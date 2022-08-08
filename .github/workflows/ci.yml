@@ -1,0 +1,26 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - '**'
+      # - '!main'
+
+jobs:
+  test_and_build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2.3.1
+      - uses: actions/setup-node@v1
+        with:
+          node-version: 'lts/*'
+      - run: npm ci --no-optional
+      - run: npm test
+
+      - name: 'Build web app artifacts'
+        run: npm run build
+
+      - uses: actions/upload-artifact@v3
+        with:
+          name: build-output
+          path: build

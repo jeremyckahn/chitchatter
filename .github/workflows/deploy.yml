@@ -1,0 +1,36 @@
+name: Deploy to Github Pages
+
+on:
+  push:
+    branches:
+      - main
+
+  workflow_dispatch:
+
+jobs:
+  deployment:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Setup Node
+        uses: actions/setup-node@v3
+        with:
+          node-version: 'lts/*'
+          cache: 'npm'
+
+      - name: Build
+        run: |
+          npm i
+          npm run build
+
+      # https://github.com/marketplace/actions/deploy-to-github-pages
+      - name: Deploy
+        uses: JamesIves/github-pages-deploy-action@3.7.1
+        with:
+          GITHUB_TOKEN: ${{ secrets.DEPLOY_KEY }}
+          BRANCH: gh-pages
+          FOLDER: build
+          CLEAN: true
+          SINGLE_COMMIT: true
