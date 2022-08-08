@@ -25,12 +25,9 @@ jobs:
           npm i
           npm run build
 
-      # https://github.com/marketplace/actions/deploy-to-github-pages
       - name: Deploy
-        uses: JamesIves/github-pages-deploy-action@3.7.1
+        uses: peaceiris/actions-gh-pages@v3
         with:
-          GITHUB_TOKEN: ${{ secrets.DEPLOY_KEY }}
-          BRANCH: gh-pages
-          FOLDER: build
-          CLEAN: true
-          SINGLE_COMMIT: true
+          deploy_key: ${{ secrets.DEPLOY_KEY }}
+          publish_dir: ./build
+          force_orphan: true
