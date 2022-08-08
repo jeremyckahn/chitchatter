@@ -1,6 +1,7 @@
 {
   "name": "chitchatter",
-  "version": "0.1.0",
+  "version": "0.0.0",
+  "homepage": "https://jeremyckahn.github.io/chitchatter/",
   "private": true,
   "dependencies": {
     "@testing-library/jest-dom": "^5.16.5",
