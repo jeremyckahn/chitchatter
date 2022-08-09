@@ -2,7 +2,8 @@
   "name": "chitchatter",
   "version": "0.0.0",
   "homepage": "https://chitchatter.im/",
-  "private": true,
+  "author": "Jeremy Kahn <jeremyckahn@gmail.com>",
+  "license": "GPL-2.0-or-later",
   "dependencies": {
     "@emotion/react": "^11.10.0",
     "@emotion/styled": "^11.10.0",
