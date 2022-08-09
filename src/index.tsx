@@ -4,14 +4,14 @@ import { HashRouter as Router } from 'react-router-dom'
 
 import * as serviceWorkerRegistration from './serviceWorkerRegistration'
 import './index.sass'
-import App from './App'
+import Bootstrap from './Bootstrap'
 import reportWebVitals from './reportWebVitals'
 
 const root = ReactDOM.createRoot(document.getElementById('root') as HTMLElement)
 root.render(
   <React.StrictMode>
     <Router>
-      <App />
+      <Bootstrap />
     </Router>
   </React.StrictMode>
 )

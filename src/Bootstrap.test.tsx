@@ -1,10 +1,10 @@
 import React from 'react'
 import { render, screen } from '@testing-library/react'
 
-import App from './App'
+import Bootstrap from './Bootstrap'
 
 test('renders learn react link', () => {
-  render(<App />)
+  render(<Bootstrap />)
   const linkElement = screen.getByText(/learn react/i)
   expect(linkElement).toBeInTheDocument()
 })
