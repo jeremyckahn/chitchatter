@@ -1,0 +1,9 @@
+{
+  "extends": ["react-app"],
+  "rules": {
+    "import/order": [
+      "error",
+      { "newlines-between": "always-and-inside-groups" }
+    ]
+  }
+}
