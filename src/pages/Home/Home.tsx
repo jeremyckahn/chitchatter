@@ -11,6 +11,9 @@ export function Home() {
           for maximum security. All communication between you and your online
           peers is encrypted and ephemeral.
         </Typography>
+        <Typography variant="body1">
+          chitchatter is still a work in progress and not yet ready to be used!
+        </Typography>
       </header>
     </div>
   )
