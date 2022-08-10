@@ -1,18 +1,29 @@
 import React from 'react'
 import ReactDOM from 'react-dom/client'
 import { BrowserRouter as Router } from 'react-router-dom'
+import { ThemeProvider, createTheme } from '@mui/material/styles'
+import CssBaseline from '@mui/material/CssBaseline'
 
 import * as serviceWorkerRegistration from './serviceWorkerRegistration'
 import './index.sass'
 import Bootstrap from './Bootstrap'
 import reportWebVitals from './reportWebVitals'
 
+const darkTheme = createTheme({
+  palette: {
+    mode: 'dark',
+  },
+})
+
 const root = ReactDOM.createRoot(document.getElementById('root') as HTMLElement)
 root.render(
   <React.StrictMode>
-    <Router>
-      <Bootstrap />
-    </Router>
+    <ThemeProvider theme={darkTheme}>
+      <CssBaseline />
+      <Router>
+        <Bootstrap />
+      </Router>
+    </ThemeProvider>
   </React.StrictMode>
 )
 
