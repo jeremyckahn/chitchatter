@@ -8,7 +8,9 @@ function Bootstrap() {
   return (
     <div className="Chitchatter">
       <Routes>
-        <Route path="/" element={<Home />} />
+        {['/', '/index.html'].map(path => (
+          <Route key={path} path={path} element={<Home />} />
+        ))}
         <Route path="/public/:roomId" element={<PublicRoom />} />
       </Routes>
     </div>
