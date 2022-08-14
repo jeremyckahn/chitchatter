@@ -2,7 +2,28 @@
 
 // TODO: Contribute this to DefinitelyTyped
 declare module 'trystero' {
-  export interface RoomConfig {}
+  interface BitTorrentRoomConfig {
+    trackerUrls?: string[]
+    trackerRedundancy?: number
+  }
+
+  interface FirebaseRoomConfig {
+    firebaseApp?: string
+    rootPath?: string
+  }
+
+  interface IpfsRoomConfig {
+    swarmAddresses?: string
+  }
+
+  export interface BaseRoomConfig {
+    appId: string
+    password?: string
+    rtcConfig?: RTCConfiguration
+  }
+
+  export type RoomConfig = BaseRoomConfig &
+    (BitTorrentRoomConfig | FirebaseRoomConfig | IpfsRoomConfig)
 
   export type PeerActionData = any
 
