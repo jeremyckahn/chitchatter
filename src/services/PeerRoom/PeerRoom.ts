@@ -18,4 +18,8 @@ export class PeerRoom {
       this.room.leave()
     }
   }
+
+  makeAction<T>(namespace: string) {
+    return this.room?.makeAction<T>(namespace)
+  }
 }
