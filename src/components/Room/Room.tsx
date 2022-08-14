@@ -1,28 +1,14 @@
-import { useEffect } from 'react'
 import { useParams } from 'react-router-dom'
 
-import { PeerRoom } from '../../services/PeerRoom'
+import { usePeerRoom } from '../../hooks/usePeerRoom'
 
-interface RoomProps {
-  peerRoom?: PeerRoom
-}
+export function Room() {
+  const { roomId = '' } = useParams()
 
-export function Room({ peerRoom = new PeerRoom() }: RoomProps) {
-  const params = useParams()
-
-  const { roomId } = params
-
-  useEffect(() => {
-    if (roomId) {
-      peerRoom.joinRoom(roomId)
-    } else {
-      console.error('roomId not specified')
-    }
-
-    return () => {
-      peerRoom.leaveRoom()
-    }
-  }, [peerRoom, roomId])
+  usePeerRoom({
+    appId: process.env.REACT_APP_NAME || '',
+    roomId,
+  })
 
   return <>Room ID: {roomId}</>
 }
