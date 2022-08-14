@@ -1,10 +1,16 @@
-import { joinRoom, Room } from 'trystero'
+import { joinRoom, Room, RoomConfig } from 'trystero'
 
 export class PeerRoom {
   private room?: Room
 
-  joinRoom(appId: string, roomId: string) {
-    this.room = joinRoom({ appId }, roomId)
+  private roomConfig: RoomConfig
+
+  constructor(config: RoomConfig) {
+    this.roomConfig = config
+  }
+
+  joinRoom(roomId: string) {
+    this.room = joinRoom(this.roomConfig, roomId)
   }
 
   leaveRoom() {
