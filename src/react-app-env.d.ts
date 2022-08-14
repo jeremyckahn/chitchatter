@@ -25,20 +25,18 @@ declare module 'trystero' {
   export type RoomConfig = BaseRoomConfig &
     (BitTorrentRoomConfig | FirebaseRoomConfig | IpfsRoomConfig)
 
-  export type PeerActionData = any
-
   export interface Room {
-    makeAction: (
+    makeAction: <T>(
       namespace: string
     ) => [
       (
-        data: PeerActionData,
+        data: T,
         targetPeers?: string[],
         metadata?: Record,
         progress: (percent: number, peerId: string) => void
       ) => void,
 
-      (data: PeerActionData, peerId: string, metadata?: Record) => void,
+      (data: T, peerId: string, metadata?: Record) => void,
 
       (percent: number, peerId: string, metadata?: Record) => void
     ]
