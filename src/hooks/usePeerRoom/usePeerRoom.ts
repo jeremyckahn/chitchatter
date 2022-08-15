@@ -9,18 +9,21 @@ interface PeerRoomProps {
 
 export function usePeerRoom({ appId, roomId }: PeerRoomProps) {
   const peerRoom = useMemo(() => {
-    return new PeerRoom({ appId })
-  }, [appId])
-
-  useEffect(() => {
+    const peerRoom = new PeerRoom({ appId })
     peerRoom.joinRoom(roomId)
 
+    return peerRoom
+  }, [appId, roomId])
+
+  useEffect(() => {
     return () => {
       peerRoom.leaveRoom()
     }
   }, [appId, peerRoom, roomId])
 
+  const { makeAction } = peerRoom
+
   return {
-    peerRoom,
+    makeAction,
   }
 }

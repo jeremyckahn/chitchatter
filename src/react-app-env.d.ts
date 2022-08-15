@@ -1,6 +1,6 @@
 /// <reference types="react-scripts" />
 
-// TODO: Contribute this to DefinitelyTyped
+// TODO: Contribute this to Trystero
 declare module 'trystero' {
   interface BitTorrentRoomConfig {
     trackerUrls?: string[]
@@ -25,24 +25,28 @@ declare module 'trystero' {
   export type RoomConfig = BaseRoomConfig &
     (BitTorrentRoomConfig | FirebaseRoomConfig | IpfsRoomConfig)
 
-  export type ActionSender = <T>(
-    data: T,
-    targetPeers?: string[],
-    metadata?: Record,
-    progress: (percent: number, peerId: string) => void
-  ) => void
+  export interface ActionSender<T> {
+    (
+      data: T,
+      targetPeers?: string[],
+      metadata?: Record,
+      progress?: (percent: number, peerId: string) => void
+    ): void
+  }
 
-  export type ActionReceiver = <T>(
-    data: T,
-    peerId: string,
-    metadata?: Record
-  ) => void
+  export interface ActionReceiver<T> {
+    (receiver: (data: T, peerId?: string, metadata?: Record) => void): void
+  }
 
-  export type ActionProgress = (
-    percent: number,
-    peerId: string,
-    metadata?: Record
-  ) => void
+  export interface ActionProgress {
+    (
+      progressHandler: (
+        percent: number,
+        peerId: string,
+        metadata?: Record
+      ) => void
+    ): void
+  }
 
   export interface Room {
     makeAction: <T>(

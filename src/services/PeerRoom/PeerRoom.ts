@@ -9,17 +9,21 @@ export class PeerRoom {
     this.roomConfig = config
   }
 
-  joinRoom(roomId: string) {
+  joinRoom = (roomId: string) => {
     this.room = joinRoom(this.roomConfig, roomId)
   }
 
-  leaveRoom() {
+  leaveRoom = () => {
     if (this.room) {
       this.room.leave()
     }
   }
 
-  makeAction<T>(namespace: string) {
-    return this.room?.makeAction<T>(namespace)
+  makeAction = <T>(namespace: string) => {
+    if (!this.room) {
+      throw new Error('PeerRoom: Called makeAction before joinRoom')
+    }
+
+    return this.room.makeAction<T>(namespace)
   }
 }
