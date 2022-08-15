@@ -1,15 +1,12 @@
 import { joinRoom, Room, RoomConfig } from 'trystero'
 
 export class PeerRoom {
-  private room?: Room
+  private room: Room
 
   private roomConfig: RoomConfig
 
-  constructor(config: RoomConfig) {
+  constructor(config: RoomConfig, roomId: string) {
     this.roomConfig = config
-  }
-
-  joinRoom = (roomId: string) => {
     this.room = joinRoom(this.roomConfig, roomId)
   }
 
@@ -20,10 +17,6 @@ export class PeerRoom {
   }
 
   makeAction = <T>(namespace: string) => {
-    if (!this.room) {
-      throw new Error('PeerRoom: Called makeAction before joinRoom')
-    }
-
     return this.room.makeAction<T>(namespace)
   }
 }

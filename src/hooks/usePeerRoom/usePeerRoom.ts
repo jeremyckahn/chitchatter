@@ -9,8 +9,7 @@ interface PeerRoomProps {
 
 export function usePeerRoom({ appId, roomId }: PeerRoomProps) {
   const peerRoom = useMemo(() => {
-    const peerRoom = new PeerRoom({ appId })
-    peerRoom.joinRoom(roomId)
+    const peerRoom = new PeerRoom({ appId }, roomId)
 
     return peerRoom
   }, [appId, roomId])
@@ -21,9 +20,5 @@ export function usePeerRoom({ appId, roomId }: PeerRoomProps) {
     }
   }, [appId, peerRoom, roomId])
 
-  const { makeAction } = peerRoom
-
-  return {
-    makeAction,
-  }
+  return peerRoom
 }
