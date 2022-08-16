@@ -48,7 +48,7 @@ function RoomLoader() {
   const { roomId = '' } = useParams()
 
   const peerRoom = usePeerRoom({
-    appId: `${process.env.REACT_APP_NAME}`,
+    appId: `${encodeURI(window.location.origin)}_${process.env.REACT_APP_NAME}`,
     roomId,
   })
 
