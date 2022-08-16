@@ -1,6 +1,6 @@
-import { useEffect, useMemo } from 'react'
+import { useEffect, useState } from 'react'
 
-import { PeerRoom } from '../../services/PeerRoom'
+import { PeerRoom, getPeerRoom } from '../../services/PeerRoom'
 
 interface PeerRoomProps {
   appId: string
@@ -8,17 +8,19 @@ interface PeerRoomProps {
 }
 
 export function usePeerRoom({ appId, roomId }: PeerRoomProps) {
-  const peerRoom = useMemo(() => {
-    const peerRoom = new PeerRoom({ appId }, roomId)
+  const [peerRoom, setPeerRoom] = useState<PeerRoom | null>(null)
 
-    return peerRoom
+  useEffect(() => {
+    ;(async () => {
+      setPeerRoom(await getPeerRoom({ appId }, roomId))
+    })()
   }, [appId, roomId])
 
   useEffect(() => {
     return () => {
-      peerRoom.leaveRoom()
+      peerRoom?.leaveRoom()
     }
-  }, [appId, peerRoom, roomId])
+  }, [peerRoom])
 
   return peerRoom
 }

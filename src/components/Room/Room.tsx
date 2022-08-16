@@ -1,25 +1,25 @@
-import { useMemo } from 'react'
+import { useState } from 'react'
 import { useParams } from 'react-router-dom'
 import Button from '@mui/material/Button'
 import Typography from '@mui/material/Typography'
 
 import { usePeerRoom } from '../../hooks/usePeerRoom'
+import { PeerRoom } from '../../services/PeerRoom'
 
 enum PeerActions {
   MESSAGE = 'MESSAGE',
 }
 
-export function Room() {
-  const { roomId = '' } = useParams()
+interface RoomProps {
+  peerRoom: PeerRoom
+  roomId: string
+}
 
-  const { makeAction } = usePeerRoom({
-    appId: `${window.location.origin}_${process.env.REACT_APP_NAME}`,
-    roomId,
-  })
+function Room({ peerRoom, roomId }: RoomProps) {
+  const { makeAction } = peerRoom
 
-  const [sendMessage, receiveMessage] = useMemo(
-    () => makeAction<string>(PeerActions.MESSAGE),
-    [makeAction]
+  const [[sendMessage, receiveMessage]] = useState(() =>
+    makeAction<string>(PeerActions.MESSAGE)
   )
 
   receiveMessage(message => {
@@ -43,3 +43,20 @@ export function Room() {
     </div>
   )
 }
+
+function RoomLoader() {
+  const { roomId = '' } = useParams()
+
+  const peerRoom = usePeerRoom({
+    appId: `${process.env.REACT_APP_NAME}`,
+    roomId,
+  })
+
+  if (peerRoom) {
+    return <Room peerRoom={peerRoom} roomId={roomId} />
+  } else {
+    return <>Loading...</>
+  }
+}
+
+export { RoomLoader as Room }
