@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 
-import { PeerRoom, getPeerRoom } from '../../services/PeerRoom'
+import { PeerRoom, getPeerRoom } from 'services/PeerRoom'
 
 interface PeerRoomProps {
   appId: string

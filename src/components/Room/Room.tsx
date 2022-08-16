@@ -3,8 +3,8 @@ import { useParams } from 'react-router-dom'
 import Button from '@mui/material/Button'
 import Typography from '@mui/material/Typography'
 
-import { usePeerRoom } from '../../hooks/usePeerRoom'
-import { PeerRoom } from '../../services/PeerRoom'
+import { usePeerRoom } from 'hooks/usePeerRoom'
+import { PeerRoom } from 'services/PeerRoom'
 
 enum PeerActions {
   MESSAGE = 'MESSAGE',

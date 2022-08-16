@@ -1,6 +1,6 @@
 import { joinRoom, Room, RoomConfig } from 'trystero'
 
-import { sleep } from '../../utils'
+import { sleep } from 'utils'
 
 export class PeerRoom {
   private room: Room

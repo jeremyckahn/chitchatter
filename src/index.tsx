@@ -4,10 +4,10 @@ import { BrowserRouter as Router } from 'react-router-dom'
 import { ThemeProvider, createTheme } from '@mui/material/styles'
 import CssBaseline from '@mui/material/CssBaseline'
 
-import * as serviceWorkerRegistration from './serviceWorkerRegistration'
-import './index.sass'
-import Bootstrap from './Bootstrap'
-import reportWebVitals from './reportWebVitals'
+import * as serviceWorkerRegistration from 'serviceWorkerRegistration'
+import 'index.sass'
+import Bootstrap from 'Bootstrap'
+import reportWebVitals from 'reportWebVitals'
 
 const darkTheme = createTheme({
   palette: {
