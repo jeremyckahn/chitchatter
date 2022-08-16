@@ -2,12 +2,12 @@ import { useEffect, useState } from 'react'
 
 import { PeerRoom, getPeerRoom } from 'services/PeerRoom'
 
-interface PeerRoomProps {
+interface UsePeerRoomProps {
   appId: string
   roomId: string
 }
 
-export function usePeerRoom({ appId, roomId }: PeerRoomProps) {
+export function usePeerRoom({ appId, roomId }: UsePeerRoomProps) {
   const [peerRoom, setPeerRoom] = useState<PeerRoom | null>(null)
 
   useEffect(() => {

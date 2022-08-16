@@ -1,14 +1,9 @@
-import { useState } from 'react'
 import { useParams } from 'react-router-dom'
 import Button from '@mui/material/Button'
 import Typography from '@mui/material/Typography'
 
-import { usePeerRoom } from 'hooks/usePeerRoom'
+import { usePeerRoom, usePeerRoomAction, PeerActions } from 'hooks/usePeerRoom'
 import { PeerRoom } from 'services/PeerRoom'
-
-enum PeerActions {
-  MESSAGE = 'MESSAGE',
-}
 
 interface RoomProps {
   peerRoom: PeerRoom
@@ -16,10 +11,9 @@ interface RoomProps {
 }
 
 function Room({ peerRoom, roomId }: RoomProps) {
-  const { makeAction } = peerRoom
-
-  const [[sendMessage, receiveMessage]] = useState(() =>
-    makeAction<string>(PeerActions.MESSAGE)
+  const [sendMessage, receiveMessage] = usePeerRoomAction<string>(
+    peerRoom,
+    PeerActions.MESSAGE
   )
 
   receiveMessage(message => {
