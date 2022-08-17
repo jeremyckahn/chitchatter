@@ -3,14 +3,15 @@ import Button from '@mui/material/Button'
 import Typography from '@mui/material/Typography'
 
 import { usePeerRoom, usePeerRoomAction, PeerActions } from 'hooks/usePeerRoom'
-import { PeerRoom } from 'services/PeerRoom'
 
-interface RoomProps {
-  peerRoom: PeerRoom
-  roomId: string
-}
+export function Room() {
+  const { roomId = '' } = useParams()
 
-function Room({ peerRoom, roomId }: RoomProps) {
+  const peerRoom = usePeerRoom({
+    appId: `${encodeURI(window.location.origin)}_${process.env.REACT_APP_NAME}`,
+    roomId,
+  })
+
   const [sendMessage, receiveMessage] = usePeerRoomAction<string>(
     peerRoom,
     PeerActions.MESSAGE
@@ -37,20 +38,3 @@ function Room({ peerRoom, roomId }: RoomProps) {
     </div>
   )
 }
-
-function RoomLoader() {
-  const { roomId = '' } = useParams()
-
-  const peerRoom = usePeerRoom({
-    appId: `${encodeURI(window.location.origin)}_${process.env.REACT_APP_NAME}`,
-    roomId,
-  })
-
-  if (peerRoom) {
-    return <Room peerRoom={peerRoom} roomId={roomId} />
-  } else {
-    return <>Loading...</>
-  }
-}
-
-export { RoomLoader as Room }
