@@ -25,7 +25,7 @@ export class PeerRoom {
 // Memoization isn't just a performance optimization here. It is necessary to
 // prevent subsequent calls to getPeerRoom from causing a room collision due to
 // the amount of time it takes for Trystero rooms to be torn down (which is an
-// asynchronous operation).
+// asynchronous operation that cannot be `await`-ed).
 export const getPeerRoom = memoize((config: RoomConfig, roomId: string) => {
   return new PeerRoom(config, roomId)
 })
