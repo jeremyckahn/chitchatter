@@ -1,6 +1,5 @@
 import { joinRoom, Room, RoomConfig } from 'trystero'
-
-import { sleep } from 'utils'
+import memoize from 'fast-memoize'
 
 export class PeerRoom {
   private room: Room
@@ -23,24 +22,10 @@ export class PeerRoom {
   }
 }
 
-// This abstraction is necessary because it takes some time for a PeerRoom to
-// be torn down, and there is no way to detect when that happens. If a new
-// PeerRoom is instantiated with the same config and roomId before the previous
-// one is torn down, an error is thrown. The workaround is to continually
-// trying to instantiate a PeerRoom until it succeeds.
-export const getPeerRoom = async (config: RoomConfig, roomId: string) => {
-  const timeout = 1000
-  const epoch = Date.now()
-
-  do {
-    if (Date.now() - epoch > timeout) {
-      throw new Error('Could not create PeerRoom')
-    }
-
-    try {
-      return new PeerRoom(config, roomId)
-    } catch (e) {}
-
-    await sleep(100)
-  } while (true)
-}
+// Memoization isn't just a performance optimization here. It is necessary to
+// prevent subsequent calls to getPeerRoom from causing a room collision due to
+// the amount of time it takes for Trystero rooms to be torn down (which is an
+// asynchronous operation).
+export const getPeerRoom = memoize((config: RoomConfig, roomId: string) => {
+  return new PeerRoom(config, roomId)
+})
