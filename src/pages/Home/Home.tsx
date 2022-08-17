@@ -44,11 +44,15 @@ export function Home() {
               size="medium"
             />
           </FormControl>
-          <div className="block pt-4">
-            <Button variant="contained" type="submit">
-              Go to public room
-            </Button>
-          </div>
+          <Button
+            variant="contained"
+            type="submit"
+            sx={{
+              marginTop: 2,
+            }}
+          >
+            Go to public room
+          </Button>
         </form>
       </main>
     </div>
