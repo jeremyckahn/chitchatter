@@ -5,38 +5,46 @@ import FormControl from '@mui/material/FormControl'
 import Typography from '@mui/material/Typography'
 import TextField from '@mui/material/TextField'
 
-import { usePeerRoom, usePeerRoomAction, PeerActions } from 'hooks/usePeerRoom'
+import { usePeerRoom, usePeerRoomAction } from 'hooks/usePeerRoom'
+import { PeerActions } from 'models/network'
+import { UnsentMessage, ReceivedMessage } from 'models/chat'
 
 export function Room() {
   const { roomId = '' } = useParams()
 
-  const [message, setMessage] = useState('')
+  const [textMessage, setTextMessage] = useState('')
+  const [receivedMessages, setReceivedMessages] = useState<ReceivedMessage[]>(
+    []
+  )
 
   const peerRoom = usePeerRoom({
     appId: `${encodeURI(window.location.origin)}_${process.env.REACT_APP_NAME}`,
     roomId,
   })
 
-  const [sendMessage, receiveMessage] = usePeerRoomAction<string>(
+  const [sendMessage, receiveMessage] = usePeerRoomAction<UnsentMessage>(
     peerRoom,
     PeerActions.MESSAGE
   )
 
   const handleMessageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const { value } = event.target
-    setMessage(value)
+    setTextMessage(value)
   }
 
   const handleMessageSubmit = (
     event: React.SyntheticEvent<HTMLFormElement>
   ) => {
     event.preventDefault()
-    sendMessage(message)
-    setMessage('')
+    sendMessage({ text: textMessage, timeSent: Date.now() })
+    setTextMessage('')
   }
 
   receiveMessage(message => {
-    console.log(message)
+    setReceivedMessages([
+      ...receivedMessages,
+      { ...message, timeReceived: Date.now() },
+    ])
   })
 
   return (
@@ -50,7 +58,7 @@ export function Room() {
           <TextField
             label="Your message"
             variant="outlined"
-            value={message}
+            value={textMessage}
             onChange={handleMessageChange}
             size="medium"
           />
@@ -58,7 +66,7 @@ export function Room() {
         <Button
           variant="contained"
           type="submit"
-          disabled={message.length === 0}
+          disabled={textMessage.length === 0}
           sx={{
             marginTop: 2,
           }}
@@ -66,6 +74,11 @@ export function Room() {
           Send
         </Button>
       </form>
+      <div>
+        {receivedMessages.map((message, idx) => (
+          <Typography key={`${idx}_${message}`}>{message.text}</Typography>
+        ))}
+      </div>
     </div>
   )
 }
