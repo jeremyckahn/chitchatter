@@ -62,11 +62,11 @@ export function Room({
       <form onSubmit={handleMessageSubmit} className="max-w-xl mt-8">
         <FormControl fullWidth>
           <TextField
-            label="Your message"
             variant="outlined"
             value={textMessage}
             onChange={handleMessageChange}
             size="medium"
+            placeholder="Your message"
           />
         </FormControl>
         <Button
