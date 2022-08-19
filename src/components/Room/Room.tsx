@@ -9,7 +9,13 @@ import { usePeerRoom, usePeerRoomAction } from 'hooks/usePeerRoom'
 import { PeerActions } from 'models/network'
 import { UnsentMessage, ReceivedMessage } from 'models/chat'
 
-export function Room() {
+export interface RoomProps {
+  appId?: string
+}
+
+export function Room({
+  appId = `${encodeURI(window.location.origin)}_${process.env.REACT_APP_NAME}`,
+}: RoomProps) {
   const { roomId = '' } = useParams()
 
   const [textMessage, setTextMessage] = useState('')
@@ -18,7 +24,7 @@ export function Room() {
   )
 
   const peerRoom = usePeerRoom({
-    appId: `${encodeURI(window.location.origin)}_${process.env.REACT_APP_NAME}`,
+    appId,
     roomId,
   })
 
