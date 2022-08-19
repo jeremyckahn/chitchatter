@@ -1,4 +1,5 @@
 export interface UnsentMessage {
+  id: string
   text: string
   timeSent: number
 }

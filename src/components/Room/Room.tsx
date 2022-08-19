@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useParams } from 'react-router-dom'
+import { v4 as uuid } from 'uuid'
 import Button from '@mui/material/Button'
 import FormControl from '@mui/material/FormControl'
 import Typography from '@mui/material/Typography'
@@ -11,10 +12,12 @@ import { UnsentMessage, ReceivedMessage } from 'models/chat'
 
 export interface RoomProps {
   appId?: string
+  getUuid?: typeof uuid
 }
 
 export function Room({
   appId = `${encodeURI(window.location.origin)}_${process.env.REACT_APP_NAME}`,
+  getUuid = uuid,
 }: RoomProps) {
   const { roomId = '' } = useParams()
 
@@ -42,7 +45,7 @@ export function Room({
     event: React.SyntheticEvent<HTMLFormElement>
   ) => {
     event.preventDefault()
-    sendMessage({ text: textMessage, timeSent: Date.now() })
+    sendMessage({ text: textMessage, timeSent: Date.now(), id: getUuid() })
     setTextMessage('')
   }
 

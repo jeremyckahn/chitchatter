@@ -5,11 +5,12 @@ import { MemoryRouter as Router, Route, Routes } from 'react-router-dom'
 
 import { Room } from './'
 
-const mockSender = jest.fn()
+const mockGetUuid = jest.fn()
+const mockMessagedSender = jest.fn()
 
 jest.mock('trystero', () => ({
   joinRoom: () => ({
-    makeAction: () => [mockSender, () => {}, () => {}],
+    makeAction: () => [mockMessagedSender, () => {}, () => {}],
     ping: () => Promise.resolve(0),
     leave: () => {},
     getPeers: () => [],
@@ -87,7 +88,7 @@ describe('Room', () => {
   test('message is sent to peer', () => {
     render(
       <RouteStub>
-        <Room />
+        <Room getUuid={mockGetUuid.mockImplementation(() => 'abc123')} />
       </RouteStub>
     )
 
@@ -95,6 +96,10 @@ describe('Room', () => {
     const textInput = screen.getByPlaceholderText('Your message')
     userEvent.type(textInput, 'hello')
     userEvent.click(sendButton)
-    expect(mockSender).toHaveBeenCalledWith({ text: 'hello', timeSent: 100 })
+    expect(mockMessagedSender).toHaveBeenCalledWith({
+      text: 'hello',
+      timeSent: 100,
+      id: 'abc123',
+    })
   })
 })
