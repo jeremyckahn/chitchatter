@@ -28,10 +28,12 @@ export function Room({
     []
   )
 
-  const peerRoom = usePeerRoom({
-    appId,
-    roomId,
-  })
+  const peerRoom = usePeerRoom(
+    {
+      appId,
+    },
+    roomId
+  )
 
   const [sendMessage, receiveMessage] = usePeerRoomAction<UnsentMessage>(
     peerRoom,
