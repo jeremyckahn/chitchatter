@@ -13,9 +13,11 @@ import { UnsentMessage, ReceivedMessage } from 'models/chat'
 export interface RoomProps {
   appId?: string
   getUuid?: typeof uuid
+  userId: string
 }
 
 export function Room({
+  userId,
   appId = `${encodeURI(window.location.origin)}_${process.env.REACT_APP_NAME}`,
   getUuid = uuid,
 }: RoomProps) {
@@ -45,7 +47,12 @@ export function Room({
     event: React.SyntheticEvent<HTMLFormElement>
   ) => {
     event.preventDefault()
-    sendMessage({ text: textMessage, timeSent: Date.now(), id: getUuid() })
+    sendMessage({
+      authorId: userId,
+      text: textMessage,
+      timeSent: Date.now(),
+      id: getUuid(),
+    })
     setTextMessage('')
   }
 
@@ -59,9 +66,7 @@ export function Room({
   return (
     <div className="p-4">
       <Typography>Room ID: {roomId}</Typography>
-      <Typography>
-        Open this page in another tab and open the console.
-      </Typography>
+      <Typography>Open this page in another tab.</Typography>
       <form onSubmit={handleMessageSubmit} className="max-w-xl mt-8">
         <FormControl fullWidth>
           <TextField

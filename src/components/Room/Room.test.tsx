@@ -5,6 +5,8 @@ import { MemoryRouter as Router, Route, Routes } from 'react-router-dom'
 
 import { Room } from './'
 
+const stubUserId = 'user-id'
+
 const mockGetUuid = jest.fn()
 const mockMessagedSender = jest.fn()
 
@@ -42,7 +44,7 @@ describe('Room', () => {
   test('is available', () => {
     render(
       <RouteStub>
-        <Room />
+        <Room userId={stubUserId} />
       </RouteStub>
     )
   })
@@ -50,7 +52,7 @@ describe('Room', () => {
   test('send button is disabled', () => {
     render(
       <RouteStub>
-        <Room />
+        <Room userId={stubUserId} />
       </RouteStub>
     )
 
@@ -61,7 +63,7 @@ describe('Room', () => {
   test('inputting text enabled send button', () => {
     render(
       <RouteStub>
-        <Room />
+        <Room userId={stubUserId} />
       </RouteStub>
     )
 
@@ -74,7 +76,7 @@ describe('Room', () => {
   test('sending a message clears the text input', () => {
     render(
       <RouteStub>
-        <Room />
+        <Room userId={stubUserId} />
       </RouteStub>
     )
 
@@ -88,7 +90,10 @@ describe('Room', () => {
   test('message is sent to peer', () => {
     render(
       <RouteStub>
-        <Room getUuid={mockGetUuid.mockImplementation(() => 'abc123')} />
+        <Room
+          getUuid={mockGetUuid.mockImplementation(() => 'abc123')}
+          userId={stubUserId}
+        />
       </RouteStub>
     )
 
@@ -97,6 +102,7 @@ describe('Room', () => {
     userEvent.type(textInput, 'hello')
     userEvent.click(sendButton)
     expect(mockMessagedSender).toHaveBeenCalledWith({
+      authorId: stubUserId,
       text: 'hello',
       timeSent: 100,
       id: 'abc123',
