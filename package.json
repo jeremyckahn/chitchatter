@@ -17,6 +17,7 @@
     "@types/react": "^18.0.17",
     "@types/react-dom": "^18.0.6",
     "fast-memoize": "^2.5.2",
+    "localforage": "^1.10.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-markdown": "^8.0.3",

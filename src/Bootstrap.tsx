@@ -1,24 +1,64 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Routes, Route } from 'react-router-dom'
 import { v4 as uuid } from 'uuid'
+import localforage from 'localforage'
 
-import { Home } from './pages/Home/'
-import { PublicRoom } from './pages/PublicRoom/'
+import { Home } from 'pages/Home/'
+import { PublicRoom } from 'pages/PublicRoom/'
+import { UserSettings } from 'models/settings'
+import { PersistedStorageKeys } from 'models/storage'
 
-function Bootstrap() {
-  const [userId] = useState(uuid())
+export interface BootstrapProps {
+  persistedStorage?: typeof localforage
+  getUuid?: typeof uuid
+}
+
+function Bootstrap({
+  persistedStorage = localforage.createInstance({
+    name: 'chitchatter',
+    description: 'Persisted settings data for chitchatter',
+  }),
+  getUuid = uuid,
+}: BootstrapProps) {
+  const [hasLoadedSettings, setHasLoadedSettings] = useState(false)
+  const [settings, setSettings] = useState({ userId: getUuid() })
+  const { userId } = settings
+
+  useEffect(() => {
+    ;(async () => {
+      if (hasLoadedSettings) return
+
+      const persistedUserSettings =
+        await persistedStorage.getItem<UserSettings>(
+          PersistedStorageKeys.USER_SETTINGS
+        )
+
+      if (persistedUserSettings) {
+        setSettings(persistedUserSettings)
+      } else {
+        await persistedStorage.setItem(
+          PersistedStorageKeys.USER_SETTINGS,
+          settings
+        )
+      }
+
+      setHasLoadedSettings(true)
+    })()
+  }, [hasLoadedSettings, persistedStorage, settings, userId])
 
   return (
     <div className="Chitchatter">
-      <Routes>
-        {['/', '/index.html'].map(path => (
-          <Route key={path} path={path} element={<Home />} />
-        ))}
-        <Route
-          path="/public/:roomId"
-          element={<PublicRoom userId={userId} />}
-        />
-      </Routes>
+      {hasLoadedSettings ? (
+        <Routes>
+          {['/', '/index.html'].map(path => (
+            <Route key={path} path={path} element={<Home />} />
+          ))}
+          <Route
+            path="/public/:roomId"
+            element={<PublicRoom userId={userId} />}
+          />
+        </Routes>
+      ) : null}
     </div>
   )
 }

@@ -1,15 +1,70 @@
-import React from 'react'
-import { render } from '@testing-library/react'
+import { act, render } from '@testing-library/react'
 import { MemoryRouter as Router } from 'react-router-dom'
+import localforage from 'localforage'
 
-import Bootstrap from './Bootstrap'
+import { PersistedStorageKeys } from 'models/storage'
 
-const StubBootstrap = () => (
-  <Router>
-    <Bootstrap />
-  </Router>
-)
+import Bootstrap, { BootstrapProps } from './Bootstrap'
 
-test('renders', () => {
-  render(<StubBootstrap />)
+const mockPersistedStorage =
+  jest.createMockFromModule<jest.Mock<typeof localforage>>('localforage')
+
+const mockGetUuid = jest.fn()
+
+const mockGetItem = jest.fn()
+const mockSetItem = jest.fn()
+
+beforeEach(() => {
+  mockGetItem.mockImplementation(() => Promise.resolve(null))
+  mockSetItem.mockImplementation((data: any) => Promise.resolve(data))
+})
+
+const renderBootstrap = async (overrides: BootstrapProps = {}) => {
+  Object.assign(mockPersistedStorage, {
+    getItem: mockGetItem,
+    setItem: mockSetItem,
+  })
+
+  render(
+    <Router>
+      <Bootstrap
+        persistedStorage={mockPersistedStorage as any as typeof localforage}
+        {...overrides}
+      />
+    </Router>
+  )
+
+  // https://kentcdodds.com/blog/fix-the-not-wrapped-in-act-warning#an-alternative-waiting-for-the-mocked-promise
+  await act(async () => {
+    await Promise.resolve()
+  })
+}
+
+test('renders', async () => {
+  await renderBootstrap()
+})
+
+test('checks persistedStorage for user settings', async () => {
+  await renderBootstrap()
+  expect(mockGetItem).toHaveBeenCalledWith(PersistedStorageKeys.USER_SETTINGS)
+})
+
+test('persists user settings if none were already persisted', async () => {
+  await renderBootstrap({
+    getUuid: mockGetUuid.mockImplementation(() => 'abc123'),
+  })
+
+  expect(mockSetItem).toHaveBeenCalledWith(PersistedStorageKeys.USER_SETTINGS, {
+    userId: 'abc123',
+  })
+})
+
+test('does not update user settings if they were already persisted', async () => {
+  mockGetItem.mockImplementation(() => ({
+    userId: 'abc123',
+  }))
+
+  await renderBootstrap()
+
+  expect(mockSetItem).not.toHaveBeenCalled()
 })
