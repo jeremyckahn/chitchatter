@@ -8,9 +8,23 @@ export interface ChatTranscriptProps {
 
 export const ChatTranscript = ({ messageLog }: ChatTranscriptProps) => {
   return (
-    <div className="ChatTranscript">
+    <div className="ChatTranscript flex flex-col">
       {messageLog.map((message, idx) => (
-        <Typography key={`${idx}_${message}`}>{message.text}</Typography>
+        <div className="block">
+          <Typography
+            key={`${idx}_${message}`}
+            variant="body1"
+            sx={{
+              backgroundColor: 'primary.dark',
+              margin: 0.5,
+              padding: 1,
+              borderRadius: 4,
+              float: 'left',
+            }}
+          >
+            {message.text}
+          </Typography>
+        </div>
       ))}
     </div>
   )
