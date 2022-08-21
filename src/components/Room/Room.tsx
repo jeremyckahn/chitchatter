@@ -93,7 +93,7 @@ export function Room({
           Send
         </Button>
       </form>
-      <ChatTranscript messageLog={messageLog} />
+      <ChatTranscript messageLog={messageLog} userId={userId} />
     </div>
   )
 }
