@@ -9,6 +9,7 @@ import TextField from '@mui/material/TextField'
 import { usePeerRoom, usePeerRoomAction } from 'hooks/usePeerRoom'
 import { PeerActions } from 'models/network'
 import { UnsentMessage, ReceivedMessage } from 'models/chat'
+import { ChatTranscript } from 'components/ChatTranscript'
 
 export interface RoomProps {
   appId?: string
@@ -24,9 +25,9 @@ export function Room({
   const { roomId = '' } = useParams()
 
   const [textMessage, setTextMessage] = useState('')
-  const [receivedMessages, setReceivedMessages] = useState<ReceivedMessage[]>(
-    []
-  )
+  const [messageLog, setMessageLog] = useState<
+    Array<ReceivedMessage | UnsentMessage>
+  >([])
 
   const peerRoom = usePeerRoom(
     {
@@ -49,20 +50,22 @@ export function Room({
     event: React.SyntheticEvent<HTMLFormElement>
   ) => {
     event.preventDefault()
-    sendMessage({
+
+    const unsentMessage: UnsentMessage = {
       authorId: userId,
       text: textMessage,
       timeSent: Date.now(),
       id: getUuid(),
-    })
+    }
+
+    sendMessage(unsentMessage)
+
     setTextMessage('')
+    setMessageLog([...messageLog, unsentMessage])
   }
 
   receiveMessage(message => {
-    setReceivedMessages([
-      ...receivedMessages,
-      { ...message, timeReceived: Date.now() },
-    ])
+    setMessageLog([...messageLog, { ...message, timeReceived: Date.now() }])
   })
 
   return (
@@ -90,11 +93,7 @@ export function Room({
           Send
         </Button>
       </form>
-      <div>
-        {receivedMessages.map((message, idx) => (
-          <Typography key={`${idx}_${message}`}>{message.text}</Typography>
-        ))}
-      </div>
+      <ChatTranscript messageLog={messageLog} />
     </div>
   )
 }
