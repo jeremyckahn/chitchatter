@@ -24,6 +24,7 @@ export function Room({
 }: RoomProps) {
   const { roomId = '' } = useParams()
 
+  const [isMessageSending, setIsMessageSending] = useState(false)
   const [textMessage, setTextMessage] = useState('')
   const [messageLog, setMessageLog] = useState<
     Array<ReceivedMessage | UnsentMessage>
@@ -46,7 +47,7 @@ export function Room({
     setTextMessage(value)
   }
 
-  const handleMessageSubmit = (
+  const handleMessageSubmit = async (
     event: React.SyntheticEvent<HTMLFormElement>
   ) => {
     event.preventDefault()
@@ -58,10 +59,16 @@ export function Room({
       id: getUuid(),
     }
 
-    sendMessage(unsentMessage)
-
     setTextMessage('')
+    setIsMessageSending(true)
     setMessageLog([...messageLog, unsentMessage])
+    await sendMessage(unsentMessage)
+
+    setMessageLog([
+      ...messageLog,
+      { ...unsentMessage, timeReceived: Date.now() },
+    ])
+    setIsMessageSending(false)
   }
 
   receiveMessage(message => {
@@ -85,7 +92,7 @@ export function Room({
         <Button
           variant="contained"
           type="submit"
-          disabled={textMessage.length === 0}
+          disabled={textMessage.length === 0 || isMessageSending}
           sx={{
             marginTop: 2,
           }}

@@ -25,13 +25,13 @@ declare module 'trystero' {
   export type RoomConfig = BaseRoomConfig &
     (BitTorrentRoomConfig | FirebaseRoomConfig | IpfsRoomConfig)
 
-  export interface ActionSender<T> {
+  export interface ActionSender<T> extends Promise {
     (
       data: T,
       targetPeers?: string[],
       metadata?: Record,
       progress?: (percent: number, peerId: string) => void
-    ): void
+    ): Promise<Array<undefined>>
   }
 
   export interface ActionReceiver<T> {

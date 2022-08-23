@@ -8,3 +8,7 @@ export interface UnsentMessage {
 export interface ReceivedMessage extends UnsentMessage {
   timeReceived: number
 }
+
+export const isMessageReceived = (
+  message: UnsentMessage
+): message is ReceivedMessage => 'timeReceived' in message

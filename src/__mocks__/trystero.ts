@@ -5,7 +5,7 @@ export const joinRoom: typeof trysteroJoinRoom = (
   _roomId: string
 ) => {
   const room: Room = {
-    makeAction: () => [() => {}, () => {}, () => {}],
+    makeAction: () => [() => Promise.resolve([]), () => {}, () => {}],
     ping: () => Promise.resolve(0),
     leave: () => {},
     getPeers: () => [],

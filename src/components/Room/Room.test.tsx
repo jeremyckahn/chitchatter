@@ -1,5 +1,5 @@
 import { PropsWithChildren } from 'react'
-import { render, screen } from '@testing-library/react'
+import { waitFor, render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter as Router, Route, Routes } from 'react-router-dom'
 
@@ -8,7 +8,9 @@ import { Room } from './'
 const stubUserId = 'user-id'
 
 const mockGetUuid = jest.fn()
-const mockMessagedSender = jest.fn()
+const mockMessagedSender = jest
+  .fn()
+  .mockImplementation(() => Promise.resolve([]))
 
 jest.mock('trystero', () => ({
   joinRoom: () => ({
@@ -73,7 +75,7 @@ describe('Room', () => {
     expect(sendButton).not.toBeDisabled()
   })
 
-  test('sending a message clears the text input', () => {
+  test('sending a message clears the text input', async () => {
     render(
       <RouteStub>
         <Room userId={stubUserId} />
@@ -83,11 +85,15 @@ describe('Room', () => {
     const sendButton = screen.getByText('Send')
     const textInput = screen.getByPlaceholderText('Your message')
     userEvent.type(textInput, 'hello')
-    userEvent.click(sendButton)
+
+    await waitFor(() => {
+      userEvent.click(sendButton)
+    })
+
     expect(textInput).toHaveValue('')
   })
 
-  test('message is sent to peer', () => {
+  test('message is sent to peer', async () => {
     render(
       <RouteStub>
         <Room
@@ -100,7 +106,11 @@ describe('Room', () => {
     const sendButton = screen.getByText('Send')
     const textInput = screen.getByPlaceholderText('Your message')
     userEvent.type(textInput, 'hello')
-    userEvent.click(sendButton)
+
+    await waitFor(() => {
+      userEvent.click(sendButton)
+    })
+
     expect(mockMessagedSender).toHaveBeenCalledWith({
       authorId: stubUserId,
       text: 'hello',
