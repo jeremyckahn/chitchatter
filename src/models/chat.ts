@@ -10,5 +10,7 @@ export interface ReceivedMessage extends UnsentMessage {
 }
 
 export const isMessageReceived = (
-  message: UnsentMessage
+  message: Message
 ): message is ReceivedMessage => 'timeReceived' in message
+
+export type Message = UnsentMessage | ReceivedMessage
