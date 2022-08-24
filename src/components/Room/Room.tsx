@@ -1,5 +1,4 @@
 import { useState } from 'react'
-import { useParams } from 'react-router-dom'
 import { v4 as uuid } from 'uuid'
 import Button from '@mui/material/Button'
 import FormControl from '@mui/material/FormControl'
@@ -14,16 +13,16 @@ import { ChatTranscript } from 'components/ChatTranscript'
 export interface RoomProps {
   appId?: string
   getUuid?: typeof uuid
+  roomId: string
   userId: string
 }
 
 export function Room({
-  userId,
   appId = `${encodeURI(window.location.origin)}_${process.env.REACT_APP_NAME}`,
   getUuid = uuid,
+  roomId,
+  userId,
 }: RoomProps) {
-  const { roomId = '' } = useParams()
-
   const [isMessageSending, setIsMessageSending] = useState(false)
   const [textMessage, setTextMessage] = useState('')
   const [messageLog, setMessageLog] = useState<
