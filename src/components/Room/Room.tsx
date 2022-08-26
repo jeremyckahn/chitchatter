@@ -75,9 +75,13 @@ export function Room({
   })
 
   return (
-    <div className="p-4">
+    <div className="h-full p-4 flex flex-col">
       <Typography>Room ID: {roomId}</Typography>
-      <Typography>Open this page in another tab.</Typography>
+      <ChatTranscript
+        messageLog={messageLog}
+        userId={userId}
+        className="grow overflow-auto"
+      />
       <form onSubmit={handleMessageSubmit} className="max-w-xl mt-8">
         <FormControl fullWidth>
           <TextField
@@ -99,7 +103,6 @@ export function Room({
           Send
         </Button>
       </form>
-      <ChatTranscript messageLog={messageLog} userId={userId} />
     </div>
   )
 }
