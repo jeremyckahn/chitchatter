@@ -3,6 +3,9 @@ import Box from '@mui/material/Box'
 import Typography, { TypographyProps } from '@mui/material/Typography'
 import Link, { LinkProps } from '@mui/material/Link'
 import Markdown from 'react-markdown'
+import { CodeProps } from 'react-markdown/lib/ast-to-react'
+import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter'
+import { materialDark } from 'react-syntax-highlighter/dist/esm/styles/prism'
 
 import { Message as IMessage, isMessageReceived } from 'models/chat'
 
@@ -34,6 +37,23 @@ const componentMap = {
     underline: 'always',
     color: 'primary.light',
   }),
+  // https://github.com/remarkjs/react-markdown#use-custom-components-syntax-highlight
+  code({ node, inline, className, children, style, ...props }: CodeProps) {
+    const match = /language-(\w+)/.exec(className || '')
+    return !inline && match ? (
+      <SyntaxHighlighter
+        children={String(children).replace(/\n$/, '')}
+        language={match[1]}
+        style={materialDark}
+        PreTag="div"
+        {...props}
+      />
+    ) : (
+      <code className={className} {...props}>
+        {children}
+      </code>
+    )
+  },
 }
 
 export const Message = ({ message, userId }: MessageProps) => {
