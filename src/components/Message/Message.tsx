@@ -50,24 +50,26 @@ export const Message = ({ message, userId }: MessageProps) => {
   return (
     <Box className="Message">
       <Typography
-        variant="overline"
+        variant="caption"
         display="block"
+        color="grey.400"
         sx={{
           textAlign: message.authorId === userId ? 'right' : 'left',
         }}
       >
-        {userId}
+        {message.authorId}
       </Typography>
       <Box
         sx={{
           backgroundColor,
           margin: 0.5,
-          padding: 1,
+          padding: '0.5em 0.75em',
           borderRadius: 6,
           float: message.authorId === userId ? 'right' : 'left',
           transition: 'background-color 1s',
-          wordBreak: 'break-all',
+          wordBreak: 'break-word',
         }}
+        maxWidth="85%"
       >
         <Markdown components={componentMap} linkTarget="_blank">
           {message.text}
