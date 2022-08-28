@@ -48,7 +48,16 @@ export const Message = ({ message, userId }: MessageProps) => {
   }
 
   return (
-    <div className="Message block">
+    <Box className="Message">
+      <Typography
+        variant="overline"
+        display="block"
+        sx={{
+          textAlign: message.authorId === userId ? 'right' : 'left',
+        }}
+      >
+        {userId}
+      </Typography>
       <Box
         sx={{
           backgroundColor,
@@ -64,6 +73,6 @@ export const Message = ({ message, userId }: MessageProps) => {
           {message.text}
         </Markdown>
       </Box>
-    </div>
+    </Box>
   )
 }

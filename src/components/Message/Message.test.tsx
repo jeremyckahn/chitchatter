@@ -33,4 +33,10 @@ describe('Message', () => {
 
     screen.getByText(mockReceivedMessage.text)
   })
+
+  test('renders message author', () => {
+    render(<Message message={mockReceivedMessage} userId={mockUserId} />)
+
+    screen.getByText(mockUserId)
+  })
 })
