@@ -1,9 +1,11 @@
 import { useState } from 'react'
 import { v4 as uuid } from 'uuid'
-import Button from '@mui/material/Button'
 import FormControl from '@mui/material/FormControl'
 import Typography from '@mui/material/Typography'
+import Stack from '@mui/material/Stack'
 import TextField from '@mui/material/TextField'
+import Fab from '@mui/material/Fab'
+import ArrowUpward from '@mui/icons-material/ArrowUpward'
 
 import { usePeerRoom, usePeerRoomAction } from 'hooks/usePeerRoom'
 import { PeerActions } from 'models/network'
@@ -82,26 +84,27 @@ export function Room({
         userId={userId}
         className="grow overflow-auto"
       />
-      <form onSubmit={handleMessageSubmit} className="max-w-xl mt-8">
-        <FormControl fullWidth>
-          <TextField
-            variant="outlined"
-            value={textMessage}
-            onChange={handleMessageChange}
-            size="medium"
-            placeholder="Your message"
-          />
-        </FormControl>
-        <Button
-          variant="contained"
-          type="submit"
-          disabled={textMessage.length === 0 || isMessageSending}
-          sx={{
-            marginTop: 2,
-          }}
-        >
-          Send
-        </Button>
+      <form onSubmit={handleMessageSubmit} className="mt-8">
+        <Stack direction="row" spacing={2}>
+          <FormControl fullWidth>
+            <TextField
+              variant="outlined"
+              value={textMessage}
+              onChange={handleMessageChange}
+              size="medium"
+              placeholder="Your message"
+            />
+          </FormControl>
+          <Fab
+            className="shrink-0"
+            aria-label="Send"
+            type="submit"
+            disabled={textMessage.length === 0 || isMessageSending}
+            color="primary"
+          >
+            <ArrowUpward />
+          </Fab>
+        </Stack>
       </form>
     </div>
   )

@@ -59,7 +59,7 @@ describe('Room', () => {
       </RouteStub>
     )
 
-    const sendButton = screen.getByText('Send')
+    const sendButton = screen.getByLabelText('Send')
     expect(sendButton).toBeDisabled()
   })
 
@@ -70,7 +70,7 @@ describe('Room', () => {
       </RouteStub>
     )
 
-    const sendButton = screen.getByText('Send')
+    const sendButton = screen.getByLabelText('Send')
     const textInput = screen.getByPlaceholderText('Your message')
     userEvent.type(textInput, 'hello')
     expect(sendButton).not.toBeDisabled()
@@ -83,7 +83,7 @@ describe('Room', () => {
       </RouteStub>
     )
 
-    const sendButton = screen.getByText('Send')
+    const sendButton = screen.getByLabelText('Send')
     const textInput = screen.getByPlaceholderText('Your message')
     userEvent.type(textInput, 'hello')
 
@@ -105,7 +105,7 @@ describe('Room', () => {
       </RouteStub>
     )
 
-    const sendButton = screen.getByText('Send')
+    const sendButton = screen.getByLabelText('Send')
     const textInput = screen.getByPlaceholderText('Your message')
     userEvent.type(textInput, 'hello')
 
