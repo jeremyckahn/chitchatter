@@ -48,7 +48,7 @@ function Bootstrap({
   }, [hasLoadedSettings, persistedStorage, settings, userId])
 
   return (
-    <Box className="Chitchatter">
+    <Box className="Chitchatter" sx={{ height: '100vh' }}>
       {hasLoadedSettings ? (
         <Routes>
           {['/', '/index.html'].map(path => (
