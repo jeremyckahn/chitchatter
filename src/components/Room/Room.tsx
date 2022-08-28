@@ -1,5 +1,6 @@
 import React, { useState } from 'react'
 import { v4 as uuid } from 'uuid'
+import Box from '@mui/material/Box'
 import FormControl from '@mui/material/FormControl'
 import Typography from '@mui/material/Typography'
 import Stack from '@mui/material/Stack'
@@ -97,7 +98,7 @@ export function Room({
   })
 
   return (
-    <div className="h-full p-4 flex flex-col">
+    <Box className="h-full p-4 flex flex-col">
       <Typography>Room ID: {roomId}</Typography>
       <ChatTranscript
         messageLog={messageLog}
@@ -132,6 +133,6 @@ export function Room({
           </Fab>
         </Stack>
       </form>
-    </div>
+    </Box>
   )
 }

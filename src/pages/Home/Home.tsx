@@ -1,6 +1,7 @@
 import React, { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import Button from '@mui/material/Button'
+import Box from '@mui/material/Box'
 import FormControl from '@mui/material/FormControl'
 import Typography from '@mui/material/Typography'
 import TextField from '@mui/material/TextField'
@@ -21,7 +22,7 @@ export function Home() {
   }
 
   return (
-    <div className="Home">
+    <Box className="Home">
       <header className="max-w-3xl text-center mx-auto">
         <Typography variant="h1">chitchatter</Typography>
         <Typography variant="body1">
@@ -55,6 +56,6 @@ export function Home() {
           </Button>
         </form>
       </main>
-    </div>
+    </Box>
   )
 }

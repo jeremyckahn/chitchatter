@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { Routes, Route } from 'react-router-dom'
 import { v4 as uuid } from 'uuid'
 import localforage from 'localforage'
+import Box from '@mui/material/Box'
 
 import { Home } from 'pages/Home/'
 import { PublicRoom } from 'pages/PublicRoom/'
@@ -47,7 +48,7 @@ function Bootstrap({
   }, [hasLoadedSettings, persistedStorage, settings, userId])
 
   return (
-    <div className="Chitchatter">
+    <Box className="Chitchatter">
       {hasLoadedSettings ? (
         <Routes>
           {['/', '/index.html'].map(path => (
@@ -59,7 +60,7 @@ function Bootstrap({
           />
         </Routes>
       ) : null}
-    </div>
+    </Box>
   )
 }
 
