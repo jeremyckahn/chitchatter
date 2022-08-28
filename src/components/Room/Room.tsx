@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import React, { useState } from 'react'
 import { v4 as uuid } from 'uuid'
 import FormControl from '@mui/material/FormControl'
 import Typography from '@mui/material/Typography'
@@ -48,10 +48,12 @@ export function Room({
     setTextMessage(value)
   }
 
-  const handleMessageSubmit = async (
-    event: React.SyntheticEvent<HTMLFormElement>
-  ) => {
-    event.preventDefault()
+  const canMessageBeSent = () => {
+    return textMessage.trim().length > 0 && !isMessageSending
+  }
+
+  const performMessageSend = async () => {
+    if (!canMessageBeSent()) return
 
     const unsentMessage: UnsentMessage = {
       authorId: userId,
@@ -70,6 +72,24 @@ export function Room({
       { ...unsentMessage, timeReceived: Date.now() },
     ])
     setIsMessageSending(false)
+  }
+
+  const handleMessageKeyPress = async (
+    event: React.KeyboardEvent<HTMLInputElement>
+  ) => {
+    const { key, shiftKey } = event
+
+    if (key === 'Enter' && shiftKey === false) {
+      event.preventDefault()
+      await performMessageSend()
+    }
+  }
+
+  const handleMessageSubmit = async (
+    event: React.SyntheticEvent<HTMLFormElement>
+  ) => {
+    event.preventDefault()
+    await performMessageSend()
   }
 
   receiveMessage(message => {
@@ -91,15 +111,21 @@ export function Room({
               variant="outlined"
               value={textMessage}
               onChange={handleMessageChange}
+              onKeyPress={handleMessageKeyPress}
               size="medium"
               placeholder="Your message"
+              multiline
             />
           </FormControl>
           <Fab
-            className="shrink-0"
+            sx={{
+              flexShrink: 0,
+              // The !important is needed to override a Stack style
+              marginTop: 'auto!important',
+            }}
             aria-label="Send"
             type="submit"
-            disabled={textMessage.length === 0 || isMessageSending}
+            disabled={!canMessageBeSent()}
             color="primary"
           >
             <ArrowUpward />

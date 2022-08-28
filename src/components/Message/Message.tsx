@@ -29,6 +29,7 @@ export const Message = ({ message, userId }: MessageProps) => {
           borderRadius: 6,
           float: message.authorId === userId ? 'right' : 'left',
           transition: 'background-color 1s',
+          wordBreak: 'break-all',
         }}
       >
         {message.text}
