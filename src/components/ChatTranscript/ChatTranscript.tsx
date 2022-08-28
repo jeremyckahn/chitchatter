@@ -1,4 +1,4 @@
-import { HTMLAttributes } from 'react'
+import { HTMLAttributes, useRef, useEffect } from 'react'
 import cx from 'classnames'
 import Box from '@mui/material/Box'
 
@@ -15,10 +15,40 @@ export const ChatTranscript = ({
   messageLog,
   userId,
 }: ChatTranscriptProps) => {
+  const boxRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    const { current: boxEl } = boxRef
+    if (!boxEl) return
+
+    const { scrollHeight, clientHeight, scrollTop, children } = boxEl
+    const scrollTopMax = scrollHeight - clientHeight
+
+    if (children.length === 0) return
+
+    const lastChild = children[children.length - 1]
+    const lastChildHeight = lastChild.clientHeight
+    const previousScrollTopMax = scrollTopMax - lastChildHeight
+
+    if (
+      Math.ceil(scrollTop) >= Math.ceil(previousScrollTopMax) &&
+      // scrollTo is not defined in the unit test environment
+      'scrollTo' in boxEl
+    ) {
+      boxEl.scrollTo({ top: scrollTopMax })
+    }
+  }, [messageLog.length])
+
   return (
-    <Box className={cx('ChatTranscript flex flex-col', className)}>
+    <Box ref={boxRef} className={cx('ChatTranscript flex flex-col', className)}>
       {messageLog.map(message => {
-        return <Message key={message.id} message={message} userId={userId} />
+        return (
+          // This wrapper div is necessary for accurate layout calculations
+          // when new messages cause the transcript to scroll to the bottom.
+          <div key={message.id}>
+            <Message message={message} userId={userId} />
+          </div>
+        )
       })}
     </Box>
   )
