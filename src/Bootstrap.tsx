@@ -1,9 +1,13 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Routes, Route } from 'react-router-dom'
 import { v4 as uuid } from 'uuid'
 import localforage from 'localforage'
+import AppBar from '@mui/material/AppBar'
+import Toolbar from '@mui/material/Toolbar'
 import Box from '@mui/material/Box'
+import Typography from '@mui/material/Typography'
 
+import { ShellContext } from 'ShellContext'
 import { Home } from 'pages/Home/'
 import { PublicRoom } from 'pages/PublicRoom/'
 import { UserSettings } from 'models/settings'
@@ -24,6 +28,9 @@ function Bootstrap({
   const [hasLoadedSettings, setHasLoadedSettings] = useState(false)
   const [settings, setSettings] = useState({ userId: getUuid() })
   const { userId } = settings
+  const [title, setTitle] = useState('')
+
+  const shellContextValue = useMemo(() => ({ setTitle }), [setTitle])
 
   useEffect(() => {
     ;(async () => {
@@ -48,19 +55,29 @@ function Bootstrap({
   }, [hasLoadedSettings, persistedStorage, settings, userId])
 
   return (
-    <Box className="Chitchatter" sx={{ height: '100vh' }}>
-      {hasLoadedSettings ? (
-        <Routes>
-          {['/', '/index.html'].map(path => (
-            <Route key={path} path={path} element={<Home />} />
-          ))}
-          <Route
-            path="/public/:roomId"
-            element={<PublicRoom userId={userId} />}
-          />
-        </Routes>
-      ) : null}
-    </Box>
+    <ShellContext.Provider value={shellContextValue}>
+      <Box
+        className="Chitchatter"
+        sx={{ height: '100vh', display: 'flex', flexDirection: 'column' }}
+      >
+        <AppBar position="relative">
+          <Toolbar variant="regular">
+            <Typography sx={{ fontWeight: 'bold' }}>{title}</Typography>
+          </Toolbar>
+        </AppBar>
+        {hasLoadedSettings ? (
+          <Routes>
+            {['/', '/index.html'].map(path => (
+              <Route key={path} path={path} element={<Home />} />
+            ))}
+            <Route
+              path="/public/:roomId"
+              element={<PublicRoom userId={userId} />}
+            />
+          </Routes>
+        ) : null}
+      </Box>
+    </ShellContext.Provider>
   )
 }
 

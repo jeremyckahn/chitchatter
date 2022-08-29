@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useEffect, useContext, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import Button from '@mui/material/Button'
 import Box from '@mui/material/Box'
@@ -7,9 +7,16 @@ import Typography from '@mui/material/Typography'
 import TextField from '@mui/material/TextField'
 import { v4 as uuid } from 'uuid'
 
+import { ShellContext } from 'ShellContext'
+
 export function Home() {
+  const { setTitle } = useContext(ShellContext)
   const [roomName, setRoomName] = useState(uuid())
   const navigate = useNavigate()
+
+  useEffect(() => {
+    setTitle('Chitchatter')
+  }, [setTitle])
 
   const handleRoomNameChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const { value } = event.target
@@ -23,8 +30,7 @@ export function Home() {
 
   return (
     <Box className="Home">
-      <header className="max-w-3xl text-center mx-auto">
-        <Typography variant="h1">chitchatter</Typography>
+      <header className="max-w-3xl text-center mx-auto mt-8">
         <Typography variant="body1">
           This is a communication tool that is free, open source, and designed
           for maximum security. All communication between you and your online
