@@ -1,15 +1,16 @@
 import { useEffect, useState } from 'react'
 import { RoomConfig } from 'trystero'
 
-import { getPeerRoom } from 'services/PeerRoom'
+import { PeerRoom } from 'services/PeerRoom'
 
 export function usePeerRoom(roomConfig: RoomConfig, roomId: string) {
-  const { appId } = roomConfig
-  const [peerRoom, setPeerRoom] = useState(getPeerRoom(roomConfig, roomId))
+  const [peerRoom] = useState(() => new PeerRoom(roomConfig, roomId))
 
   useEffect(() => {
-    setPeerRoom(getPeerRoom({ appId }, roomId))
-  }, [appId, roomId])
+    return () => {
+      peerRoom.leaveRoom()
+    }
+  }, [peerRoom])
 
   return peerRoom
 }
