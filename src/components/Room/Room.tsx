@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useContext, useEffect, useState } from 'react'
 import { v4 as uuid } from 'uuid'
 import Box from '@mui/material/Box'
 import FormControl from '@mui/material/FormControl'
@@ -7,6 +7,7 @@ import TextField from '@mui/material/TextField'
 import Fab from '@mui/material/Fab'
 import ArrowUpward from '@mui/icons-material/ArrowUpward'
 
+import { ShellContext } from 'ShellContext'
 import { usePeerRoom, usePeerRoomAction } from 'hooks/usePeerRoom'
 import { PeerActions } from 'models/network'
 import { UnsentMessage, ReceivedMessage } from 'models/chat'
@@ -25,6 +26,7 @@ export function Room({
   roomId,
   userId,
 }: RoomProps) {
+  const shellContext = useContext(ShellContext)
   const [isMessageSending, setIsMessageSending] = useState(false)
   const [textMessage, setTextMessage] = useState('')
   const [messageLog, setMessageLog] = useState<
@@ -40,6 +42,12 @@ export function Room({
     },
     roomId
   )
+
+  useEffect(() => {
+    peerRoom.onPeersChange((numberOfPeers: number) => {
+      shellContext.setNumberOfPeers(numberOfPeers)
+    })
+  }, [peerRoom, shellContext])
 
   const [sendMessage, receiveMessage] = usePeerRoomAction<UnsentMessage>(
     peerRoom,

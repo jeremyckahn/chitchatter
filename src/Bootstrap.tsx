@@ -6,6 +6,8 @@ import AppBar from '@mui/material/AppBar'
 import Toolbar from '@mui/material/Toolbar'
 import Box from '@mui/material/Box'
 import Typography from '@mui/material/Typography'
+import StepIcon from '@mui/material/StepIcon'
+import Tooltip from '@mui/material/Tooltip'
 
 import { ShellContext } from 'ShellContext'
 import { Home } from 'pages/Home/'
@@ -29,8 +31,12 @@ function Bootstrap({
   const [settings, setSettings] = useState({ userId: getUuid() })
   const { userId } = settings
   const [title, setTitle] = useState('')
+  const [numberOfPeers, setNumberOfPeers] = useState(1)
 
-  const shellContextValue = useMemo(() => ({ setTitle }), [setTitle])
+  const shellContextValue = useMemo(
+    () => ({ numberOfPeers, setNumberOfPeers, setTitle }),
+    [numberOfPeers, setNumberOfPeers, setTitle]
+  )
 
   useEffect(() => {
     ;(async () => {
@@ -61,8 +67,18 @@ function Bootstrap({
         sx={{ height: '100vh', display: 'flex', flexDirection: 'column' }}
       >
         <AppBar position="relative">
-          <Toolbar variant="regular">
+          <Toolbar
+            variant="regular"
+            sx={{
+              display: 'flex',
+              flexDirection: 'row',
+              justifyContent: 'space-between',
+            }}
+          >
             <Typography sx={{ fontWeight: 'bold' }}>{title}</Typography>
+            <Tooltip title="Number of peers in the room">
+              <StepIcon icon={numberOfPeers} sx={{ marginLeft: 'auto' }} />
+            </Tooltip>
           </Toolbar>
         </AppBar>
         {hasLoadedSettings ? (
