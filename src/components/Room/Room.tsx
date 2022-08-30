@@ -34,6 +34,9 @@ export function Room({
   const peerRoom = usePeerRoom(
     {
       appId,
+      trackerUrls: process.env.REACT_APP_TRACKER_URL
+        ? [process.env.REACT_APP_TRACKER_URL]
+        : undefined,
     },
     roomId
   )

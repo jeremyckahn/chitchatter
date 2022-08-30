@@ -6,9 +6,13 @@ This project was bootstrapped with [Create React App](https://github.com/faceboo
 
 In the project directory, you can run:
 
+### `npm dev`
+
+Runs the entire stack (client + WebTorrent tracker) locally.
+
 ### `npm start`
 
-Runs the app in the development mode.\
+Runs the front end app in the development mode. Uses public WebTorrent trackers.\
 Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
 
 The page will reload when you make changes.\
