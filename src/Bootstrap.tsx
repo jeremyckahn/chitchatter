@@ -64,9 +64,14 @@ function Bootstrap({
     <ShellContext.Provider value={shellContextValue}>
       <Box
         className="Chitchatter"
-        sx={{ height: '100vh', display: 'flex', flexDirection: 'column' }}
+        sx={{
+          height: '100vh',
+          display: 'flex',
+          flexDirection: 'column',
+          paddingTop: 7,
+        }}
       >
-        <AppBar position="relative">
+        <AppBar position="fixed">
           <Toolbar
             variant="regular"
             sx={{
