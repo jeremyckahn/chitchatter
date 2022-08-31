@@ -1,13 +1,17 @@
 import { createContext, Dispatch, SetStateAction } from 'react'
 
+import { AlertOptions } from 'models/shell'
+
 interface ShellContextProps {
-  setTitle: Dispatch<SetStateAction<string>>
-  setNumberOfPeers: Dispatch<SetStateAction<number>>
   numberOfPeers: number
+  setNumberOfPeers: Dispatch<SetStateAction<number>>
+  setTitle: Dispatch<SetStateAction<string>>
+  showAlert: (message: string, options?: AlertOptions) => void
 }
 
 export const ShellContext = createContext<ShellContextProps>({
-  setTitle: () => {},
-  setNumberOfPeers: () => {},
   numberOfPeers: 1,
+  setNumberOfPeers: () => {},
+  setTitle: () => {},
+  showAlert: () => {},
 })

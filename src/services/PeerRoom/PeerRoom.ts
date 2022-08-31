@@ -5,31 +5,24 @@ export class PeerRoom {
 
   private roomConfig: RoomConfig
 
-  private numberOfPeers: number
-
   constructor(config: RoomConfig, roomId: string) {
     this.roomConfig = config
     this.room = joinRoom(this.roomConfig, roomId)
-    this.numberOfPeers = 1 // Includes this peer
-  }
-
-  onPeersChange = (handlePeersChange: (numberOfPeers: number) => void) => {
-    if (!this.room) return
-
-    this.room.onPeerJoin(() => {
-      this.numberOfPeers++
-      handlePeersChange(this.numberOfPeers)
-    })
-
-    this.room.onPeerLeave(() => {
-      this.numberOfPeers--
-      handlePeersChange(this.numberOfPeers)
-    })
   }
 
   leaveRoom = () => {
     if (!this.room) return
     this.room.leave()
+  }
+
+  onPeerJoin: Room['onPeerJoin'] = fn => {
+    if (!this.room) return
+    this.room.onPeerJoin((...args) => fn(...args))
+  }
+
+  onPeerLeave: Room['onPeerLeave'] = fn => {
+    if (!this.room) return
+    this.room.onPeerLeave((...args) => fn(...args))
   }
 
   makeAction = <T>(namespace: string) => {

@@ -26,6 +26,7 @@ export function Room({
   roomId,
   userId,
 }: RoomProps) {
+  const [numberOfPeers, setNumberOfPeers] = useState(1) // Includes this peer
   const shellContext = useContext(ShellContext)
   const [isMessageSending, setIsMessageSending] = useState(false)
   const [textMessage, setTextMessage] = useState('')
@@ -66,10 +67,26 @@ export function Room({
   )
 
   useEffect(() => {
-    peerRoom.onPeersChange((numberOfPeers: number) => {
-      shellContext.setNumberOfPeers(numberOfPeers)
+    peerRoom.onPeerJoin(() => {
+      shellContext.showAlert(`Someone has has joined the room`, {
+        severity: 'success',
+      })
+
+      const newNumberOfPeers = numberOfPeers + 1
+      setNumberOfPeers(newNumberOfPeers)
+      shellContext.setNumberOfPeers(newNumberOfPeers)
     })
-  }, [peerRoom, shellContext])
+
+    peerRoom.onPeerLeave(() => {
+      shellContext.showAlert(`Someone has has left the room`, {
+        severity: 'warning',
+      })
+
+      const newNumberOfPeers = numberOfPeers - 1
+      setNumberOfPeers(newNumberOfPeers)
+      shellContext.setNumberOfPeers(newNumberOfPeers)
+    })
+  }, [numberOfPeers, peerRoom, shellContext])
 
   const [sendMessage, receiveMessage] = usePeerRoomAction<UnsentMessage>(
     peerRoom,
