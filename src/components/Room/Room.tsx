@@ -68,7 +68,7 @@ export function Room({
 
   useEffect(() => {
     peerRoom.onPeerJoin(() => {
-      shellContext.showAlert(`Someone has has joined the room`, {
+      shellContext.showAlert(`Someone has joined the room`, {
         severity: 'success',
       })
 
@@ -78,7 +78,7 @@ export function Room({
     })
 
     peerRoom.onPeerLeave(() => {
-      shellContext.showAlert(`Someone has has left the room`, {
+      shellContext.showAlert(`Someone has left the room`, {
         severity: 'warning',
       })
 
