@@ -99,6 +99,10 @@ function Bootstrap({
     })()
   }, [hasLoadedSettings, persistedStorage, settings, userId])
 
+  useEffect(() => {
+    document.title = title
+  }, [title])
+
   return (
     <ShellContext.Provider value={shellContextValue}>
       <Box
