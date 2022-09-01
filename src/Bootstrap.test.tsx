@@ -1,5 +1,4 @@
 import { act, render } from '@testing-library/react'
-import { MemoryRouter as Router } from 'react-router-dom'
 import localforage from 'localforage'
 
 import { PersistedStorageKeys } from 'models/storage'
@@ -26,12 +25,10 @@ const renderBootstrap = async (overrides: BootstrapProps = {}) => {
   })
 
   render(
-    <Router>
-      <Bootstrap
-        persistedStorage={mockPersistedStorage as any as typeof localforage}
-        {...overrides}
-      />
-    </Router>
+    <Bootstrap
+      persistedStorage={mockPersistedStorage as any as typeof localforage}
+      {...overrides}
+    />
   )
 
   // https://kentcdodds.com/blog/fix-the-not-wrapped-in-act-warning#an-alternative-waiting-for-the-mocked-promise

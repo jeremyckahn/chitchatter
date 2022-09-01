@@ -11,6 +11,7 @@ import { Link } from 'react-router-dom'
 import CssBaseline from '@mui/material/CssBaseline'
 import { styled, useTheme } from '@mui/material/styles'
 import MuiAppBar, { AppBarProps as MuiAppBarProps } from '@mui/material/AppBar'
+import { ThemeProvider, createTheme } from '@mui/material/styles'
 import Drawer from '@mui/material/Drawer'
 import Toolbar from '@mui/material/Toolbar'
 import Box from '@mui/material/Box'
@@ -94,6 +95,12 @@ const DrawerHeader = styled('div')(({ theme }) => ({
   justifyContent: 'flex-end',
 }))
 
+const darkTheme = createTheme({
+  palette: {
+    mode: 'dark',
+  },
+})
+
 export const Shell = ({ children }: ShellProps) => {
   const theme = useTheme()
   const [isAlertShowing, setIsAlertShowing] = useState(false)
@@ -141,95 +148,97 @@ export const Shell = ({ children }: ShellProps) => {
 
   return (
     <ShellContext.Provider value={shellContextValue}>
-      <CssBaseline />
-      <Box
-        className="Chitchatter"
-        sx={{
-          height: '100vh',
-          display: 'flex',
-          paddingTop: 8,
-        }}
-      >
-        <Snackbar
-          open={isAlertShowing}
-          autoHideDuration={6000}
-          onClose={handleAlertClose}
-          anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
-        >
-          <Alert
-            onClose={handleAlertClose}
-            severity={alertSeverity}
-            variant="standard"
-          >
-            {alertText}
-          </Alert>
-        </Snackbar>
-        <AppBar position="fixed" open={isDrawerOpen}>
-          <Toolbar
-            variant="regular"
-            sx={{
-              display: 'flex',
-              flexDirection: 'row',
-              justifyContent: 'space-between',
-            }}
-          >
-            <IconButton
-              size="large"
-              edge="start"
-              color="inherit"
-              aria-label="menu"
-              sx={{ mr: 2, ...(isDrawerOpen && { display: 'none' }) }}
-              onClick={handleDrawerOpen}
-            >
-              <MenuIcon />
-            </IconButton>
-            <Typography variant="h6" noWrap component="div">
-              {title}
-            </Typography>
-            <Tooltip title="Number of peers in the room">
-              <StepIcon icon={numberOfPeers} sx={{ marginLeft: 'auto' }} />
-            </Tooltip>
-          </Toolbar>
-        </AppBar>
-        <Drawer
+      <ThemeProvider theme={darkTheme}>
+        <CssBaseline />
+        <Box
+          className="Chitchatter"
           sx={{
-            width: drawerWidth,
-            flexShrink: 0,
-            '& .MuiDrawer-paper': {
-              width: drawerWidth,
-              boxSizing: 'border-box',
-            },
+            height: '100vh',
+            display: 'flex',
+            paddingTop: 8,
           }}
-          variant="persistent"
-          anchor="left"
-          open={isDrawerOpen}
         >
-          <DrawerHeader>
-            <IconButton onClick={handleDrawerClose}>
-              {theme.direction === 'ltr' ? (
-                <ChevronLeftIcon />
-              ) : (
-                <ChevronRightIcon />
-              )}
-            </IconButton>
-          </DrawerHeader>
-          <Divider />
-          <List>
-            <Link to="/">
-              <ListItem disablePadding>
-                <ListItemButton>
-                  <ListItemIcon>
-                    <Home />
-                  </ListItemIcon>
-                  <ListItemText primary="Home" />
-                </ListItemButton>
-              </ListItem>
-            </Link>
-          </List>
-          <Divider />
-        </Drawer>
-        <Main open={isDrawerOpen}>{children}</Main>
-      </Box>
+          <Snackbar
+            open={isAlertShowing}
+            autoHideDuration={6000}
+            onClose={handleAlertClose}
+            anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+          >
+            <Alert
+              onClose={handleAlertClose}
+              severity={alertSeverity}
+              variant="standard"
+            >
+              {alertText}
+            </Alert>
+          </Snackbar>
+          <AppBar position="fixed" open={isDrawerOpen}>
+            <Toolbar
+              variant="regular"
+              sx={{
+                display: 'flex',
+                flexDirection: 'row',
+                justifyContent: 'space-between',
+              }}
+            >
+              <IconButton
+                size="large"
+                edge="start"
+                color="inherit"
+                aria-label="menu"
+                sx={{ mr: 2, ...(isDrawerOpen && { display: 'none' }) }}
+                onClick={handleDrawerOpen}
+              >
+                <MenuIcon />
+              </IconButton>
+              <Typography variant="h6" noWrap component="div">
+                {title}
+              </Typography>
+              <Tooltip title="Number of peers in the room">
+                <StepIcon icon={numberOfPeers} sx={{ marginLeft: 'auto' }} />
+              </Tooltip>
+            </Toolbar>
+          </AppBar>
+          <Drawer
+            sx={{
+              width: drawerWidth,
+              flexShrink: 0,
+              '& .MuiDrawer-paper': {
+                width: drawerWidth,
+                boxSizing: 'border-box',
+              },
+            }}
+            variant="persistent"
+            anchor="left"
+            open={isDrawerOpen}
+          >
+            <DrawerHeader>
+              <IconButton onClick={handleDrawerClose}>
+                {theme.direction === 'ltr' ? (
+                  <ChevronLeftIcon />
+                ) : (
+                  <ChevronRightIcon />
+                )}
+              </IconButton>
+            </DrawerHeader>
+            <Divider />
+            <List>
+              <Link to="/">
+                <ListItem disablePadding>
+                  <ListItemButton>
+                    <ListItemIcon>
+                      <Home />
+                    </ListItemIcon>
+                    <ListItemText primary="Home" />
+                  </ListItemButton>
+                </ListItem>
+              </Link>
+            </List>
+            <Divider />
+          </Drawer>
+          <Main open={isDrawerOpen}>{children}</Main>
+        </Box>
+      </ThemeProvider>
     </ShellContext.Provider>
   )
 }

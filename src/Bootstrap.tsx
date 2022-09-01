@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Routes, Route } from 'react-router-dom'
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
 import { v4 as uuid } from 'uuid'
 import localforage from 'localforage'
 
@@ -48,21 +48,23 @@ function Bootstrap({
   }, [hasLoadedSettings, persistedStorage, settings, userId])
 
   return (
-    <Shell>
-      {hasLoadedSettings ? (
-        <Routes>
-          {['/', '/index.html'].map(path => (
-            <Route key={path} path={path} element={<Home />} />
-          ))}
-          <Route
-            path="/public/:roomId"
-            element={<PublicRoom userId={userId} />}
-          />
-        </Routes>
-      ) : (
-        <></>
-      )}
-    </Shell>
+    <Router>
+      <Shell>
+        {hasLoadedSettings ? (
+          <Routes>
+            {['/', '/index.html'].map(path => (
+              <Route key={path} path={path} element={<Home />} />
+            ))}
+            <Route
+              path="/public/:roomId"
+              element={<PublicRoom userId={userId} />}
+            />
+          </Routes>
+        ) : (
+          <></>
+        )}
+      </Shell>
+    </Router>
   )
 }
 
