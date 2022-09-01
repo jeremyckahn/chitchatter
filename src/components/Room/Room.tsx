@@ -147,13 +147,22 @@ export function Room({
   })
 
   return (
-    <Box className="h-full p-4 flex flex-col">
+    <Box
+      className="Room"
+      sx={{
+        height: '100%',
+        padding: 2,
+        paddingTop: 0,
+        display: 'flex',
+        flexDirection: 'column',
+      }}
+    >
       <ChatTranscript
         messageLog={messageLog}
         userId={userId}
         className="grow overflow-auto"
       />
-      <form onSubmit={handleMessageSubmit} className="mt-8">
+      <form onSubmit={handleMessageSubmit} className="mt-2">
         <Stack direction="row" spacing={2}>
           <FormControl fullWidth>
             <TextField

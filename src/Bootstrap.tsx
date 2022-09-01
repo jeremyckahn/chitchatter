@@ -111,7 +111,7 @@ function Bootstrap({
           height: '100vh',
           display: 'flex',
           flexDirection: 'column',
-          paddingTop: 7,
+          paddingTop: 8,
         }}
       >
         <Snackbar
@@ -137,7 +137,7 @@ function Bootstrap({
               justifyContent: 'space-between',
             }}
           >
-            <Typography sx={{ fontWeight: 'bold' }}>{title}</Typography>
+            <Typography variant="h6">{title}</Typography>
             <Tooltip title="Number of peers in the room">
               <StepIcon icon={numberOfPeers} sx={{ marginLeft: 'auto' }} />
             </Tooltip>
