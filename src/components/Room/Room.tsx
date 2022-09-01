@@ -151,8 +151,6 @@ export function Room({
       className="Room"
       sx={{
         height: '100%',
-        padding: 2,
-        paddingTop: 0,
         display: 'flex',
         flexDirection: 'column',
       }}
