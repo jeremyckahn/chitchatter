@@ -105,6 +105,7 @@ export const Shell = ({ children }: ShellProps) => {
   const theme = useTheme()
   const [isAlertShowing, setIsAlertShowing] = useState(false)
   const [isDrawerOpen, setIsDrawerOpen] = useState(false)
+  const [doShowPeers, setDoShowPeers] = useState(false)
   const [alertSeverity, setAlertSeverity] = useState<AlertColor>('info')
   const [title, setTitle] = useState('')
   const [alertText, setAlertText] = useState('')
@@ -119,8 +120,14 @@ export const Shell = ({ children }: ShellProps) => {
   }, [])
 
   const shellContextValue = useMemo(
-    () => ({ numberOfPeers, setNumberOfPeers, setTitle, showAlert }),
-    [numberOfPeers, setNumberOfPeers, setTitle, showAlert]
+    () => ({
+      numberOfPeers,
+      setDoShowPeers,
+      setNumberOfPeers,
+      setTitle,
+      showAlert,
+    }),
+    [numberOfPeers, setDoShowPeers, setNumberOfPeers, setTitle, showAlert]
   )
 
   const handleAlertClose = (
@@ -191,12 +198,19 @@ export const Shell = ({ children }: ShellProps) => {
               >
                 <MenuIcon />
               </IconButton>
-              <Typography variant="h6" noWrap component="div">
+              <Typography
+                variant="h6"
+                noWrap
+                component="div"
+                sx={{ marginRight: 'auto' }}
+              >
                 {title}
               </Typography>
-              <Tooltip title="Number of peers in the room">
-                <StepIcon icon={numberOfPeers} sx={{ marginLeft: 'auto' }} />
-              </Tooltip>
+              {doShowPeers ? (
+                <Tooltip title="Number of peers in the room">
+                  <StepIcon icon={numberOfPeers} sx={{ marginLeft: 'auto' }} />
+                </Tooltip>
+              ) : null}
             </Toolbar>
           </AppBar>
           <Drawer

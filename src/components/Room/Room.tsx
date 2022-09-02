@@ -67,6 +67,8 @@ export function Room({
   )
 
   useEffect(() => {
+    shellContext.setDoShowPeers(true)
+
     peerRoom.onPeerJoin(() => {
       shellContext.showAlert(`Someone has joined the room`, {
         severity: 'success',
@@ -86,6 +88,10 @@ export function Room({
       setNumberOfPeers(newNumberOfPeers)
       shellContext.setNumberOfPeers(newNumberOfPeers)
     })
+
+    return () => {
+      shellContext.setDoShowPeers(false)
+    }
   }, [numberOfPeers, peerRoom, shellContext])
 
   const [sendMessage, receiveMessage] = usePeerRoomAction<UnsentMessage>(
