@@ -51,6 +51,7 @@ const Main = styled('main', { shouldForwardProp: prop => prop !== 'open' })<{
 }>(({ theme, open }) => ({
   flexGrow: 1,
   padding: theme.spacing(3),
+  paddingTop: 0,
   transition: theme.transitions.create('margin', {
     easing: theme.transitions.easing.sharp,
     duration: theme.transitions.duration.leavingScreen,
@@ -159,11 +160,11 @@ export const Shell = ({ children }: ShellProps) => {
         <CssBaseline />
         <Box
           className="Chitchatter"
-          sx={{
+          sx={theme => ({
             height: '100vh',
             display: 'flex',
-            paddingTop: 8,
-          }}
+            paddingTop: theme.spacing(7),
+          })}
         >
           <Snackbar
             open={isAlertShowing}
