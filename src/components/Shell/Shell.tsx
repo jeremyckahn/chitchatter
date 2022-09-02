@@ -35,7 +35,7 @@ import Home from '@mui/icons-material/Home'
 import { ShellContext } from 'ShellContext'
 import { AlertOptions } from 'models/shell'
 
-interface ShellProps extends PropsWithChildren {}
+export interface ShellProps extends PropsWithChildren {}
 
 const drawerWidth = 240
 
@@ -185,7 +185,7 @@ export const Shell = ({ children }: ShellProps) => {
                 size="large"
                 edge="start"
                 color="inherit"
-                aria-label="menu"
+                aria-label="Open menu"
                 sx={{ mr: 2, ...(isDrawerOpen && { display: 'none' }) }}
                 onClick={handleDrawerOpen}
               >
@@ -213,7 +213,7 @@ export const Shell = ({ children }: ShellProps) => {
             open={isDrawerOpen}
           >
             <DrawerHeader>
-              <IconButton onClick={handleDrawerClose}>
+              <IconButton onClick={handleDrawerClose} aria-label="Close menu">
                 {theme.direction === 'ltr' ? (
                   <ChevronLeftIcon />
                 ) : (
@@ -222,7 +222,7 @@ export const Shell = ({ children }: ShellProps) => {
               </IconButton>
             </DrawerHeader>
             <Divider />
-            <List>
+            <List role="navigation">
               <Link to="/">
                 <ListItem disablePadding>
                   <ListItemButton>
