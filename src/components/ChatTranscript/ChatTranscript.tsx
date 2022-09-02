@@ -40,7 +40,15 @@ export const ChatTranscript = ({
   }, [messageLog.length])
 
   return (
-    <Box ref={boxRef} className={cx('ChatTranscript flex flex-col', className)}>
+    <Box
+      ref={boxRef}
+      className={cx('ChatTranscript', className)}
+      sx={theme => ({
+        display: 'flex',
+        flexDirection: 'column',
+        paddingTop: theme.spacing(1),
+      })}
+    >
       {messageLog.map(message => {
         return (
           // This wrapper div is necessary for accurate layout calculations

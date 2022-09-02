@@ -62,9 +62,9 @@ export const Message = ({ message, userId }: MessageProps) => {
   if (message.authorId === userId) {
     backgroundColor = isMessageReceived(message)
       ? 'primary.dark'
-      : 'primary.main'
+      : 'primary.light'
   } else {
-    backgroundColor = 'grey.700'
+    backgroundColor = 'secondary.light'
   }
 
   return (
@@ -72,7 +72,6 @@ export const Message = ({ message, userId }: MessageProps) => {
       <Typography
         variant="caption"
         display="block"
-        color="grey.400"
         sx={{
           textAlign: message.authorId === userId ? 'right' : 'left',
         }}
@@ -81,6 +80,7 @@ export const Message = ({ message, userId }: MessageProps) => {
       </Typography>
       <Box
         sx={{
+          color: 'primary.contrastText',
           backgroundColor,
           margin: 0.5,
           padding: '0.5em 0.75em',

@@ -9,9 +9,8 @@ import {
 } from 'react'
 import { Link } from 'react-router-dom'
 import CssBaseline from '@mui/material/CssBaseline'
-import { styled, useTheme } from '@mui/material/styles'
 import MuiAppBar, { AppBarProps as MuiAppBarProps } from '@mui/material/AppBar'
-import { ThemeProvider, createTheme } from '@mui/material/styles'
+import { ThemeProvider, createTheme, styled } from '@mui/material/styles'
 import Drawer from '@mui/material/Drawer'
 import Toolbar from '@mui/material/Toolbar'
 import Box from '@mui/material/Box'
@@ -31,6 +30,8 @@ import ListItemButton from '@mui/material/ListItemButton'
 import ListItemIcon from '@mui/material/ListItemIcon'
 import ListItemText from '@mui/material/ListItemText'
 import Home from '@mui/icons-material/Home'
+import Brightness4Icon from '@mui/icons-material/Brightness4'
+import Brightness7Icon from '@mui/icons-material/Brightness7'
 
 import { ShellContext } from 'ShellContext'
 import { AlertOptions } from 'models/shell'
@@ -96,14 +97,7 @@ const DrawerHeader = styled('div')(({ theme }) => ({
   justifyContent: 'flex-end',
 }))
 
-const darkTheme = createTheme({
-  palette: {
-    mode: 'dark',
-  },
-})
-
 export const Shell = ({ children }: ShellProps) => {
-  const theme = useTheme()
   const [isAlertShowing, setIsAlertShowing] = useState(false)
   const [isDrawerOpen, setIsDrawerOpen] = useState(false)
   const [doShowPeers, setDoShowPeers] = useState(false)
@@ -131,6 +125,22 @@ export const Shell = ({ children }: ShellProps) => {
     [numberOfPeers, setDoShowPeers, setNumberOfPeers, setTitle, showAlert]
   )
 
+  const [mode, setMode] = useState<'light' | 'dark'>('dark')
+
+  const handleColorModeToggleClick = () => {
+    setMode(prevMode => (prevMode === 'light' ? 'dark' : 'light'))
+  }
+
+  const theme = useMemo(
+    () =>
+      createTheme({
+        palette: {
+          mode,
+        },
+      }),
+    [mode]
+  )
+
   const handleAlertClose = (
     _event?: SyntheticEvent | Event,
     reason?: string
@@ -156,7 +166,7 @@ export const Shell = ({ children }: ShellProps) => {
 
   return (
     <ShellContext.Provider value={shellContextValue}>
-      <ThemeProvider theme={darkTheme}>
+      <ThemeProvider theme={theme}>
         <CssBaseline />
         <Box
           className="Chitchatter"
@@ -248,6 +258,18 @@ export const Shell = ({ children }: ShellProps) => {
                   </ListItemButton>
                 </ListItem>
               </Link>
+              <ListItem disablePadding>
+                <ListItemButton onClick={handleColorModeToggleClick}>
+                  <ListItemIcon>
+                    {theme.palette.mode === 'dark' ? (
+                      <Brightness7Icon />
+                    ) : (
+                      <Brightness4Icon />
+                    )}
+                  </ListItemIcon>
+                  <ListItemText primary="Change theme" />
+                </ListItemButton>
+              </ListItem>
             </List>
             <Divider />
           </Drawer>
