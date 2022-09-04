@@ -8,6 +8,7 @@ import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter'
 import { materialDark } from 'react-syntax-highlighter/dist/esm/styles/prism'
 
 import { Message as IMessage, isMessageReceived } from 'models/chat'
+import { PeerNameDisplay } from 'components/PeerNameDisplay'
 
 export interface MessageProps {
   message: IMessage
@@ -76,7 +77,7 @@ export const Message = ({ message, userId }: MessageProps) => {
           textAlign: message.authorId === userId ? 'right' : 'left',
         }}
       >
-        {message.authorId}
+        <PeerNameDisplay>{message.authorId}</PeerNameDisplay>
       </Typography>
       <Box
         sx={{

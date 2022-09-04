@@ -1,4 +1,5 @@
 import { render, screen } from '@testing-library/react'
+import { funAnimalName } from 'fun-animal-names'
 
 import { ReceivedMessage, UnsentMessage } from 'models/chat'
 
@@ -37,6 +38,6 @@ describe('Message', () => {
   test('renders message author', () => {
     render(<Message message={mockReceivedMessage} userId={mockUserId} />)
 
-    screen.getByText(mockUserId)
+    screen.getByText(funAnimalName(mockUserId))
   })
 })
