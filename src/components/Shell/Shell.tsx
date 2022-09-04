@@ -35,8 +35,11 @@ import Brightness7Icon from '@mui/icons-material/Brightness7'
 
 import { ShellContext } from 'ShellContext'
 import { AlertOptions } from 'models/shell'
+import { PeerNameDisplay } from 'components/PeerNameDisplay'
 
-export interface ShellProps extends PropsWithChildren {}
+export interface ShellProps extends PropsWithChildren {
+  userPeerId: string
+}
 
 const drawerWidth = 240
 
@@ -97,7 +100,7 @@ const DrawerHeader = styled('div')(({ theme }) => ({
   justifyContent: 'flex-end',
 }))
 
-export const Shell = ({ children }: ShellProps) => {
+export const Shell = ({ children, userPeerId }: ShellProps) => {
   const [isAlertShowing, setIsAlertShowing] = useState(false)
   const [isDrawerOpen, setIsDrawerOpen] = useState(false)
   const [doShowPeers, setDoShowPeers] = useState(false)
@@ -246,6 +249,22 @@ export const Shell = ({ children }: ShellProps) => {
                 )}
               </IconButton>
             </DrawerHeader>
+            <Divider />
+            <ListItem disablePadding>
+              <ListItemText
+                sx={{
+                  padding: '1em 1.5em',
+                }}
+                primary={
+                  <>
+                    <Typography>Your user name: </Typography>
+                    <PeerNameDisplay sx={{ fontWeight: 'bold' }}>
+                      {userPeerId}
+                    </PeerNameDisplay>
+                  </>
+                }
+              />
+            </ListItem>
             <Divider />
             <List role="navigation">
               <Link to="/">

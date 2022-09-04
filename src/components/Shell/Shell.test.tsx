@@ -4,10 +4,10 @@ import { MemoryRouter as Router } from 'react-router-dom'
 
 import { Shell, ShellProps } from './Shell'
 
-const ShellStub = (overrides: ShellProps = {}) => {
+const ShellStub = (overrides: Partial<ShellProps> = {}) => {
   return (
     <Router>
-      <Shell {...overrides} />
+      <Shell userPeerId="abc123" {...overrides} />
     </Router>
   )
 }

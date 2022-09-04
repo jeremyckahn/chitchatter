@@ -49,7 +49,7 @@ function Bootstrap({
 
   return (
     <Router>
-      <Shell>
+      <Shell userPeerId={userId}>
         {hasLoadedSettings ? (
           <Routes>
             {['/', '/index.html'].map(path => (
