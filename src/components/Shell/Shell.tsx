@@ -173,11 +173,10 @@ export const Shell = ({ children, userPeerId }: ShellProps) => {
         <CssBaseline />
         <Box
           className="Chitchatter"
-          sx={theme => ({
+          sx={{
             height: '100vh',
             display: 'flex',
-            paddingTop: theme.spacing(7),
-          })}
+          }}
         >
           <Snackbar
             open={isAlertShowing}
@@ -292,7 +291,21 @@ export const Shell = ({ children, userPeerId }: ShellProps) => {
             </List>
             <Divider />
           </Drawer>
-          <Main open={isDrawerOpen}>{children}</Main>
+          <Main
+            open={isDrawerOpen}
+            sx={{
+              display: 'flex',
+              flexDirection: 'column',
+              flexGrow: 'unset',
+              height: '100%',
+              width: '100%',
+              maxHeight: '100%',
+              overflow: 'auto',
+            }}
+          >
+            <DrawerHeader sx={{ flexGrow: 1 }}></DrawerHeader>
+            <Box sx={{ overflow: 'auto', flexGrow: 1 }}>{children}</Box>
+          </Main>
         </Box>
       </ThemeProvider>
     </ShellContext.Provider>
