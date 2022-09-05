@@ -5,6 +5,7 @@ import FormControl from '@mui/material/FormControl'
 import Stack from '@mui/material/Stack'
 import TextField from '@mui/material/TextField'
 import Fab from '@mui/material/Fab'
+import Divider from '@mui/material/Divider'
 import ArrowUpward from '@mui/icons-material/ArrowUpward'
 
 import { ShellContext } from 'ShellContext'
@@ -164,9 +165,10 @@ export function Room({
       <ChatTranscript
         messageLog={messageLog}
         userId={userId}
-        className="grow overflow-auto"
+        className="grow overflow-auto px-4"
       />
-      <form onSubmit={handleMessageSubmit} className="mt-2">
+      <Divider />
+      <form onSubmit={handleMessageSubmit} className="p-4">
         <Stack direction="row" spacing={2}>
           <FormControl fullWidth>
             <TextField

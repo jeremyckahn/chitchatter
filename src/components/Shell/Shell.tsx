@@ -53,9 +53,6 @@ const Alert = forwardRef<HTMLDivElement, AlertProps>(function Alert(
 const Main = styled('main', { shouldForwardProp: prop => prop !== 'open' })<{
   open?: boolean
 }>(({ theme, open }) => ({
-  flexGrow: 1,
-  padding: theme.spacing(3),
-  paddingTop: 0,
   transition: theme.transitions.create('margin', {
     easing: theme.transitions.easing.sharp,
     duration: theme.transitions.duration.leavingScreen,
@@ -296,14 +293,10 @@ export const Shell = ({ children, userPeerId }: ShellProps) => {
             sx={{
               display: 'flex',
               flexDirection: 'column',
-              flexGrow: 'unset',
-              height: '100%',
               width: '100%',
-              maxHeight: '100%',
-              overflow: 'auto',
             }}
           >
-            <DrawerHeader sx={{ flexGrow: 1 }}></DrawerHeader>
+            <DrawerHeader />
             <Box sx={{ overflow: 'auto', flexGrow: 1 }}>{children}</Box>
           </Main>
         </Box>

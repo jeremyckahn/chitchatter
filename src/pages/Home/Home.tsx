@@ -29,7 +29,7 @@ export function Home() {
   }
 
   return (
-    <Box className="Home">
+    <Box className="Home px-4">
       <header className="max-w-3xl text-center mx-auto mt-8">
         <Typography variant="body1">
           This is a communication tool that is free, open source, and designed
