@@ -2,7 +2,7 @@ import { useContext, useEffect } from 'react'
 import { Room } from 'components/Room'
 import { useParams } from 'react-router-dom'
 
-import { ShellContext } from 'ShellContext'
+import { ShellContext } from 'contexts/ShellContext'
 
 interface PublicRoomProps {
   userId: string

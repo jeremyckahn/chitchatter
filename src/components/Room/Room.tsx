@@ -8,7 +8,7 @@ import Fab from '@mui/material/Fab'
 import Divider from '@mui/material/Divider'
 import ArrowUpward from '@mui/icons-material/ArrowUpward'
 
-import { ShellContext } from 'ShellContext'
+import { ShellContext } from 'contexts/ShellContext'
 import { usePeerRoom, usePeerRoomAction } from 'hooks/usePeerRoom'
 import { PeerActions } from 'models/network'
 import { UnsentMessage, ReceivedMessage } from 'models/chat'

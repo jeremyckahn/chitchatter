@@ -33,7 +33,7 @@ import Home from '@mui/icons-material/Home'
 import Brightness4Icon from '@mui/icons-material/Brightness4'
 import Brightness7Icon from '@mui/icons-material/Brightness7'
 
-import { ShellContext } from 'ShellContext'
+import { ShellContext } from 'contexts/ShellContext'
 import { AlertOptions } from 'models/shell'
 import { PeerNameDisplay } from 'components/PeerNameDisplay'
 

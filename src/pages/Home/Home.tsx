@@ -7,7 +7,7 @@ import Typography from '@mui/material/Typography'
 import TextField from '@mui/material/TextField'
 import { v4 as uuid } from 'uuid'
 
-import { ShellContext } from 'ShellContext'
+import { ShellContext } from 'contexts/ShellContext'
 
 export function Home() {
   const { setTitle } = useContext(ShellContext)
