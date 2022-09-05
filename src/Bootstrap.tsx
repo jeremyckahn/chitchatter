@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
 import { v4 as uuid } from 'uuid'
 import localforage from 'localforage'
 
+import { SettingsContext } from 'contexts/SettingsContext'
 import { Home } from 'pages/Home/'
 import { PublicRoom } from 'pages/PublicRoom/'
 import { UserSettings } from 'models/settings'
@@ -22,8 +23,11 @@ function Bootstrap({
   getUuid = uuid,
 }: BootstrapProps) {
   const [hasLoadedSettings, setHasLoadedSettings] = useState(false)
-  const [settings, setSettings] = useState({ userId: getUuid() })
-  const { userId } = settings
+  const [userSettings, setUserSettings] = useState<UserSettings>({
+    userId: getUuid(),
+    colorMode: 'dark',
+  })
+  const { userId } = userSettings
 
   useEffect(() => {
     ;(async () => {
@@ -35,35 +39,54 @@ function Bootstrap({
         )
 
       if (persistedUserSettings) {
-        setSettings(persistedUserSettings)
+        setUserSettings(persistedUserSettings)
       } else {
         await persistedStorage.setItem(
           PersistedStorageKeys.USER_SETTINGS,
-          settings
+          userSettings
         )
       }
 
       setHasLoadedSettings(true)
     })()
-  }, [hasLoadedSettings, persistedStorage, settings, userId])
+  }, [hasLoadedSettings, persistedStorage, userSettings, userId])
+
+  const settingsContextValue = {
+    updateUserSettings: async (changedSettings: Partial<UserSettings>) => {
+      const newSettings = {
+        ...userSettings,
+        ...changedSettings,
+      }
+
+      await persistedStorage.setItem(
+        PersistedStorageKeys.USER_SETTINGS,
+        newSettings
+      )
+
+      setUserSettings(newSettings)
+    },
+    getUserSettings: () => ({ ...userSettings }),
+  }
 
   return (
     <Router>
-      <Shell userPeerId={userId}>
-        {hasLoadedSettings ? (
-          <Routes>
-            {['/', '/index.html'].map(path => (
-              <Route key={path} path={path} element={<Home />} />
-            ))}
-            <Route
-              path="/public/:roomId"
-              element={<PublicRoom userId={userId} />}
-            />
-          </Routes>
-        ) : (
-          <></>
-        )}
-      </Shell>
+      <SettingsContext.Provider value={settingsContextValue}>
+        <Shell userPeerId={userId}>
+          {hasLoadedSettings ? (
+            <Routes>
+              {['/', '/index.html'].map(path => (
+                <Route key={path} path={path} element={<Home />} />
+              ))}
+              <Route
+                path="/public/:roomId"
+                element={<PublicRoom userId={userId} />}
+              />
+            </Routes>
+          ) : (
+            <></>
+          )}
+        </Shell>
+      </SettingsContext.Provider>
     </Router>
   )
 }

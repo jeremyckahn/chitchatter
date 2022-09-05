@@ -1,11 +1,12 @@
 import {
-  forwardRef,
   PropsWithChildren,
+  SyntheticEvent,
+  forwardRef,
   useCallback,
+  useContext,
   useEffect,
   useMemo,
   useState,
-  SyntheticEvent,
 } from 'react'
 import { Link } from 'react-router-dom'
 import CssBaseline from '@mui/material/CssBaseline'
@@ -34,6 +35,7 @@ import Brightness4Icon from '@mui/icons-material/Brightness4'
 import Brightness7Icon from '@mui/icons-material/Brightness7'
 
 import { ShellContext } from 'contexts/ShellContext'
+import { SettingsContext } from 'contexts/SettingsContext'
 import { AlertOptions } from 'models/shell'
 import { PeerNameDisplay } from 'components/PeerNameDisplay'
 
@@ -98,6 +100,7 @@ const DrawerHeader = styled('div')(({ theme }) => ({
 }))
 
 export const Shell = ({ children, userPeerId }: ShellProps) => {
+  const settingsContext = useContext(SettingsContext)
   const [isAlertShowing, setIsAlertShowing] = useState(false)
   const [isDrawerOpen, setIsDrawerOpen] = useState(false)
   const [doShowPeers, setDoShowPeers] = useState(false)
@@ -125,20 +128,21 @@ export const Shell = ({ children, userPeerId }: ShellProps) => {
     [numberOfPeers, setDoShowPeers, setNumberOfPeers, setTitle, showAlert]
   )
 
-  const [mode, setMode] = useState<'light' | 'dark'>('dark')
+  const colorMode = settingsContext.getUserSettings().colorMode
 
   const handleColorModeToggleClick = () => {
-    setMode(prevMode => (prevMode === 'light' ? 'dark' : 'light'))
+    const newMode = colorMode === 'light' ? 'dark' : 'light'
+    settingsContext.updateUserSettings({ colorMode: newMode })
   }
 
   const theme = useMemo(
     () =>
       createTheme({
         palette: {
-          mode,
+          mode: colorMode,
         },
       }),
-    [mode]
+    [colorMode]
   )
 
   const handleAlertClose = (
