@@ -169,6 +169,10 @@ export const Shell = ({ children, userPeerId }: ShellProps) => {
     setIsDrawerOpen(false)
   }
 
+  const handleHomeLinkClick = () => {
+    setIsDrawerOpen(false)
+  }
+
   const handleLinkButtonClick = async () => {
     await navigator.clipboard.writeText(window.location.href)
 
@@ -288,7 +292,7 @@ export const Shell = ({ children, userPeerId }: ShellProps) => {
             </ListItem>
             <Divider />
             <List role="navigation">
-              <Link to="/">
+              <Link to="/" onClick={handleHomeLinkClick}>
                 <ListItem disablePadding>
                   <ListItemButton>
                     <ListItemIcon>
