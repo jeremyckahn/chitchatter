@@ -75,7 +75,11 @@ function Bootstrap({
           {hasLoadedSettings ? (
             <Routes>
               {['/', '/index.html'].map(path => (
-                <Route key={path} path={path} element={<Home />} />
+                <Route
+                  key={path}
+                  path={path}
+                  element={<Home userId={userId} />}
+                />
               ))}
               <Route
                 path="/public/:roomId"

@@ -9,5 +9,9 @@ export const PeerNameDisplay = ({
   children,
   ...rest
 }: PeerNameDisplayProps) => {
-  return <Typography {...rest}>{funAnimalName(children)}</Typography>
+  return (
+    <Typography component="span" {...rest}>
+      {funAnimalName(children)}
+    </Typography>
+  )
 }

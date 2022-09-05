@@ -281,12 +281,12 @@ export const Shell = ({ children, userPeerId }: ShellProps) => {
                   padding: '1em 1.5em',
                 }}
                 primary={
-                  <>
-                    <Typography>Your user name: </Typography>
+                  <Typography>
+                    Your user name:{' '}
                     <PeerNameDisplay sx={{ fontWeight: 'bold' }}>
                       {userPeerId}
                     </PeerNameDisplay>
-                  </>
+                  </Typography>
                 }
               />
             </ListItem>
