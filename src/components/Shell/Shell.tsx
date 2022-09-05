@@ -239,7 +239,7 @@ export const Shell = ({ children, userPeerId }: ShellProps) => {
                   edge="start"
                   color="inherit"
                   aria-label="Copy current URL"
-                  sx={{ mr: 1, ml: 'auto' }}
+                  sx={{ ml: 'auto' }}
                   onClick={handleLinkButtonClick}
                 >
                   <LinkIcon />
@@ -247,7 +247,7 @@ export const Shell = ({ children, userPeerId }: ShellProps) => {
               </Tooltip>
               {doShowPeers ? (
                 <Tooltip title="Number of peers in the room">
-                  <StepIcon icon={numberOfPeers} />
+                  <StepIcon icon={numberOfPeers} sx={{ ml: 2 }} />
                 </Tooltip>
               ) : null}
             </Toolbar>
