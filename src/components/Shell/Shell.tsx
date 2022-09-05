@@ -33,6 +33,7 @@ import ListItemText from '@mui/material/ListItemText'
 import Home from '@mui/icons-material/Home'
 import Brightness4Icon from '@mui/icons-material/Brightness4'
 import Brightness7Icon from '@mui/icons-material/Brightness7'
+import LinkIcon from '@mui/icons-material/Link'
 
 import { ShellContext } from 'contexts/ShellContext'
 import { SettingsContext } from 'contexts/SettingsContext'
@@ -168,6 +169,14 @@ export const Shell = ({ children, userPeerId }: ShellProps) => {
     setIsDrawerOpen(false)
   }
 
+  const handleLinkButtonClick = async () => {
+    await navigator.clipboard.writeText(window.location.href)
+
+    shellContextValue.showAlert('Current URL copied to clipboard', {
+      severity: 'success',
+    })
+  }
+
   return (
     <ShellContext.Provider value={shellContextValue}>
       <ThemeProvider theme={theme}>
@@ -220,9 +229,21 @@ export const Shell = ({ children, userPeerId }: ShellProps) => {
               >
                 {title}
               </Typography>
+              <Tooltip title="Copy current URL">
+                <IconButton
+                  size="large"
+                  edge="start"
+                  color="inherit"
+                  aria-label="Copy current URL"
+                  sx={{ mr: 1, ml: 'auto' }}
+                  onClick={handleLinkButtonClick}
+                >
+                  <LinkIcon />
+                </IconButton>
+              </Tooltip>
               {doShowPeers ? (
                 <Tooltip title="Number of peers in the room">
-                  <StepIcon icon={numberOfPeers} sx={{ marginLeft: 'auto' }} />
+                  <StepIcon icon={numberOfPeers} />
                 </Tooltip>
               ) : null}
             </Toolbar>
