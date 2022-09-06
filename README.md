@@ -17,7 +17,7 @@ Chitchatter was bootstrapped with [Create React App](https://github.com/facebook
 
 ## How to use it
 
-Open https://chitchatter.im/ and join a room to start chatting with anyone else who is in the room. By default, room names are random [UUID](https://en.wikipedia.org/wiki/Universally_unique_identifier)s that are generated client-side. To securely communicate with someone, it is recommended to join one of these randomly-generated rooms and share the URL (via the "🔗" button at the top of the page) to whoever you wish to communicate with via a medium of your choosing (such as email, SMS, Discord, etc.). Your static user name will be presented to you, and it would be good share that with who you will be chatting with so they know they're talking to you.
+Open https://chitchatter.im/ and join a room to start chatting with anyone else who is in the room. By default, room names are random [UUID](https://en.wikipedia.org/wiki/Universally_unique_identifier)s that are generated client-side. To securely communicate with someone, it is recommended to join one of these randomly-generated rooms and share the URL (via the "🔗" button at the top of the page) to whoever you wish to communicate with via a secure medium of your choosing (such as [Burner Note](https://burnernote.com/) or [Yopass](https://yopass.se/)). Your static user name will be presented to you, and it would be good share that with who you will be chatting with so they know they're talking to you.
 
 Some things to keep in mind:
 
