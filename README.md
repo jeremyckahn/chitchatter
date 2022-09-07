@@ -19,11 +19,21 @@ Chitchatter was bootstrapped with [Create React App](https://github.com/facebook
 
 Open https://chitchatter.im/ and join a room to start chatting with anyone else who is in the room. By default, room names are random [UUID](https://en.wikipedia.org/wiki/Universally_unique_identifier)s that are generated client-side. To securely communicate with someone, it is recommended to join one of these randomly-generated rooms and share the URL (via the "🔗" button at the top of the page) to whoever you wish to communicate with via a secure medium of your choosing (such as [Burner Note](https://burnernote.com/) or [Yopass](https://yopass.se/)). Your static user name will be presented to you, and it would be good share that with who you will be chatting with so they know they're talking to you.
 
-Some things to keep in mind:
+## Features
 
-- Messages disappear as soon as you leave the chat room.
+- Multiple peers per room (limited only by the number of peer connections your browser supports).
 - The number displayed at the top-right of the screen shows how many peers you are connected to. Your peers are the only ones who can see your message.
-- Chitchatter supports Markdown, including syntax highlighting for code.
+- Markdown support via [`react-markdown`](https://github.com/remarkjs/react-markdown).
+  - Includes support for syntax highlighting of code.
+- Multiline message support (hold Shift and press Enter).
+- Dark and light themes
+
+## Anti-features
+
+- Messages are never persisted to disk. When you leave a peer room, messages are cleared from memory and cannot be retrieved.
+- Chitchatter is an entirely client-side communication app. It uses external general-purpose WebTorrent and STUN/TURN servers as for necessary communication, but there is no Chitchatter API server.
+- No analytics, tracking, or telemetry.
+- This is a community-driven, unfunded project that makes no money. This is necessary to prevent corporate influence from harming users.
 
 ## Why another chat app?
 
@@ -31,7 +41,7 @@ There is no shortage of user-friendly chat apps available, but most of them rely
 
 Chitchatter designs around these concerns by not having a central service operator and never storing communication data. Some services are required to establish a connection between peers, but the app relies on direct peer-to-peer communication as much as possible. Any services that are used by the app have no association with Chitchatter project and are publicly available for all to use.
 
-Chitchatter is inspired by [Cryptocat](https://en.wikipedia.org/wiki/Cryptocat).
+Chitchatter is inspired by [Cryptocat](https://en.wikipedia.org/wiki/Cryptocat) and [Tox](<https://en.wikipedia.org/wiki/Tox_(protocol)>).
 
 ### Veracity
 
