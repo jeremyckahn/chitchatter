@@ -6,6 +6,7 @@ import Markdown from 'react-markdown'
 import { CodeProps } from 'react-markdown/lib/ast-to-react'
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter'
 import { materialDark } from 'react-syntax-highlighter/dist/esm/styles/prism'
+import remarkGfm from 'remark-gfm'
 
 import { Message as IMessage, isMessageReceived } from 'models/chat'
 import { PeerNameDisplay } from 'components/PeerNameDisplay'
@@ -36,7 +37,7 @@ const componentMap = {
   a: linkFactory({
     variant: 'body1',
     underline: 'always',
-    color: 'primary.light',
+    color: 'primary.contrastText',
   }),
   // https://github.com/remarkjs/react-markdown#use-custom-components-syntax-highlight
   code({ node, inline, className, children, style, ...props }: CodeProps) {
@@ -92,7 +93,11 @@ export const Message = ({ message, userId }: MessageProps) => {
         }}
         maxWidth="85%"
       >
-        <Markdown components={componentMap} linkTarget="_blank">
+        <Markdown
+          components={componentMap}
+          remarkPlugins={[remarkGfm]}
+          linkTarget="_blank"
+        >
           {message.text}
         </Markdown>
       </Box>

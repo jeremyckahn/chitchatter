@@ -26,6 +26,7 @@
     "react-router-dom": "^6.3.0",
     "react-scripts": "5.0.1",
     "react-syntax-highlighter": "^15.5.0",
+    "remark-gfm": "^3.0.1",
     "sass": "^1.54.3",
     "trystero": "github:jeremyckahn/trystero#bugfix/fully-qualified-module-resolution",
     "typeface-public-sans": "^1.1.13",
