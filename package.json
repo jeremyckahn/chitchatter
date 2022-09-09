@@ -28,7 +28,7 @@
     "react-syntax-highlighter": "^15.5.0",
     "remark-gfm": "^3.0.1",
     "sass": "^1.54.3",
-    "trystero": "github:jeremyckahn/trystero#bugfix/fully-qualified-module-resolution",
+    "trystero": "^0.11.2",
     "typeface-public-sans": "^1.1.13",
     "typeface-roboto": "^1.1.13",
     "typescript": "^4.7.4",
