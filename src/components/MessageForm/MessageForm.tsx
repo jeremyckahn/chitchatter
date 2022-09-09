@@ -1,4 +1,10 @@
-import { KeyboardEvent, SyntheticEvent, useState } from 'react'
+import {
+  KeyboardEvent,
+  SyntheticEvent,
+  useEffect,
+  useRef,
+  useState,
+} from 'react'
 import FormControl from '@mui/material/FormControl'
 import Stack from '@mui/material/Stack'
 import TextField from '@mui/material/TextField'
@@ -14,7 +20,15 @@ export const MessageForm = ({
   onMessageSubmit,
   isMessageSending,
 }: MessageFormProps) => {
+  const textFieldRef = useRef<HTMLInputElement>(null)
   const [textMessage, setTextMessage] = useState('')
+
+  useEffect(() => {
+    const { current: textField } = textFieldRef
+    if (!textField) return
+
+    textField.focus()
+  }, [textFieldRef])
 
   const canMessageBeSent = () => {
     return textMessage.trim().length > 0 && !isMessageSending
@@ -55,6 +69,7 @@ export const MessageForm = ({
             onKeyPress={handleMessageKeyPress}
             size="medium"
             placeholder="Your message"
+            inputRef={textFieldRef}
             multiline
           />
         </FormControl>
