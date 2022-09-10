@@ -4,6 +4,7 @@ import Box from '@mui/material/Box'
 import Divider from '@mui/material/Divider'
 
 import { rtcConfig } from 'config/rtcConfig'
+import { trackerUrls } from 'config/trackerUrls'
 import { ShellContext } from 'contexts/ShellContext'
 import { usePeerRoom, usePeerRoomAction } from 'hooks/usePeerRoom'
 import { PeerActions } from 'models/network'
@@ -34,9 +35,7 @@ export function Room({
   const peerRoom = usePeerRoom(
     {
       appId,
-      trackerUrls: process.env.REACT_APP_TRACKER_URL
-        ? [process.env.REACT_APP_TRACKER_URL]
-        : undefined,
+      trackerUrls,
       rtcConfig,
     },
     roomId
