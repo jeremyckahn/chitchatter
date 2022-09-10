@@ -3,6 +3,7 @@ import { v4 as uuid } from 'uuid'
 import Box from '@mui/material/Box'
 import Divider from '@mui/material/Divider'
 
+import { rtcConfig } from 'config/rtcConfig'
 import { ShellContext } from 'contexts/ShellContext'
 import { usePeerRoom, usePeerRoomAction } from 'hooks/usePeerRoom'
 import { PeerActions } from 'models/network'
@@ -36,28 +37,7 @@ export function Room({
       trackerUrls: process.env.REACT_APP_TRACKER_URL
         ? [process.env.REACT_APP_TRACKER_URL]
         : undefined,
-      rtcConfig: {
-        iceServers: [
-          {
-            urls: 'stun:openrelay.metered.ca:80',
-          },
-          {
-            urls: 'turn:openrelay.metered.ca:80',
-            username: 'openrelayproject',
-            credential: 'openrelayproject',
-          },
-          {
-            urls: 'turn:openrelay.metered.ca:443',
-            username: 'openrelayproject',
-            credential: 'openrelayproject',
-          },
-          {
-            urls: 'turn:openrelay.metered.ca:443?transport=tcp',
-            username: 'openrelayproject',
-            credential: 'openrelayproject',
-          },
-        ],
-      },
+      rtcConfig,
     },
     roomId
   )
