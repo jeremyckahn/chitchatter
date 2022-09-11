@@ -7,7 +7,7 @@ import { Shell, ShellProps } from './Shell'
 const ShellStub = (overrides: Partial<ShellProps> = {}) => {
   return (
     <Router>
-      <Shell userPeerId="abc123" {...overrides} />
+      <Shell appNeedsUpdate={false} userPeerId="abc123" {...overrides} />
     </Router>
   )
 }

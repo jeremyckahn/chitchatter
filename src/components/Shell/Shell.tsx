@@ -23,7 +23,14 @@ import Tooltip from '@mui/material/Tooltip'
 import Snackbar from '@mui/material/Snackbar'
 import MuiAlert, { AlertProps, AlertColor } from '@mui/material/Alert'
 import IconButton from '@mui/material/IconButton'
+import Button from '@mui/material/Button'
+import Dialog from '@mui/material/Dialog'
+import DialogActions from '@mui/material/DialogActions'
+import DialogContent from '@mui/material/DialogContent'
+import DialogContentText from '@mui/material/DialogContentText'
+import DialogTitle from '@mui/material/DialogTitle'
 import MenuIcon from '@mui/icons-material/Menu'
+import WarningIcon from '@mui/icons-material/Warning'
 import ChevronLeftIcon from '@mui/icons-material/ChevronLeft'
 import ChevronRightIcon from '@mui/icons-material/ChevronRight'
 import ListItem from '@mui/material/ListItem'
@@ -39,10 +46,6 @@ import { ShellContext } from 'contexts/ShellContext'
 import { SettingsContext } from 'contexts/SettingsContext'
 import { AlertOptions } from 'models/shell'
 import { PeerNameDisplay } from 'components/PeerNameDisplay'
-
-export interface ShellProps extends PropsWithChildren {
-  userPeerId: string
-}
 
 const drawerWidth = 240
 
@@ -100,7 +103,12 @@ const DrawerHeader = styled('div')(({ theme }) => ({
   justifyContent: 'flex-end',
 }))
 
-export const Shell = ({ children, userPeerId }: ShellProps) => {
+export interface ShellProps extends PropsWithChildren {
+  userPeerId: string
+  appNeedsUpdate: boolean
+}
+
+export const Shell = ({ appNeedsUpdate, children, userPeerId }: ShellProps) => {
   const settingsContext = useContext(SettingsContext)
   const [isAlertShowing, setIsAlertShowing] = useState(false)
   const [isDrawerOpen, setIsDrawerOpen] = useState(false)
@@ -181,10 +189,44 @@ export const Shell = ({ children, userPeerId }: ShellProps) => {
     })
   }
 
+  const handleRestartClick = () => {
+    window.location.reload()
+  }
+
   return (
     <ShellContext.Provider value={shellContextValue}>
       <ThemeProvider theme={theme}>
         <CssBaseline />
+        <Dialog
+          open={appNeedsUpdate}
+          aria-labelledby="alert-dialog-title"
+          aria-describedby="alert-dialog-description"
+        >
+          <DialogTitle id="alert-dialog-title">
+            <Box sx={{ display: 'flex', alignItems: 'center' }}>
+              <WarningIcon
+                fontSize="medium"
+                sx={theme => ({
+                  color: theme.palette.warning.main,
+                  mr: theme.spacing(1),
+                })}
+              />
+              Update needed
+            </Box>
+          </DialogTitle>
+          <DialogContent>
+            <DialogContentText id="alert-dialog-description">
+              In order to function properly, Chitchatter needs to be updated.
+              The update has already been installed in the background. All you
+              need to do is reload the page or click "Refresh" below.
+            </DialogContentText>
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={handleRestartClick} autoFocus>
+              Refresh
+            </Button>
+          </DialogActions>
+        </Dialog>
         <Box
           className="Chitchatter"
           sx={{

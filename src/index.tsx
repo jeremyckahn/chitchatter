@@ -1,7 +1,6 @@
 import ReactDOM from 'react-dom/client'
 import 'typeface-roboto'
 
-import * as serviceWorkerRegistration from 'serviceWorkerRegistration'
 import 'index.sass'
 import Bootstrap from 'Bootstrap'
 import reportWebVitals from 'reportWebVitals'
@@ -13,5 +12,3 @@ root.render(<Bootstrap />)
 // to log results (for example: reportWebVitals(console.log))
 // or send to an analytics endpoint. Learn more: https://bit.ly/CRA-vitals
 reportWebVitals()
-
-serviceWorkerRegistration.register()
