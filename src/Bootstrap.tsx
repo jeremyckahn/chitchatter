@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
 import { v4 as uuid } from 'uuid'
 import localforage from 'localforage'
 
+import * as serviceWorkerRegistration from 'serviceWorkerRegistration'
 import { SettingsContext } from 'contexts/SettingsContext'
 import { Home } from 'pages/Home/'
 import { PublicRoom } from 'pages/PublicRoom/'
@@ -22,12 +23,21 @@ function Bootstrap({
   }),
   getUuid = uuid,
 }: BootstrapProps) {
+  const [appNeedsUpdate, setAppNeedsUpdate] = useState(false)
   const [hasLoadedSettings, setHasLoadedSettings] = useState(false)
   const [userSettings, setUserSettings] = useState<UserSettings>({
     userId: getUuid(),
     colorMode: 'dark',
   })
   const { userId } = userSettings
+
+  const handleServiceWorkerUpdate = () => {
+    setAppNeedsUpdate(true)
+  }
+
+  useEffect(() => {
+    serviceWorkerRegistration.register({ onUpdate: handleServiceWorkerUpdate })
+  }, [])
 
   useEffect(() => {
     ;(async () => {
@@ -71,7 +81,7 @@ function Bootstrap({
   return (
     <Router>
       <SettingsContext.Provider value={settingsContextValue}>
-        <Shell userPeerId={userId}>
+        <Shell appNeedsUpdate={appNeedsUpdate} userPeerId={userId}>
           {hasLoadedSettings ? (
             <Routes>
               {['/', '/index.html'].map(path => (
