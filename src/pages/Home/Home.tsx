@@ -14,6 +14,7 @@ import { v4 as uuid } from 'uuid'
 
 import { ShellContext } from 'contexts/ShellContext'
 import { PeerNameDisplay } from 'components/PeerNameDisplay'
+import { ReactComponent as Logo } from 'img/logo.svg'
 
 interface HomeProps {
   userId: string
@@ -41,6 +42,7 @@ export function Home({ userId }: HomeProps) {
   return (
     <Box className="Home">
       <main className="mt-6 px-4 max-w-3xl text-center mx-auto">
+        <Logo className="px-1 pb-4 mx-auto max-w-md" />
         <form onSubmit={handleFormSubmit} className="max-w-xl mx-auto">
           <Typography sx={{ mb: 2 }}>
             Your user name:{' '}

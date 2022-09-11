@@ -1,5 +1,7 @@
 # Chitchatter
 
+![Chitchatter logo](./public/logo/logo.svg)
+
 Chitchatter is a free (as in both price and freedom) communication tool. It is designed with security and privacy in mind. To that end, it is:
 
 - Fully open source (licensed under [GPL v2](./LICENSE))
