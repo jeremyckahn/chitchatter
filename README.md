@@ -122,14 +122,19 @@ The build is minified and the filenames include the hashes.
 
 ### Self-hosting
 
-Chitchatter is designed to be forked and self-hosted. If you would like to change pairing or relay server configuration, or you simply prefer to control your own builds and versions, just [fork this repo](https://github.com/jeremyckahn/chitchatter/fork).
+Chitchatter is designed to be forked and self-hosted. If you would like to change pairing or relay server configuration, or you simply prefer to control your own builds and versions, just [fork this repo](https://github.com/jeremyckahn/chitchatter/fork) and follow the steps below.
 
-**Important step!** After forking, be sure to change the [`homepage` property in `package.json`](https://github.com/jeremyckahn/chitchatter/blob/1ea67e2c3a45115e054ebfe3457f2c3572c6213b/package.json#L4) to whatever URL your Chitchatter will be hosted from. Assuming you are using [GitHub Pages](https://pages.github.com/), this will be something like `https://github_user_or_org_name.github.io/chitchatter/`. **If you don't do this, your builds will not produce usable build artifacts**.
+#### Necessary steps after forking
+
+Assuming you are hosting Chitchatter on [GitHub Pages](https://pages.github.com/):
+
+1. Change the [`homepage` property in `package.json`](https://github.com/jeremyckahn/chitchatter/blob/1ea67e2c3a45115e054ebfe3457f2c3572c6213b/package.json#L4) to whatever URL your Chitchatter instance will be hosted from. This will be something like `https://github_user_or_org_name.github.io/chitchatter/`.
+2. Define a [`DEPLOY_KEY` GitHub Action secret](https://github.com/jeremyckahn/chitchatter/blob/e2bac732cf1288f7b5d0bec151098f18e8b1d0d6/.github/workflows/deploy.yml#L28-L31) (at `https://github.com/github_user_or_org_name/chitchatter/settings/secrets/actions`). See the docs for [`peaceiris/actions-gh-pages`](https://github.com/peaceiris/actions-gh-pages#%EF%B8%8F-set-ssh-private-key-deploy_key) for more information.
+
+#### Deployment
+
+When hosted on GitHub Pages and the configuration above has been done, the Production environment is updated when the remote `main` branch is updated.
 
 #### Runtime configuration
 
 Explore the files in `src/config` to modify pairing and relay server configuration.
-
-#### Deployment
-
-When hosted on GitHub, the Production environment is updated when the remote `main` branch is updated.
