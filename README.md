@@ -15,9 +15,10 @@ Chitchatter is a free (as in both price and freedom) communication tool. It is d
 - Ephemeral
   - Message content is never persisted to disk
 - Decentralized
-  - There is no API server. All that's required for Chitchatter to function is availability of GitHub for static assets and public WebTorrent and STUN/TURN relay servers for establishing communication.
+  - There is no API server. All that's required for Chitchatter to function is availability of GitHub for static assets and public WebTorrent and STUN/TURN relay servers for establishing peer communication.
+- [Self-hostable](#self-hosting)
 
-Chitchatter was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+Chitchatter was bootstrapped with [Create React App](https://github.com/facebook/create-react-app). The secure networking magic would not be possible without [Trystero](https://github.com/dmotz/trystero).
 
 ## How to use it
 
@@ -91,7 +92,6 @@ This is a non-exhaustive list of things that are in Chitchatter's future:
 - Voice calling
 - Video calling
 - File sharing
-- Pairing and relay server configuration
 - Indicators for when others are typing
 - Transcript backfilling for peers who join a room after there has already been activity
 
@@ -120,6 +120,16 @@ Builds the app for production to the `build` folder. It correctly bundles React 
 
 The build is minified and the filenames include the hashes.
 
-### Deployment
+### Self-hosting
 
-The Production environment is updated when the `main` branch is updated.
+Chitchatter is designed to be forked and self-hosted. If you would like to change pairing or relay server configuration, or you simply prefer to control your own builds and versions, just [fork this repo](https://github.com/jeremyckahn/chitchatter/fork).
+
+**Important step!** After forking, be sure to change the [`homepage` property in `package.json`](https://github.com/jeremyckahn/chitchatter/blob/1ea67e2c3a45115e054ebfe3457f2c3572c6213b/package.json#L4) to whatever URL your Chitchatter will be hosted from. Assuming you are using [GitHub Pages](https://pages.github.com/), this will be something like `https://github_user_or_org_name.github.io/chitchatter/`. **If you don't do this, your builds will not produce usable build artifacts**.
+
+#### Runtime configuration
+
+Explore the files in `src/config` to modify pairing and relay server configuration.
+
+#### Deployment
+
+When hosted on GitHub, the Production environment is updated when the remote `main` branch is updated.
