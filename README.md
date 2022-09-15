@@ -95,6 +95,8 @@ This is a non-exhaustive list of things that are in Chitchatter's future:
 - Indicators for when others are typing
 - Transcript backfilling for peers who join a room after there has already been activity
 
+See the full ticket backlog [here](https://github.com/users/jeremyckahn/projects/1).
+
 ## Available Scripts
 
 In the project directory, you can run:
