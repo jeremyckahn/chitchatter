@@ -31,7 +31,7 @@ export const MessageForm = ({
   }, [textFieldRef])
 
   const canMessageBeSent = () => {
-    return textMessage.trim().length > 0 && !isMessageSending
+    return textMessage.trim().length > 0 && textMessage.trim().length < 1000 && !isMessageSending
   }
 
   const handleMessageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
