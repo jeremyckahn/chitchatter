@@ -8,16 +8,12 @@ import {
   useMemo,
   useState,
 } from 'react'
-import { Link } from 'react-router-dom'
 import CssBaseline from '@mui/material/CssBaseline'
 import MuiAppBar, { AppBarProps as MuiAppBarProps } from '@mui/material/AppBar'
 import { ThemeProvider, createTheme, styled } from '@mui/material/styles'
-import Drawer from '@mui/material/Drawer'
 import Toolbar from '@mui/material/Toolbar'
 import Box from '@mui/material/Box'
-import List from '@mui/material/List'
 import Typography from '@mui/material/Typography'
-import Divider from '@mui/material/Divider'
 import StepIcon from '@mui/material/StepIcon'
 import Tooltip from '@mui/material/Tooltip'
 import Snackbar from '@mui/material/Snackbar'
@@ -31,23 +27,14 @@ import DialogContentText from '@mui/material/DialogContentText'
 import DialogTitle from '@mui/material/DialogTitle'
 import MenuIcon from '@mui/icons-material/Menu'
 import WarningIcon from '@mui/icons-material/Warning'
-import ChevronLeftIcon from '@mui/icons-material/ChevronLeft'
-import ChevronRightIcon from '@mui/icons-material/ChevronRight'
-import ListItem from '@mui/material/ListItem'
-import ListItemButton from '@mui/material/ListItemButton'
-import ListItemIcon from '@mui/material/ListItemIcon'
-import ListItemText from '@mui/material/ListItemText'
-import Home from '@mui/icons-material/Home'
-import Brightness4Icon from '@mui/icons-material/Brightness4'
-import Brightness7Icon from '@mui/icons-material/Brightness7'
 import LinkIcon from '@mui/icons-material/Link'
 
 import { ShellContext } from 'contexts/ShellContext'
 import { SettingsContext } from 'contexts/SettingsContext'
 import { AlertOptions } from 'models/shell'
-import { PeerNameDisplay } from 'components/PeerNameDisplay'
 
-const drawerWidth = 240
+import { Drawer, drawerWidth } from './Drawer'
+import { DrawerHeader } from './DrawerHeader'
 
 const Alert = forwardRef<HTMLDivElement, AlertProps>(function Alert(
   props,
@@ -94,15 +81,6 @@ const AppBar = styled(MuiAppBar, {
   }),
 }))
 
-const DrawerHeader = styled('div')(({ theme }) => ({
-  display: 'flex',
-  alignItems: 'center',
-  padding: theme.spacing(0, 1),
-  // necessary for content to be below app bar
-  ...theme.mixins.toolbar,
-  justifyContent: 'flex-end',
-}))
-
 export interface ShellProps extends PropsWithChildren {
   userPeerId: string
   appNeedsUpdate: boolean
@@ -139,11 +117,6 @@ export const Shell = ({ appNeedsUpdate, children, userPeerId }: ShellProps) => {
 
   const colorMode = settingsContext.getUserSettings().colorMode
 
-  const handleColorModeToggleClick = () => {
-    const newMode = colorMode === 'light' ? 'dark' : 'light'
-    settingsContext.updateUserSettings({ colorMode: newMode })
-  }
-
   const theme = useMemo(
     () =>
       createTheme({
@@ -173,14 +146,6 @@ export const Shell = ({ appNeedsUpdate, children, userPeerId }: ShellProps) => {
     setIsDrawerOpen(true)
   }
 
-  const handleDrawerClose = () => {
-    setIsDrawerOpen(false)
-  }
-
-  const handleHomeLinkClick = () => {
-    setIsDrawerOpen(false)
-  }
-
   const handleLinkButtonClick = async () => {
     await navigator.clipboard.writeText(window.location.href)
 
@@ -191,6 +156,14 @@ export const Shell = ({ appNeedsUpdate, children, userPeerId }: ShellProps) => {
 
   const handleRestartClick = () => {
     window.location.reload()
+  }
+
+  const handleDrawerClose = () => {
+    setIsDrawerOpen(false)
+  }
+
+  const handleHomeLinkClick = () => {
+    setIsDrawerOpen(false)
   }
 
   return (
@@ -295,70 +268,12 @@ export const Shell = ({ appNeedsUpdate, children, userPeerId }: ShellProps) => {
             </Toolbar>
           </AppBar>
           <Drawer
-            sx={{
-              width: drawerWidth,
-              flexShrink: 0,
-              '& .MuiDrawer-paper': {
-                width: drawerWidth,
-                boxSizing: 'border-box',
-              },
-            }}
-            variant="persistent"
-            anchor="left"
-            open={isDrawerOpen}
-          >
-            <DrawerHeader>
-              <IconButton onClick={handleDrawerClose} aria-label="Close menu">
-                {theme.direction === 'ltr' ? (
-                  <ChevronLeftIcon />
-                ) : (
-                  <ChevronRightIcon />
-                )}
-              </IconButton>
-            </DrawerHeader>
-            <Divider />
-            <ListItem disablePadding>
-              <ListItemText
-                sx={{
-                  padding: '1em 1.5em',
-                }}
-                primary={
-                  <Typography>
-                    Your user name:{' '}
-                    <PeerNameDisplay sx={{ fontWeight: 'bold' }}>
-                      {userPeerId}
-                    </PeerNameDisplay>
-                  </Typography>
-                }
-              />
-            </ListItem>
-            <Divider />
-            <List role="navigation">
-              <Link to="/" onClick={handleHomeLinkClick}>
-                <ListItem disablePadding>
-                  <ListItemButton>
-                    <ListItemIcon>
-                      <Home />
-                    </ListItemIcon>
-                    <ListItemText primary="Home" />
-                  </ListItemButton>
-                </ListItem>
-              </Link>
-              <ListItem disablePadding>
-                <ListItemButton onClick={handleColorModeToggleClick}>
-                  <ListItemIcon>
-                    {theme.palette.mode === 'dark' ? (
-                      <Brightness7Icon />
-                    ) : (
-                      <Brightness4Icon />
-                    )}
-                  </ListItemIcon>
-                  <ListItemText primary="Change theme" />
-                </ListItemButton>
-              </ListItem>
-            </List>
-            <Divider />
-          </Drawer>
+            isDrawerOpen={isDrawerOpen}
+            onDrawerClose={handleDrawerClose}
+            onHomeLinkClick={handleHomeLinkClick}
+            theme={theme}
+            userPeerId={userPeerId}
+          />
           <Main
             open={isDrawerOpen}
             sx={{
