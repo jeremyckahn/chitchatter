@@ -19,14 +19,7 @@ import Tooltip from '@mui/material/Tooltip'
 import Snackbar from '@mui/material/Snackbar'
 import MuiAlert, { AlertProps, AlertColor } from '@mui/material/Alert'
 import IconButton from '@mui/material/IconButton'
-import Button from '@mui/material/Button'
-import Dialog from '@mui/material/Dialog'
-import DialogActions from '@mui/material/DialogActions'
-import DialogContent from '@mui/material/DialogContent'
-import DialogContentText from '@mui/material/DialogContentText'
-import DialogTitle from '@mui/material/DialogTitle'
 import MenuIcon from '@mui/icons-material/Menu'
-import WarningIcon from '@mui/icons-material/Warning'
 import LinkIcon from '@mui/icons-material/Link'
 
 import { ShellContext } from 'contexts/ShellContext'
@@ -34,6 +27,7 @@ import { SettingsContext } from 'contexts/SettingsContext'
 import { AlertOptions } from 'models/shell'
 
 import { Drawer, drawerWidth } from './Drawer'
+import { UpgradeDialog } from './UpgradeDialog'
 import { DrawerHeader } from './DrawerHeader'
 
 const Alert = forwardRef<HTMLDivElement, AlertProps>(function Alert(
@@ -154,10 +148,6 @@ export const Shell = ({ appNeedsUpdate, children, userPeerId }: ShellProps) => {
     })
   }
 
-  const handleRestartClick = () => {
-    window.location.reload()
-  }
-
   const handleDrawerClose = () => {
     setIsDrawerOpen(false)
   }
@@ -170,36 +160,7 @@ export const Shell = ({ appNeedsUpdate, children, userPeerId }: ShellProps) => {
     <ShellContext.Provider value={shellContextValue}>
       <ThemeProvider theme={theme}>
         <CssBaseline />
-        <Dialog
-          open={appNeedsUpdate}
-          aria-labelledby="alert-dialog-title"
-          aria-describedby="alert-dialog-description"
-        >
-          <DialogTitle id="alert-dialog-title">
-            <Box sx={{ display: 'flex', alignItems: 'center' }}>
-              <WarningIcon
-                fontSize="medium"
-                sx={theme => ({
-                  color: theme.palette.warning.main,
-                  mr: theme.spacing(1),
-                })}
-              />
-              Update needed
-            </Box>
-          </DialogTitle>
-          <DialogContent>
-            <DialogContentText id="alert-dialog-description">
-              In order to function properly, Chitchatter needs to be updated.
-              The update has already been installed in the background. All you
-              need to do is reload the page or click "Refresh" below.
-            </DialogContentText>
-          </DialogContent>
-          <DialogActions>
-            <Button onClick={handleRestartClick} autoFocus>
-              Refresh
-            </Button>
-          </DialogActions>
-        </Dialog>
+        <UpgradeDialog appNeedsUpdate={appNeedsUpdate} />
         <Box
           className="Chitchatter"
           sx={{
