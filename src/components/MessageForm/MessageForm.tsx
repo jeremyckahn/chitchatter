@@ -11,6 +11,8 @@ import TextField from '@mui/material/TextField'
 import Fab from '@mui/material/Fab'
 import ArrowUpward from '@mui/icons-material/ArrowUpward'
 
+import { messageCharacterSizeLimit } from 'config/messaging'
+
 interface MessageFormProps {
   onMessageSubmit: (message: string) => void
   isMessageSending: boolean
@@ -31,7 +33,11 @@ export const MessageForm = ({
   }, [textFieldRef])
 
   const canMessageBeSent = () => {
-    return textMessage.trim().length > 0 && textMessage.trim().length < 1000 && !isMessageSending
+    return (
+      textMessage.trim().length > 0 &&
+      textMessage.length < messageCharacterSizeLimit &&
+      !isMessageSending
+    )
   }
 
   const handleMessageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -49,6 +55,9 @@ export const MessageForm = ({
 
     if (key === 'Enter' && shiftKey === false) {
       event.preventDefault()
+
+      if (!canMessageBeSent()) return
+
       submitMessage()
     }
   }
