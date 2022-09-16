@@ -9,18 +9,10 @@ import {
   useState,
 } from 'react'
 import CssBaseline from '@mui/material/CssBaseline'
-import MuiAppBar, { AppBarProps as MuiAppBarProps } from '@mui/material/AppBar'
 import { ThemeProvider, createTheme, styled } from '@mui/material/styles'
-import Toolbar from '@mui/material/Toolbar'
 import Box from '@mui/material/Box'
-import Typography from '@mui/material/Typography'
-import StepIcon from '@mui/material/StepIcon'
-import Tooltip from '@mui/material/Tooltip'
 import Snackbar from '@mui/material/Snackbar'
 import MuiAlert, { AlertProps, AlertColor } from '@mui/material/Alert'
-import IconButton from '@mui/material/IconButton'
-import MenuIcon from '@mui/icons-material/Menu'
-import LinkIcon from '@mui/icons-material/Link'
 
 import { ShellContext } from 'contexts/ShellContext'
 import { SettingsContext } from 'contexts/SettingsContext'
@@ -29,6 +21,7 @@ import { AlertOptions } from 'models/shell'
 import { Drawer, drawerWidth } from './Drawer'
 import { UpgradeDialog } from './UpgradeDialog'
 import { DrawerHeader } from './DrawerHeader'
+import { ShellAppBar } from './ShellAppBar'
 
 const Alert = forwardRef<HTMLDivElement, AlertProps>(function Alert(
   props,
@@ -51,27 +44,6 @@ const Main = styled('main', { shouldForwardProp: prop => prop !== 'open' })<{
       duration: theme.transitions.duration.enteringScreen,
     }),
     marginLeft: 0,
-  }),
-}))
-
-interface AppBarProps extends MuiAppBarProps {
-  open?: boolean
-}
-
-const AppBar = styled(MuiAppBar, {
-  shouldForwardProp: prop => prop !== 'open',
-})<AppBarProps>(({ theme, open }) => ({
-  transition: theme.transitions.create(['margin', 'width'], {
-    easing: theme.transitions.easing.sharp,
-    duration: theme.transitions.duration.leavingScreen,
-  }),
-  ...(open && {
-    width: `calc(100% - ${drawerWidth}px)`,
-    marginLeft: `${drawerWidth}px`,
-    transition: theme.transitions.create(['margin', 'width'], {
-      easing: theme.transitions.easing.easeOut,
-      duration: theme.transitions.duration.enteringScreen,
-    }),
   }),
 }))
 
@@ -182,52 +154,14 @@ export const Shell = ({ appNeedsUpdate, children, userPeerId }: ShellProps) => {
               {alertText}
             </Alert>
           </Snackbar>
-          <AppBar position="fixed" open={isDrawerOpen}>
-            <Toolbar
-              variant="regular"
-              sx={{
-                display: 'flex',
-                flexDirection: 'row',
-                justifyContent: 'space-between',
-              }}
-            >
-              <IconButton
-                size="large"
-                edge="start"
-                color="inherit"
-                aria-label="Open menu"
-                sx={{ mr: 2, ...(isDrawerOpen && { display: 'none' }) }}
-                onClick={handleDrawerOpen}
-              >
-                <MenuIcon />
-              </IconButton>
-              <Typography
-                variant="h6"
-                noWrap
-                component="div"
-                sx={{ marginRight: 'auto' }}
-              >
-                {title}
-              </Typography>
-              <Tooltip title="Copy current URL">
-                <IconButton
-                  size="large"
-                  edge="start"
-                  color="inherit"
-                  aria-label="Copy current URL"
-                  sx={{ ml: 'auto' }}
-                  onClick={handleLinkButtonClick}
-                >
-                  <LinkIcon />
-                </IconButton>
-              </Tooltip>
-              {doShowPeers ? (
-                <Tooltip title="Number of peers in the room">
-                  <StepIcon icon={numberOfPeers} sx={{ ml: 2 }} />
-                </Tooltip>
-              ) : null}
-            </Toolbar>
-          </AppBar>
+          <ShellAppBar
+            doShowPeers={doShowPeers}
+            handleDrawerOpen={handleDrawerOpen}
+            handleLinkButtonClick={handleLinkButtonClick}
+            isDrawerOpen={isDrawerOpen}
+            numberOfPeers={numberOfPeers}
+            title={title}
+          />
           <Drawer
             isDrawerOpen={isDrawerOpen}
             onDrawerClose={handleDrawerClose}
