@@ -97,6 +97,12 @@ This is a non-exhaustive list of things that are in Chitchatter's future:
 
 See the full ticket backlog [here](https://github.com/users/jeremyckahn/projects/1).
 
+## Environments
+
+- Production environment: https://chitchatter.im/
+  - Mirror: https://chitchatter.vercel.app/ (note that peer rooms cannot connect across domains)
+- Staging: https://chitchatter-git-develop-jeremyckahn.vercel.app/
+
 ## Available Scripts
 
 In the project directory, you can run:
