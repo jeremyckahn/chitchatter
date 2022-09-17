@@ -100,7 +100,7 @@ See the full ticket backlog [here](https://github.com/users/jeremyckahn/projects
 ## Environments
 
 - Production environment: https://chitchatter.im/
-  - Mirror: https://chitchatter.vercel.app/ (note that peer rooms cannot connect across domains)
+  - Mirror: https://chitchatter.vercel.app/ (note that peers cannot connect across domains)
 - Staging: https://chitchatter-git-develop-jeremyckahn.vercel.app/
 
 ## Available Scripts

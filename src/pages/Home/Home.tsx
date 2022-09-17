@@ -77,12 +77,13 @@ export function Home({ userId }: HomeProps) {
         <Typography variant="body1">
           This is a communication tool that is free, open source, and designed
           for simplicity and security. All communication between you and your
-          online peers is encrypted and ephemeral.
+          online peers is encrypted. There is no trace of your conversation once
+          you leave.
         </Typography>
       </Box>
       <Tooltip title="View project source code and documentation">
         <Link
-          href="https://github.com/jeremyckahn/chitchatter#readme"
+          href="https://github.com/jeremyckahn/chitchatter"
           target="_blank"
           sx={{ display: 'block', textAlign: 'center', color: '#fff' }}
         >
@@ -104,6 +105,13 @@ export function Home({ userId }: HomeProps) {
           target="_blank"
         >
           GPL v2
+        </Link>
+        . Please{' '}
+        <Link
+          href="https://github.com/jeremyckahn/chitchatter/blob/develop/README.md"
+          target="_blank"
+        >
+          read the docs
         </Link>
         .
       </Typography>
