@@ -1,7 +1,6 @@
 import {
   PropsWithChildren,
   SyntheticEvent,
-  forwardRef,
   useCallback,
   useContext,
   useEffect,
@@ -11,8 +10,7 @@ import {
 import CssBaseline from '@mui/material/CssBaseline'
 import { ThemeProvider, createTheme, styled } from '@mui/material/styles'
 import Box from '@mui/material/Box'
-import Snackbar from '@mui/material/Snackbar'
-import MuiAlert, { AlertProps, AlertColor } from '@mui/material/Alert'
+import { AlertColor } from '@mui/material/Alert'
 
 import { ShellContext } from 'contexts/ShellContext'
 import { SettingsContext } from 'contexts/SettingsContext'
@@ -22,13 +20,7 @@ import { Drawer, drawerWidth } from './Drawer'
 import { UpgradeDialog } from './UpgradeDialog'
 import { DrawerHeader } from './DrawerHeader'
 import { ShellAppBar } from './ShellAppBar'
-
-const Alert = forwardRef<HTMLDivElement, AlertProps>(function Alert(
-  props,
-  ref
-) {
-  return <MuiAlert elevation={6} ref={ref} variant="filled" {...props} />
-})
+import { NotificationArea } from './NotificationArea'
 
 const Main = styled('main', { shouldForwardProp: prop => prop !== 'open' })<{
   open?: boolean
@@ -140,20 +132,12 @@ export const Shell = ({ appNeedsUpdate, children, userPeerId }: ShellProps) => {
             display: 'flex',
           }}
         >
-          <Snackbar
-            open={isAlertShowing}
-            autoHideDuration={6000}
-            onClose={handleAlertClose}
-            anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
-          >
-            <Alert
-              onClose={handleAlertClose}
-              severity={alertSeverity}
-              variant="standard"
-            >
-              {alertText}
-            </Alert>
-          </Snackbar>
+          <NotificationArea
+            alertSeverity={alertSeverity}
+            alertText={alertText}
+            isAlertShowing={isAlertShowing}
+            onAlertClose={handleAlertClose}
+          />
           <ShellAppBar
             doShowPeers={doShowPeers}
             handleDrawerOpen={handleDrawerOpen}
