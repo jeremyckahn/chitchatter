@@ -5,8 +5,9 @@ import localforage from 'localforage'
 
 import * as serviceWorkerRegistration from 'serviceWorkerRegistration'
 import { SettingsContext } from 'contexts/SettingsContext'
-import { Home } from 'pages/Home/'
-import { PublicRoom } from 'pages/PublicRoom/'
+import { Home } from 'pages/Home'
+import { About } from 'pages/About'
+import { PublicRoom } from 'pages/PublicRoom'
 import { UserSettings } from 'models/settings'
 import { PersistedStorageKeys } from 'models/storage'
 import { Shell } from 'components/Shell'
@@ -91,6 +92,7 @@ function Bootstrap({
                   element={<Home userId={userId} />}
                 />
               ))}
+              <Route path="/about" element={<About />} />
               <Route
                 path="/public/:roomId"
                 element={<PublicRoom userId={userId} />}

@@ -1,5 +1,5 @@
 import React, { useEffect, useContext, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import Button from '@mui/material/Button'
 import Box from '@mui/material/Box'
 import FormControl from '@mui/material/FormControl'
@@ -7,7 +7,7 @@ import Typography from '@mui/material/Typography'
 import TextField from '@mui/material/TextField'
 import Divider from '@mui/material/Divider'
 import IconButton from '@mui/material/IconButton'
-import Link from '@mui/material/Link'
+import MuiLink from '@mui/material/Link'
 import GitHubIcon from '@mui/icons-material/GitHub'
 import Tooltip from '@mui/material/Tooltip'
 import { v4 as uuid } from 'uuid'
@@ -42,7 +42,9 @@ export function Home({ userId }: HomeProps) {
   return (
     <Box className="Home">
       <main className="mt-6 px-4 max-w-3xl text-center mx-auto">
-        <Logo className="px-1 pb-4 mx-auto max-w-md" />
+        <Link to="/about">
+          <Logo className="px-1 pb-4 mx-auto max-w-md" />
+        </Link>
         <form onSubmit={handleFormSubmit} className="max-w-xl mx-auto">
           <Typography sx={{ mb: 2 }}>
             Your user name:{' '}
@@ -82,7 +84,7 @@ export function Home({ userId }: HomeProps) {
         </Typography>
       </Box>
       <Tooltip title="View project source code and documentation">
-        <Link
+        <MuiLink
           href="https://github.com/jeremyckahn/chitchatter"
           target="_blank"
           sx={{ display: 'block', textAlign: 'center', color: '#fff' }}
@@ -96,23 +98,23 @@ export function Home({ userId }: HomeProps) {
           >
             <GitHubIcon sx={{ fontSize: '2em' }} />
           </IconButton>
-        </Link>
+        </MuiLink>
       </Tooltip>
       <Typography variant="body1" sx={{ textAlign: 'center' }}>
         Licensed under{' '}
-        <Link
+        <MuiLink
           href="https://github.com/jeremyckahn/chitchatter/blob/develop/LICENSE"
           target="_blank"
         >
           GPL v2
-        </Link>
+        </MuiLink>
         . Please{' '}
-        <Link
+        <MuiLink
           href="https://github.com/jeremyckahn/chitchatter/blob/develop/README.md"
           target="_blank"
         >
           read the docs
-        </Link>
+        </MuiLink>
         .
       </Typography>
     </Box>
