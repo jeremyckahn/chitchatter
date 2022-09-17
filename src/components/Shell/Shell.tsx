@@ -8,7 +8,7 @@ import {
   useState,
 } from 'react'
 import CssBaseline from '@mui/material/CssBaseline'
-import { ThemeProvider, createTheme, styled } from '@mui/material/styles'
+import { ThemeProvider, createTheme } from '@mui/material/styles'
 import Box from '@mui/material/Box'
 import { AlertColor } from '@mui/material/Alert'
 
@@ -16,28 +16,11 @@ import { ShellContext } from 'contexts/ShellContext'
 import { SettingsContext } from 'contexts/SettingsContext'
 import { AlertOptions } from 'models/shell'
 
-import { Drawer, drawerWidth } from './Drawer'
+import { Drawer } from './Drawer'
 import { UpgradeDialog } from './UpgradeDialog'
-import { DrawerHeader } from './DrawerHeader'
 import { ShellAppBar } from './ShellAppBar'
 import { NotificationArea } from './NotificationArea'
-
-const Main = styled('main', { shouldForwardProp: prop => prop !== 'open' })<{
-  open?: boolean
-}>(({ theme, open }) => ({
-  transition: theme.transitions.create('margin', {
-    easing: theme.transitions.easing.sharp,
-    duration: theme.transitions.duration.leavingScreen,
-  }),
-  marginLeft: `-${drawerWidth}px`,
-  ...(open && {
-    transition: theme.transitions.create('margin', {
-      easing: theme.transitions.easing.easeOut,
-      duration: theme.transitions.duration.enteringScreen,
-    }),
-    marginLeft: 0,
-  }),
-}))
+import { RouteContent } from './RouteContent'
 
 export interface ShellProps extends PropsWithChildren {
   userPeerId: string
@@ -153,17 +136,7 @@ export const Shell = ({ appNeedsUpdate, children, userPeerId }: ShellProps) => {
             theme={theme}
             userPeerId={userPeerId}
           />
-          <Main
-            open={isDrawerOpen}
-            sx={{
-              display: 'flex',
-              flexDirection: 'column',
-              width: '100%',
-            }}
-          >
-            <DrawerHeader />
-            <Box sx={{ overflow: 'auto', flexGrow: 1 }}>{children}</Box>
-          </Main>
+          <RouteContent isDrawerOpen={isDrawerOpen}>{children}</RouteContent>
         </Box>
       </ThemeProvider>
     </ShellContext.Provider>
