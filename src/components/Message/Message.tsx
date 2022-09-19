@@ -2,10 +2,21 @@ import { HTMLAttributes } from 'react'
 import Box from '@mui/material/Box'
 import Typography, { TypographyProps } from '@mui/material/Typography'
 import Link, { LinkProps } from '@mui/material/Link'
-import Markdown from 'react-markdown'
-import { CodeProps } from 'react-markdown/lib/ast-to-react'
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter'
 import { materialDark } from 'react-syntax-highlighter/dist/esm/styles/prism'
+
+// These imports need to be ts-ignored to prevent spurious errors that look
+// like this:
+//
+//   Module 'react-markdown' cannot be imported using this construct. The
+//   specifier only resolves to an ES module, which cannot be imported
+//   synchronously. Use dynamic import instead. (tsserver 1471)
+//
+// @ts-ignore
+import Markdown from 'react-markdown'
+// @ts-ignore
+import { CodeProps } from 'react-markdown/lib/ast-to-react'
+// @ts-ignore
 import remarkGfm from 'remark-gfm'
 
 import { Message as IMessage, isMessageReceived } from 'models/chat'

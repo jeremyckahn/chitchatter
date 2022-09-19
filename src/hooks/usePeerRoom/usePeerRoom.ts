@@ -1,9 +1,13 @@
 import { useEffect, useState } from 'react'
-import { RoomConfig } from 'trystero'
+import { BaseRoomConfig } from 'trystero'
+import { TorrentRoomConfig } from 'trystero/torrent'
 
 import { PeerRoom } from 'services/PeerRoom'
 
-export function usePeerRoom(roomConfig: RoomConfig, roomId: string) {
+export function usePeerRoom(
+  roomConfig: BaseRoomConfig & TorrentRoomConfig,
+  roomId: string
+) {
   const [peerRoom] = useState(() => new PeerRoom(roomConfig, roomId))
 
   useEffect(() => {

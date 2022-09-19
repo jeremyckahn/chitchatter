@@ -1,11 +1,12 @@
-import { joinRoom, Room, RoomConfig } from 'trystero'
+import { joinRoom, Room, BaseRoomConfig } from 'trystero'
+import { TorrentRoomConfig } from 'trystero/torrent'
 
 export class PeerRoom {
   private room: Room
 
-  private roomConfig: RoomConfig
+  private roomConfig: TorrentRoomConfig & BaseRoomConfig
 
-  constructor(config: RoomConfig, roomId: string) {
+  constructor(config: TorrentRoomConfig & BaseRoomConfig, roomId: string) {
     this.roomConfig = config
     this.room = joinRoom(this.roomConfig, roomId)
   }
