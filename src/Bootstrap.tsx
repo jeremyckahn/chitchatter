@@ -8,6 +8,7 @@ import { SettingsContext } from 'contexts/SettingsContext'
 import { routes } from 'config/routes'
 import { Home } from 'pages/Home'
 import { About } from 'pages/About'
+import { Settings } from 'pages/Settings'
 import { PublicRoom } from 'pages/PublicRoom'
 import { UserSettings } from 'models/settings'
 import { PersistedStorageKeys } from 'models/storage'
@@ -94,6 +95,7 @@ function Bootstrap({
                 />
               ))}
               <Route path={routes.ABOUT} element={<About />} />
+              <Route path={routes.SETTINGS} element={<Settings />} />
               <Route
                 path={routes.PUBLIC_ROOM}
                 element={<PublicRoom userId={userId} />}

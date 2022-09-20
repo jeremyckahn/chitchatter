@@ -13,6 +13,7 @@ import ListItemButton from '@mui/material/ListItemButton'
 import ListItemIcon from '@mui/material/ListItemIcon'
 import ListItemText from '@mui/material/ListItemText'
 import Home from '@mui/icons-material/Home'
+import SettingsApplications from '@mui/icons-material/SettingsRounded'
 import QuestionMark from '@mui/icons-material/QuestionMark'
 import Brightness4Icon from '@mui/icons-material/Brightness4'
 import Brightness7Icon from '@mui/icons-material/Brightness7'
@@ -27,18 +28,20 @@ export const drawerWidth = 240
 
 export interface DrawerProps extends PropsWithChildren {
   isDrawerOpen: boolean
+  onAboutLinkClick: () => void
   onDrawerClose: () => void
   onHomeLinkClick: () => void
-  onAboutLinkClick: () => void
+  onSettingsLinkClick: () => void
   theme: Theme
   userPeerId: string
 }
 
 export const Drawer = ({
   isDrawerOpen,
+  onAboutLinkClick,
   onDrawerClose,
   onHomeLinkClick,
-  onAboutLinkClick,
+  onSettingsLinkClick,
   theme,
   userPeerId,
 }: DrawerProps) => {
@@ -98,6 +101,16 @@ export const Drawer = ({
                 <Home />
               </ListItemIcon>
               <ListItemText primary="Home" />
+            </ListItemButton>
+          </ListItem>
+        </Link>
+        <Link to={routes.SETTINGS} onClick={onSettingsLinkClick}>
+          <ListItem disablePadding>
+            <ListItemButton>
+              <ListItemIcon>
+                <SettingsApplications />
+              </ListItemIcon>
+              <ListItemText primary="Settings" />
             </ListItemButton>
           </ListItem>
         </Link>
