@@ -95,7 +95,10 @@ function Bootstrap({
                 />
               ))}
               <Route path={routes.ABOUT} element={<About />} />
-              <Route path={routes.SETTINGS} element={<Settings />} />
+              <Route
+                path={routes.SETTINGS}
+                element={<Settings userId={userId} />}
+              />
               <Route
                 path={routes.PUBLIC_ROOM}
                 element={<PublicRoom userId={userId} />}
