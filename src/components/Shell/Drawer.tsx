@@ -17,6 +17,7 @@ import QuestionMark from '@mui/icons-material/QuestionMark'
 import Brightness4Icon from '@mui/icons-material/Brightness4'
 import Brightness7Icon from '@mui/icons-material/Brightness7'
 
+import { routes } from 'config/routes'
 import { SettingsContext } from 'contexts/SettingsContext'
 import { PeerNameDisplay } from 'components/PeerNameDisplay'
 
@@ -90,7 +91,7 @@ export const Drawer = ({
       </ListItem>
       <Divider />
       <List role="navigation">
-        <Link to="/" onClick={onHomeLinkClick}>
+        <Link to={routes.INDEX_HTML} onClick={onHomeLinkClick}>
           <ListItem disablePadding>
             <ListItemButton>
               <ListItemIcon>
@@ -100,7 +101,7 @@ export const Drawer = ({
             </ListItemButton>
           </ListItem>
         </Link>
-        <Link to="/about" onClick={onAboutLinkClick}>
+        <Link to={routes.ABOUT} onClick={onAboutLinkClick}>
           <ListItem disablePadding>
             <ListItemButton>
               <ListItemIcon>

@@ -12,6 +12,7 @@ import GitHubIcon from '@mui/icons-material/GitHub'
 import Tooltip from '@mui/material/Tooltip'
 import { v4 as uuid } from 'uuid'
 
+import { routes } from 'config/routes'
 import { ShellContext } from 'contexts/ShellContext'
 import { PeerNameDisplay } from 'components/PeerNameDisplay'
 import { ReactComponent as Logo } from 'img/logo.svg'
@@ -42,7 +43,7 @@ export function Home({ userId }: HomeProps) {
   return (
     <Box className="Home">
       <main className="mt-6 px-4 max-w-3xl text-center mx-auto">
-        <Link to="/about">
+        <Link to={routes.ABOUT}>
           <Logo className="px-1 pb-4 mx-auto max-w-md" />
         </Link>
         <form onSubmit={handleFormSubmit} className="max-w-xl mx-auto">

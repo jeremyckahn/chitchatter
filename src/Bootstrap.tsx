@@ -5,6 +5,7 @@ import localforage from 'localforage'
 
 import * as serviceWorkerRegistration from 'serviceWorkerRegistration'
 import { SettingsContext } from 'contexts/SettingsContext'
+import { routes } from 'config/routes'
 import { Home } from 'pages/Home'
 import { About } from 'pages/About'
 import { PublicRoom } from 'pages/PublicRoom'
@@ -85,16 +86,16 @@ function Bootstrap({
         <Shell appNeedsUpdate={appNeedsUpdate} userPeerId={userId}>
           {hasLoadedSettings ? (
             <Routes>
-              {['/', '/index.html'].map(path => (
+              {[routes.ROOT, routes.INDEX_HTML].map(path => (
                 <Route
                   key={path}
                   path={path}
                   element={<Home userId={userId} />}
                 />
               ))}
-              <Route path="/about" element={<About />} />
+              <Route path={routes.ABOUT} element={<About />} />
               <Route
-                path="/public/:roomId"
+                path={routes.PUBLIC_ROOM}
                 element={<PublicRoom userId={userId} />}
               />
             </Routes>
