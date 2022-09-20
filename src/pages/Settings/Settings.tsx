@@ -5,6 +5,7 @@ import Typography from '@mui/material/Typography'
 import Divider from '@mui/material/Divider'
 
 import { ShellContext } from 'contexts/ShellContext'
+import { StorageContext } from 'contexts/StorageContext'
 import { PeerNameDisplay } from 'components/PeerNameDisplay'
 
 interface SettingsProps {
@@ -13,10 +14,18 @@ interface SettingsProps {
 
 export const Settings = ({ userId }: SettingsProps) => {
   const { setTitle } = useContext(ShellContext)
+  const { getPersistedStorage } = useContext(StorageContext)
+
+  const persistedStorage = getPersistedStorage()
 
   useEffect(() => {
     setTitle('Settings')
   }, [setTitle])
+
+  const handleDeleteSettingsClick = async () => {
+    await persistedStorage.clear()
+    window.location.reload()
+  }
 
   return (
     <Box className="max-w-3xl mx-auto p-4">
@@ -66,8 +75,9 @@ export const Settings = ({ userId }: SettingsProps) => {
         sx={_theme => ({
           mb: 2,
         })}
+        onClick={handleDeleteSettingsClick}
       >
-        Delete all data
+        Delete all data and restart
       </Button>
       <Typography
         variant="subtitle2"
