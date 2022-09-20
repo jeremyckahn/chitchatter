@@ -1,4 +1,4 @@
-import { useContext, useEffect } from 'react'
+import { useContext, useEffect, useState } from 'react'
 import Box from '@mui/material/Box'
 import Button from '@mui/material/Button'
 import Typography from '@mui/material/Typography'
@@ -8,6 +8,8 @@ import { ShellContext } from 'contexts/ShellContext'
 import { StorageContext } from 'contexts/StorageContext'
 import { PeerNameDisplay } from 'components/PeerNameDisplay'
 
+import { ConfirmDialog } from '../../components/ConfirmDialog'
+
 interface SettingsProps {
   userId: string
 }
@@ -15,6 +17,10 @@ interface SettingsProps {
 export const Settings = ({ userId }: SettingsProps) => {
   const { setTitle } = useContext(ShellContext)
   const { getPersistedStorage } = useContext(StorageContext)
+  const [
+    isDeleteSettingsConfirmDiaglogOpen,
+    setIsDeleteSettingsConfirmDiaglogOpen,
+  ] = useState(false)
 
   const persistedStorage = getPersistedStorage()
 
@@ -22,7 +28,15 @@ export const Settings = ({ userId }: SettingsProps) => {
     setTitle('Settings')
   }, [setTitle])
 
-  const handleDeleteSettingsClick = async () => {
+  const handleDeleteSettingsClick = () => {
+    setIsDeleteSettingsConfirmDiaglogOpen(true)
+  }
+
+  const handleDeleteSettingsCancel = () => {
+    setIsDeleteSettingsConfirmDiaglogOpen(false)
+  }
+
+  const handleDeleteSettingsConfirm = async () => {
     await persistedStorage.clear()
     window.location.reload()
   }
@@ -79,6 +93,11 @@ export const Settings = ({ userId }: SettingsProps) => {
       >
         Delete all data and restart
       </Button>
+      <ConfirmDialog
+        isOpen={isDeleteSettingsConfirmDiaglogOpen}
+        onCancel={handleDeleteSettingsCancel}
+        onConfirm={handleDeleteSettingsConfirm}
+      />
       <Typography
         variant="subtitle2"
         sx={_theme => ({
