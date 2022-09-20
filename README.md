@@ -141,7 +141,13 @@ Assuming you are hosting Chitchatter on [GitHub Pages](https://pages.github.com/
 
 #### Deployment
 
+##### On GitHub
+
 When hosted on GitHub Pages and the configuration above has been done, the Production environment is updated when the remote `main` branch is updated.
+
+##### On non-GitHub hosts
+
+Build the app with `npm run build`, and then serve the `build` directory. Any static file serving solution should work.
 
 #### Runtime configuration
 
