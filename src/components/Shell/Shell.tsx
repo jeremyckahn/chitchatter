@@ -131,6 +131,10 @@ export const Shell = ({ appNeedsUpdate, children, userPeerId }: ShellProps) => {
     setIsDrawerOpen(false)
   }
 
+  const handleSettingsLinkClick = () => {
+    setIsDrawerOpen(false)
+  }
+
   return (
     <ShellContext.Provider value={shellContextValue}>
       <ThemeProvider theme={theme}>
@@ -159,9 +163,10 @@ export const Shell = ({ appNeedsUpdate, children, userPeerId }: ShellProps) => {
           />
           <Drawer
             isDrawerOpen={isDrawerOpen}
+            onAboutLinkClick={handleAboutLinkClick}
             onDrawerClose={handleDrawerClose}
             onHomeLinkClick={handleHomeLinkClick}
-            onAboutLinkClick={handleAboutLinkClick}
+            onSettingsLinkClick={handleSettingsLinkClick}
             theme={theme}
             userPeerId={userPeerId}
           />

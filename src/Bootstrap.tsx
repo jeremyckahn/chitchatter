@@ -4,10 +4,12 @@ import { v4 as uuid } from 'uuid'
 import localforage from 'localforage'
 
 import * as serviceWorkerRegistration from 'serviceWorkerRegistration'
+import { StorageContext } from 'contexts/StorageContext'
 import { SettingsContext } from 'contexts/SettingsContext'
 import { routes } from 'config/routes'
 import { Home } from 'pages/Home'
 import { About } from 'pages/About'
+import { Settings } from 'pages/Settings'
 import { PublicRoom } from 'pages/PublicRoom'
 import { UserSettings } from 'models/settings'
 import { PersistedStorageKeys } from 'models/storage'
@@ -19,12 +21,13 @@ export interface BootstrapProps {
 }
 
 function Bootstrap({
-  persistedStorage = localforage.createInstance({
+  persistedStorage: persistedStorageProp = localforage.createInstance({
     name: 'chitchatter',
     description: 'Persisted settings data for chitchatter',
   }),
   getUuid = uuid,
 }: BootstrapProps) {
+  const [persistedStorage] = useState(persistedStorageProp)
   const [appNeedsUpdate, setAppNeedsUpdate] = useState(false)
   const [hasLoadedSettings, setHasLoadedSettings] = useState(false)
   const [userSettings, setUserSettings] = useState<UserSettings>({
@@ -47,14 +50,14 @@ function Bootstrap({
       if (hasLoadedSettings) return
 
       const persistedUserSettings =
-        await persistedStorage.getItem<UserSettings>(
+        await persistedStorageProp.getItem<UserSettings>(
           PersistedStorageKeys.USER_SETTINGS
         )
 
       if (persistedUserSettings) {
         setUserSettings(persistedUserSettings)
       } else {
-        await persistedStorage.setItem(
+        await persistedStorageProp.setItem(
           PersistedStorageKeys.USER_SETTINGS,
           userSettings
         )
@@ -62,7 +65,7 @@ function Bootstrap({
 
       setHasLoadedSettings(true)
     })()
-  }, [hasLoadedSettings, persistedStorage, userSettings, userId])
+  }, [hasLoadedSettings, persistedStorageProp, userSettings, userId])
 
   const settingsContextValue = {
     updateUserSettings: async (changedSettings: Partial<UserSettings>) => {
@@ -71,7 +74,7 @@ function Bootstrap({
         ...changedSettings,
       }
 
-      await persistedStorage.setItem(
+      await persistedStorageProp.setItem(
         PersistedStorageKeys.USER_SETTINGS,
         newSettings
       )
@@ -81,30 +84,40 @@ function Bootstrap({
     getUserSettings: () => ({ ...userSettings }),
   }
 
+  const storageContextValue = {
+    getPersistedStorage: () => persistedStorage,
+  }
+
   return (
     <Router>
-      <SettingsContext.Provider value={settingsContextValue}>
-        <Shell appNeedsUpdate={appNeedsUpdate} userPeerId={userId}>
-          {hasLoadedSettings ? (
-            <Routes>
-              {[routes.ROOT, routes.INDEX_HTML].map(path => (
+      <StorageContext.Provider value={storageContextValue}>
+        <SettingsContext.Provider value={settingsContextValue}>
+          <Shell appNeedsUpdate={appNeedsUpdate} userPeerId={userId}>
+            {hasLoadedSettings ? (
+              <Routes>
+                {[routes.ROOT, routes.INDEX_HTML].map(path => (
+                  <Route
+                    key={path}
+                    path={path}
+                    element={<Home userId={userId} />}
+                  />
+                ))}
+                <Route path={routes.ABOUT} element={<About />} />
                 <Route
-                  key={path}
-                  path={path}
-                  element={<Home userId={userId} />}
+                  path={routes.SETTINGS}
+                  element={<Settings userId={userId} />}
                 />
-              ))}
-              <Route path={routes.ABOUT} element={<About />} />
-              <Route
-                path={routes.PUBLIC_ROOM}
-                element={<PublicRoom userId={userId} />}
-              />
-            </Routes>
-          ) : (
-            <></>
-          )}
-        </Shell>
-      </SettingsContext.Provider>
+                <Route
+                  path={routes.PUBLIC_ROOM}
+                  element={<PublicRoom userId={userId} />}
+                />
+              </Routes>
+            ) : (
+              <></>
+            )}
+          </Shell>
+        </SettingsContext.Provider>
+      </StorageContext.Provider>
     </Router>
   )
 }
