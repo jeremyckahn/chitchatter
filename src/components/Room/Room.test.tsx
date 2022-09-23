@@ -8,6 +8,9 @@ import { Room } from './'
 const mockUserId = 'user-id'
 const mockRoomId = 'room-123'
 
+window.AudioContext = jest.fn().mockImplementation(() => {
+  return {}
+})
 const mockGetUuid = jest.fn()
 const mockMessagedSender = jest
   .fn()

@@ -30,6 +30,7 @@ function Bootstrap({
   const [userSettings, setUserSettings] = useState<UserSettings>({
     userId: getUuid(),
     colorMode: 'dark',
+    playSoundOnNewMessage: true,
   })
   const { userId } = userSettings
 

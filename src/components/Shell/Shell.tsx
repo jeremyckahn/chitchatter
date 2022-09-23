@@ -36,6 +36,7 @@ export const Shell = ({ appNeedsUpdate, children, userPeerId }: ShellProps) => {
   const [title, setTitle] = useState('')
   const [alertText, setAlertText] = useState('')
   const [numberOfPeers, setNumberOfPeers] = useState(1)
+  const [tabHasFocus, setTabHasFocus] = useState(true)
 
   const showAlert = useCallback<
     (message: string, options?: AlertOptions) => void
@@ -48,12 +49,20 @@ export const Shell = ({ appNeedsUpdate, children, userPeerId }: ShellProps) => {
   const shellContextValue = useMemo(
     () => ({
       numberOfPeers,
+      tabHasFocus,
       setDoShowPeers,
       setNumberOfPeers,
       setTitle,
       showAlert,
     }),
-    [numberOfPeers, setDoShowPeers, setNumberOfPeers, setTitle, showAlert]
+    [
+      numberOfPeers,
+      tabHasFocus,
+      setDoShowPeers,
+      setNumberOfPeers,
+      setTitle,
+      showAlert,
+    ]
   )
 
   const colorMode = settingsContext.getUserSettings().colorMode
@@ -82,6 +91,21 @@ export const Shell = ({ appNeedsUpdate, children, userPeerId }: ShellProps) => {
   useEffect(() => {
     document.title = title
   }, [title])
+
+  useEffect(() => {
+    const handleFocus = () => {
+      setTabHasFocus(true)
+    }
+    const handleBlur = () => {
+      setTabHasFocus(false)
+    }
+    window.addEventListener('focus', handleFocus)
+    window.addEventListener('blur', handleBlur)
+    return () => {
+      window.removeEventListener('focus', handleFocus)
+      window.removeEventListener('blur', handleBlur)
+    }
+  }, [])
 
   const handleDrawerOpen = () => {
     setIsDrawerOpen(true)
