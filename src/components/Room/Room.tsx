@@ -46,16 +46,19 @@ export function Room({
   )
 
   useEffect(() => {
-    const fetchSound = async () => {
-      audioBufferContainer.current = await fetch(
-        process.env.PUBLIC_URL + '/sounds/new-message.aac'
-      )
-        .then((response: Response) => response.arrayBuffer())
-        .then((arrayBuffer: ArrayBuffer) =>
-          audioContext.decodeAudioData(arrayBuffer)
+    ;(async () => {
+      try {
+        const response = await fetch(
+          process.env.PUBLIC_URL + '/sounds/new-message.aac'
         )
-    }
-    fetchSound().catch(console.error)
+        const arrayBuffer = await response.arrayBuffer()
+        audioBufferContainer.current = await audioContext.decodeAudioData(
+          arrayBuffer
+        )
+      } catch (e) {
+        console.error(e)
+      }
+    })()
   }, [audioBufferContainer, audioContext])
 
   useEffect(() => {
