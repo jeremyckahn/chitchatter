@@ -33,7 +33,7 @@ export function Room({
   const [messageLog, setMessageLog] = useState<
     Array<ReceivedMessage | UnsentMessage>
   >([])
-  const [audioContext] = useState(new AudioContext())
+  const [audioContext] = useState(() => new AudioContext())
   const audioBufferContainer = useRef<AudioBuffer | null>(null)
 
   const peerRoom = usePeerRoom(
