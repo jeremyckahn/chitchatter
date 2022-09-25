@@ -1,14 +1,16 @@
-import { useContext, useEffect, useState } from 'react'
+import { ChangeEvent, useContext, useEffect, useState } from 'react'
 import Box from '@mui/material/Box'
 import Button from '@mui/material/Button'
 import Typography from '@mui/material/Typography'
 import Divider from '@mui/material/Divider'
+import { Switch } from '@mui/material'
 
 import { ShellContext } from 'contexts/ShellContext'
 import { StorageContext } from 'contexts/StorageContext'
 import { PeerNameDisplay } from 'components/PeerNameDisplay'
 
 import { ConfirmDialog } from '../../components/ConfirmDialog'
+import { SettingsContext } from '../../contexts/SettingsContext'
 
 interface SettingsProps {
   userId: string
@@ -16,17 +18,29 @@ interface SettingsProps {
 
 export const Settings = ({ userId }: SettingsProps) => {
   const { setTitle } = useContext(ShellContext)
+  const { updateUserSettings, getUserSettings } = useContext(SettingsContext)
   const { getPersistedStorage } = useContext(StorageContext)
   const [
     isDeleteSettingsConfirmDiaglogOpen,
     setIsDeleteSettingsConfirmDiaglogOpen,
   ] = useState(false)
+  const [playSoundOnNewMessage, setPlaySoundOnNewMessage] = useState(
+    () => getUserSettings().playSoundOnNewMessage
+  )
 
   const persistedStorage = getPersistedStorage()
 
   useEffect(() => {
     setTitle('Settings')
   }, [setTitle])
+
+  const handlePlaySoundOnNewMessageChange = (
+    event: ChangeEvent,
+    value: boolean
+  ) => {
+    setPlaySoundOnNewMessage(value)
+    updateUserSettings({ playSoundOnNewMessage: value })
+  }
 
   const handleDeleteSettingsClick = () => {
     setIsDeleteSettingsConfirmDiaglogOpen(true)
@@ -53,6 +67,13 @@ export const Settings = ({ userId }: SettingsProps) => {
       >
         Data
       </Typography>
+      <Divider sx={{ my: 2 }} />
+      <Switch
+        checked={playSoundOnNewMessage}
+        onChange={handlePlaySoundOnNewMessageChange}
+      />{' '}
+      Play a sound on new message
+      <Divider sx={{ my: 2 }} />
       <Typography
         variant="h2"
         sx={theme => ({
