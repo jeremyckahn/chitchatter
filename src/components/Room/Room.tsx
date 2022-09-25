@@ -99,6 +99,31 @@ export function Room({
     setMessageLog([...messageLog, { ...message, timeReceived: Date.now() }])
   })
 
+  useEffect(() =>{
+
+    function showNotification(){
+    
+    const notification = new Notification("You have a new message")
+    }
+    
+    if(Notification.permission === "granted"){ // to ask for permission
+    
+    showNotification();
+    }
+    else if (Notification.permission !== "denied"){
+    
+    Notification.requestPermission().then((permission) =>{
+    
+      if (permission === "granted") {
+    
+        showNotification();
+        // …
+      }
+    })
+    }
+    
+    },[])
+
   const handleMessageSubmit = async (message: string) => {
     await performMessageSend(message)
   }
