@@ -122,7 +122,7 @@ export function Room({
 
   const playNewMessageSound = () => {
     if (!audioBufferContainer.current) {
-      console.error("Can't fetch sound buffer to play")
+      console.error('Audio buffer not available')
       return
     }
     const audioSource = audioContext.createBufferSource()
