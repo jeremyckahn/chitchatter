@@ -9,21 +9,32 @@ import MenuIcon from '@mui/icons-material/Menu'
 import LinkIcon from '@mui/icons-material/Link'
 
 import { drawerWidth } from './Drawer'
+import { peerListWidth } from './PeerList'
 
 interface AppBarProps extends MuiAppBarProps {
-  open?: boolean
+  isDrawerOpen?: boolean
+  isPeerListOpen?: boolean
 }
 
 export const AppBar = styled(MuiAppBar, {
-  shouldForwardProp: prop => prop !== 'open',
-})<AppBarProps>(({ theme, open }) => ({
+  shouldForwardProp: prop =>
+    prop !== 'isDrawerOpen' && prop !== 'isPeerListOpen',
+})<AppBarProps>(({ theme, isDrawerOpen, isPeerListOpen }) => ({
   transition: theme.transitions.create(['margin', 'width'], {
     easing: theme.transitions.easing.sharp,
     duration: theme.transitions.duration.leavingScreen,
   }),
-  ...(open && {
+  ...(isDrawerOpen && {
     width: `calc(100% - ${drawerWidth}px)`,
     marginLeft: `${drawerWidth}px`,
+    transition: theme.transitions.create(['margin', 'width'], {
+      easing: theme.transitions.easing.easeOut,
+      duration: theme.transitions.duration.enteringScreen,
+    }),
+  }),
+  ...(isPeerListOpen && {
+    width: `calc(100% - ${peerListWidth}px)`,
+    marginRight: `${peerListWidth}px`,
     transition: theme.transitions.create(['margin', 'width'], {
       easing: theme.transitions.easing.easeOut,
       duration: theme.transitions.duration.enteringScreen,
@@ -36,8 +47,10 @@ interface ShellAppBarProps {
   handleDrawerOpen: () => void
   handleLinkButtonClick: () => Promise<void>
   isDrawerOpen: boolean
+  isPeerListOpen: boolean
   numberOfPeers: number
   title: string
+  handlePeerListOpen: () => void
 }
 
 export const ShellAppBar = ({
@@ -45,11 +58,17 @@ export const ShellAppBar = ({
   handleDrawerOpen,
   handleLinkButtonClick,
   isDrawerOpen,
+  isPeerListOpen,
   numberOfPeers,
   title,
+  handlePeerListOpen,
 }: ShellAppBarProps) => {
   return (
-    <AppBar position="fixed" open={isDrawerOpen}>
+    <AppBar
+      position="fixed"
+      isDrawerOpen={isDrawerOpen}
+      isPeerListOpen={isPeerListOpen}
+    >
       <Toolbar
         variant="regular"
         sx={{
@@ -89,8 +108,12 @@ export const ShellAppBar = ({
           </IconButton>
         </Tooltip>
         {doShowPeers ? (
-          <Tooltip title="Number of peers in the room">
-            <StepIcon icon={numberOfPeers} sx={{ ml: 2 }} />
+          <Tooltip title="Clic to show peer list">
+            <StepIcon
+              icon={numberOfPeers}
+              onClick={handlePeerListOpen}
+              sx={{ ml: 2 }}
+            />
           </Tooltip>
         ) : null}
       </Toolbar>

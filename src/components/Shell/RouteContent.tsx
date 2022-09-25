@@ -4,32 +4,51 @@ import { styled } from '@mui/material/styles'
 
 import { DrawerHeader } from './DrawerHeader'
 import { drawerWidth } from './Drawer'
+import { peerListWidth } from './PeerList'
 
-const Main = styled('main', { shouldForwardProp: prop => prop !== 'open' })<{
-  open?: boolean
-}>(({ theme, open }) => ({
+const Main = styled('main', {
+  shouldForwardProp: prop =>
+    prop !== 'isDrawerOpen' && prop !== 'isPeerListOpen',
+})<{
+  isDrawerOpen?: boolean
+  isPeerListOpen?: boolean
+}>(({ theme, isDrawerOpen, isPeerListOpen }) => ({
   transition: theme.transitions.create('margin', {
     easing: theme.transitions.easing.sharp,
     duration: theme.transitions.duration.leavingScreen,
   }),
   marginLeft: `-${drawerWidth}px`,
-  ...(open && {
+  marginRight: `-${peerListWidth}px`,
+  ...(isDrawerOpen && {
     transition: theme.transitions.create('margin', {
       easing: theme.transitions.easing.easeOut,
       duration: theme.transitions.duration.enteringScreen,
     }),
     marginLeft: 0,
   }),
+  ...(isPeerListOpen && {
+    transition: theme.transitions.create('margin', {
+      easing: theme.transitions.easing.easeOut,
+      duration: theme.transitions.duration.enteringScreen,
+    }),
+    marginRight: 0,
+  }),
 }))
 
 interface RouteContentProps extends PropsWithChildren {
   isDrawerOpen: boolean
+  isPeerListOpen: boolean
 }
 
-export const RouteContent = ({ children, isDrawerOpen }: RouteContentProps) => {
+export const RouteContent = ({
+  children,
+  isDrawerOpen,
+  isPeerListOpen,
+}: RouteContentProps) => {
   return (
     <Main
-      open={isDrawerOpen}
+      isDrawerOpen={isDrawerOpen}
+      isPeerListOpen={isPeerListOpen}
       sx={{
         display: 'flex',
         flexDirection: 'column',

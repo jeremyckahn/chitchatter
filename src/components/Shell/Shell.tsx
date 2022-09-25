@@ -15,12 +15,14 @@ import { AlertColor } from '@mui/material/Alert'
 import { ShellContext } from 'contexts/ShellContext'
 import { SettingsContext } from 'contexts/SettingsContext'
 import { AlertOptions } from 'models/shell'
+import { User } from 'models/chat'
 
 import { Drawer } from './Drawer'
 import { UpgradeDialog } from './UpgradeDialog'
 import { ShellAppBar } from './ShellAppBar'
 import { NotificationArea } from './NotificationArea'
 import { RouteContent } from './RouteContent'
+import { PeerList } from './PeerList'
 
 export interface ShellProps extends PropsWithChildren {
   userPeerId: string
@@ -36,6 +38,8 @@ export const Shell = ({ appNeedsUpdate, children, userPeerId }: ShellProps) => {
   const [title, setTitle] = useState('')
   const [alertText, setAlertText] = useState('')
   const [numberOfPeers, setNumberOfPeers] = useState(1)
+  const [isPeerListOpen, setIsPeerListOpen] = useState(false)
+  const [peerList, setPeerList] = useState<User[]>([]) // except you
 
   const showAlert = useCallback<
     (message: string, options?: AlertOptions) => void
@@ -52,8 +56,12 @@ export const Shell = ({ appNeedsUpdate, children, userPeerId }: ShellProps) => {
       setNumberOfPeers,
       setTitle,
       showAlert,
+      isPeerListOpen,
+      setIsPeerListOpen,
+      peerList,
+      setPeerList,
     }),
-    [numberOfPeers, setDoShowPeers, setNumberOfPeers, setTitle, showAlert]
+    [isPeerListOpen, numberOfPeers, peerList, showAlert]
   )
 
   const colorMode = settingsContext.getUserSettings().colorMode
@@ -87,6 +95,10 @@ export const Shell = ({ appNeedsUpdate, children, userPeerId }: ShellProps) => {
     setIsDrawerOpen(true)
   }
 
+  const handlePeerListOpen = () => {
+    setIsPeerListOpen(true)
+  }
+
   const handleLinkButtonClick = async () => {
     await navigator.clipboard.writeText(window.location.href)
 
@@ -97,6 +109,10 @@ export const Shell = ({ appNeedsUpdate, children, userPeerId }: ShellProps) => {
 
   const handleDrawerClose = () => {
     setIsDrawerOpen(false)
+  }
+
+  const handlePeerListClose = () => {
+    setIsPeerListOpen(false)
   }
 
   const handleHomeLinkClick = () => {
@@ -134,8 +150,10 @@ export const Shell = ({ appNeedsUpdate, children, userPeerId }: ShellProps) => {
             handleDrawerOpen={handleDrawerOpen}
             handleLinkButtonClick={handleLinkButtonClick}
             isDrawerOpen={isDrawerOpen}
+            isPeerListOpen={isPeerListOpen}
             numberOfPeers={numberOfPeers}
             title={title}
+            handlePeerListOpen={handlePeerListOpen}
           />
           <Drawer
             isDrawerOpen={isDrawerOpen}
@@ -146,7 +164,18 @@ export const Shell = ({ appNeedsUpdate, children, userPeerId }: ShellProps) => {
             theme={theme}
             userPeerId={userPeerId}
           />
-          <RouteContent isDrawerOpen={isDrawerOpen}>{children}</RouteContent>
+          <RouteContent
+            isDrawerOpen={isDrawerOpen}
+            isPeerListOpen={isPeerListOpen}
+          >
+            {children}
+          </RouteContent>
+          <PeerList
+            userId={userPeerId}
+            isPeerListOpen={isPeerListOpen}
+            onPeerListClose={handlePeerListClose}
+            peerList={peerList}
+          />
         </Box>
       </ThemeProvider>
     </ShellContext.Provider>

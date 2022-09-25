@@ -5,6 +5,11 @@ export interface UnsentMessage {
   authorId: string
 }
 
+export interface User {
+  peerId: string
+  userId: string
+}
+
 export interface ReceivedMessage extends UnsentMessage {
   timeReceived: number
 }
