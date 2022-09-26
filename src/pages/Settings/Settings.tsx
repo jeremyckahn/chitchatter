@@ -35,7 +35,7 @@ export const Settings = ({ userId }: SettingsProps) => {
   }, [setTitle])
 
   const handlePlaySoundOnNewMessageChange = (
-    event: ChangeEvent,
+    _event: ChangeEvent,
     value: boolean
   ) => {
     setPlaySoundOnNewMessage(value)
