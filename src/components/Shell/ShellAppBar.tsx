@@ -44,8 +44,8 @@ export const AppBar = styled(MuiAppBar, {
 
 interface ShellAppBarProps {
   doShowPeers: boolean
-  handleDrawerOpen: () => void
-  handleLinkButtonClick: () => Promise<void>
+  onDrawerOpen: () => void
+  onLinkButtonClick: () => Promise<void>
   isDrawerOpen: boolean
   isPeerListOpen: boolean
   numberOfPeers: number
@@ -55,13 +55,13 @@ interface ShellAppBarProps {
 
 export const ShellAppBar = ({
   doShowPeers,
-  handleDrawerOpen,
-  handleLinkButtonClick,
+  onDrawerOpen,
+  onLinkButtonClick,
   isDrawerOpen,
   isPeerListOpen,
   numberOfPeers,
   title,
-  handlePeerListOpen,
+  onPeerListOpen,
 }: ShellAppBarProps) => {
   return (
     <AppBar
@@ -83,7 +83,7 @@ export const ShellAppBar = ({
           color="inherit"
           aria-label="Open menu"
           sx={{ mr: 2, ...(isDrawerOpen && { display: 'none' }) }}
-          onClick={handleDrawerOpen}
+          onClick={onDrawerOpen}
         >
           <MenuIcon />
         </IconButton>
@@ -102,7 +102,7 @@ export const ShellAppBar = ({
             color="inherit"
             aria-label="Copy current URL"
             sx={{ ml: 'auto' }}
-            onClick={handleLinkButtonClick}
+            onClick={onLinkButtonClick}
           >
             <LinkIcon />
           </IconButton>
@@ -111,7 +111,7 @@ export const ShellAppBar = ({
           <Tooltip title="Click to show peer list">
             <StepIcon
               icon={numberOfPeers}
-              onClick={handlePeerListOpen}
+              onClick={onPeerListOpen}
               sx={{ ml: 2 }}
             />
           </Tooltip>

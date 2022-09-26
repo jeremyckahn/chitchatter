@@ -15,7 +15,7 @@ import { AlertColor } from '@mui/material/Alert'
 import { ShellContext } from 'contexts/ShellContext'
 import { SettingsContext } from 'contexts/SettingsContext'
 import { AlertOptions } from 'models/shell'
-import { User } from 'models/chat'
+import { Peer } from 'models/chat'
 
 import { Drawer } from './Drawer'
 import { UpgradeDialog } from './UpgradeDialog'
@@ -39,7 +39,7 @@ export const Shell = ({ appNeedsUpdate, children, userPeerId }: ShellProps) => {
   const [alertText, setAlertText] = useState('')
   const [numberOfPeers, setNumberOfPeers] = useState(1)
   const [isPeerListOpen, setIsPeerListOpen] = useState(false)
-  const [peerList, setPeerList] = useState<User[]>([]) // except you
+  const [peerList, setPeerList] = useState<Peer[]>([]) // except you
 
   const showAlert = useCallback<
     (message: string, options?: AlertOptions) => void
@@ -147,13 +147,13 @@ export const Shell = ({ appNeedsUpdate, children, userPeerId }: ShellProps) => {
           />
           <ShellAppBar
             doShowPeers={doShowPeers}
-            handleDrawerOpen={handleDrawerOpen}
-            handleLinkButtonClick={handleLinkButtonClick}
+            onDrawerOpen={handleDrawerOpen}
+            onLinkButtonClick={handleLinkButtonClick}
             isDrawerOpen={isDrawerOpen}
             isPeerListOpen={isPeerListOpen}
             numberOfPeers={numberOfPeers}
             title={title}
-            handlePeerListOpen={handlePeerListOpen}
+            onPeerListOpen={handlePeerListOpen}
           />
           <Drawer
             isDrawerOpen={isDrawerOpen}

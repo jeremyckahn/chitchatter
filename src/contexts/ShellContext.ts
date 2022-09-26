@@ -1,7 +1,7 @@
 import { createContext, Dispatch, SetStateAction } from 'react'
 
 import { AlertOptions } from 'models/shell'
-import { User } from 'models/chat'
+import { Peer } from 'models/chat'
 
 interface ShellContextProps {
   numberOfPeers: number
@@ -11,8 +11,8 @@ interface ShellContextProps {
   showAlert: (message: string, options?: AlertOptions) => void
   isPeerListOpen: boolean
   setIsPeerListOpen: Dispatch<SetStateAction<boolean>>
-  peerList: User[]
-  setPeerList: Dispatch<SetStateAction<User[]>>
+  peerList: Peer[]
+  setPeerList: Dispatch<SetStateAction<Peer[]>>
 }
 
 export const ShellContext = createContext<ShellContextProps>({

@@ -8,9 +8,10 @@ import { trackerUrls } from 'config/trackerUrls'
 import { ShellContext } from 'contexts/ShellContext'
 import { usePeerRoom, usePeerRoomAction } from 'hooks/usePeerRoom'
 import { PeerActions } from 'models/network'
-import { ReceivedMessage, UnsentMessage, User } from 'models/chat'
+import { Peer, ReceivedMessage, UnsentMessage } from 'models/chat'
 import { MessageForm } from 'components/MessageForm'
 import { ChatTranscript } from 'components/ChatTranscript'
+import { funAnimalName } from 'fun-animal-names'
 
 export interface RoomProps {
   appId?: string
@@ -41,9 +42,9 @@ export function Room({
     roomId
   )
 
-  const [sendUserId, receiveUserId] = usePeerRoomAction<string>(
+  const [sendPeerId, receivePeerId] = usePeerRoomAction<string>(
     peerRoom,
-    PeerActions.USER_NAME
+    PeerActions.PEER_NAME
   )
 
   useEffect(() => {
@@ -59,7 +60,7 @@ export function Room({
       shellContext.setNumberOfPeers(newNumberOfPeers)
       ;(async () => {
         try {
-          await sendUserId(userId, peerId)
+          await sendPeerId(userId, peerId)
         } catch (e) {
           console.error(e)
         }
@@ -73,7 +74,9 @@ export function Room({
       const peerExist = peerIndex !== -1
       shellContext.showAlert(
         `${
-          peerExist ? shellContext.peerList[peerIndex].userId : 'Someone'
+          peerExist
+            ? funAnimalName(shellContext.peerList[peerIndex].userId)
+            : 'Someone'
         } has left the room`,
         {
           severity: 'warning',
@@ -98,7 +101,7 @@ export function Room({
     numberOfPeers,
     shellContext.peerList,
     peerRoom,
-    sendUserId,
+    sendPeerId,
     shellContext,
     userId,
   ])
@@ -130,23 +133,23 @@ export function Room({
   }
 
   const upsertToPeerList = (peerToAdd: Peer) => {
-    const userIndex = shellContext.peerList.findIndex(
-      peer => peer.peerId === userToAdd.peerId
+    const peerIndex = shellContext.peerList.findIndex(
+      peer => peer.peerId === peerToAdd.peerId
     )
-    if (userIndex === -1) {
+    if (peerIndex === -1) {
       shellContext.setPeerList([
         ...shellContext.peerList,
-        { peerId: userToAdd.peerId, userId: userToAdd.userId },
+        { peerId: peerToAdd.peerId, userId: peerToAdd.userId },
       ])
     } else {
       const peerListClone = [...shellContext.peerList]
-      peerListClone[userIndex].userId = userToAdd.userId
+      peerListClone[peerIndex].userId = peerToAdd.userId
       shellContext.setPeerList(peerListClone)
     }
   }
 
-  receiveUserId((userId: string, peerId?: string) => {
-    if (peerId) addUserIfNotPresent({ peerId, userId })
+  receivePeerId((userId: string, peerId?: string) => {
+    if (peerId) upsertToPeerList({ peerId, userId })
   })
 
   receiveMessage(message => {

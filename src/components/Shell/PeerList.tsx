@@ -5,11 +5,12 @@ import Divider from '@mui/material/Divider'
 import IconButton from '@mui/material/IconButton'
 import ChevronRightIcon from '@mui/icons-material/ChevronRight'
 import ListItemButton from '@mui/material/ListItemButton'
+import Typography from '@mui/material/Typography'
 
 import { PeerListHeader } from 'components/Shell/PeerListHeader'
 import { PeerNameDisplay } from 'components/PeerNameDisplay'
 
-import { User } from '../../models/chat'
+import { Peer } from 'models/chat'
 
 export const peerListWidth = 240
 
@@ -17,7 +18,7 @@ export interface PeerListProps extends PropsWithChildren {
   userId: string
   isPeerListOpen: boolean
   onPeerListClose: () => void
-  peerList: User[]
+  peerList: Peer[]
 }
 
 export const PeerList = ({
@@ -52,7 +53,7 @@ export const PeerList = ({
             <PeerNameDisplay>{userId}</PeerNameDisplay> (you)
           </Typography>
         </ListItemButton>
-        {peerList.map((peer: User) => (
+        {peerList.map((peer: Peer) => (
           <ListItemButton key={peer.peerId}>
             <PeerNameDisplay>{peer.userId}</PeerNameDisplay>
           </ListItemButton>
