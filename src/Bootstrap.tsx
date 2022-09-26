@@ -55,7 +55,7 @@ function Bootstrap({
         )
 
       if (persistedUserSettings) {
-        setUserSettings(persistedUserSettings)
+        setUserSettings({ ...userSettings, ...persistedUserSettings })
       } else {
         await persistedStorageProp.setItem(
           PersistedStorageKeys.USER_SETTINGS,
