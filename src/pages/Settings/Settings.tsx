@@ -24,9 +24,7 @@ export const Settings = ({ userId }: SettingsProps) => {
     isDeleteSettingsConfirmDiaglogOpen,
     setIsDeleteSettingsConfirmDiaglogOpen,
   ] = useState(false)
-  const [playSoundOnNewMessage, setPlaySoundOnNewMessage] = useState(
-    () => getUserSettings().playSoundOnNewMessage
-  )
+  const { playSoundOnNewMessage } = getUserSettings()
 
   const persistedStorage = getPersistedStorage()
 
@@ -38,7 +36,6 @@ export const Settings = ({ userId }: SettingsProps) => {
     _event: ChangeEvent,
     value: boolean
   ) => {
-    setPlaySoundOnNewMessage(value)
     updateUserSettings({ playSoundOnNewMessage: value })
   }
 
