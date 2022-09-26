@@ -62,15 +62,24 @@ export const Settings = ({ userId }: SettingsProps) => {
           mb: 2,
         })}
       >
-        Data
+        Chat
       </Typography>
-      <Divider sx={{ my: 2 }} />
       <Switch
         checked={playSoundOnNewMessage}
         onChange={handlePlaySoundOnNewMessageChange}
       />{' '}
       Play a sound when a new message is received
       <Divider sx={{ my: 2 }} />
+      <Typography
+        variant="h2"
+        sx={theme => ({
+          fontSize: theme.typography.h3.fontSize,
+          fontWeight: theme.typography.fontWeightMedium,
+          mb: 2,
+        })}
+      >
+        Data
+      </Typography>
       <Typography
         variant="h2"
         sx={theme => ({
