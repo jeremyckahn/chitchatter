@@ -5,7 +5,7 @@ export interface UnsentMessage {
   authorId: string
 }
 
-export interface User {
+export interface Peer {
   peerId: string
   userId: string
 }

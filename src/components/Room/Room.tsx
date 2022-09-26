@@ -129,7 +129,7 @@ export function Room({
     setIsMessageSending(false)
   }
 
-  const addUserIfNotPresent = (userToAdd: User) => {
+  const upsertToPeerList = (peerToAdd: Peer) => {
     const userIndex = shellContext.peerList.findIndex(
       peer => peer.peerId === userToAdd.peerId
     )

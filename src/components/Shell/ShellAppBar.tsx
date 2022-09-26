@@ -50,7 +50,7 @@ interface ShellAppBarProps {
   isPeerListOpen: boolean
   numberOfPeers: number
   title: string
-  handlePeerListOpen: () => void
+  onPeerListOpen: () => void
 }
 
 export const ShellAppBar = ({
@@ -108,7 +108,7 @@ export const ShellAppBar = ({
           </IconButton>
         </Tooltip>
         {doShowPeers ? (
-          <Tooltip title="Clic to show peer list">
+          <Tooltip title="Click to show peer list">
             <StepIcon
               icon={numberOfPeers}
               onClick={handlePeerListOpen}
