@@ -72,7 +72,7 @@ export const Settings = ({ userId }: SettingsProps) => {
         checked={playSoundOnNewMessage}
         onChange={handlePlaySoundOnNewMessageChange}
       />{' '}
-      Play a sound on new message
+      Play a sound when a new message is received
       <Divider sx={{ my: 2 }} />
       <Typography
         variant="h2"
