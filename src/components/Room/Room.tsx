@@ -2,7 +2,6 @@ import { useContext, useEffect, useRef, useState } from 'react'
 import { v4 as uuid } from 'uuid'
 import Box from '@mui/material/Box'
 import Divider from '@mui/material/Divider'
-import { funAnimalName } from 'fun-animal-names'
 
 import { rtcConfig } from 'config/rtcConfig'
 import { trackerUrls } from 'config/trackerUrls'
@@ -13,6 +12,7 @@ import { PeerActions } from 'models/network'
 import { UnsentMessage, ReceivedMessage } from 'models/chat'
 import { MessageForm } from 'components/MessageForm'
 import { ChatTranscript } from 'components/ChatTranscript'
+import { getPeerName } from 'components/PeerNameDisplay'
 import { NotificationService } from 'services/Notification'
 
 export interface RoomProps {
@@ -128,7 +128,7 @@ export function Room({
 
       if (userSettings.showNotificationOnNewMessage) {
         NotificationService.showNotification(
-          `${funAnimalName(message.authorId)}: ${message.text}`
+          `${getPeerName(message.authorId)}: ${message.text}`
         )
       }
     }
