@@ -7,6 +7,7 @@ import Switch from '@mui/material/Switch'
 import FormGroup from '@mui/material/FormGroup'
 import FormControlLabel from '@mui/material/FormControlLabel'
 
+import { NotificationService } from 'services/Notification'
 import { ShellContext } from 'contexts/ShellContext'
 import { StorageContext } from 'contexts/StorageContext'
 import { PeerNameDisplay } from 'components/PeerNameDisplay'
@@ -26,10 +27,21 @@ export const Settings = ({ userId }: SettingsProps) => {
     isDeleteSettingsConfirmDiaglogOpen,
     setIsDeleteSettingsConfirmDiaglogOpen,
   ] = useState(false)
+  const [, setIsNotificationPermissionDetermined] = useState(false)
   const { playSoundOnNewMessage, showNotificationOnNewMessage } =
     getUserSettings()
 
   const persistedStorage = getPersistedStorage()
+
+  useEffect(() => {
+    ;(async () => {
+      await NotificationService.requestPermission()
+
+      // This state needs to be set to cause a rerender so that
+      // areNotificationsAvailable is up-to-date.
+      setIsNotificationPermissionDetermined(true)
+    })()
+  }, [])
 
   useEffect(() => {
     setTitle('Settings')
@@ -62,6 +74,8 @@ export const Settings = ({ userId }: SettingsProps) => {
     window.location.reload()
   }
 
+  const areNotificationsAvailable = NotificationService.permission === 'granted'
+
   return (
     <Box className="max-w-3xl mx-auto p-4">
       <Typography
@@ -88,8 +102,11 @@ export const Settings = ({ userId }: SettingsProps) => {
         <FormControlLabel
           control={
             <Switch
-              checked={showNotificationOnNewMessage}
+              checked={
+                areNotificationsAvailable && showNotificationOnNewMessage
+              }
               onChange={handleShowNotificationOnNewMessageChange}
+              disabled={!areNotificationsAvailable}
             />
           }
           label="Show a notification"
