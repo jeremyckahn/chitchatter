@@ -1,4 +1,4 @@
-import { useContext, useEffect, useRef, useState } from 'react'
+import { useContext, useEffect, useState } from 'react'
 import { v4 as uuid } from 'uuid'
 import Box from '@mui/material/Box'
 import Divider from '@mui/material/Divider'
@@ -14,6 +14,7 @@ import { MessageForm } from 'components/MessageForm'
 import { ChatTranscript } from 'components/ChatTranscript'
 import { getPeerName } from 'components/PeerNameDisplay'
 import { NotificationService } from 'services/Notification'
+import { Audio } from 'services/Audio'
 
 export interface RoomProps {
   appId?: string
@@ -35,8 +36,9 @@ export function Room({
   const [messageLog, setMessageLog] = useState<
     Array<ReceivedMessage | UnsentMessage>
   >([])
-  const [audioContext] = useState(() => new AudioContext())
-  const audioBufferContainer = useRef<AudioBuffer | null>(null)
+  const [newMessageAudio] = useState(
+    () => new Audio(process.env.PUBLIC_URL + '/sounds/new-message.aac')
+  )
 
   const peerRoom = usePeerRoom(
     {
@@ -46,23 +48,6 @@ export function Room({
     },
     roomId
   )
-
-  // TODO: Move audio logic to a service
-  useEffect(() => {
-    ;(async () => {
-      try {
-        const response = await fetch(
-          process.env.PUBLIC_URL + '/sounds/new-message.aac'
-        )
-        const arrayBuffer = await response.arrayBuffer()
-        audioBufferContainer.current = await audioContext.decodeAudioData(
-          arrayBuffer
-        )
-      } catch (e) {
-        console.error(e)
-      }
-    })()
-  }, [audioBufferContainer, audioContext])
 
   useEffect(() => {
     shellContext.setDoShowPeers(true)
@@ -123,7 +108,7 @@ export function Room({
 
     if (!shellContext.tabHasFocus) {
       if (userSettings.playSoundOnNewMessage) {
-        playNewMessageSound()
+        newMessageAudio.play()
       }
 
       if (userSettings.showNotificationOnNewMessage) {
@@ -135,17 +120,6 @@ export function Room({
 
     setMessageLog([...messageLog, { ...message, timeReceived: Date.now() }])
   })
-
-  const playNewMessageSound = () => {
-    if (!audioBufferContainer.current) {
-      console.error('Audio buffer not available')
-      return
-    }
-    const audioSource = audioContext.createBufferSource()
-    audioSource.buffer = audioBufferContainer.current
-    audioSource.connect(audioContext.destination)
-    audioSource.start()
-  }
 
   const handleMessageSubmit = async (message: string) => {
     await performMessageSend(message)
