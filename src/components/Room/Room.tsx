@@ -47,6 +47,7 @@ export function Room({
     roomId
   )
 
+  // TODO: Move audio logic to a service
   useEffect(() => {
     ;(async () => {
       try {
@@ -119,14 +120,17 @@ export function Room({
 
   receiveMessage(message => {
     const userSettings = settingsContext.getUserSettings()
-    !shellContext.tabHasFocus &&
-      userSettings.playSoundOnNewMessage &&
-      playNewMessageSound()
 
     if (!shellContext.tabHasFocus) {
-      NotificationService.showNotification(
-        `${funAnimalName(message.authorId)}: ${message.text}`
-      )
+      if (userSettings.playSoundOnNewMessage) {
+        playNewMessageSound()
+      }
+
+      if (userSettings.showNotificationOnNewMessage) {
+        NotificationService.showNotification(
+          `${funAnimalName(message.authorId)}: ${message.text}`
+        )
+      }
     }
 
     setMessageLog([...messageLog, { ...message, timeReceived: Date.now() }])

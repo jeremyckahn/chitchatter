@@ -55,6 +55,7 @@ test('persists user settings if none were already persisted', async () => {
     colorMode: 'dark',
     userId: 'abc123',
     playSoundOnNewMessage: true,
+    showNotificationOnNewMessage: true,
   })
 })
 

@@ -3,7 +3,9 @@ import Box from '@mui/material/Box'
 import Button from '@mui/material/Button'
 import Typography from '@mui/material/Typography'
 import Divider from '@mui/material/Divider'
-import { Switch } from '@mui/material'
+import Switch from '@mui/material/Switch'
+import FormGroup from '@mui/material/FormGroup'
+import FormControlLabel from '@mui/material/FormControlLabel'
 
 import { ShellContext } from 'contexts/ShellContext'
 import { StorageContext } from 'contexts/StorageContext'
@@ -24,7 +26,8 @@ export const Settings = ({ userId }: SettingsProps) => {
     isDeleteSettingsConfirmDiaglogOpen,
     setIsDeleteSettingsConfirmDiaglogOpen,
   ] = useState(false)
-  const { playSoundOnNewMessage } = getUserSettings()
+  const { playSoundOnNewMessage, showNotificationOnNewMessage } =
+    getUserSettings()
 
   const persistedStorage = getPersistedStorage()
 
@@ -34,9 +37,16 @@ export const Settings = ({ userId }: SettingsProps) => {
 
   const handlePlaySoundOnNewMessageChange = (
     _event: ChangeEvent,
-    value: boolean
+    playSoundOnNewMessage: boolean
   ) => {
-    updateUserSettings({ playSoundOnNewMessage: value })
+    updateUserSettings({ playSoundOnNewMessage })
+  }
+
+  const handleShowNotificationOnNewMessageChange = (
+    _event: ChangeEvent,
+    showNotificationOnNewMessage: boolean
+  ) => {
+    updateUserSettings({ showNotificationOnNewMessage })
   }
 
   const handleDeleteSettingsClick = () => {
@@ -64,11 +74,27 @@ export const Settings = ({ userId }: SettingsProps) => {
       >
         Chat
       </Typography>
-      <Switch
-        checked={playSoundOnNewMessage}
-        onChange={handlePlaySoundOnNewMessageChange}
-      />{' '}
-      Play a sound when a new message is received
+      <Typography>When a message is received in the background:</Typography>
+      <FormGroup>
+        <FormControlLabel
+          control={
+            <Switch
+              checked={playSoundOnNewMessage}
+              onChange={handlePlaySoundOnNewMessageChange}
+            />
+          }
+          label="Play a sound"
+        />
+        <FormControlLabel
+          control={
+            <Switch
+              checked={showNotificationOnNewMessage}
+              onChange={handleShowNotificationOnNewMessageChange}
+            />
+          }
+          label="Show a notification"
+        />
+      </FormGroup>
       <Divider sx={{ my: 2 }} />
       <Typography
         variant="h2"

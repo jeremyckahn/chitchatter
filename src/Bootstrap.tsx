@@ -34,6 +34,7 @@ function Bootstrap({
     userId: getUuid(),
     colorMode: 'dark',
     playSoundOnNewMessage: true,
+    showNotificationOnNewMessage: true,
   })
   const { userId } = userSettings
 

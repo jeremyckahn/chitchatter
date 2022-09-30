@@ -13,5 +13,6 @@ export const SettingsContext = createContext<SettingsContextProps>({
     userId: '',
     colorMode: 'dark',
     playSoundOnNewMessage: true,
+    showNotificationOnNewMessage: true,
   }),
 })
