@@ -12,6 +12,8 @@ import { PeerActions } from 'models/network'
 import { UnsentMessage, ReceivedMessage } from 'models/chat'
 import { MessageForm } from 'components/MessageForm'
 import { ChatTranscript } from 'components/ChatTranscript'
+import { getPeerName } from 'components/PeerNameDisplay'
+import { NotificationService } from 'services/Notification'
 
 export interface RoomProps {
   appId?: string
@@ -45,6 +47,7 @@ export function Room({
     roomId
   )
 
+  // TODO: Move audio logic to a service
   useEffect(() => {
     ;(async () => {
       try {
@@ -117,9 +120,19 @@ export function Room({
 
   receiveMessage(message => {
     const userSettings = settingsContext.getUserSettings()
-    !shellContext.tabHasFocus &&
-      userSettings.playSoundOnNewMessage &&
-      playNewMessageSound()
+
+    if (!shellContext.tabHasFocus) {
+      if (userSettings.playSoundOnNewMessage) {
+        playNewMessageSound()
+      }
+
+      if (userSettings.showNotificationOnNewMessage) {
+        NotificationService.showNotification(
+          `${getPeerName(message.authorId)}: ${message.text}`
+        )
+      }
+    }
+
     setMessageLog([...messageLog, { ...message, timeReceived: Date.now() }])
   })
 

@@ -3,8 +3,11 @@ import Box from '@mui/material/Box'
 import Button from '@mui/material/Button'
 import Typography from '@mui/material/Typography'
 import Divider from '@mui/material/Divider'
-import { Switch } from '@mui/material'
+import Switch from '@mui/material/Switch'
+import FormGroup from '@mui/material/FormGroup'
+import FormControlLabel from '@mui/material/FormControlLabel'
 
+import { NotificationService } from 'services/Notification'
 import { ShellContext } from 'contexts/ShellContext'
 import { StorageContext } from 'contexts/StorageContext'
 import { PeerNameDisplay } from 'components/PeerNameDisplay'
@@ -24,9 +27,21 @@ export const Settings = ({ userId }: SettingsProps) => {
     isDeleteSettingsConfirmDiaglogOpen,
     setIsDeleteSettingsConfirmDiaglogOpen,
   ] = useState(false)
-  const { playSoundOnNewMessage } = getUserSettings()
+  const [, setIsNotificationPermissionDetermined] = useState(false)
+  const { playSoundOnNewMessage, showNotificationOnNewMessage } =
+    getUserSettings()
 
   const persistedStorage = getPersistedStorage()
+
+  useEffect(() => {
+    ;(async () => {
+      await NotificationService.requestPermission()
+
+      // This state needs to be set to cause a rerender so that
+      // areNotificationsAvailable is up-to-date.
+      setIsNotificationPermissionDetermined(true)
+    })()
+  }, [])
 
   useEffect(() => {
     setTitle('Settings')
@@ -34,9 +49,16 @@ export const Settings = ({ userId }: SettingsProps) => {
 
   const handlePlaySoundOnNewMessageChange = (
     _event: ChangeEvent,
-    value: boolean
+    playSoundOnNewMessage: boolean
   ) => {
-    updateUserSettings({ playSoundOnNewMessage: value })
+    updateUserSettings({ playSoundOnNewMessage })
+  }
+
+  const handleShowNotificationOnNewMessageChange = (
+    _event: ChangeEvent,
+    showNotificationOnNewMessage: boolean
+  ) => {
+    updateUserSettings({ showNotificationOnNewMessage })
   }
 
   const handleDeleteSettingsClick = () => {
@@ -52,6 +74,8 @@ export const Settings = ({ userId }: SettingsProps) => {
     window.location.reload()
   }
 
+  const areNotificationsAvailable = NotificationService.permission === 'granted'
+
   return (
     <Box className="max-w-3xl mx-auto p-4">
       <Typography
@@ -64,11 +88,30 @@ export const Settings = ({ userId }: SettingsProps) => {
       >
         Chat
       </Typography>
-      <Switch
-        checked={playSoundOnNewMessage}
-        onChange={handlePlaySoundOnNewMessageChange}
-      />{' '}
-      Play a sound when a new message is received
+      <Typography>When a message is received in the background:</Typography>
+      <FormGroup>
+        <FormControlLabel
+          control={
+            <Switch
+              checked={playSoundOnNewMessage}
+              onChange={handlePlaySoundOnNewMessageChange}
+            />
+          }
+          label="Play a sound"
+        />
+        <FormControlLabel
+          control={
+            <Switch
+              checked={
+                areNotificationsAvailable && showNotificationOnNewMessage
+              }
+              onChange={handleShowNotificationOnNewMessageChange}
+              disabled={!areNotificationsAvailable}
+            />
+          }
+          label="Show a notification"
+        />
+      </FormGroup>
       <Divider sx={{ my: 2 }} />
       <Typography
         variant="h2"
