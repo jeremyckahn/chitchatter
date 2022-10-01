@@ -15,6 +15,7 @@ import { AlertColor } from '@mui/material/Alert'
 import { ShellContext } from 'contexts/ShellContext'
 import { SettingsContext } from 'contexts/SettingsContext'
 import { AlertOptions } from 'models/shell'
+import { ErrorBoundary } from 'components/ErrorBoundary'
 
 import { Drawer } from './Drawer'
 import { UpgradeDialog } from './UpgradeDialog'
@@ -170,7 +171,10 @@ export const Shell = ({ appNeedsUpdate, children, userPeerId }: ShellProps) => {
             theme={theme}
             userPeerId={userPeerId}
           />
-          <RouteContent isDrawerOpen={isDrawerOpen}>{children}</RouteContent>
+
+          <RouteContent isDrawerOpen={isDrawerOpen}>
+            <ErrorBoundary>{children}</ErrorBoundary>
+          </RouteContent>
         </Box>
       </ThemeProvider>
     </ShellContext.Provider>
