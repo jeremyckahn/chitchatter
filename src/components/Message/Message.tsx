@@ -22,6 +22,8 @@ import remarkGfm from 'remark-gfm'
 import { Message as IMessage, isMessageReceived } from 'models/chat'
 import { PeerNameDisplay } from 'components/PeerNameDisplay'
 
+import './Message.sass'
+
 export interface MessageProps {
   message: IMessage
   userId: string
