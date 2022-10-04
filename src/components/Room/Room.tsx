@@ -4,9 +4,10 @@ import { v4 as uuid } from 'uuid'
 
 import { rtcConfig } from 'config/rtcConfig'
 import { trackerUrls } from 'config/trackerUrls'
-import { usePeerRoom } from 'hooks/usePeerRoom'
 import { MessageForm } from 'components/MessageForm'
 import { ChatTranscript } from 'components/ChatTranscript'
+
+import { useRoom } from './useRoom'
 
 export interface RoomProps {
   appId?: string
@@ -21,7 +22,7 @@ export function Room({
   roomId,
   userId,
 }: RoomProps) {
-  const { messageLog, sendMessage, isMessageSending } = usePeerRoom(
+  const { messageLog, sendMessage, isMessageSending } = useRoom(
     {
       appId,
       trackerUrls,

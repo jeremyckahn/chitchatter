@@ -11,12 +11,11 @@ import { funAnimalName } from 'fun-animal-names'
 import { getPeerName } from 'components/PeerNameDisplay'
 import { NotificationService } from 'services/Notification'
 import { Audio } from 'services/Audio'
-
 import { PeerRoom } from 'services/PeerRoom'
 
 import { usePeerRoomAction } from './usePeerRoomAction'
 
-export function usePeerRoom(
+export function useRoom(
   roomConfig: BaseRoomConfig & TorrentRoomConfig,
   {
     roomId,
