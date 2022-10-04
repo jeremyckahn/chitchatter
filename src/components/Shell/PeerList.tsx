@@ -48,13 +48,13 @@ export const PeerList = ({
       </PeerListHeader>
       <Divider />
       <List>
-        <ListItemButton>
+        <ListItemButton disableRipple={true}>
           <Typography>
             <PeerNameDisplay>{userId}</PeerNameDisplay> (you)
           </Typography>
         </ListItemButton>
         {peerList.map((peer: Peer) => (
-          <ListItemButton key={peer.peerId}>
+          <ListItemButton key={peer.peerId} disableRipple={true}>
             <PeerNameDisplay>{peer.userId}</PeerNameDisplay>
           </ListItemButton>
         ))}
