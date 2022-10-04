@@ -156,8 +156,8 @@ export function Room({
     }
   }
 
-  receivePeerId((userId: string, peerId?: string) => {
-    if (peerId) upsertToPeerList({ peerId, userId })
+  receivePeerId((userId: string, peerId: string) => {
+    upsertToPeerList({ peerId, userId })
   })
 
   receiveMessage(message => {
