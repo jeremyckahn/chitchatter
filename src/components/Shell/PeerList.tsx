@@ -48,7 +48,7 @@ export const PeerList = ({
       </PeerListHeader>
       <Divider />
       <List>
-        <ListItemButton key={userId}>
+        <ListItemButton>
           <Typography>
             <PeerNameDisplay>{userId}</PeerNameDisplay> (you)
           </Typography>
