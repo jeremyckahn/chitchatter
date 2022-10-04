@@ -49,12 +49,20 @@ export const ChatTranscript = ({
         paddingY: theme.spacing(1),
       })}
     >
-      {messageLog.map(message => {
+      {messageLog.map((message, idx) => {
+        const previousMessage = messageLog[idx - 1]
+        const isFirstMessageInGroup =
+          previousMessage?.authorId !== message.authorId
+
         return (
           // This wrapper div is necessary for accurate layout calculations
           // when new messages cause the transcript to scroll to the bottom.
           <div key={message.id}>
-            <Message message={message} userId={userId} />
+            <Message
+              message={message}
+              userId={userId}
+              showAuthor={isFirstMessageInGroup}
+            />
           </div>
         )
       })}

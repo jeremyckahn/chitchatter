@@ -24,19 +24,37 @@ const mockReceivedMessage: ReceivedMessage = {
 
 describe('Message', () => {
   test('renders unsent message text', () => {
-    render(<Message message={mockUnsentMessage} userId={mockUserId} />)
+    render(
+      <Message
+        message={mockUnsentMessage}
+        userId={mockUserId}
+        showAuthor={false}
+      />
+    )
 
     screen.getByText(mockUnsentMessage.text)
   })
 
   test('renders received message text', () => {
-    render(<Message message={mockReceivedMessage} userId={mockUserId} />)
+    render(
+      <Message
+        message={mockReceivedMessage}
+        userId={mockUserId}
+        showAuthor={false}
+      />
+    )
 
     screen.getByText(mockReceivedMessage.text)
   })
 
   test('renders message author', () => {
-    render(<Message message={mockReceivedMessage} userId={mockUserId} />)
+    render(
+      <Message
+        message={mockReceivedMessage}
+        userId={mockUserId}
+        showAuthor={true}
+      />
+    )
 
     screen.getByText(funAnimalName(mockUserId))
   })
