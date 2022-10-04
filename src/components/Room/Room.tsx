@@ -6,12 +6,16 @@ import Divider from '@mui/material/Divider'
 import { rtcConfig } from 'config/rtcConfig'
 import { trackerUrls } from 'config/trackerUrls'
 import { ShellContext } from 'contexts/ShellContext'
+import { SettingsContext } from 'contexts/SettingsContext'
 import { usePeerRoom, usePeerRoomAction } from 'hooks/usePeerRoom'
 import { PeerActions } from 'models/network'
 import { Peer, ReceivedMessage, UnsentMessage } from 'models/chat'
 import { MessageForm } from 'components/MessageForm'
 import { ChatTranscript } from 'components/ChatTranscript'
 import { funAnimalName } from 'fun-animal-names'
+import { getPeerName } from 'components/PeerNameDisplay'
+import { NotificationService } from 'services/Notification'
+import { Audio } from 'services/Audio'
 
 export interface RoomProps {
   appId?: string
@@ -28,10 +32,14 @@ export function Room({
 }: RoomProps) {
   const [numberOfPeers, setNumberOfPeers] = useState(1) // Includes this peer
   const shellContext = useContext(ShellContext)
+  const settingsContext = useContext(SettingsContext)
   const [isMessageSending, setIsMessageSending] = useState(false)
   const [messageLog, setMessageLog] = useState<
     Array<ReceivedMessage | UnsentMessage>
   >([])
+  const [newMessageAudio] = useState(
+    () => new Audio(process.env.PUBLIC_URL + '/sounds/new-message.aac')
+  )
 
   const peerRoom = usePeerRoom(
     {
@@ -153,6 +161,20 @@ export function Room({
   })
 
   receiveMessage(message => {
+    const userSettings = settingsContext.getUserSettings()
+
+    if (!shellContext.tabHasFocus) {
+      if (userSettings.playSoundOnNewMessage) {
+        newMessageAudio.play()
+      }
+
+      if (userSettings.showNotificationOnNewMessage) {
+        NotificationService.showNotification(
+          `${getPeerName(message.authorId)}: ${message.text}`
+        )
+      }
+    }
+
     setMessageLog([...messageLog, { ...message, timeReceived: Date.now() }])
   })
 

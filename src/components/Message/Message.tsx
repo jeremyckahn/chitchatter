@@ -22,8 +22,11 @@ import remarkGfm from 'remark-gfm'
 import { Message as IMessage, isMessageReceived } from 'models/chat'
 import { PeerNameDisplay } from 'components/PeerNameDisplay'
 
+import './Message.sass'
+
 export interface MessageProps {
   message: IMessage
+  showAuthor: boolean
   userId: string
 }
 
@@ -69,7 +72,7 @@ const componentMap = {
   },
 }
 
-export const Message = ({ message, userId }: MessageProps) => {
+export const Message = ({ message, showAuthor, userId }: MessageProps) => {
   let backgroundColor: string
 
   if (message.authorId === userId) {
@@ -82,15 +85,17 @@ export const Message = ({ message, userId }: MessageProps) => {
 
   return (
     <Box className="Message">
-      <Typography
-        variant="caption"
-        display="block"
-        sx={{
-          textAlign: message.authorId === userId ? 'right' : 'left',
-        }}
-      >
-        <PeerNameDisplay>{message.authorId}</PeerNameDisplay>
-      </Typography>
+      {showAuthor && (
+        <Typography
+          variant="caption"
+          display="block"
+          sx={{
+            textAlign: message.authorId === userId ? 'right' : 'left',
+          }}
+        >
+          <PeerNameDisplay>{message.authorId}</PeerNameDisplay>
+        </Typography>
+      )}
       <Box
         sx={{
           color: 'primary.contrastText',

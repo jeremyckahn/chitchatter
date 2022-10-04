@@ -16,6 +16,7 @@ import { ShellContext } from 'contexts/ShellContext'
 import { SettingsContext } from 'contexts/SettingsContext'
 import { AlertOptions } from 'models/shell'
 import { Peer } from 'models/chat'
+import { ErrorBoundary } from 'components/ErrorBoundary'
 
 import { Drawer } from './Drawer'
 import { UpgradeDialog } from './UpgradeDialog'
@@ -40,6 +41,7 @@ export const Shell = ({ appNeedsUpdate, children, userPeerId }: ShellProps) => {
   const [numberOfPeers, setNumberOfPeers] = useState(1)
   const [isPeerListOpen, setIsPeerListOpen] = useState(false)
   const [peerList, setPeerList] = useState<Peer[]>([]) // except you
+  const [tabHasFocus, setTabHasFocus] = useState(true)
 
   const showAlert = useCallback<
     (message: string, options?: AlertOptions) => void
@@ -52,6 +54,7 @@ export const Shell = ({ appNeedsUpdate, children, userPeerId }: ShellProps) => {
   const shellContextValue = useMemo(
     () => ({
       numberOfPeers,
+      tabHasFocus,
       setDoShowPeers,
       setNumberOfPeers,
       setTitle,
@@ -61,7 +64,16 @@ export const Shell = ({ appNeedsUpdate, children, userPeerId }: ShellProps) => {
       peerList,
       setPeerList,
     }),
-    [isPeerListOpen, numberOfPeers, peerList, showAlert]
+    [
+      isPeerListOpen,
+      numberOfPeers,
+      peerList,
+      tabHasFocus,
+      setDoShowPeers,
+      setNumberOfPeers,
+      setTitle,
+      showAlert,
+    ]
   )
 
   const colorMode = settingsContext.getUserSettings().colorMode
@@ -90,6 +102,21 @@ export const Shell = ({ appNeedsUpdate, children, userPeerId }: ShellProps) => {
   useEffect(() => {
     document.title = title
   }, [title])
+
+  useEffect(() => {
+    const handleFocus = () => {
+      setTabHasFocus(true)
+    }
+    const handleBlur = () => {
+      setTabHasFocus(false)
+    }
+    window.addEventListener('focus', handleFocus)
+    window.addEventListener('blur', handleBlur)
+    return () => {
+      window.removeEventListener('focus', handleFocus)
+      window.removeEventListener('blur', handleBlur)
+    }
+  }, [])
 
   const handleDrawerOpen = () => {
     setIsDrawerOpen(true)
@@ -168,7 +195,7 @@ export const Shell = ({ appNeedsUpdate, children, userPeerId }: ShellProps) => {
             isDrawerOpen={isDrawerOpen}
             isPeerListOpen={isPeerListOpen}
           >
-            {children}
+            <ErrorBoundary>{children}</ErrorBoundary>
           </RouteContent>
           <PeerList
             userId={userPeerId}

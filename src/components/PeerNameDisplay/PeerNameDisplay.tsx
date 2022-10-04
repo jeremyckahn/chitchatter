@@ -1,5 +1,6 @@
 import Typography, { TypographyProps } from '@mui/material/Typography'
-import { funAnimalName } from 'fun-animal-names'
+
+import { getPeerName } from './getPeerName'
 
 interface PeerNameDisplayProps extends TypographyProps {
   children: string
@@ -11,7 +12,7 @@ export const PeerNameDisplay = ({
 }: PeerNameDisplayProps) => {
   return (
     <Typography component="span" {...rest}>
-      {funAnimalName(children)}
+      {getPeerName(children)}
     </Typography>
   )
 }

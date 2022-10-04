@@ -5,6 +5,7 @@ import { Peer } from 'models/chat'
 
 interface ShellContextProps {
   numberOfPeers: number
+  tabHasFocus: boolean
   setDoShowPeers: Dispatch<SetStateAction<boolean>>
   setNumberOfPeers: Dispatch<SetStateAction<number>>
   setTitle: Dispatch<SetStateAction<string>>
@@ -17,6 +18,7 @@ interface ShellContextProps {
 
 export const ShellContext = createContext<ShellContextProps>({
   numberOfPeers: 1,
+  tabHasFocus: true,
   setDoShowPeers: () => {},
   setNumberOfPeers: () => {},
   setTitle: () => {},
