@@ -6,7 +6,7 @@ import { v4 as uuid } from 'uuid'
 import { ShellContext } from 'contexts/ShellContext'
 import { SettingsContext } from 'contexts/SettingsContext'
 import { PeerActions } from 'models/network'
-import { Peer, ReceivedMessage, UnsentMessage } from 'models/chat'
+import { ReceivedMessage, UnsentMessage } from 'models/chat'
 import { funAnimalName } from 'fun-animal-names'
 import { getPeerName } from 'components/PeerNameDisplay'
 import { NotificationService } from 'services/Notification'
@@ -109,12 +109,10 @@ export function useRoom(
     userId,
   ])
 
-  const [sendMessage, receiveMessage] = usePeerRoomAction<UnsentMessage>(
-    peerRoom,
-    PeerActions.MESSAGE
-  )
+  const [sendPeerMessage, receivePeerMessage] =
+    usePeerRoomAction<UnsentMessage>(peerRoom, PeerActions.MESSAGE)
 
-  const performMessageSend = async (message: string) => {
+  const sendMessage = async (message: string) => {
     if (isMessageSending) return
 
     const unsentMessage: UnsentMessage = {
@@ -126,7 +124,7 @@ export function useRoom(
 
     setIsMessageSending(true)
     setMessageLog([...messageLog, unsentMessage])
-    await sendMessage(unsentMessage)
+    await sendPeerMessage(unsentMessage)
 
     setMessageLog([
       ...messageLog,
@@ -135,27 +133,23 @@ export function useRoom(
     setIsMessageSending(false)
   }
 
-  const upsertToPeerList = (peerToAdd: Peer) => {
+  receivePeerId((userId: string, peerId: string) => {
     const peerIndex = shellContext.peerList.findIndex(
-      peer => peer.peerId === peerToAdd.peerId
+      peer => peer.peerId === peerId
     )
     if (peerIndex === -1) {
       shellContext.setPeerList([
         ...shellContext.peerList,
-        { peerId: peerToAdd.peerId, userId: peerToAdd.userId },
+        { peerId: peerId, userId: userId },
       ])
     } else {
       const peerListClone = [...shellContext.peerList]
-      peerListClone[peerIndex].userId = peerToAdd.userId
+      peerListClone[peerIndex].userId = userId
       shellContext.setPeerList(peerListClone)
     }
-  }
-
-  receivePeerId((userId: string, peerId: string) => {
-    upsertToPeerList({ peerId, userId })
   })
 
-  receiveMessage(message => {
+  receivePeerMessage(message => {
     const userSettings = settingsContext.getUserSettings()
 
     if (!shellContext.tabHasFocus) {
@@ -176,7 +170,7 @@ export function useRoom(
   return {
     peerRoom,
     messageLog,
-    sendMessage: performMessageSend,
+    sendMessage,
     isMessageSending,
   }
 }
