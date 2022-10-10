@@ -152,3 +152,13 @@ Build the app with `npm run build`, and then serve the `build` directory. Any st
 #### Runtime configuration
 
 Explore the files in `src/config` to modify pairing and relay server configuration.
+
+### Troubleshooting
+
+#### Peers won't connect to peers
+
+This could happen for a variety of reasons. The most likely of which is that one or more peers cannot connect directly and must use the configured STUN/TURN relay as a fallback. The standard relay (https://www.metered.ca/tools/openrelay/) does not guarantee uptime, so it may simply be unavailable for some time. There's not much to do other than wait until it becomes available again.
+
+##### Firefox-specific
+
+Per #36, check your `about:config` settings and ensure that `media.peerconnection.enabled` is **enabled**.
