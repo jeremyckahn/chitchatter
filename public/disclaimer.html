@@ -1,0 +1,500 @@
+<!DOCTYPE html>
+<html style lang="en-us">
+
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="x-ua-compatible" content="ie=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title class="pageTitle">MD Taseen Khan</title>
+    <meta name="description" content="Write a short tagline for your app.">
+    <!-- Smart App Banner -->
+    <meta name="apple-itunes-app" content="app-id=1234793120">
+    <style>
+        @keyframes fa-spin {
+            0% {
+                transform: rotate(0deg)
+            }
+
+            to {
+                transform: rotate(1turn)
+            }
+        }
+    </style>
+    <style></style>
+    <style></style>
+    <style>
+        html {
+            font-size: 62.5%;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+            line-height: 1
+        }
+
+        body {
+            font-size: 2rem
+        }
+
+        .subPageBody {
+            background-color: #fff
+        }
+
+        body {
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale
+        }
+
+        a:link,
+        a:hover,
+        a:visited,
+        a:active {
+            color: #1d63ea;
+            text-decoration: none
+        }
+
+        *,
+        *::before,
+        *::after {
+            -webkit-box-sizing: border-box;
+            -moz-box-sizing: border-box;
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0
+        }
+
+        .headerBackground {
+            height: 115px
+        }
+
+        @media only screen and (max-width:768px) {
+            .headerBackground {
+                height: 80px
+            }
+        }
+
+        .subPageHeaderBackground {
+            background-color: #fff
+        }
+
+        .container {
+            display: grid;
+            margin: auto;
+            max-width: 1170px;
+            padding-left: 15px;
+            padding-right: 15px;
+            grid-template-columns: repeat(12, 1fr);
+            grid-column-gap: 30px;
+            grid-template-areas: "h h h h h h h h h h h h""p p p p p i i i i i i i""c c c c c c c c c c c c""f f f f f f f f f f f f"
+        }
+
+        .subPageContainer {
+            grid-template-rows: 115px auto auto auto;
+            background-color: #fff
+        }
+
+        @media only screen and (max-width:768px) {
+            .container {
+                grid-template-rows: 80px 811px auto auto
+            }
+        }
+
+        @media only screen and (max-width:992px) {
+            .container {
+                grid-column-gap: 0px;
+                grid-template-rows: 115px auto auto auto auto;
+                grid-template-areas: "h h h h h h h h h h h h""i i i i i i i i i i i i""p p p p p p p p p p p p""c c c c c c c c c c c c""f f f f f f f f f f f f"
+            }
+        }
+
+        .page {
+            margin-top: 30px;
+            margin-bottom: 70px;
+            grid-column: 3/11
+        }
+
+        @media only screen and (max-width:768px) {
+            .page {
+                margin-top: 30px;
+                margin-bottom: 70px;
+                grid-column: 1/-1
+            }
+        }
+
+        header {
+            grid-area: h;
+            display: flex;
+            margin-right: -15px
+        }
+
+        .logo {
+            display: flex;
+            justify-content: flex-start;
+            align-items: center;
+            height: 115px;
+            margin-right: 30px
+        }
+
+        .logo>p {
+            white-space: nowrap;
+            display: flex;
+            font-weight: bold;
+            margin-left: 15px
+        }
+
+        @media only screen and (max-width:768px) {
+            .logo {
+                height: 80px;
+                margin-right: 0px
+            }
+
+            .logo>p {
+                display: none
+            }
+        }
+
+        .headerIcon {
+            width: 40px;
+            height: 40px;
+        }
+
+        @media only screen and (max-width:768px) {
+            .divider {
+                position: relative;
+                min-width: 1px;
+                max-width: 1px;
+                background-color: rgba(127, 127, 127, 0.2);
+                display: inline-block;
+                margin-left: 15px
+            }
+        }
+
+        .scroll {
+            display: flex;
+            width: 100%;
+            align-items: center;
+            justify-content: flex-end;
+            height: 115px;
+            white-space: nowrap;
+            overflow-x: auto;
+            overflow-y: hidden;
+            -webkit-overflow-scrolling: touch;
+            -ms-overflow-style: -ms-autohiding-scrollbar
+        }
+
+        @media only screen and (max-width:768px) {
+            .scroll {
+                height: 80px;
+                padding-top: 100px;
+                padding-bottom: 100px;
+                margin-top: -60px;
+                justify-content: flex-start
+            }
+        }
+
+        .scroll::-webkit-scrollbar {
+            display: none
+        }
+
+        nav>ul {
+            color: #fff;
+            display: flex;
+            list-style-type: none
+        }
+
+        nav>ul li {
+            padding-left: 30px
+        }
+
+        @media only screen and (max-width:768px) {
+            nav>ul li {
+                padding-left: 20px
+            }
+        }
+
+        nav>ul li:first-child {
+            padding-left: 0px;
+            padding-left: 15px
+        }
+
+        nav>ul li:last-child {
+            padding-right: 15px
+        }
+
+        nav>ul li a:link,
+        nav>ul li a:visited {
+            text-decoration: none;
+            color: rgba(255, 255, 255, 0.6)
+        }
+
+        nav>ul li a:hover,
+        nav>ul li a:active {
+            text-decoration: none;
+            color: #fff
+        }
+
+        .subPageHeaderBackground .logo>p {
+            color: #000
+        }
+
+        .subPageHeaderBackground nav>ul li a:link,
+        .subPageHeaderBackground nav>ul li a:visited {
+            color: rgba(0, 0, 0, 0.6)
+        }
+
+        .subPageHeaderBackground nav>ul li a:hover,
+        .subPageHeaderBackground nav>ul li a:active {
+            color: #000
+        }
+
+        .appIconShadow {
+            display: flex;
+            filter: drop-shadow(0px 5px 10px rgba(0, 0, 0, 0.1)) drop-shadow(0px 1px 1px rgba(0, 0, 0, 0.2))
+        }
+
+        .markdown-body h1,
+        .markdown-body h2,
+        .markdown-body h3 {
+            color: #000
+        }
+
+        .markdown-body {
+            -ms-text-size-adjust: 100%;
+            -webkit-text-size-adjust: 100%;
+            color: rgba(0, 0, 0, 0.8);
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+            font-size: 16px;
+            line-height: 1.5;
+            word-wrap: break-word
+        }
+
+        .markdown-body h1 {
+            margin: .67em 0
+        }
+
+        .markdown-body * {
+            box-sizing: border-box
+        }
+
+        .markdown-body strong {
+            font-weight: 600
+        }
+
+        .markdown-body table {
+            border-collapse: collapse;
+            border-spacing: 0
+        }
+
+        .markdown-body:before {
+            content: "";
+            display: table
+        }
+
+        .markdown-body:after {
+            clear: both;
+            content: "";
+            display: table
+        }
+
+        .markdown-body>:first-child {
+            margin-top: 0 !important
+        }
+
+        .markdown-body>:last-child {
+            margin-bottom: 0 !important
+        }
+
+        .markdown-body ol,
+        .markdown-body p,
+        .markdown-body table,
+        .markdown-body ul {
+            margin-bottom: 16px;
+            margin-top: 0
+        }
+
+        .markdown-body h1,
+        .markdown-body h2,
+        .markdown-body h3 {
+            font-weight: 600;
+            line-height: 1.25;
+            margin-bottom: 16px;
+            margin-top: 24px
+        }
+
+        .markdown-body h1 {
+            font-size: 2em
+        }
+
+        .markdown-body h1,
+        .markdown-body h2 {
+            border-bottom: 1px solid #eaecef;
+            padding-bottom: .3em
+        }
+
+        .markdown-body h2 {
+            font-size: 1.2em
+        }
+
+        .markdown-body h3 {
+            font-size: 1.25em
+        }
+
+        .markdown-body ol,
+        .markdown-body ul {
+            padding-left: 2em
+        }
+
+        .markdown-body li+li {
+            margin-top: .25em
+        }
+
+        .markdown-body table {
+            display: block;
+            overflow: auto;
+            width: 100%
+        }
+
+        .markdown-body table th {
+            font-weight: 600
+        }
+
+        .markdown-body table td,
+        .markdown-body table th {
+            border: 1px solid #dfe2e5;
+            padding: 6px 13px
+        }
+
+        .markdown-body table tr {
+            background-color: #fff;
+            border-top: 1px solid #c6cbd1
+        }
+
+        .markdown-body table tr:nth-child(2n) {
+            background-color: #f6f8fa
+        }
+    </style>
+    <link rel="shortcut icon" href="./assets/elza-circle.webp">
+    <link rel="canonical" href="/">
+</head>
+
+<body class="subPageBody">
+    <div class="headerBackground subPageHeaderBackground">
+        <div class="container subPageContainer">
+            <header>
+                <div class="logo">
+                    <div class="appIconShadow">
+                        <svg width="0" height="0">
+                            <defs>
+                                <clippath id="shape">
+                                    <path id="shape" class="cls-1"
+                                        d="M6181.23,233.709v-1.792c0-.5-0.02-1-0.02-1.523a24.257,24.257,0,0,0-.28-3.3,11.207,11.207,0,0,0-1.04-3.132,10.683,10.683,0,0,0-1.95-2.679,10.384,10.384,0,0,0-2.68-1.943,10.806,10.806,0,0,0-3.13-1.038,19.588,19.588,0,0,0-3.3-.285c-0.5-.017-1-0.017-1.52-0.017h-22.39c-0.51,0-1.01.017-1.53,0.017a24.041,24.041,0,0,0-3.3.285,11.009,11.009,0,0,0-3.13,1.038,10.491,10.491,0,0,0-4.62,4.622,10.893,10.893,0,0,0-1.04,3.132,19.2,19.2,0,0,0-.28,3.3c-0.02.5-.02,1-0.02,1.523v22.392c0,0.5.02,1,.02,1.524a24.257,24.257,0,0,0,.28,3.3,10.9,10.9,0,0,0,1.04,3.132,10.491,10.491,0,0,0,4.62,4.622,11.04,11.04,0,0,0,3.13,1.038,19.891,19.891,0,0,0,3.3.285c0.51,0.017,1.01.017,1.53,0.017h22.39c0.5,0,1-.017,1.52-0.017a24.221,24.221,0,0,0,3.3-.285,10.836,10.836,0,0,0,3.13-1.038,10.408,10.408,0,0,0,2.68-1.943,10.683,10.683,0,0,0,1.95-2.679,11.217,11.217,0,0,0,1.04-3.132,20.257,20.257,0,0,0,.28-3.3c0.02-.5.02-1,0.02-1.524v-20.6h0Z"
+                                        transform="translate(-6131 -218)"></path>
+                                </clippath>
+                            </defs>
+                        </svg>
+                        <a href="/" target="_self"><img class="headerIcon"
+                                src="https://md-taseen-khan.vercel.app/img/85288261-modified.png"></a>
+                        <div class="divider"></div>
+                    </div>
+                    <p class="headerName" style="letter-spacing: 1px;">MD Taseen Khan</p>
+                </div>
+                <nav class="scroll">
+                    <ul>
+                        <!--   <li><a href=""
+                                target="_self">What's New</a></li>
+                        <li><a href="">Press Kit</a></li> -->
+                    </ul>
+                </nav>
+            </header>
+            <article class="page markdown-body">
+                <p><strong>Last updated</strong><br>
+                    October 10, 2022</p>
+
+                <h1>Disclaimer</h1>
+
+                <h1>Interpretation and Definitions</h1>
+                <h2>Interpretation</h2>
+                <p>The words of which the initial letter is capitalized have meanings defined under the following
+                    conditions.
+                    The following definitions shall have the same meaning regardless of whether they appear in singular
+                    or in plural.</p>
+                <h2>Definitions</h2>
+                <p>For the purposes of this Disclaimer:</p>
+                <ul>
+                    <li><strong>Company</strong> (referred to as either &quot;the Company&quot;, &quot;We&quot;,
+                        &quot;Us&quot; or &quot;Our&quot; in this Disclaimer) refers to Chitchatter.</li>
+                    <li><strong>Service</strong> refers to the Website.</li>
+                    <li><strong>You</strong> means the individual accessing the Service, or the company, or other legal
+                        entity on behalf of which such individual is accessing or using the Service, as applicable.</li>
+                    <li><strong>Website</strong> refers to Chitchatter, accessible from <a href="https://chitchatter.im"
+                            rel="external nofollow noopener" target="_blank">https://chitchatter.im</a></li>
+                </ul>
+                <h1>Disclaimer</h1>
+                <p>The information contained on the Service is for general information purposes only.</p>
+                <p>The Company assumes no responsibility for errors or omissions in the contents of the Service.</p>
+                <p>In no event shall the Company be liable for any special, direct, indirect, consequential, or
+                    incidental damages or any damages whatsoever, whether in an action of contract, negligence or other
+                    tort, arising out of or in connection with the use of the Service or the contents of the Service.
+                    The Company reserves the right to make additions, deletions, or modifications to the contents on the
+                    Service at any time without prior notice.</p>
+                <p>The Company does not warrant that the Service is free of viruses or other harmful components.</p>
+                <h1>External Links Disclaimer</h1>
+                <p>The Service may contain links to external websites that are not provided or maintained by or in any
+                    way affiliated with the Company.</p>
+                <p>Please note that the Company does not guarantee the accuracy, relevance, timeliness, or completeness
+                    of any information on these external websites.</p>
+                <h1>Errors and Omissions Disclaimer</h1>
+                <p>The information given by the Service is for general guidance on matters of interest only. Even if the
+                    Company takes every precaution to insure that the content of the Service is both current and
+                    accurate, errors can occur. Plus, given the changing nature of laws, rules and regulations, there
+                    may be delays, omissions or inaccuracies in the information contained on the Service.</p>
+                <p>The Company is not responsible for any errors or omissions, or for the results obtained from the use
+                    of this information.</p>
+                <h1>Fair Use Disclaimer</h1>
+                <p>The Company may use copyrighted material which has not always been specifically authorized by the
+                    copyright owner. The Company is making such material available for criticism, comment, news
+                    reporting, teaching, scholarship, or research.</p>
+                <p>The Company believes this constitutes a &quot;fair use&quot; of any such copyrighted material as
+                    provided for in section 107 of the United States Copyright law.</p>
+                <p>If You wish to use copyrighted material from the Service for your own purposes that go beyond fair
+                    use, You must obtain permission from the copyright owner.</p>
+                <h1>Views Expressed Disclaimer</h1>
+                <p>The Service may contain views and opinions which are those of the authors and do not necessarily
+                    reflect the official policy or position of any other author, agency, organization, employer or
+                    company, including the Company.</p>
+                <p>Comments published by users are their sole responsibility and the users will take full
+                    responsibility, liability and blame for any libel or litigation that results from something written
+                    in or as a direct result of something written in a comment. The Company is not liable for any
+                    comment published by users and reserves the right to delete any comment for any reason whatsoever.
+                </p>
+                <h1>No Responsibility Disclaimer</h1>
+                <p>The information on the Service is provided with the understanding that the Company is not herein
+                    engaged in rendering legal, accounting, tax, or other professional advice and services. As such, it
+                    should not be used as a substitute for consultation with professional accounting, tax, legal or
+                    other competent advisers.</p>
+                <p>In no event shall the Company or its suppliers be liable for any special, incidental, indirect, or
+                    consequential damages whatsoever arising out of or in connection with your access or use or
+                    inability to access or use the Service.</p>
+                <h1>&quot;Use at Your Own Risk&quot; Disclaimer</h1>
+                <p>All information in the Service is provided &quot;as is&quot;, with no guarantee of completeness,
+                    accuracy, timeliness or of the results obtained from the use of this information, and without
+                    warranty of any kind, express or implied, including, but not limited to warranties of performance,
+                    merchantability and fitness for a particular purpose.</p>
+                <p>The Company will not be liable to You or anyone else for any decision made or action taken in
+                    reliance on the information given by the Service or for any consequential, special or similar
+                    damages, even if advised of the possibility of such damages.</p>
+                <h1>Contact Us</h1>
+                <p>If you have any questions about this Disclaimer, You can contact Us:</p>
+                <ul>
+                    <li>
+                        <p>By email: jeremyckahn@gmail.com</p>
+                    </li>
+                    <li>
+                        <p>By visiting this page on our website: <a href="https://github.com/jeremyckahn"
+                                rel="external nofollow noopener" target="_blank">https://github.com/jeremyckahn</a></p>
+                    </li>
+                </ul>
+
+            </article>
+        </div>
+    </div>
+</body>
+
+</html>
