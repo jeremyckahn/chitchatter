@@ -155,10 +155,10 @@ Explore the files in `src/config` to modify pairing and relay server configurati
 
 ### Troubleshooting
 
-#### Peers won't connect to peers
+#### Peers won't connect
 
 This could happen for a variety of reasons. The most likely of which is that one or more peers cannot connect directly and must use the configured STUN/TURN relay as a fallback. The standard relay (https://www.metered.ca/tools/openrelay/) does not guarantee uptime, so it may simply be unavailable for some time. There's not much to do other than wait until it becomes available again.
 
 ##### Firefox-specific
 
-Per #36, check your `about:config` settings and ensure that `media.peerconnection.enabled` is **enabled**.
+Per [#36](https://github.com/jeremyckahn/chitchatter/issues/36), check your `about:config` settings and ensure that `media.peerconnection.enabled` is **enabled**.
