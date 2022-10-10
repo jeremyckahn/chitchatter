@@ -162,3 +162,8 @@ This could happen for a variety of reasons. The most likely of which is that one
 ##### Firefox-specific
 
 Per [#36](https://github.com/jeremyckahn/chitchatter/issues/36), check your `about:config` settings and ensure that `media.peerconnection.enabled` is **enabled**.
+
+
+## ⚠️ Disclaimer
+
+If any user does any kind of **illegal activities** through this website. He or She or Them will have to take the **full responsibility** for their illegal activities. And It is made clear that the Author and the contributors of this website will not take any **responsibility** of the users illegal activities.
