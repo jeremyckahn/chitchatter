@@ -9,6 +9,7 @@ import { SettingsContext } from 'contexts/SettingsContext'
 import { routes } from 'config/routes'
 import { Home } from 'pages/Home'
 import { About } from 'pages/About'
+import { Disclaimer } from 'pages/Disclaimer'
 import { Settings } from 'pages/Settings'
 import { PublicRoom } from 'pages/PublicRoom'
 import { UserSettings } from 'models/settings'
@@ -104,6 +105,7 @@ function Bootstrap({
                   />
                 ))}
                 <Route path={routes.ABOUT} element={<About />} />
+                <Route path={routes.DISCLAIMER} element={<Disclaimer />} />
                 <Route
                   path={routes.SETTINGS}
                   element={<Settings userId={userId} />}

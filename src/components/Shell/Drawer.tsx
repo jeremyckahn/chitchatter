@@ -17,6 +17,7 @@ import SettingsApplications from '@mui/icons-material/SettingsRounded'
 import QuestionMark from '@mui/icons-material/QuestionMark'
 import Brightness4Icon from '@mui/icons-material/Brightness4'
 import Brightness7Icon from '@mui/icons-material/Brightness7'
+import ReportIcon from '@mui/icons-material/Report'
 
 import { routes } from 'config/routes'
 import { SettingsContext } from 'contexts/SettingsContext'
@@ -29,6 +30,7 @@ export const drawerWidth = 240
 export interface DrawerProps extends PropsWithChildren {
   isDrawerOpen: boolean
   onAboutLinkClick: () => void
+  onDisclaimerClick: () => void
   onDrawerClose: () => void
   onHomeLinkClick: () => void
   onSettingsLinkClick: () => void
@@ -39,6 +41,7 @@ export interface DrawerProps extends PropsWithChildren {
 export const Drawer = ({
   isDrawerOpen,
   onAboutLinkClick,
+  onDisclaimerClick,
   onDrawerClose,
   onHomeLinkClick,
   onSettingsLinkClick,
@@ -121,6 +124,16 @@ export const Drawer = ({
                 <QuestionMark />
               </ListItemIcon>
               <ListItemText primary="About" />
+            </ListItemButton>
+          </ListItem>
+        </Link>
+        <Link to={routes.DISCLAIMER} onClick={onDisclaimerClick}>
+          <ListItem disablePadding>
+            <ListItemButton>
+              <ListItemIcon>
+                <ReportIcon />
+              </ListItemIcon>
+              <ListItemText primary="Disclaimer" />
             </ListItemButton>
           </ListItem>
         </Link>
