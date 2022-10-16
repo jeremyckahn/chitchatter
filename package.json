@@ -20,6 +20,7 @@
     "fast-memoize": "^2.5.2",
     "fun-animal-names": "^0.1.1",
     "localforage": "^1.10.0",
+    "mui-markdown": "^0.5.5",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-markdown": "^8.0.3",
