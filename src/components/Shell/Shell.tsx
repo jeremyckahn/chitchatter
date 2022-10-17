@@ -150,6 +150,10 @@ export const Shell = ({ appNeedsUpdate, children, userPeerId }: ShellProps) => {
     setIsDrawerOpen(false)
   }
 
+  const handleDisclaimerLinkClick = () => {
+    setIsDrawerOpen(false)
+  }
+
   const handleSettingsLinkClick = () => {
     setIsDrawerOpen(false)
   }
@@ -185,6 +189,7 @@ export const Shell = ({ appNeedsUpdate, children, userPeerId }: ShellProps) => {
           <Drawer
             isDrawerOpen={isDrawerOpen}
             onAboutLinkClick={handleAboutLinkClick}
+            onDisclaimerClick={handleDisclaimerLinkClick}
             onDrawerClose={handleDrawerClose}
             onHomeLinkClick={handleHomeLinkClick}
             onSettingsLinkClick={handleSettingsLinkClick}

@@ -1,11 +1,11 @@
 import { useContext, useEffect } from 'react'
-import Link from '@mui/material/Link'
+import MuiMarkdown from 'mui-markdown'
 import Box from '@mui/material/Box'
-import Typography from '@mui/material/Typography'
-import Divider from '@mui/material/Divider'
 
-import { messageCharacterSizeLimit } from 'config/messaging'
 import { ShellContext } from 'contexts/ShellContext'
+import { messageCharacterSizeLimit } from 'config/messaging'
+
+import './index.sass'
 
 export const About = () => {
   const { setTitle } = useContext(ShellContext)
@@ -15,83 +15,30 @@ export const About = () => {
   }, [setTitle])
 
   return (
-    <Box className="max-w-3xl mx-auto p-4">
-      <Typography sx={{ mb: 1 }}>
-        Chitchatter is a communication tool designed to make secure and private
-        communication accessible to all. Please{' '}
-        <Link
-          href="https://github.com/jeremyckahn/chitchatter/blob/develop/README.md"
-          target="_blank"
-        >
-          see the README
-        </Link>{' '}
-        for full project documentation.
-      </Typography>
-      <Divider sx={{ my: 2 }} />
-      <Typography
-        variant="h2"
-        sx={theme => ({
-          fontSize: theme.typography.h3.fontSize,
-          fontWeight: theme.typography.fontWeightMedium,
-          mb: 2,
-        })}
-      >
-        User Guide
-      </Typography>
-      <Typography
-        variant="h2"
-        sx={theme => ({
-          fontSize: theme.typography.h5.fontSize,
-          fontWeight: theme.typography.fontWeightMedium,
-          mb: 1.5,
-        })}
-      >
-        Chat rooms
-      </Typography>
-      <Typography sx={{ mb: 1 }}>
-        Public rooms can be joined by <strong>anyone</strong> with the room URL.
-        By default, rooms are given a random and un-guessable name. You can name
-        your room whatever you'd like, but keep in mind that simpler room names
-        are more guessable by others. For maximum security, consider using the
-        default room name.
-      </Typography>
-      <Typography sx={{ mb: 1 }}>
-        To connect to others, share the room URL with a secure tool such as{' '}
-        <Link href="https://burnernote.com/" target="_blank">
-          Burner Note
-        </Link>{' '}
-        or{' '}
-        <Link href="https://yopass.se/" target="_blank">
-          Yopass
-        </Link>
-        . You will be notified when others join the room.
-      </Typography>
-      <Typography sx={{ mb: 1 }}>
-        Chat message transcripts are erased as soon as you close the page or
-        navigate away from the room.
-      </Typography>
-      <Typography
-        variant="h2"
-        sx={theme => ({
-          fontSize: theme.typography.h5.fontSize,
-          fontWeight: theme.typography.fontWeightMedium,
-          mb: 1.5,
-        })}
-      >
-        Message Authoring
-      </Typography>
-      <Typography sx={{ mb: 1 }}>
-        Chat messages support{' '}
-        <Link href="https://github.github.com/gfm/" target="_blank">
-          GitHub-flavored Markdown
-        </Link>
-        .
-      </Typography>
-      <Typography sx={{ mb: 1 }}>
-        Press <code>Enter</code> to send a message. Press{' '}
-        <code>Shift + Enter</code> to insert a line break. Message size is
-        limited to {messageCharacterSizeLimit.toLocaleString()} characters.
-      </Typography>
+    <Box className="About max-w-3xl mx-auto p-4">
+      <MuiMarkdown>
+        {`
+### User Guide
+
+Chitchatter is a communication tool designed to make secure and private communication accessible to all. Please [see the README](https://github.com/jeremyckahn/chitchatter/blob/develop/README.md) for full project documentation.
+
+#### Chat rooms
+
+Public rooms can be joined by **anyone** with the room URL. By default, rooms are given a random and un-guessable name. You can name your room whatever you'd like, but keep in mind that simpler room names are more guessable by others. For maximum security, consider using the default room name.
+
+To connect to others, share the room URL with a secure tool such as [Burner Note](https://burnernote.com/) or [Yopass](https://yopass.se/). You will be notified when others join the room.
+
+Chat message transcripts are erased as soon as you close the page or navigate away from the room.
+
+#### Message Authoring
+
+Chat messages support [GitHub-flavored Markdown](https://github.github.com/gfm/).
+
+Press \`Enter\` to send a message. Press \`Shift + Enter\` to insert a line break. Message size is limited to ${Intl.NumberFormat().format(
+          messageCharacterSizeLimit
+        )} characters.
+        `}
+      </MuiMarkdown>
     </Box>
   )
 }
