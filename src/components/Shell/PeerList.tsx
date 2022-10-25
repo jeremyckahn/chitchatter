@@ -30,7 +30,6 @@ export const PeerList = ({
   return (
     <MuiDrawer
       sx={{
-        width: peerListWidth,
         flexShrink: 0,
         '& .MuiDrawer-paper': {
           width: peerListWidth,
