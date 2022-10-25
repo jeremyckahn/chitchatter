@@ -140,11 +140,10 @@ export function useRoom(
     shellContext.setNumberOfPeers(newNumberOfPeers)
     ;(async () => {
       try {
-        await sendPeerId(userId, peerId)
-        await sendMessageTranscript(
-          messageLog.filter(isMessageReceived),
-          peerId
-        )
+        await Promise.all([
+          sendPeerId(userId, peerId),
+          sendMessageTranscript(messageLog.filter(isMessageReceived), peerId),
+        ])
       } catch (e) {
         console.error(e)
       }
