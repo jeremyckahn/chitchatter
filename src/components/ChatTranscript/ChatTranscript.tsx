@@ -1,4 +1,4 @@
-import { HTMLAttributes, useRef, useEffect } from 'react'
+import { HTMLAttributes, useRef, useEffect, useState } from 'react'
 import cx from 'classnames'
 import Box from '@mui/material/Box'
 
@@ -16,6 +16,9 @@ export const ChatTranscript = ({
   userId,
 }: ChatTranscriptProps) => {
   const boxRef = useRef<HTMLDivElement>(null)
+  const [previousMessageLogLength, setPreviousMessageLogLength] = useState(
+    messageLog.length
+  )
 
   useEffect(() => {
     const { current: boxEl } = boxRef
@@ -29,14 +32,21 @@ export const ChatTranscript = ({
     const lastChild = children[children.length - 1]
     const lastChildHeight = lastChild.clientHeight
     const previousScrollTopMax = scrollTopMax - lastChildHeight
+    const shouldScrollToLatestMessage =
+      Math.ceil(scrollTop) >= Math.ceil(previousScrollTopMax) ||
+      previousMessageLogLength === 0
 
     if (
-      Math.ceil(scrollTop) >= Math.ceil(previousScrollTopMax) &&
+      shouldScrollToLatestMessage &&
       // scrollTo is not defined in the unit test environment
       'scrollTo' in boxEl
     ) {
       boxEl.scrollTo({ top: scrollTopMax })
     }
+  }, [messageLog.length, previousMessageLogLength])
+
+  useEffect(() => {
+    setPreviousMessageLogLength(messageLog.length)
   }, [messageLog.length])
 
   return (
