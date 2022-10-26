@@ -6,12 +6,14 @@ import { v4 as uuid } from 'uuid'
 import { ShellContext } from 'contexts/ShellContext'
 import { SettingsContext } from 'contexts/SettingsContext'
 import { PeerActions } from 'models/network'
-import { ReceivedMessage, UnsentMessage } from 'models/chat'
+import { ReceivedMessage, UnsentMessage, Message } from 'models/chat'
 import { funAnimalName } from 'fun-animal-names'
 import { getPeerName } from 'components/PeerNameDisplay'
 import { NotificationService } from 'services/Notification'
 import { Audio } from 'services/Audio'
 import { PeerRoom } from 'services/PeerRoom'
+
+import { messageTranscriptSizeLimit } from 'config/messaging'
 
 import { usePeerRoomAction } from './usePeerRoomAction'
 
@@ -30,12 +32,16 @@ export function useRoom(
   const shellContext = useContext(ShellContext)
   const settingsContext = useContext(SettingsContext)
   const [isMessageSending, setIsMessageSending] = useState(false)
-  const [messageLog, setMessageLog] = useState<
+  const [messageLog, _setMessageLog] = useState<
     Array<ReceivedMessage | UnsentMessage>
   >([])
   const [newMessageAudio] = useState(
     () => new Audio(process.env.PUBLIC_URL + '/sounds/new-message.aac')
   )
+
+  const setMessageLog = (messages: Message[]) => {
+    _setMessageLog(messages.slice(-messageTranscriptSizeLimit))
+  }
 
   useEffect(() => {
     return () => {
