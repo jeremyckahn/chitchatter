@@ -28,7 +28,11 @@ Public rooms can be joined by **anyone** with the room URL. By default, rooms ar
 
 To connect to others, share the room URL with a secure tool such as [Burner Note](https://burnernote.com/) or [Yopass](https://yopass.se/). You will be notified when others join the room.
 
-Chat message transcripts are erased as soon as you close the page or navigate away from the room.
+##### Conversation backfilling
+
+Conversation transcripts are erased from local memory as soon as you close the page or navigate away from the room. Conversations are only ever held in volatile memory and never persisted to any disk by Chitchatter.
+
+When a peer joins a public room with participants already in it, the new peer will automatically request the transcript of the conversation that has already taken place from the other peers. Once all peers leave the room, the conversation is completely erased.
 
 #### Message Authoring
 

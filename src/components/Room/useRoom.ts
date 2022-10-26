@@ -6,7 +6,7 @@ import { v4 as uuid } from 'uuid'
 import { ShellContext } from 'contexts/ShellContext'
 import { SettingsContext } from 'contexts/SettingsContext'
 import { PeerActions } from 'models/network'
-import { ReceivedMessage, UnsentMessage, Message } from 'models/chat'
+import { Message, ReceivedMessage, UnsentMessage, isMessageReceived } from 'models/chat'
 import { funAnimalName } from 'fun-animal-names'
 import { getPeerName } from 'components/PeerNameDisplay'
 import { NotificationService } from 'services/Notification'
@@ -62,6 +62,10 @@ export function useRoom(
     PeerActions.PEER_NAME
   )
 
+  const [sendMessageTranscript, receiveMessageTranscript] = usePeerRoomAction<
+    ReceivedMessage[]
+  >(peerRoom, PeerActions.MESSAGE_TRANSCRIPT)
+
   const [sendPeerMessage, receivePeerMessage] =
     usePeerRoomAction<UnsentMessage>(peerRoom, PeerActions.MESSAGE)
 
@@ -102,6 +106,12 @@ export function useRoom(
     }
   })
 
+  receiveMessageTranscript(transcript => {
+    if (messageLog.length) return
+
+    setMessageLog(transcript)
+  })
+
   receivePeerMessage(message => {
     const userSettings = settingsContext.getUserSettings()
 
@@ -130,7 +140,10 @@ export function useRoom(
     shellContext.setNumberOfPeers(newNumberOfPeers)
     ;(async () => {
       try {
-        await sendPeerId(userId, peerId)
+        await Promise.all([
+          sendPeerId(userId, peerId),
+          sendMessageTranscript(messageLog.filter(isMessageReceived), peerId),
+        ])
       } catch (e) {
         console.error(e)
       }
