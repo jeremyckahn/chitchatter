@@ -28,6 +28,10 @@ Public rooms can be joined by **anyone** with the room URL. By default, rooms ar
 
 To connect to others, share the room URL with a secure tool such as [Burner Note](https://burnernote.com/) or [Yopass](https://yopass.se/). You will be notified when others join the room.
 
+##### Community rooms
+
+There is [a public list of community rooms](https://github.com/jeremyckahn/chitchatter/wiki/Chitchatter-Community-Rooms) that you can join to discuss various topics.
+
 ##### Conversation backfilling
 
 Conversation transcripts are erased from local memory as soon as you close the page or navigate away from the room. Conversations are only ever held in volatile memory and never persisted to any disk by Chitchatter.
