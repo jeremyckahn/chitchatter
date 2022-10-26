@@ -1,0 +1,23 @@
+name: Community Room Request
+description: Request a new Community Room
+title: '[Community Room Request]: '
+labels: ['room request']
+assignees:
+  - jeremyckahn
+body:
+  - type: input
+    id: room-url
+    attributes:
+      label: Room URL
+      description: What is the Chitchatter URL for this room?
+      placeholder: ex. https://chitchatter.im/public/room-subject
+    validations:
+      required: true
+  - type: input
+    id: room-subject
+    attributes:
+      label: Room Subject
+      description: What should be discussed in this room?
+      placeholder: ex. Technology, video games, etc.
+    validations:
+      required: true
