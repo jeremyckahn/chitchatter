@@ -50,7 +50,7 @@ interface ShellAppBarProps {
   isPeerListOpen: boolean
   numberOfPeers: number
   title: string
-  onPeerListOpen: () => void
+  onPeerListClick: () => void
 }
 
 export const ShellAppBar = ({
@@ -61,7 +61,7 @@ export const ShellAppBar = ({
   isPeerListOpen,
   numberOfPeers,
   title,
-  onPeerListOpen,
+  onPeerListClick,
 }: ShellAppBarProps) => {
   return (
     <AppBar
@@ -114,7 +114,7 @@ export const ShellAppBar = ({
               edge="end"
               color="inherit"
               aria-label="Peer list"
-              onClick={onPeerListOpen}
+              onClick={onPeerListClick}
             >
               <StepIcon icon={numberOfPeers} />
             </IconButton>

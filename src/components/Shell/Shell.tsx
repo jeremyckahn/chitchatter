@@ -122,8 +122,8 @@ export const Shell = ({ appNeedsUpdate, children, userPeerId }: ShellProps) => {
     setIsDrawerOpen(true)
   }
 
-  const handlePeerListOpen = () => {
-    setIsPeerListOpen(true)
+  const handlePeerListClick = () => {
+    setIsPeerListOpen(!isPeerListOpen)
   }
 
   const handleLinkButtonClick = async () => {
@@ -136,10 +136,6 @@ export const Shell = ({ appNeedsUpdate, children, userPeerId }: ShellProps) => {
 
   const handleDrawerClose = () => {
     setIsDrawerOpen(false)
-  }
-
-  const handlePeerListClose = () => {
-    setIsPeerListOpen(false)
   }
 
   const handleHomeLinkClick = () => {
@@ -184,7 +180,7 @@ export const Shell = ({ appNeedsUpdate, children, userPeerId }: ShellProps) => {
             isPeerListOpen={isPeerListOpen}
             numberOfPeers={numberOfPeers}
             title={title}
-            onPeerListOpen={handlePeerListOpen}
+            onPeerListClick={handlePeerListClick}
           />
           <Drawer
             isDrawerOpen={isDrawerOpen}
@@ -205,7 +201,7 @@ export const Shell = ({ appNeedsUpdate, children, userPeerId }: ShellProps) => {
           <PeerList
             userId={userPeerId}
             isPeerListOpen={isPeerListOpen}
-            onPeerListClose={handlePeerListClose}
+            onPeerListClose={handlePeerListClick}
             peerList={peerList}
           />
         </Box>
