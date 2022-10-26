@@ -109,11 +109,15 @@ export const ShellAppBar = ({
         </Tooltip>
         {doShowPeers ? (
           <Tooltip title="Click to show peer list">
-            <StepIcon
-              icon={numberOfPeers}
+            <IconButton
+              size="large"
+              edge="end"
+              color="inherit"
+              aria-label="Peer list"
               onClick={onPeerListOpen}
-              sx={{ ml: 2 }}
-            />
+            >
+              <StepIcon icon={numberOfPeers} />
+            </IconButton>
           </Tooltip>
         ) : null}
       </Toolbar>
