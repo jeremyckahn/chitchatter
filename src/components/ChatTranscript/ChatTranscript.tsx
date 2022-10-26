@@ -16,9 +16,7 @@ export const ChatTranscript = ({
   userId,
 }: ChatTranscriptProps) => {
   const boxRef = useRef<HTMLDivElement>(null)
-  const [previousMessageLogLength, setPreviousMessageLogLength] = useState(
-    messageLog.length
-  )
+  const [previousMessageLogLength, setPreviousMessageLogLength] = useState(0)
 
   useEffect(() => {
     const { current: boxEl } = boxRef
@@ -32,9 +30,11 @@ export const ChatTranscript = ({
     const lastChild = children[children.length - 1]
     const lastChildHeight = lastChild.clientHeight
     const previousScrollTopMax = scrollTopMax - lastChildHeight
+    const wasPreviouslyScrolledToBottom =
+      Math.ceil(scrollTop) >= Math.ceil(previousScrollTopMax)
+    const wasMessageLogPreviouslyEmpty = previousMessageLogLength === 0
     const shouldScrollToLatestMessage =
-      Math.ceil(scrollTop) >= Math.ceil(previousScrollTopMax) ||
-      previousMessageLogLength === 0
+      wasPreviouslyScrolledToBottom || wasMessageLogPreviouslyEmpty
 
     if (
       shouldScrollToLatestMessage &&
