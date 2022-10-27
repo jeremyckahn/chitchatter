@@ -97,7 +97,7 @@ export const Drawer = ({
       </ListItem>
       <Divider />
       <List role="navigation">
-        <Link to={routes.INDEX_HTML} onClick={onHomeLinkClick}>
+        <Link to={routes.ROOT} onClick={onHomeLinkClick}>
           <ListItem disablePadding>
             <ListItemButton>
               <ListItemIcon>
