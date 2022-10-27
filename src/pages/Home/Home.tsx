@@ -37,7 +37,14 @@ export function Home({ userId }: HomeProps) {
 
   const handleFormSubmit = (event: React.SyntheticEvent<HTMLFormElement>) => {
     event.preventDefault()
+  }
+
+  const handleJoinPublicRoomClick = () => {
     navigate(`/public/${roomName}`)
+  }
+
+  const handleJoinPrivateRoomClick = () => {
+    navigate(`/private/${roomName}`)
   }
 
   return (
@@ -64,15 +71,32 @@ export function Home({ userId }: HomeProps) {
               />
             </Tooltip>
           </FormControl>
-          <Button
-            variant="contained"
-            type="submit"
+          <Box
             sx={{
-              marginTop: 2,
+              display: 'flex',
+              justifyContent: 'center',
             }}
           >
-            Go to chat room
-          </Button>
+            <Button
+              variant="contained"
+              onClick={handleJoinPublicRoomClick}
+              sx={{
+                marginTop: 2,
+              }}
+            >
+              Join public room
+            </Button>
+            <Button
+              variant="contained"
+              onClick={handleJoinPrivateRoomClick}
+              sx={{
+                marginTop: 2,
+                marginLeft: 2,
+              }}
+            >
+              Join private room
+            </Button>
+          </Box>
         </form>
       </main>
       <Divider sx={{ my: 2 }} />
