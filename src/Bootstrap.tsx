@@ -12,6 +12,7 @@ import { About } from 'pages/About'
 import { Disclaimer } from 'pages/Disclaimer'
 import { Settings } from 'pages/Settings'
 import { PublicRoom } from 'pages/PublicRoom'
+import { PrivateRoom } from 'pages/PrivateRoom'
 import { UserSettings } from 'models/settings'
 import { PersistedStorageKeys } from 'models/storage'
 import { Shell } from 'components/Shell'
@@ -113,6 +114,10 @@ function Bootstrap({
                 <Route
                   path={routes.PUBLIC_ROOM}
                   element={<PublicRoom userId={userId} />}
+                />
+                <Route
+                  path={routes.PRIVATE_ROOM}
+                  element={<PrivateRoom userId={userId} />}
                 />
               </Routes>
             ) : (
