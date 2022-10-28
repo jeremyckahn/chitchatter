@@ -27,7 +27,7 @@ Open https://chitchatter.im/ and join a room to start chatting with anyone else 
 ## Features
 
 - Multiple peers per room (limited only by the number of peer connections your browser supports).
-- The number displayed at the top-right of the screen shows how many peers you are connected to. Your peers are the only ones who can see your message.
+- Public and private rooms
 - Markdown support via [`react-markdown`](https://github.com/remarkjs/react-markdown).
   - Includes support for syntax highlighting of code.
 - Conversation backfilling from peers when a new participant joins

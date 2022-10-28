@@ -6,7 +6,12 @@ import { v4 as uuid } from 'uuid'
 import { ShellContext } from 'contexts/ShellContext'
 import { SettingsContext } from 'contexts/SettingsContext'
 import { PeerActions } from 'models/network'
-import { Message, ReceivedMessage, UnsentMessage, isMessageReceived } from 'models/chat'
+import {
+  Message,
+  ReceivedMessage,
+  UnsentMessage,
+  isMessageReceived,
+} from 'models/chat'
 import { funAnimalName } from 'fun-animal-names'
 import { getPeerName } from 'components/PeerNameDisplay'
 import { NotificationService } from 'services/Notification'
@@ -24,10 +29,14 @@ interface UseRoomConfig {
 }
 
 export function useRoom(
-  roomConfig: BaseRoomConfig & TorrentRoomConfig,
+  { password, ...roomConfig }: BaseRoomConfig & TorrentRoomConfig,
   { roomId, userId, getUuid = uuid }: UseRoomConfig
 ) {
-  const [peerRoom] = useState(() => new PeerRoom(roomConfig, roomId))
+  const isPublicRoom = !password
+
+  const [peerRoom] = useState(
+    () => new PeerRoom({ password: password ?? roomId, ...roomConfig }, roomId)
+  )
   const [numberOfPeers, setNumberOfPeers] = useState(1) // Includes this peer
   const shellContext = useContext(ShellContext)
   const settingsContext = useContext(SettingsContext)
@@ -140,10 +149,15 @@ export function useRoom(
     shellContext.setNumberOfPeers(newNumberOfPeers)
     ;(async () => {
       try {
-        await Promise.all([
-          sendPeerId(userId, peerId),
-          sendMessageTranscript(messageLog.filter(isMessageReceived), peerId),
-        ])
+        const promises: Promise<any>[] = [sendPeerId(userId, peerId)]
+
+        if (isPublicRoom) {
+          promises.push(
+            sendMessageTranscript(messageLog.filter(isMessageReceived), peerId)
+          )
+        }
+
+        await Promise.all(promises)
       } catch (e) {
         console.error(e)
       }

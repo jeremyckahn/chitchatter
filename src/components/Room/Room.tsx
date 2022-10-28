@@ -21,7 +21,7 @@ export function Room({
   appId = `${encodeURI(window.location.origin)}_${process.env.REACT_APP_NAME}`,
   getUuid = uuid,
   roomId,
-  password = roomId,
+  password,
   userId,
 }: RoomProps) {
   const { messageLog, sendMessage, isMessageSending } = useRoom(
