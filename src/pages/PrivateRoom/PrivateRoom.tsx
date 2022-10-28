@@ -1,9 +1,10 @@
-import { useContext, useEffect } from 'react'
+import { useContext, useEffect, useState } from 'react'
 import { Room } from 'components/Room'
 import { useParams } from 'react-router-dom'
 
 import { ShellContext } from 'contexts/ShellContext'
 import { NotificationService } from 'services/Notification'
+import { PasswordPrompt } from 'components/PasswordPrompt/PasswordPrompt'
 
 interface PublicRoomProps {
   userId: string
@@ -12,6 +13,7 @@ interface PublicRoomProps {
 export function PrivateRoom({ userId }: PublicRoomProps) {
   const { roomId = '' } = useParams()
   const { setTitle } = useContext(ShellContext)
+  const [password, setPassword] = useState('')
 
   useEffect(() => {
     NotificationService.requestPermission()
@@ -21,5 +23,16 @@ export function PrivateRoom({ userId }: PublicRoomProps) {
     setTitle(`Room: ${roomId}`)
   }, [roomId, setTitle])
 
-  return <Room userId={userId} roomId={roomId} />
+  const handlePasswordEntered = (password: string) => {
+    setPassword(password)
+  }
+
+  return (
+    <PasswordPrompt
+      isOpen={password.length === 0}
+      onPasswordEntered={handlePasswordEntered}
+    >
+      <Room userId={userId} roomId={roomId} />
+    </PasswordPrompt>
+  )
 }
