@@ -31,7 +31,6 @@ export const PasswordPrompt = ({
   return (
     <>
       {children}
-
       <Dialog open={isOpen}>
         <form onSubmit={handleFormSubmit}>
           <DialogTitle>Room Password</DialogTitle>

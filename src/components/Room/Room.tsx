@@ -12,6 +12,7 @@ import { useRoom } from './useRoom'
 export interface RoomProps {
   appId?: string
   getUuid?: typeof uuid
+  password?: string
   roomId: string
   userId: string
 }
@@ -20,6 +21,7 @@ export function Room({
   appId = `${encodeURI(window.location.origin)}_${process.env.REACT_APP_NAME}`,
   getUuid = uuid,
   roomId,
+  password = roomId,
   userId,
 }: RoomProps) {
   const { messageLog, sendMessage, isMessageSending } = useRoom(
@@ -27,6 +29,7 @@ export function Room({
       appId,
       trackerUrls,
       rtcConfig,
+      password,
     },
     {
       roomId,

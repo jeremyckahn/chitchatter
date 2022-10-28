@@ -35,6 +35,6 @@ export function PrivateRoom({ userId }: PublicRoomProps) {
       onPasswordEntered={handlePasswordEntered}
     />
   ) : (
-    <Room userId={userId} roomId={roomId} />
+    <Room userId={userId} roomId={roomId} password={password} />
   )
 }
