@@ -59,7 +59,9 @@ export const PasswordPrompt = ({
             />
           </DialogContent>
           <DialogActions>
-            <Button type="submit">Submit</Button>
+            <Button type="submit" disabled={password.length === 0}>
+              Submit
+            </Button>
           </DialogActions>
         </form>
       </Dialog>

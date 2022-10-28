@@ -27,12 +27,14 @@ export function PrivateRoom({ userId }: PublicRoomProps) {
     setPassword(password)
   }
 
-  return (
+  const isPasswordEntered = password.length === 0
+
+  return isPasswordEntered ? (
     <PasswordPrompt
-      isOpen={password.length === 0}
+      isOpen={isPasswordEntered}
       onPasswordEntered={handlePasswordEntered}
-    >
-      <Room userId={userId} roomId={roomId} />
-    </PasswordPrompt>
+    />
+  ) : (
+    <Room userId={userId} roomId={roomId} />
   )
 }
