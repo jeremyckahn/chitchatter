@@ -1,5 +1,6 @@
 import { HTMLAttributes } from 'react'
 import Box from '@mui/material/Box'
+import Tooltip from '@mui/material/Tooltip'
 import Typography, { TypographyProps } from '@mui/material/Typography'
 import Link, { LinkProps } from '@mui/material/Link'
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter'
@@ -72,6 +73,8 @@ const componentMap = {
   },
 }
 
+const spaceNeededForSideDateTooltip = 850
+
 export const Message = ({ message, showAuthor, userId }: MessageProps) => {
   let backgroundColor: string
 
@@ -96,27 +99,39 @@ export const Message = ({ message, showAuthor, userId }: MessageProps) => {
           <PeerNameDisplay>{message.authorId}</PeerNameDisplay>
         </Typography>
       )}
-      <Box
-        sx={{
-          color: 'primary.contrastText',
-          backgroundColor,
-          margin: 0.5,
-          padding: '0.5em 0.75em',
-          borderRadius: 6,
-          float: message.authorId === userId ? 'right' : 'left',
-          transition: 'background-color 1s',
-          wordBreak: 'break-word',
-        }}
-        maxWidth="85%"
+      <Tooltip
+        placement={
+          window.innerWidth >= spaceNeededForSideDateTooltip ? 'left' : 'top'
+        }
+        title={String(
+          Intl.DateTimeFormat(undefined, {
+            dateStyle: 'short',
+            timeStyle: 'short',
+          }).format(message.timeSent)
+        )}
       >
-        <Markdown
-          components={componentMap}
-          remarkPlugins={[remarkGfm]}
-          linkTarget="_blank"
+        <Box
+          sx={{
+            color: 'primary.contrastText',
+            backgroundColor,
+            margin: 0.5,
+            padding: '0.5em 0.75em',
+            borderRadius: 6,
+            float: message.authorId === userId ? 'right' : 'left',
+            transition: 'background-color 1s',
+            wordBreak: 'break-word',
+          }}
+          maxWidth="85%"
         >
-          {message.text}
-        </Markdown>
-      </Box>
+          <Markdown
+            components={componentMap}
+            remarkPlugins={[remarkGfm]}
+            linkTarget="_blank"
+          >
+            {message.text}
+          </Markdown>
+        </Box>
+      </Tooltip>
     </Box>
   )
 }
