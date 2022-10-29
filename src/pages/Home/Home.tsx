@@ -47,6 +47,8 @@ export function Home({ userId }: HomeProps) {
     navigate(`/private/${roomName}`)
   }
 
+  const isRoomNameValid = roomName.length > 0
+
   return (
     <Box className="Home">
       <main className="mt-6 px-4 max-w-3xl text-center mx-auto">
@@ -83,6 +85,7 @@ export function Home({ userId }: HomeProps) {
               sx={{
                 marginTop: 2,
               }}
+              disabled={!isRoomNameValid}
             >
               Join public room
             </Button>
@@ -93,6 +96,7 @@ export function Home({ userId }: HomeProps) {
                 marginTop: 2,
                 marginLeft: 2,
               }}
+              disabled={!isRoomNameValid}
             >
               Join private room
             </Button>
