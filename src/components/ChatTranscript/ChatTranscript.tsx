@@ -43,7 +43,7 @@ export const ChatTranscript = ({
     ) {
       boxEl.scrollTo({ top: scrollTopMax })
     }
-  }, [messageLog.length, previousMessageLogLength])
+  }, [messageLog, previousMessageLogLength])
 
   useEffect(() => {
     setPreviousMessageLogLength(messageLog.length)
