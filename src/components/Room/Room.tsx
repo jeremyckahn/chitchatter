@@ -5,8 +5,8 @@ import AccordionDetails from '@mui/material/AccordionDetails'
 import Box from '@mui/material/Box'
 import Divider from '@mui/material/Divider'
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore'
-import PhoneEnabled from '@mui/icons-material/PhoneEnabled'
-import PhoneDisabled from '@mui/icons-material/PhoneDisabled'
+import RecordVoiceOver from '@mui/icons-material/RecordVoiceOver'
+import VoiceOverOff from '@mui/icons-material/VoiceOverOff'
 import List from '@mui/material/List'
 import ListItem from '@mui/material/ListItem'
 import ListItemText from '@mui/material/ListItemText'
@@ -122,13 +122,13 @@ export function Room({
             >
               {isVoiceCalling ? (
                 <>
-                  <PhoneDisabled sx={{ mr: 1 }} />
-                  End voice call
+                  <VoiceOverOff sx={{ mr: 1 }} />
+                  Stop speaking to room
                 </>
               ) : (
                 <>
-                  <PhoneEnabled sx={{ mr: 1 }} />
-                  Start voice call
+                  <RecordVoiceOver sx={{ mr: 1 }} />
+                  Start speaking to room
                 </>
               )}
             </Fab>
