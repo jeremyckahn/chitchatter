@@ -56,6 +56,7 @@ export function useRoom(
   const setMessageLog = (messages: Message[]) => {
     _setMessageLog(messages.slice(-messageTranscriptSizeLimit))
   }
+  const [audioDevices, setAudioDevices] = useState<MediaDeviceInfo[]>([])
 
   useEffect(() => {
     return () => {
@@ -70,6 +71,16 @@ export function useRoom(
       shellContext.setDoShowPeers(false)
     }
   }, [shellContext])
+
+  useEffect(() => {
+    ;(async () => {
+      if (!selfStream) return
+
+      const devices = await window.navigator.mediaDevices.enumerateDevices()
+      const audioDevices = devices.filter(({ kind }) => kind === 'audioinput')
+      setAudioDevices(audioDevices)
+    })()
+  }, [selfStream])
 
   const [sendPeerId, receivePeerId] = usePeerRoomAction<string>(
     peerRoom,
@@ -213,6 +224,27 @@ export function useRoom(
     setPeerAudios({ ...peerAudios, [peerId]: audio })
   })
 
+  const handleAudioDeviceSelect = async (audioDevice: MediaDeviceInfo) => {
+    if (!selfStream) return
+
+    for (const track of selfStream.getTracks()) {
+      track.stop()
+      selfStream.removeTrack(track)
+    }
+
+    peerRoom.removeStream(selfStream, peerRoom.getPeers())
+
+    const newSelfStream = await navigator.mediaDevices.getUserMedia({
+      audio: {
+        deviceId: audioDevice.deviceId,
+      },
+      video: false,
+    })
+
+    peerRoom.addStream(newSelfStream)
+    setSelfStream(newSelfStream)
+  }
+
   useEffect(() => {
     ;(async () => {
       if (isVoiceCalling) {
@@ -241,11 +273,13 @@ export function useRoom(
   }, [isVoiceCalling, peerAudios, peerRoom, selfStream])
 
   return {
+    audioDevices,
     peerRoom,
     messageLog,
     sendMessage,
     isMessageSending,
     isVoiceCalling,
     setIsVoiceCalling,
+    handleAudioDeviceSelect,
   }
 }
