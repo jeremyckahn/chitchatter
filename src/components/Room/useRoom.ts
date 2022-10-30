@@ -15,7 +15,7 @@ import {
 import { funAnimalName } from 'fun-animal-names'
 import { getPeerName } from 'components/PeerNameDisplay'
 import { NotificationService } from 'services/Notification'
-import { Audio } from 'services/Audio'
+import { Audio as AudioService } from 'services/Audio'
 import { PeerRoom } from 'services/PeerRoom'
 
 import { messageTranscriptSizeLimit } from 'config/messaging'
@@ -45,9 +45,13 @@ export function useRoom(
     Array<ReceivedMessage | UnsentMessage>
   >([])
   const [newMessageAudio] = useState(
-    () => new Audio(process.env.PUBLIC_URL + '/sounds/new-message.aac')
+    () => new AudioService(process.env.PUBLIC_URL + '/sounds/new-message.aac')
   )
   const [isVoiceCalling, setIsVoiceCalling] = useState(false)
+  const [peerAudios, setPeerAudios] = useState<
+    Record<string, HTMLAudioElement>
+  >({})
+  const [selfStream, setSelfStream] = useState<MediaStream | undefined>()
 
   const setMessageLog = (messages: Message[]) => {
     _setMessageLog(messages.slice(-messageTranscriptSizeLimit))
@@ -148,6 +152,11 @@ export function useRoom(
     const newNumberOfPeers = numberOfPeers + 1
     setNumberOfPeers(newNumberOfPeers)
     shellContext.setNumberOfPeers(newNumberOfPeers)
+
+    if (selfStream) {
+      peerRoom.addStream(selfStream, peerId)
+    }
+
     ;(async () => {
       try {
         const promises: Promise<any>[] = [sendPeerId(userId, peerId)]
@@ -185,12 +194,51 @@ export function useRoom(
     setNumberOfPeers(newNumberOfPeers)
     shellContext.setNumberOfPeers(newNumberOfPeers)
 
+    if (selfStream) {
+      peerRoom.removeStream(selfStream, peerId)
+    }
+
     if (peerExist) {
       const peerListClone = [...shellContext.peerList]
       peerListClone.splice(peerIndex, 1)
       shellContext.setPeerList(peerListClone)
     }
   })
+
+  peerRoom.onPeerStream((stream, peerId) => {
+    const audio = new Audio()
+    audio.srcObject = stream
+    audio.autoplay = true
+
+    setPeerAudios({ ...peerAudios, [peerId]: audio })
+  })
+
+  useEffect(() => {
+    ;(async () => {
+      if (isVoiceCalling) {
+        if (!selfStream) {
+          const newSelfStream = await navigator.mediaDevices.getUserMedia({
+            audio: true,
+            video: false,
+          })
+
+          peerRoom.addStream(newSelfStream)
+
+          setSelfStream(newSelfStream)
+        }
+      } else {
+        if (selfStream) {
+          for (const track of selfStream.getTracks()) {
+            track.stop()
+            selfStream.removeTrack(track)
+          }
+
+          peerRoom.removeStream(selfStream, peerRoom.getPeers())
+          setSelfStream(undefined)
+        }
+      }
+    })()
+  }, [isVoiceCalling, peerAudios, peerRoom, selfStream])
 
   return {
     peerRoom,
