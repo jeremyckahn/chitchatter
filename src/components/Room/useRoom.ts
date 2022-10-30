@@ -47,6 +47,7 @@ export function useRoom(
   const [newMessageAudio] = useState(
     () => new Audio(process.env.PUBLIC_URL + '/sounds/new-message.aac')
   )
+  const [isVoiceCalling, setIsVoiceCalling] = useState(false)
 
   const setMessageLog = (messages: Message[]) => {
     _setMessageLog(messages.slice(-messageTranscriptSizeLimit))
@@ -196,5 +197,7 @@ export function useRoom(
     messageLog,
     sendMessage,
     isMessageSending,
+    isVoiceCalling,
+    setIsVoiceCalling,
   }
 }

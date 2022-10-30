@@ -1,5 +1,12 @@
+import Accordion from '@mui/material/Accordion'
+import AccordionSummary from '@mui/material/AccordionSummary'
+import AccordionDetails from '@mui/material/AccordionDetails'
 import Box from '@mui/material/Box'
 import Divider from '@mui/material/Divider'
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore'
+import PhoneEnabled from '@mui/icons-material/PhoneEnabled'
+import PhoneDisabled from '@mui/icons-material/PhoneDisabled'
+import Fab from '@mui/material/Fab'
 import { v4 as uuid } from 'uuid'
 
 import { rtcConfig } from 'config/rtcConfig'
@@ -24,7 +31,13 @@ export function Room({
   password,
   userId,
 }: RoomProps) {
-  const { messageLog, sendMessage, isMessageSending } = useRoom(
+  const {
+    messageLog,
+    sendMessage,
+    isMessageSending,
+    isVoiceCalling,
+    setIsVoiceCalling,
+  } = useRoom(
     {
       appId,
       trackerUrls,
@@ -42,6 +55,10 @@ export function Room({
     await sendMessage(message)
   }
 
+  const handleVoiceCallClick = () => {
+    setIsVoiceCalling(!isVoiceCalling)
+  }
+
   return (
     <Box
       className="Room"
@@ -51,6 +68,35 @@ export function Room({
         flexDirection: 'column',
       }}
     >
+      <Accordion>
+        <AccordionSummary
+          expandIcon={<ExpandMoreIcon />}
+          aria-controls="panel1a-content"
+          id="panel1a-header"
+        ></AccordionSummary>
+        <AccordionDetails>
+          <Box sx={{ display: 'flex', justifyContent: 'center' }}>
+            <Fab
+              variant="extended"
+              color={isVoiceCalling ? 'error' : 'success'}
+              aria-label="call"
+              onClick={handleVoiceCallClick}
+            >
+              {isVoiceCalling ? (
+                <>
+                  <PhoneDisabled sx={{ mr: 1 }} />
+                  End voice call
+                </>
+              ) : (
+                <>
+                  <PhoneEnabled sx={{ mr: 1 }} />
+                  Start voice call
+                </>
+              )}
+            </Fab>
+          </Box>
+        </AccordionDetails>
+      </Accordion>
       <ChatTranscript
         messageLog={messageLog}
         userId={userId}
