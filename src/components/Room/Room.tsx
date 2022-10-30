@@ -42,8 +42,8 @@ export function Room({
     messageLog,
     sendMessage,
     isMessageSending,
-    isVoiceCalling,
-    setIsVoiceCalling,
+    isSpeakingToRoom,
+    setIsSpeakingToRoom,
     handleAudioDeviceSelect,
   } = useRoom(
     {
@@ -68,7 +68,7 @@ export function Room({
   }
 
   const handleVoiceCallClick = () => {
-    setIsVoiceCalling(!isVoiceCalling)
+    setIsSpeakingToRoom(!isSpeakingToRoom)
   }
 
   const handleAudioDeviceListItemClick = (
@@ -86,7 +86,7 @@ export function Room({
     setAudioAnchorEl(null)
   }
 
-  const handleClose = () => {
+  const handleAudioInputSelectMenuClose = () => {
     setAudioAnchorEl(null)
   }
 
@@ -116,11 +116,11 @@ export function Room({
           >
             <Fab
               variant="extended"
-              color={isVoiceCalling ? 'error' : 'success'}
+              color={isSpeakingToRoom ? 'error' : 'success'}
               aria-label="call"
               onClick={handleVoiceCallClick}
             >
-              {isVoiceCalling ? (
+              {isSpeakingToRoom ? (
                 <>
                   <VoiceOverOff sx={{ mr: 1 }} />
                   Stop speaking to room
@@ -158,7 +158,7 @@ export function Room({
                   id="audio-input-select-menu"
                   anchorEl={audioAnchorEl}
                   open={isAudioDeviceSelectOpen}
-                  onClose={handleClose}
+                  onClose={handleAudioInputSelectMenuClose}
                   MenuListProps={{
                     'aria-labelledby': 'audio-input-select-button',
                     role: 'listbox',
