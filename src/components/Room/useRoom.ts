@@ -15,7 +15,7 @@ import {
 import { funAnimalName } from 'fun-animal-names'
 import { getPeerName } from 'components/PeerNameDisplay'
 import { NotificationService } from 'services/Notification'
-import { Audio } from 'services/Audio'
+import { Audio as AudioService } from 'services/Audio'
 import { PeerRoom } from 'services/PeerRoom'
 
 import { messageTranscriptSizeLimit } from 'config/messaging'
@@ -45,12 +45,18 @@ export function useRoom(
     Array<ReceivedMessage | UnsentMessage>
   >([])
   const [newMessageAudio] = useState(
-    () => new Audio(process.env.PUBLIC_URL + '/sounds/new-message.aac')
+    () => new AudioService(process.env.PUBLIC_URL + '/sounds/new-message.aac')
   )
+  const [isSpeakingToRoom, setIsSpeakingToRoom] = useState(false)
+  const [peerAudios, setPeerAudios] = useState<
+    Record<string, HTMLAudioElement>
+  >({})
+  const [audioStream, setAudioStream] = useState<MediaStream | null>()
 
   const setMessageLog = (messages: Message[]) => {
     _setMessageLog(messages.slice(-messageTranscriptSizeLimit))
   }
+  const [audioDevices, setAudioDevices] = useState<MediaDeviceInfo[]>([])
 
   useEffect(() => {
     return () => {
@@ -65,6 +71,16 @@ export function useRoom(
       shellContext.setDoShowPeers(false)
     }
   }, [shellContext])
+
+  useEffect(() => {
+    ;(async () => {
+      if (!audioStream) return
+
+      const devices = await window.navigator.mediaDevices.enumerateDevices()
+      const audioDevices = devices.filter(({ kind }) => kind === 'audioinput')
+      setAudioDevices(audioDevices)
+    })()
+  }, [audioStream])
 
   const [sendPeerId, receivePeerId] = usePeerRoomAction<string>(
     peerRoom,
@@ -147,6 +163,11 @@ export function useRoom(
     const newNumberOfPeers = numberOfPeers + 1
     setNumberOfPeers(newNumberOfPeers)
     shellContext.setNumberOfPeers(newNumberOfPeers)
+
+    if (audioStream) {
+      peerRoom.addStream(audioStream, peerId)
+    }
+
     ;(async () => {
       try {
         const promises: Promise<any>[] = [sendPeerId(userId, peerId)]
@@ -184,6 +205,10 @@ export function useRoom(
     setNumberOfPeers(newNumberOfPeers)
     shellContext.setNumberOfPeers(newNumberOfPeers)
 
+    if (audioStream) {
+      peerRoom.removeStream(audioStream, peerId)
+    }
+
     if (peerExist) {
       const peerListClone = [...shellContext.peerList]
       peerListClone.splice(peerIndex, 1)
@@ -191,10 +216,70 @@ export function useRoom(
     }
   })
 
+  peerRoom.onPeerStream((stream, peerId) => {
+    const audio = new Audio()
+    audio.srcObject = stream
+    audio.autoplay = true
+
+    setPeerAudios({ ...peerAudios, [peerId]: audio })
+  })
+
+  useEffect(() => {
+    ;(async () => {
+      if (isSpeakingToRoom) {
+        if (!audioStream) {
+          const newSelfStream = await navigator.mediaDevices.getUserMedia({
+            audio: true,
+            video: false,
+          })
+
+          peerRoom.addStream(newSelfStream)
+
+          setAudioStream(newSelfStream)
+        }
+      } else {
+        if (audioStream) {
+          for (const audioTrack of audioStream.getTracks()) {
+            audioTrack.stop()
+            audioStream.removeTrack(audioTrack)
+          }
+
+          peerRoom.removeStream(audioStream, peerRoom.getPeers())
+          setAudioStream(null)
+        }
+      }
+    })()
+  }, [isSpeakingToRoom, peerAudios, peerRoom, audioStream])
+
+  const handleAudioDeviceSelect = async (audioDevice: MediaDeviceInfo) => {
+    if (!audioStream) return
+
+    for (const audioTrack of audioStream.getTracks()) {
+      audioTrack.stop()
+      audioStream.removeTrack(audioTrack)
+    }
+
+    peerRoom.removeStream(audioStream, peerRoom.getPeers())
+
+    const newSelfStream = await navigator.mediaDevices.getUserMedia({
+      audio: {
+        deviceId: audioDevice.deviceId,
+      },
+      video: false,
+    })
+
+    peerRoom.addStream(newSelfStream)
+    setAudioStream(newSelfStream)
+  }
+
   return {
+    audioDevices,
     peerRoom,
     messageLog,
     sendMessage,
     isMessageSending,
+    isSpeakingToRoom,
+    setIsSpeakingToRoom,
+    handleAudioDeviceSelect,
   }
 }

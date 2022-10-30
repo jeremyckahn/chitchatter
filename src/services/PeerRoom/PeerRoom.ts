@@ -26,7 +26,23 @@ export class PeerRoom {
     this.room.onPeerLeave((...args) => fn(...args))
   }
 
+  onPeerStream: Room['onPeerStream'] = fn => {
+    this.room.onPeerStream((...args) => fn(...args))
+  }
+
+  getPeers: Room['getPeers'] = () => {
+    return this.room.getPeers()
+  }
+
   makeAction = <T>(namespace: string) => {
     return this.room.makeAction<T>(namespace)
+  }
+
+  addStream: Room['addStream'] = stream => {
+    return this.room.addStream(stream)
+  }
+
+  removeStream: Room['removeStream'] = (stream, targetPeers) => {
+    return this.room.removeStream(stream, targetPeers)
   }
 }
