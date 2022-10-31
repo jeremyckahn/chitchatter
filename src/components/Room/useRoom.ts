@@ -57,6 +57,9 @@ export function useRoom(
     _setMessageLog(messages.slice(-messageTranscriptSizeLimit))
   }
   const [audioDevices, setAudioDevices] = useState<MediaDeviceInfo[]>([])
+  const [selectedAudioDeviceId, setSelectedAudioDeviceId] = useState<
+    string | null
+  >(null)
 
   useEffect(() => {
     return () => {
@@ -229,12 +232,13 @@ export function useRoom(
       if (isSpeakingToRoom) {
         if (!audioStream) {
           const newSelfStream = await navigator.mediaDevices.getUserMedia({
-            audio: true,
+            audio: selectedAudioDeviceId
+              ? { deviceId: selectedAudioDeviceId }
+              : true,
             video: false,
           })
 
           peerRoom.addStream(newSelfStream)
-
           setAudioStream(newSelfStream)
         }
       } else {
@@ -249,9 +253,18 @@ export function useRoom(
         }
       }
     })()
-  }, [isSpeakingToRoom, peerAudios, peerRoom, audioStream])
+  }, [
+    isSpeakingToRoom,
+    peerAudios,
+    peerRoom,
+    audioStream,
+    selectedAudioDeviceId,
+  ])
 
   const handleAudioDeviceSelect = async (audioDevice: MediaDeviceInfo) => {
+    const { deviceId } = audioDevice
+    setSelectedAudioDeviceId(deviceId)
+
     if (!audioStream) return
 
     for (const audioTrack of audioStream.getTracks()) {
@@ -263,7 +276,7 @@ export function useRoom(
 
     const newSelfStream = await navigator.mediaDevices.getUserMedia({
       audio: {
-        deviceId: audioDevice.deviceId,
+        deviceId,
       },
       video: false,
     })
