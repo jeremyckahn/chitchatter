@@ -45,6 +45,10 @@ export function useRoomAudio({ peerRoom }: UseRoomAudioConfig) {
 
       if (peer.peerId === peerId) {
         newPeer.audioState = audioState
+
+        if (audioState === AudioState.STOPPED) {
+          deletePeerAudio(peerId)
+        }
       }
 
       return newPeer
@@ -125,6 +129,12 @@ export function useRoomAudio({ peerRoom }: UseRoomAudioConfig) {
     setAudioStream(newSelfStream)
   }
 
+  const deletePeerAudio = (peerId: string) => {
+    const newPeerAudios = { ...peerAudios }
+    delete newPeerAudios[peerId]
+    setPeerAudios(newPeerAudios)
+  }
+
   const handleAudioForNewPeer = (peerId: string) => {
     if (audioStream) {
       peerRoom.addStream(audioStream, peerId)
@@ -134,6 +144,7 @@ export function useRoomAudio({ peerRoom }: UseRoomAudioConfig) {
   const handleAudioForLeavingPeer = (peerId: string) => {
     if (audioStream) {
       peerRoom.removeStream(audioStream, peerId)
+      deletePeerAudio(peerId)
     }
   }
 
