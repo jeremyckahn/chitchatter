@@ -12,7 +12,6 @@ import {
   ReceivedMessage,
   UnsentMessage,
   isMessageReceived,
-  Peer,
 } from 'models/chat'
 import { funAnimalName } from 'fun-animal-names'
 import { getPeerName } from 'components/PeerNameDisplay'
@@ -23,6 +22,7 @@ import { PeerRoom } from 'services/PeerRoom'
 import { messageTranscriptSizeLimit } from 'config/messaging'
 
 import { usePeerRoomAction } from './usePeerRoomAction'
+import { useRoomAudio } from './useRoomAudio'
 
 interface UseRoomConfig {
   roomId: string
@@ -49,19 +49,19 @@ export function useRoom(
   const [newMessageAudio] = useState(
     () => new AudioService(process.env.PUBLIC_URL + '/sounds/new-message.aac')
   )
-  const [isSpeakingToRoom, setIsSpeakingToRoom] = useState(false)
-  const [peerAudios, setPeerAudios] = useState<
-    Record<string, HTMLAudioElement>
-  >({})
-  const [audioStream, setAudioStream] = useState<MediaStream | null>()
 
   const setMessageLog = (messages: Message[]) => {
     _setMessageLog(messages.slice(-messageTranscriptSizeLimit))
   }
-  const [audioDevices, setAudioDevices] = useState<MediaDeviceInfo[]>([])
-  const [selectedAudioDeviceId, setSelectedAudioDeviceId] = useState<
-    string | null
-  >(null)
+
+  const {
+    audioDevices,
+    isSpeakingToRoom,
+    setIsSpeakingToRoom,
+    handleAudioDeviceSelect,
+    handleAudioForNewPeer,
+    handleAudioForLeavingPeer,
+  } = useRoomAudio({ peerRoom })
 
   useEffect(() => {
     return () => {
@@ -77,16 +77,6 @@ export function useRoom(
     }
   }, [shellContext])
 
-  useEffect(() => {
-    ;(async () => {
-      if (!audioStream) return
-
-      const devices = await window.navigator.mediaDevices.enumerateDevices()
-      const audioDevices = devices.filter(({ kind }) => kind === 'audioinput')
-      setAudioDevices(audioDevices)
-    })()
-  }, [audioStream])
-
   const [sendPeerId, receivePeerId] = usePeerRoomAction<string>(
     peerRoom,
     PeerActions.PEER_NAME
@@ -98,11 +88,6 @@ export function useRoom(
 
   const [sendPeerMessage, receivePeerMessage] =
     usePeerRoomAction<UnsentMessage>(peerRoom, PeerActions.MESSAGE)
-
-  const [sendAudioChange, receiveAudioChange] = usePeerRoomAction<AudioState>(
-    peerRoom,
-    PeerActions.AUDIO_CHANGE
-  )
 
   const sendMessage = async (message: string) => {
     if (isMessageSending) return
@@ -165,20 +150,6 @@ export function useRoom(
     setMessageLog([...messageLog, { ...message, timeReceived: Date.now() }])
   })
 
-  receiveAudioChange((audioState, peerId) => {
-    const newPeerList = shellContext.peerList.map(peer => {
-      const newPeer: Peer = { ...peer }
-
-      if (peer.peerId === peerId) {
-        newPeer.audioState = audioState
-      }
-
-      return newPeer
-    })
-
-    shellContext.setPeerList(newPeerList)
-  })
-
   peerRoom.onPeerJoin((peerId: string) => {
     shellContext.showAlert(`Someone has joined the room`, {
       severity: 'success',
@@ -188,10 +159,7 @@ export function useRoom(
     setNumberOfPeers(newNumberOfPeers)
     shellContext.setNumberOfPeers(newNumberOfPeers)
 
-    if (audioStream) {
-      peerRoom.addStream(audioStream, peerId)
-    }
-
+    handleAudioForNewPeer(peerId)
     ;(async () => {
       try {
         const promises: Promise<any>[] = [sendPeerId(userId, peerId)]
@@ -229,9 +197,7 @@ export function useRoom(
     setNumberOfPeers(newNumberOfPeers)
     shellContext.setNumberOfPeers(newNumberOfPeers)
 
-    if (audioStream) {
-      peerRoom.removeStream(audioStream, peerId)
-    }
+    handleAudioForLeavingPeer(peerId)
 
     if (peerExist) {
       const peerListClone = [...shellContext.peerList]
@@ -239,78 +205,6 @@ export function useRoom(
       shellContext.setPeerList(peerListClone)
     }
   })
-
-  peerRoom.onPeerStream((stream, peerId) => {
-    const audio = new Audio()
-    audio.srcObject = stream
-    audio.autoplay = true
-
-    setPeerAudios({ ...peerAudios, [peerId]: audio })
-  })
-
-  useEffect(() => {
-    ;(async () => {
-      if (isSpeakingToRoom) {
-        if (!audioStream) {
-          const newSelfStream = await navigator.mediaDevices.getUserMedia({
-            audio: selectedAudioDeviceId
-              ? { deviceId: selectedAudioDeviceId }
-              : true,
-            video: false,
-          })
-
-          peerRoom.addStream(newSelfStream)
-          sendAudioChange(AudioState.PLAYING)
-          shellContext.setAudioState(AudioState.PLAYING)
-          setAudioStream(newSelfStream)
-        }
-      } else {
-        if (audioStream) {
-          for (const audioTrack of audioStream.getTracks()) {
-            audioTrack.stop()
-            audioStream.removeTrack(audioTrack)
-          }
-
-          peerRoom.removeStream(audioStream, peerRoom.getPeers())
-          sendAudioChange(AudioState.STOPPED)
-          shellContext.setAudioState(AudioState.STOPPED)
-          setAudioStream(null)
-        }
-      }
-    })()
-  }, [
-    isSpeakingToRoom,
-    peerAudios,
-    peerRoom,
-    audioStream,
-    selectedAudioDeviceId,
-    sendAudioChange,
-    shellContext,
-  ])
-
-  const handleAudioDeviceSelect = async (audioDevice: MediaDeviceInfo) => {
-    const { deviceId } = audioDevice
-    setSelectedAudioDeviceId(deviceId)
-
-    if (!audioStream) return
-
-    for (const audioTrack of audioStream.getTracks()) {
-      audioTrack.stop()
-      audioStream.removeTrack(audioTrack)
-    }
-
-    peerRoom.removeStream(audioStream, peerRoom.getPeers())
-
-    const newSelfStream = await navigator.mediaDevices.getUserMedia({
-      audio: {
-        deviceId,
-      },
-      video: false,
-    })
-
-    peerRoom.addStream(newSelfStream)
-    setAudioStream(newSelfStream)
-  }
 
   return {
     audioDevices,
