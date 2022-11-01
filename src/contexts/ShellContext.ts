@@ -1,7 +1,7 @@
 import { createContext, Dispatch, SetStateAction } from 'react'
 
 import { AlertOptions } from 'models/shell'
-import { Peer } from 'models/chat'
+import { AudioState, Peer } from 'models/chat'
 
 interface ShellContextProps {
   numberOfPeers: number
@@ -14,6 +14,8 @@ interface ShellContextProps {
   setIsPeerListOpen: Dispatch<SetStateAction<boolean>>
   peerList: Peer[]
   setPeerList: Dispatch<SetStateAction<Peer[]>>
+  audioState: AudioState
+  setAudioState: Dispatch<SetStateAction<AudioState>>
 }
 
 export const ShellContext = createContext<ShellContextProps>({
@@ -27,4 +29,6 @@ export const ShellContext = createContext<ShellContextProps>({
   setIsPeerListOpen: () => {},
   peerList: [],
   setPeerList: () => {},
+  audioState: AudioState.STOPPED,
+  setAudioState: () => {},
 })

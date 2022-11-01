@@ -1,24 +1,27 @@
 import { PropsWithChildren } from 'react'
 import MuiDrawer from '@mui/material/Drawer'
 import List from '@mui/material/List'
+import ListItemIcon from '@mui/material/ListItemIcon'
+import ListItemText from '@mui/material/ListItemText'
 import Divider from '@mui/material/Divider'
 import IconButton from '@mui/material/IconButton'
 import ChevronRightIcon from '@mui/icons-material/ChevronRight'
+import VolumeUp from '@mui/icons-material/VolumeUp'
 import ListItemButton from '@mui/material/ListItemButton'
-import Typography from '@mui/material/Typography'
 
 import { PeerListHeader } from 'components/Shell/PeerListHeader'
 import { PeerNameDisplay } from 'components/PeerNameDisplay'
 
-import { Peer } from 'models/chat'
+import { AudioState, Peer } from 'models/chat'
 
-export const peerListWidth = 240
+export const peerListWidth = 300
 
 export interface PeerListProps extends PropsWithChildren {
   userId: string
   isPeerListOpen: boolean
   onPeerListClose: () => void
   peerList: Peer[]
+  audioState: AudioState
 }
 
 export const PeerList = ({
@@ -26,6 +29,7 @@ export const PeerList = ({
   isPeerListOpen,
   onPeerListClose,
   peerList,
+  audioState,
 }: PeerListProps) => {
   return (
     <MuiDrawer
@@ -48,13 +52,25 @@ export const PeerList = ({
       <Divider />
       <List>
         <ListItemButton disableRipple={true}>
-          <Typography>
+          {audioState === AudioState.PLAYING && (
+            <ListItemIcon>
+              <VolumeUp />
+            </ListItemIcon>
+          )}
+          <ListItemText>
             <PeerNameDisplay>{userId}</PeerNameDisplay> (you)
-          </Typography>
+          </ListItemText>
         </ListItemButton>
         {peerList.map((peer: Peer) => (
           <ListItemButton key={peer.peerId} disableRipple={true}>
-            <PeerNameDisplay>{peer.userId}</PeerNameDisplay>
+            {peer.audioState === AudioState.PLAYING && (
+              <ListItemIcon>
+                <VolumeUp />
+              </ListItemIcon>
+            )}
+            <ListItemText>
+              <PeerNameDisplay>{peer.userId}</PeerNameDisplay>
+            </ListItemText>
           </ListItemButton>
         ))}
       </List>

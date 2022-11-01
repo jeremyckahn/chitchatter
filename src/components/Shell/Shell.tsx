@@ -15,7 +15,7 @@ import { AlertColor } from '@mui/material/Alert'
 import { ShellContext } from 'contexts/ShellContext'
 import { SettingsContext } from 'contexts/SettingsContext'
 import { AlertOptions } from 'models/shell'
-import { Peer } from 'models/chat'
+import { AudioState, Peer } from 'models/chat'
 import { ErrorBoundary } from 'components/ErrorBoundary'
 
 import { Drawer } from './Drawer'
@@ -42,6 +42,7 @@ export const Shell = ({ appNeedsUpdate, children, userPeerId }: ShellProps) => {
   const [isPeerListOpen, setIsPeerListOpen] = useState(false)
   const [peerList, setPeerList] = useState<Peer[]>([]) // except you
   const [tabHasFocus, setTabHasFocus] = useState(true)
+  const [audioState, setAudioState] = useState<AudioState>(AudioState.STOPPED)
 
   const showAlert = useCallback<
     (message: string, options?: AlertOptions) => void
@@ -63,6 +64,8 @@ export const Shell = ({ appNeedsUpdate, children, userPeerId }: ShellProps) => {
       setIsPeerListOpen,
       peerList,
       setPeerList,
+      audioState,
+      setAudioState,
     }),
     [
       isPeerListOpen,
@@ -73,6 +76,8 @@ export const Shell = ({ appNeedsUpdate, children, userPeerId }: ShellProps) => {
       setNumberOfPeers,
       setTitle,
       showAlert,
+      audioState,
+      setAudioState,
     ]
   )
 
@@ -203,6 +208,7 @@ export const Shell = ({ appNeedsUpdate, children, userPeerId }: ShellProps) => {
             isPeerListOpen={isPeerListOpen}
             onPeerListClose={handlePeerListClick}
             peerList={peerList}
+            audioState={audioState}
           />
         </Box>
       </ThemeProvider>

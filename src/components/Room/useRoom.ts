@@ -7,10 +7,12 @@ import { ShellContext } from 'contexts/ShellContext'
 import { SettingsContext } from 'contexts/SettingsContext'
 import { PeerActions } from 'models/network'
 import {
+  AudioState,
   Message,
   ReceivedMessage,
   UnsentMessage,
   isMessageReceived,
+  Peer,
 } from 'models/chat'
 import { funAnimalName } from 'fun-animal-names'
 import { getPeerName } from 'components/PeerNameDisplay'
@@ -97,6 +99,11 @@ export function useRoom(
   const [sendPeerMessage, receivePeerMessage] =
     usePeerRoomAction<UnsentMessage>(peerRoom, PeerActions.MESSAGE)
 
+  const [sendAudioChange, receiveAudioChange] = usePeerRoomAction<AudioState>(
+    peerRoom,
+    PeerActions.AUDIO_CHANGE
+  )
+
   const sendMessage = async (message: string) => {
     if (isMessageSending) return
 
@@ -125,12 +132,12 @@ export function useRoom(
     if (peerIndex === -1) {
       shellContext.setPeerList([
         ...shellContext.peerList,
-        { peerId: peerId, userId: userId },
+        { peerId: peerId, userId: userId, audioState: AudioState.STOPPED },
       ])
     } else {
-      const peerListClone = [...shellContext.peerList]
-      peerListClone[peerIndex].userId = userId
-      shellContext.setPeerList(peerListClone)
+      const newPeerList = [...shellContext.peerList]
+      newPeerList[peerIndex].userId = userId
+      shellContext.setPeerList(newPeerList)
     }
   })
 
@@ -156,6 +163,20 @@ export function useRoom(
     }
 
     setMessageLog([...messageLog, { ...message, timeReceived: Date.now() }])
+  })
+
+  receiveAudioChange((audioState, peerId) => {
+    const newPeerList = shellContext.peerList.map(peer => {
+      const newPeer: Peer = { ...peer }
+
+      if (peer.peerId === peerId) {
+        newPeer.audioState = audioState
+      }
+
+      return newPeer
+    })
+
+    shellContext.setPeerList(newPeerList)
   })
 
   peerRoom.onPeerJoin((peerId: string) => {
@@ -239,6 +260,8 @@ export function useRoom(
           })
 
           peerRoom.addStream(newSelfStream)
+          sendAudioChange(AudioState.PLAYING)
+          shellContext.setAudioState(AudioState.PLAYING)
           setAudioStream(newSelfStream)
         }
       } else {
@@ -249,6 +272,8 @@ export function useRoom(
           }
 
           peerRoom.removeStream(audioStream, peerRoom.getPeers())
+          sendAudioChange(AudioState.STOPPED)
+          shellContext.setAudioState(AudioState.STOPPED)
           setAudioStream(null)
         }
       }
@@ -259,6 +284,8 @@ export function useRoom(
     peerRoom,
     audioStream,
     selectedAudioDeviceId,
+    sendAudioChange,
+    shellContext,
   ])
 
   const handleAudioDeviceSelect = async (audioDevice: MediaDeviceInfo) => {

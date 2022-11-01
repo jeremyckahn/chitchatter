@@ -5,9 +5,15 @@ export interface UnsentMessage {
   authorId: string
 }
 
+export enum AudioState {
+  PLAYING = 'PLAYING',
+  STOPPED = 'STOPPED',
+}
+
 export interface Peer {
   peerId: string
   userId: string
+  audioState: AudioState
 }
 
 export interface ReceivedMessage extends UnsentMessage {

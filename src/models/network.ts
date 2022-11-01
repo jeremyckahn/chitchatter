@@ -3,4 +3,5 @@ export enum PeerActions {
   MESSAGE = 'MESSAGE',
   MESSAGE_TRANSCRIPT = 'MSG_XSCRIPT',
   PEER_NAME = 'PEER_NAME',
+  AUDIO_CHANGE = 'AUDIO_CHANGE',
 }
