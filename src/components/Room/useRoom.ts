@@ -22,6 +22,7 @@ import { PeerRoom } from 'services/PeerRoom'
 import { messageTranscriptSizeLimit } from 'config/messaging'
 
 import { usePeerRoomAction } from './usePeerRoomAction'
+import { useRoomAudio } from './useRoomAudio'
 
 interface UseRoomConfig {
   roomId: string
@@ -55,6 +56,15 @@ export function useRoom(
   const setMessageLog = (messages: Message[]) => {
     _setMessageLog(messages.slice(-messageTranscriptSizeLimit))
   }
+
+  const {
+    audioDevices,
+    isSpeakingToRoom,
+    setIsSpeakingToRoom,
+    handleAudioDeviceSelect,
+    handleAudioForNewPeer,
+    handleAudioForLeavingPeer,
+  } = useRoomAudio({ peerRoom })
 
   useEffect(() => {
     return () => {
@@ -168,6 +178,10 @@ export function useRoom(
     })()
   })
 
+  peerRoom.onPeerJoin((peerId: string) => {
+    handleAudioForNewPeer(peerId)
+  })
+
   peerRoom.onPeerLeave((peerId: string) => {
     const peerIndex = shellContext.peerList.findIndex(
       peer => peer.peerId === peerId
@@ -195,10 +209,18 @@ export function useRoom(
     }
   })
 
+  peerRoom.onPeerLeave((peerId: string) => {
+    handleAudioForLeavingPeer(peerId)
+  })
+
   return {
+    audioDevices,
     peerRoom,
     messageLog,
     sendMessage,
     isMessageSending,
+    isSpeakingToRoom,
+    setIsSpeakingToRoom,
+    handleAudioDeviceSelect,
   }
 }
