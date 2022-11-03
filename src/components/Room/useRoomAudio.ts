@@ -1,4 +1,4 @@
-import { useContext, useEffect, useState } from 'react'
+import { useContext, useEffect, useCallback, useState } from 'react'
 
 import { ShellContext } from 'contexts/ShellContext'
 import { PeerActions } from 'models/network'
@@ -65,6 +65,15 @@ export function useRoomAudio({ peerRoom }: UseRoomAudioConfig) {
     setPeerAudios({ ...peerAudios, [peerId]: audio })
   })
 
+  const cleanupAudio = useCallback(() => {
+    if (!audioStream) return
+
+    for (const audioTrack of audioStream.getTracks()) {
+      audioTrack.stop()
+      audioStream.removeTrack(audioTrack)
+    }
+  }, [audioStream])
+
   useEffect(() => {
     ;(async () => {
       if (isSpeakingToRoom) {
@@ -83,10 +92,7 @@ export function useRoomAudio({ peerRoom }: UseRoomAudioConfig) {
         }
       } else {
         if (audioStream) {
-          for (const audioTrack of audioStream.getTracks()) {
-            audioTrack.stop()
-            audioStream.removeTrack(audioTrack)
-          }
+          cleanupAudio()
 
           peerRoom.removeStream(audioStream, peerRoom.getPeers())
           sendAudioChange(AudioState.STOPPED)
@@ -103,7 +109,14 @@ export function useRoomAudio({ peerRoom }: UseRoomAudioConfig) {
     selectedAudioDeviceId,
     sendAudioChange,
     shellContext,
+    cleanupAudio,
   ])
+
+  useEffect(() => {
+    return () => {
+      cleanupAudio()
+    }
+  }, [cleanupAudio])
 
   const handleAudioDeviceSelect = async (audioDevice: MediaDeviceInfo) => {
     const { deviceId } = audioDevice

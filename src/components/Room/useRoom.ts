@@ -39,6 +39,9 @@ export function useRoom(
   const [peerRoom] = useState(
     () => new PeerRoom({ password: password ?? roomId, ...roomConfig }, roomId)
   )
+
+  peerRoom.flush()
+
   const [numberOfPeers, setNumberOfPeers] = useState(1) // Includes this peer
   const shellContext = useContext(ShellContext)
   const settingsContext = useContext(SettingsContext)
@@ -158,8 +161,6 @@ export function useRoom(
     const newNumberOfPeers = numberOfPeers + 1
     setNumberOfPeers(newNumberOfPeers)
     shellContext.setNumberOfPeers(newNumberOfPeers)
-
-    handleAudioForNewPeer(peerId)
     ;(async () => {
       try {
         const promises: Promise<any>[] = [sendPeerId(userId, peerId)]
@@ -175,6 +176,10 @@ export function useRoom(
         console.error(e)
       }
     })()
+  })
+
+  peerRoom.onPeerJoin((peerId: string) => {
+    handleAudioForNewPeer(peerId)
   })
 
   peerRoom.onPeerLeave((peerId: string) => {
@@ -197,13 +202,15 @@ export function useRoom(
     setNumberOfPeers(newNumberOfPeers)
     shellContext.setNumberOfPeers(newNumberOfPeers)
 
-    handleAudioForLeavingPeer(peerId)
-
     if (peerExist) {
       const peerListClone = [...shellContext.peerList]
       peerListClone.splice(peerIndex, 1)
       shellContext.setPeerList(peerListClone)
     }
+  })
+
+  peerRoom.onPeerLeave((peerId: string) => {
+    handleAudioForLeavingPeer(peerId)
   })
 
   return {

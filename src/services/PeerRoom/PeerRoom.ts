@@ -6,28 +6,76 @@ export class PeerRoom {
 
   private roomConfig: TorrentRoomConfig & BaseRoomConfig
 
+  private peerJoinHandlers: Set<(peerId: string) => void> = new Set()
+
+  private peerLeaveHandlers: Set<(peerId: string) => void> = new Set()
+
+  private peerStreamHandlers: Set<
+    (stream: MediaStream, peerId: string) => void
+  > = new Set()
+
   constructor(config: TorrentRoomConfig & BaseRoomConfig, roomId: string) {
     this.roomConfig = config
     this.room = joinRoom(this.roomConfig, roomId)
+
+    this.room.onPeerJoin((...args) => {
+      for (const peerJoinHandler of this.peerJoinHandlers) {
+        peerJoinHandler(...args)
+      }
+    })
+
+    this.room.onPeerLeave((...args) => {
+      for (const peerLeaveHandler of this.peerLeaveHandlers) {
+        peerLeaveHandler(...args)
+      }
+    })
+
+    this.room.onPeerStream((...args) => {
+      for (const peerStreamHandler of this.peerStreamHandlers) {
+        peerStreamHandler(...args)
+      }
+    })
+  }
+
+  flush = () => {
+    this.onPeerJoinFlush()
+    this.onPeerLeaveFlush()
+    this.onPeerStreamFlush()
   }
 
   leaveRoom = () => {
-    if (!this.room) return
     this.room.leave()
+    this.flush()
   }
 
   onPeerJoin: Room['onPeerJoin'] = fn => {
-    if (!this.room) return
-    this.room.onPeerJoin((...args) => fn(...args))
+    this.peerJoinHandlers.add(fn)
+  }
+
+  onPeerJoinFlush = () => {
+    this.peerJoinHandlers.forEach(handler =>
+      this.peerJoinHandlers.delete(handler)
+    )
   }
 
   onPeerLeave: Room['onPeerLeave'] = fn => {
-    if (!this.room) return
-    this.room.onPeerLeave((...args) => fn(...args))
+    this.peerLeaveHandlers.add(fn)
+  }
+
+  onPeerLeaveFlush = () => {
+    this.peerLeaveHandlers.forEach(handler =>
+      this.peerLeaveHandlers.delete(handler)
+    )
   }
 
   onPeerStream: Room['onPeerStream'] = fn => {
-    this.room.onPeerStream((...args) => fn(...args))
+    this.peerStreamHandlers.add(fn)
+  }
+
+  onPeerStreamFlush = () => {
+    this.peerStreamHandlers.forEach(handler =>
+      this.peerStreamHandlers.delete(handler)
+    )
   }
 
   getPeers: Room['getPeers'] = () => {
