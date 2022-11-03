@@ -161,12 +161,18 @@ export function useRoomAudio({ peerRoom }: UseRoomAudioConfig) {
     }
   }
 
+  peerRoom.onPeerJoin((peerId: string) => {
+    handleAudioForNewPeer(peerId)
+  })
+
+  peerRoom.onPeerLeave((peerId: string) => {
+    handleAudioForLeavingPeer(peerId)
+  })
+
   return {
     audioDevices,
     isSpeakingToRoom,
     setIsSpeakingToRoom,
     handleAudioDeviceSelect,
-    handleAudioForNewPeer,
-    handleAudioForLeavingPeer,
   }
 }
