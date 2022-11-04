@@ -35,19 +35,19 @@ export class PeerRoom {
     this.room = joinRoom(this.roomConfig, roomId)
 
     this.room.onPeerJoin((...args) => {
-      for (const peerJoinHandler of this.peerJoinHandlers.values()) {
+      for (const [, peerJoinHandler] of this.peerJoinHandlers) {
         peerJoinHandler(...args)
       }
     })
 
     this.room.onPeerLeave((...args) => {
-      for (const peerLeaveHandler of this.peerLeaveHandlers.values()) {
+      for (const [, peerLeaveHandler] of this.peerLeaveHandlers) {
         peerLeaveHandler(...args)
       }
     })
 
     this.room.onPeerStream((...args) => {
-      for (const peerStreamHandler of this.peerStreamHandlers.values()) {
+      for (const [, peerStreamHandler] of this.peerStreamHandlers) {
         peerStreamHandler(...args)
       }
     })
@@ -65,10 +65,10 @@ export class PeerRoom {
   }
 
   onPeerJoin = (
-    peerHookId: PeerHookType,
+    peerHookType: PeerHookType,
     fn: Parameters<Room['onPeerJoin']>[0]
   ) => {
-    this.peerJoinHandlers.set(peerHookId, fn)
+    this.peerJoinHandlers.set(peerHookType, fn)
   }
 
   onPeerJoinFlush = () => {
@@ -76,10 +76,10 @@ export class PeerRoom {
   }
 
   onPeerLeave = (
-    peerHookId: PeerHookType,
+    peerHookType: PeerHookType,
     fn: Parameters<Room['onPeerLeave']>[0]
   ) => {
-    this.peerLeaveHandlers.set(peerHookId, fn)
+    this.peerLeaveHandlers.set(peerHookType, fn)
   }
 
   onPeerLeaveFlush = () => {
@@ -87,10 +87,10 @@ export class PeerRoom {
   }
 
   onPeerStream = (
-    peerStreamId: PeerStreamType,
+    peerStreamType: PeerStreamType,
     fn: Parameters<Room['onPeerStream']>[0]
   ) => {
-    this.peerStreamHandlers.set(peerStreamId, fn)
+    this.peerStreamHandlers.set(peerStreamType, fn)
   }
 
   onPeerStreamFlush = () => {
