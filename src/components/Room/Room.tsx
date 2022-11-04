@@ -75,11 +75,19 @@ export function Room({
           </Box>
         </AccordionDetails>
       </Accordion>
-      <ChatTranscript
-        messageLog={messageLog}
-        userId={userId}
-        className="grow overflow-auto px-4"
-      />
+      <Box
+        sx={{
+          display: 'flex',
+          flexGrow: '1',
+          overflow: 'auto',
+        }}
+      >
+        <ChatTranscript
+          messageLog={messageLog}
+          userId={userId}
+          className="grow overflow-auto px-4"
+        />
+      </Box>
       <Divider />
       <MessageForm
         onMessageSubmit={handleMessageSubmit}
