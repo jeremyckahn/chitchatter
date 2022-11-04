@@ -17,7 +17,7 @@ import { funAnimalName } from 'fun-animal-names'
 import { getPeerName } from 'components/PeerNameDisplay'
 import { NotificationService } from 'services/Notification'
 import { Audio as AudioService } from 'services/Audio'
-import { PeerRoom } from 'services/PeerRoom'
+import { PeerRoom, PeerHookType } from 'services/PeerRoom'
 
 import { messageTranscriptSizeLimit } from 'config/messaging'
 
@@ -143,7 +143,7 @@ export function useRoom(
     setMessageLog([...messageLog, { ...message, timeReceived: Date.now() }])
   })
 
-  peerRoom.onPeerJoin((peerId: string) => {
+  peerRoom.onPeerJoin(PeerHookType.NEW_PEER, (peerId: string) => {
     shellContext.showAlert(`Someone has joined the room`, {
       severity: 'success',
     })
@@ -168,7 +168,7 @@ export function useRoom(
     })()
   })
 
-  peerRoom.onPeerLeave((peerId: string) => {
+  peerRoom.onPeerLeave(PeerHookType.NEW_PEER, (peerId: string) => {
     const peerIndex = shellContext.peerList.findIndex(
       peer => peer.peerId === peerId
     )

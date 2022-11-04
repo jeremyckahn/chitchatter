@@ -3,7 +3,7 @@ import { useContext, useEffect, useCallback, useState } from 'react'
 import { ShellContext } from 'contexts/ShellContext'
 import { PeerActions } from 'models/network'
 import { AudioState, Peer } from 'models/chat'
-import { PeerRoom } from 'services/PeerRoom'
+import { PeerRoom, PeerHookType, PeerStreamType } from 'services/PeerRoom'
 
 import { usePeerRoomAction } from './usePeerRoomAction'
 
@@ -57,7 +57,7 @@ export function useRoomAudio({ peerRoom }: UseRoomAudioConfig) {
     shellContext.setPeerList(newPeerList)
   })
 
-  peerRoom.onPeerStream((stream, peerId) => {
+  peerRoom.onPeerStream(PeerStreamType.AUDIO, (stream, peerId) => {
     const audio = new Audio()
     audio.srcObject = stream
     audio.autoplay = true
@@ -161,11 +161,11 @@ export function useRoomAudio({ peerRoom }: UseRoomAudioConfig) {
     }
   }
 
-  peerRoom.onPeerJoin((peerId: string) => {
+  peerRoom.onPeerJoin(PeerHookType.AUDIO, (peerId: string) => {
     handleAudioForNewPeer(peerId)
   })
 
-  peerRoom.onPeerLeave((peerId: string) => {
+  peerRoom.onPeerLeave(PeerHookType.AUDIO, (peerId: string) => {
     handleAudioForLeavingPeer(peerId)
   })
 

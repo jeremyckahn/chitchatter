@@ -1,37 +1,53 @@
 import { joinRoom, Room, BaseRoomConfig } from 'trystero'
 import { TorrentRoomConfig } from 'trystero/torrent'
 
+export enum PeerHookType {
+  NEW_PEER = 'NEW_PEER',
+  AUDIO = 'AUDIO',
+}
+
+export enum PeerStreamType {
+  AUDIO = 'AUDIO',
+}
+
 export class PeerRoom {
   private room: Room
 
   private roomConfig: TorrentRoomConfig & BaseRoomConfig
 
-  private peerJoinHandlers: Set<(peerId: string) => void> = new Set()
+  private peerJoinHandlers: Map<
+    PeerHookType,
+    Parameters<Room['onPeerJoin']>[0]
+  > = new Map()
 
-  private peerLeaveHandlers: Set<(peerId: string) => void> = new Set()
+  private peerLeaveHandlers: Map<
+    PeerHookType,
+    Parameters<Room['onPeerLeave']>[0]
+  > = new Map()
 
-  private peerStreamHandlers: Set<
-    (stream: MediaStream, peerId: string) => void
-  > = new Set()
+  private peerStreamHandlers: Map<
+    PeerStreamType,
+    Parameters<Room['onPeerStream']>[0]
+  > = new Map()
 
   constructor(config: TorrentRoomConfig & BaseRoomConfig, roomId: string) {
     this.roomConfig = config
     this.room = joinRoom(this.roomConfig, roomId)
 
     this.room.onPeerJoin((...args) => {
-      for (const peerJoinHandler of this.peerJoinHandlers) {
+      for (const peerJoinHandler of this.peerJoinHandlers.values()) {
         peerJoinHandler(...args)
       }
     })
 
     this.room.onPeerLeave((...args) => {
-      for (const peerLeaveHandler of this.peerLeaveHandlers) {
+      for (const peerLeaveHandler of this.peerLeaveHandlers.values()) {
         peerLeaveHandler(...args)
       }
     })
 
     this.room.onPeerStream((...args) => {
-      for (const peerStreamHandler of this.peerStreamHandlers) {
+      for (const peerStreamHandler of this.peerStreamHandlers.values()) {
         peerStreamHandler(...args)
       }
     })
@@ -48,34 +64,37 @@ export class PeerRoom {
     this.flush()
   }
 
-  onPeerJoin: Room['onPeerJoin'] = fn => {
-    this.peerJoinHandlers.add(fn)
+  onPeerJoin = (
+    peerHookId: PeerHookType,
+    fn: Parameters<Room['onPeerJoin']>[0]
+  ) => {
+    this.peerJoinHandlers.set(peerHookId, fn)
   }
 
   onPeerJoinFlush = () => {
-    this.peerJoinHandlers.forEach(handler =>
-      this.peerJoinHandlers.delete(handler)
-    )
+    this.peerJoinHandlers = new Map()
   }
 
-  onPeerLeave: Room['onPeerLeave'] = fn => {
-    this.peerLeaveHandlers.add(fn)
+  onPeerLeave = (
+    peerHookId: PeerHookType,
+    fn: Parameters<Room['onPeerLeave']>[0]
+  ) => {
+    this.peerLeaveHandlers.set(peerHookId, fn)
   }
 
   onPeerLeaveFlush = () => {
-    this.peerLeaveHandlers.forEach(handler =>
-      this.peerLeaveHandlers.delete(handler)
-    )
+    this.peerLeaveHandlers = new Map()
   }
 
-  onPeerStream: Room['onPeerStream'] = fn => {
-    this.peerStreamHandlers.add(fn)
+  onPeerStream = (
+    peerStreamId: PeerStreamType,
+    fn: Parameters<Room['onPeerStream']>[0]
+  ) => {
+    this.peerStreamHandlers.set(peerStreamId, fn)
   }
 
   onPeerStreamFlush = () => {
-    this.peerStreamHandlers.forEach(handler =>
-      this.peerStreamHandlers.delete(handler)
-    )
+    this.peerStreamHandlers = new Map()
   }
 
   getPeers: Room['getPeers'] = () => {
