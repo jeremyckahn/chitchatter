@@ -15,7 +15,7 @@ import { AlertColor } from '@mui/material/Alert'
 import { ShellContext } from 'contexts/ShellContext'
 import { SettingsContext } from 'contexts/SettingsContext'
 import { AlertOptions } from 'models/shell'
-import { AudioState, Peer } from 'models/chat'
+import { AudioState, VideoState, Peer } from 'models/chat'
 import { ErrorBoundary } from 'components/ErrorBoundary'
 
 import { Drawer } from './Drawer'
@@ -43,6 +43,7 @@ export const Shell = ({ appNeedsUpdate, children, userPeerId }: ShellProps) => {
   const [peerList, setPeerList] = useState<Peer[]>([]) // except you
   const [tabHasFocus, setTabHasFocus] = useState(true)
   const [audioState, setAudioState] = useState<AudioState>(AudioState.STOPPED)
+  const [videoState, setVideoState] = useState<VideoState>(VideoState.STOPPED)
 
   const showAlert = useCallback<
     (message: string, options?: AlertOptions) => void
@@ -66,6 +67,8 @@ export const Shell = ({ appNeedsUpdate, children, userPeerId }: ShellProps) => {
       setPeerList,
       audioState,
       setAudioState,
+      videoState,
+      setVideoState,
     }),
     [
       isPeerListOpen,
@@ -78,6 +81,8 @@ export const Shell = ({ appNeedsUpdate, children, userPeerId }: ShellProps) => {
       showAlert,
       audioState,
       setAudioState,
+      videoState,
+      setVideoState,
     ]
   )
 

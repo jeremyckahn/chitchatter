@@ -10,10 +10,16 @@ export enum AudioState {
   STOPPED = 'STOPPED',
 }
 
+export enum VideoState {
+  PLAYING = 'PLAYING',
+  STOPPED = 'STOPPED',
+}
+
 export interface Peer {
   peerId: string
   userId: string
   audioState: AudioState
+  videoState: VideoState
 }
 
 export interface ReceivedMessage extends UnsentMessage {

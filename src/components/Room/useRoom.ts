@@ -11,6 +11,7 @@ import {
   Message,
   ReceivedMessage,
   UnsentMessage,
+  VideoState,
   isMessageReceived,
 } from 'models/chat'
 import { funAnimalName } from 'fun-animal-names'
@@ -110,7 +111,12 @@ export function useRoom(
     if (peerIndex === -1) {
       shellContext.setPeerList([
         ...shellContext.peerList,
-        { peerId: peerId, userId: userId, audioState: AudioState.STOPPED },
+        {
+          peerId: peerId,
+          userId: userId,
+          audioState: AudioState.STOPPED,
+          videoState: VideoState.STOPPED,
+        },
       ])
     } else {
       const newPeerList = [...shellContext.peerList]

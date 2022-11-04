@@ -13,6 +13,7 @@ import { ChatTranscript } from 'components/ChatTranscript'
 
 import { useRoom } from './useRoom'
 import { RoomAudioControls } from './RoomAudioControls'
+import { RoomVideoControls } from './RoomVideoControls'
 
 export interface RoomProps {
   appId?: string
@@ -65,13 +66,13 @@ export function Room({
         <AccordionDetails>
           <Box
             sx={{
-              alignItems: 'center',
+              alignItems: 'flex-start',
               display: 'flex',
-              flexDirection: 'column',
               justifyContent: 'center',
             }}
           >
             <RoomAudioControls peerRoom={peerRoom} />
+            <RoomVideoControls peerRoom={peerRoom} />
           </Box>
         </AccordionDetails>
       </Accordion>

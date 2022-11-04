@@ -53,7 +53,15 @@ export function RoomAudioControls({ peerRoom }: RoomAudioControlsProps) {
   }
 
   return (
-    <>
+    <Box
+      sx={{
+        alignItems: 'center',
+        display: 'flex',
+        flexDirection: 'column',
+        justifyContent: 'center',
+        px: 1,
+      }}
+    >
       <Fab
         variant="extended"
         color={isSpeakingToRoom ? 'error' : 'success'}
@@ -116,6 +124,6 @@ export function RoomAudioControls({ peerRoom }: RoomAudioControlsProps) {
           </Menu>
         </Box>
       )}
-    </>
+    </Box>
   )
 }
