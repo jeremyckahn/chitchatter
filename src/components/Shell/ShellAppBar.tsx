@@ -7,6 +7,8 @@ import Tooltip from '@mui/material/Tooltip'
 import IconButton from '@mui/material/IconButton'
 import MenuIcon from '@mui/icons-material/Menu'
 import LinkIcon from '@mui/icons-material/Link'
+import QrCode2Icon from '@mui/icons-material/QrCode2'
+import { Box } from '@mui/material'
 
 import { drawerWidth } from './Drawer'
 import { peerListWidth } from './PeerList'
@@ -51,6 +53,7 @@ interface ShellAppBarProps {
   numberOfPeers: number
   title: string
   onPeerListClick: () => void
+  setIsQRCodeDialogOpen: (isOpen: boolean) => void
 }
 
 export const ShellAppBar = ({
@@ -59,10 +62,12 @@ export const ShellAppBar = ({
   onLinkButtonClick,
   isDrawerOpen,
   isPeerListOpen,
+  setIsQRCodeDialogOpen,
   numberOfPeers,
   title,
   onPeerListClick,
 }: ShellAppBarProps) => {
+  const handleQRCodeClick = () => setIsQRCodeDialogOpen(true)
   return (
     <AppBar
       position="fixed"
@@ -95,30 +100,42 @@ export const ShellAppBar = ({
         >
           {title}
         </Typography>
-        <Tooltip title="Copy current URL">
-          <IconButton
-            size="large"
-            edge="start"
-            color="inherit"
-            aria-label="Copy current URL"
-            sx={{ ml: 'auto' }}
-            onClick={onLinkButtonClick}
-          >
-            <LinkIcon />
-          </IconButton>
-        </Tooltip>
         {doShowPeers ? (
-          <Tooltip title="Click to show peer list">
-            <IconButton
-              size="large"
-              edge="end"
-              color="inherit"
-              aria-label="Peer list"
-              onClick={onPeerListClick}
-            >
-              <StepIcon icon={numberOfPeers} />
-            </IconButton>
-          </Tooltip>
+          <Box>
+            <Tooltip title="Open QR Code">
+              <IconButton
+                size="large"
+                color="inherit"
+                aria-label="Open QR Code"
+                onClick={handleQRCodeClick}
+              >
+                <QrCode2Icon />
+              </IconButton>
+            </Tooltip>
+            <Tooltip title="Copy current URL">
+              <IconButton
+                size="large"
+                edge="start"
+                color="inherit"
+                aria-label="Copy current URL"
+                sx={{ ml: 'auto' }}
+                onClick={onLinkButtonClick}
+              >
+                <LinkIcon />
+              </IconButton>
+            </Tooltip>
+            <Tooltip title="Click to show peer list">
+              <IconButton
+                size="large"
+                edge="end"
+                color="inherit"
+                aria-label="Peer list"
+                onClick={onPeerListClick}
+              >
+                <StepIcon icon={numberOfPeers} />
+              </IconButton>
+            </Tooltip>
+          </Box>
         ) : null}
       </Toolbar>
     </AppBar>
