@@ -44,6 +44,9 @@ export const Shell = ({ appNeedsUpdate, children, userPeerId }: ShellProps) => {
   const [tabHasFocus, setTabHasFocus] = useState(true)
   const [audioState, setAudioState] = useState<AudioState>(AudioState.STOPPED)
   const [videoState, setVideoState] = useState<VideoState>(VideoState.STOPPED)
+  const [selfVideoStream, setSelfVideoStream] = useState<MediaStream | null>(
+    null
+  )
 
   const showAlert = useCallback<
     (message: string, options?: AlertOptions) => void
@@ -69,6 +72,8 @@ export const Shell = ({ appNeedsUpdate, children, userPeerId }: ShellProps) => {
       setAudioState,
       videoState,
       setVideoState,
+      selfVideoStream,
+      setSelfVideoStream,
     }),
     [
       isPeerListOpen,
@@ -83,6 +88,8 @@ export const Shell = ({ appNeedsUpdate, children, userPeerId }: ShellProps) => {
       setAudioState,
       videoState,
       setVideoState,
+      selfVideoStream,
+      setSelfVideoStream,
     ]
   )
 

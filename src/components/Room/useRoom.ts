@@ -201,10 +201,16 @@ export function useRoom(
     }
   })
 
+  // FIXME: Also check for peer videos
+  const showVideoDisplay = Boolean(
+    shellContext.videoState === VideoState.PLAYING
+  )
+
   return {
-    peerRoom,
-    messageLog,
-    sendMessage,
     isMessageSending,
+    messageLog,
+    peerRoom,
+    sendMessage,
+    showVideoDisplay,
   }
 }

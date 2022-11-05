@@ -35,7 +35,7 @@ export function useRoomVideo({ peerRoom }: UseRoomVideoConfig) {
 
       // Sometimes duplicate devices are provided by enumerateDevices, so
       // dedupe them by ID.
-      const videoDevices = [
+      const newVideoDevices = [
         ...rawVideoDevices
           .reduce((acc, videoDevice) => {
             return acc.set(videoDevice.deviceId, videoDevice)
@@ -43,9 +43,24 @@ export function useRoomVideo({ peerRoom }: UseRoomVideoConfig) {
           .values(),
       ]
 
-      setVideoDevices(videoDevices)
+      setVideoDevices(newVideoDevices)
+
+      if (newVideoDevices.length > 0 && !shellContext.selfVideoStream) {
+        const [firstVideoDevice] = newVideoDevices
+        const newSelfStream = await navigator.mediaDevices.getUserMedia({
+          audio: false,
+          video: {
+            deviceId: firstVideoDevice.deviceId,
+          },
+        })
+
+        peerRoom.addStream(newSelfStream)
+        setVideoStream(newSelfStream)
+
+        shellContext.setSelfVideoStream(newSelfStream)
+      }
     })()
-  }, [videoStream])
+  }, [peerRoom, shellContext, videoStream])
 
   const [sendVideoChange, receiveVideoChange] = usePeerRoomAction<VideoState>(
     peerRoom,
@@ -112,6 +127,7 @@ export function useRoomVideo({ peerRoom }: UseRoomVideoConfig) {
           sendVideoChange(VideoState.STOPPED)
           shellContext.setVideoState(VideoState.STOPPED)
           setVideoStream(null)
+          shellContext.setSelfVideoStream(null)
         }
       }
     })()
@@ -131,6 +147,17 @@ export function useRoomVideo({ peerRoom }: UseRoomVideoConfig) {
       cleanupVideo()
     }
   }, [cleanupVideo])
+
+  const { selfVideoStream, setSelfVideoStream, setVideoState } = shellContext
+
+  useEffect(() => {
+    return () => {
+      if (selfVideoStream) {
+        setSelfVideoStream(null)
+        setVideoState(VideoState.STOPPED)
+      }
+    }
+  }, [selfVideoStream, setSelfVideoStream, setVideoState])
 
   const handleVideoDeviceSelect = async (videoDevice: MediaDeviceInfo) => {
     const { deviceId } = videoDevice
@@ -154,6 +181,8 @@ export function useRoomVideo({ peerRoom }: UseRoomVideoConfig) {
 
     peerRoom.addStream(newSelfStream)
     setVideoStream(newSelfStream)
+
+    shellContext.setSelfVideoStream(newSelfStream)
   }
 
   const deletePeerVideo = (peerId: string) => {
@@ -166,6 +195,8 @@ export function useRoomVideo({ peerRoom }: UseRoomVideoConfig) {
     if (videoStream) {
       peerRoom.addStream(videoStream, peerId)
     }
+
+    // TODO: Set up video for peer
   }
 
   const handleVideoForLeavingPeer = (peerId: string) => {
