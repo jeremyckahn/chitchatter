@@ -73,12 +73,14 @@ export function Home({ userId }: HomeProps) {
                 InputProps={{
                   endAdornment: (
                     <IconButton
-                      aria-label="Regenerate room name"
+                      aria-label="Regenerate room id"
                       onClick={() => setRoomName(uuid())}
+                      size="small"
                     >
                       <Cached />
                     </IconButton>
                   ),
+                  sx: { fontSize: { xs: '0.9rem', sm: '1rem' } },
                 }}
                 size="medium"
               />
