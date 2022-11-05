@@ -9,6 +9,7 @@ import Divider from '@mui/material/Divider'
 import IconButton from '@mui/material/IconButton'
 import MuiLink from '@mui/material/Link'
 import GitHubIcon from '@mui/icons-material/GitHub'
+import Cached from '@mui/icons-material/Cached'
 import Tooltip from '@mui/material/Tooltip'
 import { v4 as uuid } from 'uuid'
 
@@ -69,6 +70,18 @@ export function Home({ userId }: HomeProps) {
                 variant="outlined"
                 value={roomName}
                 onChange={handleRoomNameChange}
+                InputProps={{
+                  endAdornment: (
+                    <IconButton
+                      aria-label="Regenerate room id"
+                      onClick={() => setRoomName(uuid())}
+                      size="small"
+                    >
+                      <Cached />
+                    </IconButton>
+                  ),
+                  sx: { fontSize: { xs: '0.9rem', sm: '1rem' } },
+                }}
                 size="medium"
               />
             </Tooltip>
