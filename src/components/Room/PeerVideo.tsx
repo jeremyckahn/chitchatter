@@ -4,11 +4,12 @@ import Paper from '@mui/material/Paper'
 import { PeerNameDisplay } from 'components/PeerNameDisplay'
 
 interface PeerVideoProps {
+  isSelf?: boolean
   userId: string
   videoStream: MediaStream
 }
 
-export const PeerVideo = ({ userId: peerId, videoStream }: PeerVideoProps) => {
+export const PeerVideo = ({ isSelf, userId, videoStream }: PeerVideoProps) => {
   const videoRef = useRef<HTMLVideoElement>(null)
 
   useEffect(() => {
@@ -38,10 +39,13 @@ export const PeerVideo = ({ userId: peerId, videoStream }: PeerVideoProps) => {
           borderRadius: '1.25em',
           overflow: 'auto',
           padding: '1em',
+          ...(isSelf && {
+            transform: 'rotateY(180deg)',
+          }),
         }}
       />
       <PeerNameDisplay sx={{ textAlign: 'center', display: 'block' }}>
-        {peerId}
+        {userId}
       </PeerNameDisplay>
     </Paper>
   )

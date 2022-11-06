@@ -46,7 +46,11 @@ export const RoomVideoDisplay = ({ userId }: RoomVideoDisplayProps) => {
       }}
     >
       {shellContext.selfVideoStream && (
-        <PeerVideo userId={userId} videoStream={shellContext.selfVideoStream} />
+        <PeerVideo
+          isSelf
+          userId={userId}
+          videoStream={shellContext.selfVideoStream}
+        />
       )}
       {peersWithVideo.map(peerWithVideo => (
         <PeerVideo
