@@ -14,16 +14,22 @@ interface UseRoomVideoConfig {
 export function useRoomVideo({ peerRoom }: UseRoomVideoConfig) {
   const shellContext = useContext(ShellContext)
   const [isSpeakingToRoom, setIsSpeakingToRoom] = useState(false)
-  const [videoStream, setVideoStream] = useState<MediaStream | null>()
 
   const [videoDevices, setVideoDevices] = useState<MediaDeviceInfo[]>([])
   const [selectedVideoDeviceId, setSelectedVideoDeviceId] = useState<
     string | null
   >(null)
 
+  const {
+    selfVideoStream,
+    setSelfVideoStream,
+    setVideoState,
+    setPeerVideoStreams,
+  } = shellContext
+
   useEffect(() => {
     ;(async () => {
-      if (!videoStream) return
+      if (!selfVideoStream) return
 
       const devices = await window.navigator.mediaDevices.enumerateDevices()
       const rawVideoDevices = devices.filter(
@@ -52,12 +58,12 @@ export function useRoomVideo({ peerRoom }: UseRoomVideoConfig) {
         })
 
         peerRoom.addStream(newSelfStream)
-        setVideoStream(newSelfStream)
+        setSelfVideoStream(newSelfStream)
 
         shellContext.setSelfVideoStream(newSelfStream)
       }
     })()
-  }, [peerRoom, shellContext, videoStream])
+  }, [peerRoom, shellContext, selfVideoStream, setSelfVideoStream])
 
   const [sendVideoChange, receiveVideoChange] = usePeerRoomAction<VideoState>(
     peerRoom,
@@ -94,18 +100,18 @@ export function useRoomVideo({ peerRoom }: UseRoomVideoConfig) {
   })
 
   const cleanupVideo = useCallback(() => {
-    if (!videoStream) return
+    if (!selfVideoStream) return
 
-    for (const videoTrack of videoStream.getTracks()) {
+    for (const videoTrack of selfVideoStream.getTracks()) {
       videoTrack.stop()
-      videoStream.removeTrack(videoTrack)
+      selfVideoStream.removeTrack(videoTrack)
     }
-  }, [videoStream])
+  }, [selfVideoStream])
 
   useEffect(() => {
     ;(async () => {
       if (isSpeakingToRoom) {
-        if (!videoStream) {
+        if (!selfVideoStream) {
           const newSelfStream = await navigator.mediaDevices.getUserMedia({
             audio: false,
             video: selectedVideoDeviceId
@@ -116,16 +122,16 @@ export function useRoomVideo({ peerRoom }: UseRoomVideoConfig) {
           peerRoom.addStream(newSelfStream)
           sendVideoChange(VideoState.PLAYING)
           shellContext.setVideoState(VideoState.PLAYING)
-          setVideoStream(newSelfStream)
+          setSelfVideoStream(newSelfStream)
         }
       } else {
-        if (videoStream) {
+        if (selfVideoStream) {
           cleanupVideo()
 
-          peerRoom.removeStream(videoStream, peerRoom.getPeers())
+          peerRoom.removeStream(selfVideoStream, peerRoom.getPeers())
           sendVideoChange(VideoState.STOPPED)
           shellContext.setVideoState(VideoState.STOPPED)
-          setVideoStream(null)
+          setSelfVideoStream(null)
           shellContext.setSelfVideoStream(null)
         }
       }
@@ -133,11 +139,12 @@ export function useRoomVideo({ peerRoom }: UseRoomVideoConfig) {
   }, [
     isSpeakingToRoom,
     peerRoom,
-    videoStream,
+    selfVideoStream,
     selectedVideoDeviceId,
     sendVideoChange,
     shellContext,
     cleanupVideo,
+    setSelfVideoStream,
   ])
 
   useEffect(() => {
@@ -145,13 +152,6 @@ export function useRoomVideo({ peerRoom }: UseRoomVideoConfig) {
       cleanupVideo()
     }
   }, [cleanupVideo])
-
-  const {
-    selfVideoStream,
-    setSelfVideoStream,
-    setVideoState,
-    setPeerVideoStreams,
-  } = shellContext
 
   useEffect(() => {
     return () => {
@@ -168,14 +168,14 @@ export function useRoomVideo({ peerRoom }: UseRoomVideoConfig) {
     const { deviceId } = videoDevice
     setSelectedVideoDeviceId(deviceId)
 
-    if (!videoStream) return
+    if (!selfVideoStream) return
 
-    for (const videoTrack of videoStream.getTracks()) {
+    for (const videoTrack of selfVideoStream.getTracks()) {
       videoTrack.stop()
-      videoStream.removeTrack(videoTrack)
+      selfVideoStream.removeTrack(videoTrack)
     }
 
-    peerRoom.removeStream(videoStream, peerRoom.getPeers())
+    peerRoom.removeStream(selfVideoStream, peerRoom.getPeers())
 
     const newSelfStream = await navigator.mediaDevices.getUserMedia({
       audio: false,
@@ -185,7 +185,7 @@ export function useRoomVideo({ peerRoom }: UseRoomVideoConfig) {
     })
 
     peerRoom.addStream(newSelfStream)
-    setVideoStream(newSelfStream)
+    setSelfVideoStream(newSelfStream)
 
     shellContext.setSelfVideoStream(newSelfStream)
   }
@@ -197,16 +197,14 @@ export function useRoomVideo({ peerRoom }: UseRoomVideoConfig) {
   }
 
   const handleVideoForNewPeer = (peerId: string) => {
-    if (videoStream) {
-      peerRoom.addStream(videoStream, peerId)
+    if (selfVideoStream) {
+      peerRoom.addStream(selfVideoStream, peerId)
     }
-
-    // TODO: Set up video for peer
   }
 
   const handleVideoForLeavingPeer = (peerId: string) => {
-    if (videoStream) {
-      peerRoom.removeStream(videoStream, peerId)
+    if (selfVideoStream) {
+      peerRoom.removeStream(selfVideoStream, peerId)
       deletePeerVideo(peerId)
     }
   }
