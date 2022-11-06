@@ -83,8 +83,10 @@ export function useRoomVideo({ peerRoom }: UseRoomVideoConfig) {
   })
 
   peerRoom.onPeerStream(PeerStreamType.VIDEO, (stream, peerId) => {
-    // FIXME: Need to build stream (MediaStream record) as a map, not overwrite
-    // it.
+    const videoTracks = stream.getVideoTracks()
+
+    if (videoTracks.length === 0) return
+
     shellContext.setPeerVideoStreams({
       ...shellContext.peerVideoStreams,
       [peerId]: stream,
@@ -144,7 +146,12 @@ export function useRoomVideo({ peerRoom }: UseRoomVideoConfig) {
     }
   }, [cleanupVideo])
 
-  const { selfVideoStream, setSelfVideoStream, setVideoState } = shellContext
+  const {
+    selfVideoStream,
+    setSelfVideoStream,
+    setVideoState,
+    setPeerVideoStreams,
+  } = shellContext
 
   useEffect(() => {
     return () => {
@@ -152,8 +159,10 @@ export function useRoomVideo({ peerRoom }: UseRoomVideoConfig) {
         setSelfVideoStream(null)
         setVideoState(VideoState.STOPPED)
       }
+
+      setPeerVideoStreams({})
     }
-  }, [selfVideoStream, setSelfVideoStream, setVideoState])
+  }, [selfVideoStream, setSelfVideoStream, setVideoState, setPeerVideoStreams])
 
   const handleVideoDeviceSelect = async (videoDevice: MediaDeviceInfo) => {
     const { deviceId } = videoDevice
