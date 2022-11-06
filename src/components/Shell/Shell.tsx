@@ -24,6 +24,7 @@ import { ShellAppBar } from './ShellAppBar'
 import { NotificationArea } from './NotificationArea'
 import { RouteContent } from './RouteContent'
 import { PeerList } from './PeerList'
+import { QRCodeDialog } from './QRCodeDialog'
 
 export interface ShellProps extends PropsWithChildren {
   userPeerId: string
@@ -34,6 +35,7 @@ export const Shell = ({ appNeedsUpdate, children, userPeerId }: ShellProps) => {
   const settingsContext = useContext(SettingsContext)
   const [isAlertShowing, setIsAlertShowing] = useState(false)
   const [isDrawerOpen, setIsDrawerOpen] = useState(false)
+  const [isQRCodeDialogOpen, setIsQRCodeDialogOpen] = useState(false)
   const [doShowPeers, setDoShowPeers] = useState(false)
   const [alertSeverity, setAlertSeverity] = useState<AlertColor>('info')
   const [title, setTitle] = useState('')
@@ -61,6 +63,7 @@ export const Shell = ({ appNeedsUpdate, children, userPeerId }: ShellProps) => {
       setTitle,
       showAlert,
       isPeerListOpen,
+      setIsQRCodeDialogOpen,
       setIsPeerListOpen,
       peerList,
       setPeerList,
@@ -69,6 +72,7 @@ export const Shell = ({ appNeedsUpdate, children, userPeerId }: ShellProps) => {
     }),
     [
       isPeerListOpen,
+      setIsQRCodeDialogOpen,
       numberOfPeers,
       peerList,
       tabHasFocus,
@@ -159,6 +163,10 @@ export const Shell = ({ appNeedsUpdate, children, userPeerId }: ShellProps) => {
     setIsDrawerOpen(false)
   }
 
+  const handleQRCodeDialogClose = () => {
+    setIsQRCodeDialogOpen(false)
+  }
+
   return (
     <ShellContext.Provider value={shellContextValue}>
       <ThemeProvider theme={theme}>
@@ -186,6 +194,7 @@ export const Shell = ({ appNeedsUpdate, children, userPeerId }: ShellProps) => {
             numberOfPeers={numberOfPeers}
             title={title}
             onPeerListClick={handlePeerListClick}
+            setIsQRCodeDialogOpen={setIsQRCodeDialogOpen}
           />
           <Drawer
             isDrawerOpen={isDrawerOpen}
@@ -209,6 +218,10 @@ export const Shell = ({ appNeedsUpdate, children, userPeerId }: ShellProps) => {
             onPeerListClose={handlePeerListClick}
             peerList={peerList}
             audioState={audioState}
+          />
+          <QRCodeDialog
+            isOpen={isQRCodeDialogOpen}
+            handleClose={handleQRCodeDialogClose}
           />
         </Box>
       </ThemeProvider>
