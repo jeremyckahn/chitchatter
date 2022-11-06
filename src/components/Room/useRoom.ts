@@ -11,6 +11,7 @@ import {
   Message,
   ReceivedMessage,
   UnsentMessage,
+  VideoState,
   isMessageReceived,
 } from 'models/chat'
 import { funAnimalName } from 'fun-animal-names'
@@ -38,8 +39,6 @@ export function useRoom(
   const [peerRoom] = useState(
     () => new PeerRoom({ password: password ?? roomId, ...roomConfig }, roomId)
   )
-
-  peerRoom.flush()
 
   const [numberOfPeers, setNumberOfPeers] = useState(1) // Includes this peer
   const shellContext = useContext(ShellContext)
@@ -110,7 +109,12 @@ export function useRoom(
     if (peerIndex === -1) {
       shellContext.setPeerList([
         ...shellContext.peerList,
-        { peerId: peerId, userId: userId, audioState: AudioState.STOPPED },
+        {
+          peerId,
+          userId,
+          audioState: AudioState.STOPPED,
+          videoState: VideoState.STOPPED,
+        },
       ])
     } else {
       const newPeerList = [...shellContext.peerList]
@@ -195,10 +199,15 @@ export function useRoom(
     }
   })
 
+  const showVideoDisplay =
+    shellContext.selfVideoStream ||
+    Object.values(shellContext.peerVideoStreams).length > 0
+
   return {
-    peerRoom,
-    messageLog,
-    sendMessage,
     isMessageSending,
+    messageLog,
+    peerRoom,
+    sendMessage,
+    showVideoDisplay,
   }
 }

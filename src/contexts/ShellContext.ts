@@ -1,7 +1,7 @@
 import { createContext, Dispatch, SetStateAction } from 'react'
 
 import { AlertOptions } from 'models/shell'
-import { AudioState, Peer } from 'models/chat'
+import { AudioState, VideoState, Peer } from 'models/chat'
 
 interface ShellContextProps {
   numberOfPeers: number
@@ -16,6 +16,12 @@ interface ShellContextProps {
   setPeerList: Dispatch<SetStateAction<Peer[]>>
   audioState: AudioState
   setAudioState: Dispatch<SetStateAction<AudioState>>
+  videoState: VideoState
+  setVideoState: Dispatch<SetStateAction<VideoState>>
+  selfVideoStream: MediaStream | null
+  setSelfVideoStream: Dispatch<SetStateAction<MediaStream | null>>
+  peerVideoStreams: Record<string, MediaStream>
+  setPeerVideoStreams: Dispatch<SetStateAction<Record<string, MediaStream>>>
 }
 
 export const ShellContext = createContext<ShellContextProps>({
@@ -31,4 +37,10 @@ export const ShellContext = createContext<ShellContextProps>({
   setPeerList: () => {},
   audioState: AudioState.STOPPED,
   setAudioState: () => {},
+  videoState: VideoState.STOPPED,
+  setVideoState: () => {},
+  selfVideoStream: null,
+  setSelfVideoStream: () => {},
+  peerVideoStreams: {},
+  setPeerVideoStreams: () => {},
 })

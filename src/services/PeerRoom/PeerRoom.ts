@@ -4,10 +4,12 @@ import { TorrentRoomConfig } from 'trystero/torrent'
 export enum PeerHookType {
   NEW_PEER = 'NEW_PEER',
   AUDIO = 'AUDIO',
+  VIDEO = 'VIDEO',
 }
 
 export enum PeerStreamType {
   AUDIO = 'AUDIO',
+  VIDEO = 'VIDEO',
 }
 
 export class PeerRoom {

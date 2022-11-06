@@ -58,6 +58,10 @@ export function useRoomAudio({ peerRoom }: UseRoomAudioConfig) {
   })
 
   peerRoom.onPeerStream(PeerStreamType.AUDIO, (stream, peerId) => {
+    const audioTracks = stream.getAudioTracks()
+
+    if (audioTracks.length === 0) return
+
     const audio = new Audio()
     audio.srcObject = stream
     audio.autoplay = true

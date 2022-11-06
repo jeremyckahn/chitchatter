@@ -8,6 +8,7 @@ import ListItemText from '@mui/material/ListItemText'
 import Menu from '@mui/material/Menu'
 import MenuItem from '@mui/material/MenuItem'
 import Fab from '@mui/material/Fab'
+import Tooltip from '@mui/material/Tooltip'
 
 import { PeerRoom } from 'services/PeerRoom/PeerRoom'
 
@@ -53,30 +54,35 @@ export function RoomAudioControls({ peerRoom }: RoomAudioControlsProps) {
   }
 
   return (
-    <>
-      <Fab
-        variant="extended"
-        color={isSpeakingToRoom ? 'error' : 'success'}
-        aria-label="call"
-        onClick={handleVoiceCallClick}
+    <Box
+      sx={{
+        alignItems: 'center',
+        display: 'flex',
+        flexDirection: 'column',
+        justifyContent: 'center',
+        px: 1,
+      }}
+    >
+      <Tooltip
+        title={
+          isSpeakingToRoom
+            ? 'Turn off microphone'
+            : 'Turn on microphone and speak to room'
+        }
       >
-        {isSpeakingToRoom ? (
-          <>
-            <VoiceOverOff sx={{ mr: 1 }} />
-            Stop speaking to room
-          </>
-        ) : (
-          <>
-            <RecordVoiceOver sx={{ mr: 1 }} />
-            Start speaking to room
-          </>
-        )}
-      </Fab>
+        <Fab
+          color={isSpeakingToRoom ? 'error' : 'success'}
+          aria-label="call"
+          onClick={handleVoiceCallClick}
+        >
+          {isSpeakingToRoom ? <VoiceOverOff /> : <RecordVoiceOver />}
+        </Fab>
+      </Tooltip>
       {audioDevices.length > 0 && (
         <Box sx={{ mt: 1 }}>
           <List
             component="nav"
-            aria-label="Audio device selection"
+            aria-label="Microphone selection"
             sx={{ bgcolor: 'background.paper' }}
           >
             <ListItem
@@ -84,12 +90,12 @@ export function RoomAudioControls({ peerRoom }: RoomAudioControlsProps) {
               id="audio-input-select-button"
               aria-haspopup="listbox"
               aria-controls="audio-input-select-menu"
-              aria-label="Audio input device to use"
+              aria-label="Microphone to use"
               aria-expanded={isAudioDeviceSelectOpen ? 'true' : undefined}
               onClick={handleAudioDeviceListItemClick}
             >
               <ListItemText
-                primary="Selected audio input device"
+                primary="Selected microphone"
                 secondary={audioDevices[selectedAudioDeviceIdx]?.label}
               />
             </ListItem>
@@ -116,6 +122,6 @@ export function RoomAudioControls({ peerRoom }: RoomAudioControlsProps) {
           </Menu>
         </Box>
       )}
-    </>
+    </Box>
   )
 }

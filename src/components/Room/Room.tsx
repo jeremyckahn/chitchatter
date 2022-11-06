@@ -13,6 +13,8 @@ import { ChatTranscript } from 'components/ChatTranscript'
 
 import { useRoom } from './useRoom'
 import { RoomAudioControls } from './RoomAudioControls'
+import { RoomVideoControls } from './RoomVideoControls'
+import { RoomVideoDisplay } from './RoomVideoDisplay'
 
 export interface RoomProps {
   appId?: string
@@ -29,7 +31,13 @@ export function Room({
   password,
   userId,
 }: RoomProps) {
-  const { messageLog, peerRoom, sendMessage, isMessageSending } = useRoom(
+  const {
+    isMessageSending,
+    messageLog,
+    peerRoom,
+    sendMessage,
+    showVideoDisplay,
+  } = useRoom(
     {
       appId,
       trackerUrls,
@@ -53,38 +61,49 @@ export function Room({
       sx={{
         height: '100%',
         display: 'flex',
-        flexDirection: 'column',
+        flexGrow: '1',
+        overflow: 'auto',
       }}
     >
-      <Accordion>
-        <AccordionSummary
-          expandIcon={<ExpandMoreIcon />}
-          aria-controls="panel1a-content"
-          id="panel1a-header"
-        ></AccordionSummary>
-        <AccordionDetails>
-          <Box
-            sx={{
-              alignItems: 'center',
-              display: 'flex',
-              flexDirection: 'column',
-              justifyContent: 'center',
-            }}
-          >
-            <RoomAudioControls peerRoom={peerRoom} />
-          </Box>
-        </AccordionDetails>
-      </Accordion>
-      <ChatTranscript
-        messageLog={messageLog}
-        userId={userId}
-        className="grow overflow-auto px-4"
-      />
-      <Divider />
-      <MessageForm
-        onMessageSubmit={handleMessageSubmit}
-        isMessageSending={isMessageSending}
-      />
+      {showVideoDisplay && <RoomVideoDisplay userId={userId} />}
+      <Box
+        sx={{
+          display: 'flex',
+          flexDirection: 'column',
+          flexGrow: '1',
+          overflow: 'auto',
+        }}
+      >
+        <Accordion>
+          <AccordionSummary
+            expandIcon={<ExpandMoreIcon />}
+            aria-controls="panel1a-content"
+            id="panel1a-header"
+          ></AccordionSummary>
+          <AccordionDetails>
+            <Box
+              sx={{
+                alignItems: 'flex-start',
+                display: 'flex',
+                justifyContent: 'center',
+              }}
+            >
+              <RoomAudioControls peerRoom={peerRoom} />
+              <RoomVideoControls peerRoom={peerRoom} />
+            </Box>
+          </AccordionDetails>
+        </Accordion>
+        <ChatTranscript
+          messageLog={messageLog}
+          userId={userId}
+          className="grow overflow-auto px-4"
+        />
+        <Divider />
+        <MessageForm
+          onMessageSubmit={handleMessageSubmit}
+          isMessageSending={isMessageSending}
+        />
+      </Box>
     </Box>
   )
 }
