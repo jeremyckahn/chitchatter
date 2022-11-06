@@ -1,4 +1,4 @@
-import { useContext, useEffect, useRef } from 'react'
+import { useContext } from 'react'
 import Paper from '@mui/material/Paper'
 
 import { Peer } from 'models/chat'
@@ -10,15 +10,6 @@ type PeerWithVideo = { peer: Peer; videoStream: MediaStream }
 
 export const RoomVideoDisplay = () => {
   const shellContext = useContext(ShellContext)
-  const selfVideoRef = useRef<HTMLVideoElement>(null)
-
-  useEffect(() => {
-    const { current: selfVideo } = selfVideoRef
-    if (!selfVideo || shellContext.selfVideoStream === null) return
-
-    selfVideo.autoplay = true
-    selfVideo.srcObject = shellContext.selfVideoStream
-  }, [selfVideoRef, shellContext.selfVideoStream])
 
   const peersWithVideo: PeerWithVideo[] = shellContext.peerList.reduce(
     (acc: PeerWithVideo[], peer: Peer) => {
@@ -35,8 +26,6 @@ export const RoomVideoDisplay = () => {
     []
   )
 
-  const showSelfVideo = Boolean(shellContext.selfVideoStream)
-
   return (
     <Paper
       className="RoomVideoDisplay"
@@ -49,12 +38,8 @@ export const RoomVideoDisplay = () => {
         width: '75%',
       }}
     >
-      {showSelfVideo && (
-        <video
-          playsInline
-          ref={selfVideoRef}
-          style={{ margin: '1em', marginTop: 'auto', marginBottom: 'auto' }}
-        />
+      {shellContext.selfVideoStream && (
+        <PeerVideo videoStream={shellContext.selfVideoStream} />
       )}
       {peersWithVideo.map(peerWithVideo => (
         <PeerVideo
