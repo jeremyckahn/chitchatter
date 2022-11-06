@@ -14,9 +14,6 @@ interface UseRoomVideoConfig {
 export function useRoomVideo({ peerRoom }: UseRoomVideoConfig) {
   const shellContext = useContext(ShellContext)
   const [isSpeakingToRoom, setIsSpeakingToRoom] = useState(false)
-  const [peerVideos, setPeerVideos] = useState<
-    Record<string, HTMLVideoElement>
-  >({})
   const [videoStream, setVideoStream] = useState<MediaStream | null>()
 
   const [videoDevices, setVideoDevices] = useState<MediaDeviceInfo[]>([])
@@ -86,12 +83,12 @@ export function useRoomVideo({ peerRoom }: UseRoomVideoConfig) {
   })
 
   peerRoom.onPeerStream(PeerStreamType.VIDEO, (stream, peerId) => {
-    // FIXME: Video elements need to be retrieved from DOM
-    const video = document.createElement('video')
-    video.srcObject = stream
-    video.autoplay = true
-
-    setPeerVideos({ ...peerVideos, [peerId]: video })
+    // FIXME: Need to build stream (MediaStream record) as a map, not overwrite
+    // it.
+    shellContext.setPeerVideoStreams({
+      ...shellContext.peerVideoStreams,
+      [peerId]: stream,
+    })
   })
 
   const cleanupVideo = useCallback(() => {
@@ -133,7 +130,6 @@ export function useRoomVideo({ peerRoom }: UseRoomVideoConfig) {
     })()
   }, [
     isSpeakingToRoom,
-    peerVideos,
     peerRoom,
     videoStream,
     selectedVideoDeviceId,
@@ -186,9 +182,9 @@ export function useRoomVideo({ peerRoom }: UseRoomVideoConfig) {
   }
 
   const deletePeerVideo = (peerId: string) => {
-    const newPeerVideos = { ...peerVideos }
+    const newPeerVideos = { ...shellContext.peerVideoStreams }
     delete newPeerVideos[peerId]
-    setPeerVideos(newPeerVideos)
+    shellContext.setPeerVideoStreams(newPeerVideos)
   }
 
   const handleVideoForNewPeer = (peerId: string) => {

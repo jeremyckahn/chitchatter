@@ -40,8 +40,6 @@ export function useRoom(
     () => new PeerRoom({ password: password ?? roomId, ...roomConfig }, roomId)
   )
 
-  peerRoom.flush()
-
   const [numberOfPeers, setNumberOfPeers] = useState(1) // Includes this peer
   const shellContext = useContext(ShellContext)
   const settingsContext = useContext(SettingsContext)
@@ -201,10 +199,9 @@ export function useRoom(
     }
   })
 
-  // FIXME: Also check for peer videos
-  const showVideoDisplay = Boolean(
-    shellContext.videoState === VideoState.PLAYING
-  )
+  const showVideoDisplay =
+    shellContext.selfVideoStream ||
+    Object.values(shellContext.peerVideoStreams).length > 0
 
   return {
     isMessageSending,

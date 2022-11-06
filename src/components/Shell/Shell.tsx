@@ -47,6 +47,9 @@ export const Shell = ({ appNeedsUpdate, children, userPeerId }: ShellProps) => {
   const [selfVideoStream, setSelfVideoStream] = useState<MediaStream | null>(
     null
   )
+  const [peerVideoStreams, setPeerVideoStreams] = useState<
+    Record<string, MediaStream>
+  >({})
 
   const showAlert = useCallback<
     (message: string, options?: AlertOptions) => void
@@ -74,6 +77,8 @@ export const Shell = ({ appNeedsUpdate, children, userPeerId }: ShellProps) => {
       setVideoState,
       selfVideoStream,
       setSelfVideoStream,
+      peerVideoStreams,
+      setPeerVideoStreams,
     }),
     [
       isPeerListOpen,
@@ -90,6 +95,8 @@ export const Shell = ({ appNeedsUpdate, children, userPeerId }: ShellProps) => {
       setVideoState,
       selfVideoStream,
       setSelfVideoStream,
+      peerVideoStreams,
+      setPeerVideoStreams,
     ]
   )
 
