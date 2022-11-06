@@ -36,7 +36,6 @@ export const PeerVideo = ({ userId: peerId, videoStream }: PeerVideoProps) => {
         ref={videoRef}
         style={{
           borderRadius: '1.25em',
-          margin: 'auto',
           overflow: 'auto',
           padding: '1em',
         }}
