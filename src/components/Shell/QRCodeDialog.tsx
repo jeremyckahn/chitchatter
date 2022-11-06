@@ -20,7 +20,6 @@ export interface QRCodeDialogProps {
 
 export function QRCodeDialog({ isOpen, handleClose }: QRCodeDialogProps) {
   const url = window.location.href
-  console.log(url)
   return (
     <Dialog
       open={isOpen}
