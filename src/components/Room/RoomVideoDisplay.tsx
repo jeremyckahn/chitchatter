@@ -8,7 +8,11 @@ import { PeerVideo } from './PeerVideo'
 
 type PeerWithVideo = { peer: Peer; videoStream: MediaStream }
 
-export const RoomVideoDisplay = () => {
+export interface RoomVideoDisplayProps {
+  userId: string
+}
+
+export const RoomVideoDisplay = ({ userId }: RoomVideoDisplayProps) => {
   const shellContext = useContext(ShellContext)
 
   const peersWithVideo: PeerWithVideo[] = shellContext.peerList.reduce(
@@ -32,18 +36,22 @@ export const RoomVideoDisplay = () => {
       elevation={3}
       square
       sx={{
+        alignItems: 'stretch',
         display: 'flex',
         flexDirection: 'column',
         flexGrow: 1,
+        justifyContent: 'center',
+        overflow: 'auto',
         width: '75%',
       }}
     >
       {shellContext.selfVideoStream && (
-        <PeerVideo videoStream={shellContext.selfVideoStream} />
+        <PeerVideo userId={userId} videoStream={shellContext.selfVideoStream} />
       )}
       {peersWithVideo.map(peerWithVideo => (
         <PeerVideo
           key={peerWithVideo.peer.peerId}
+          userId={peerWithVideo.peer.userId}
           videoStream={peerWithVideo.videoStream}
         />
       ))}

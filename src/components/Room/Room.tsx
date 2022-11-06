@@ -65,7 +65,7 @@ export function Room({
         overflow: 'auto',
       }}
     >
-      {showVideoDisplay && <RoomVideoDisplay />}
+      {showVideoDisplay && <RoomVideoDisplay userId={userId} />}
       <Box
         sx={{
           display: 'flex',

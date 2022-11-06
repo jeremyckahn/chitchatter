@@ -1,10 +1,14 @@
 import { useEffect, useRef } from 'react'
+import Paper from '@mui/material/Paper'
+
+import { PeerNameDisplay } from 'components/PeerNameDisplay'
 
 interface PeerVideoProps {
+  userId: string
   videoStream: MediaStream
 }
 
-export const PeerVideo = ({ videoStream }: PeerVideoProps) => {
+export const PeerVideo = ({ userId: peerId, videoStream }: PeerVideoProps) => {
   const videoRef = useRef<HTMLVideoElement>(null)
 
   useEffect(() => {
@@ -16,10 +20,30 @@ export const PeerVideo = ({ videoStream }: PeerVideoProps) => {
   }, [videoRef, videoStream])
 
   return (
-    <video
-      playsInline
-      ref={videoRef}
-      style={{ margin: '1em', marginTop: 'auto', marginBottom: 'auto' }}
-    />
+    <Paper
+      sx={{
+        py: 2,
+        margin: '0.5em',
+        flexShrink: 1,
+        overflow: 'auto',
+        display: 'flex',
+        flexDirection: 'column',
+      }}
+      elevation={10}
+    >
+      <video
+        playsInline
+        ref={videoRef}
+        style={{
+          borderRadius: '1.25em',
+          margin: 'auto',
+          overflow: 'auto',
+          padding: '1em',
+        }}
+      />
+      <PeerNameDisplay sx={{ textAlign: 'center', display: 'block' }}>
+        {peerId}
+      </PeerNameDisplay>
+    </Paper>
   )
 }
