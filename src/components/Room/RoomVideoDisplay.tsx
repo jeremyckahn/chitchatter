@@ -51,6 +51,7 @@ export const RoomVideoDisplay = () => {
     >
       {showSelfVideo && (
         <video
+          playsInline
           ref={selfVideoRef}
           style={{ margin: '1em', marginTop: 'auto', marginBottom: 'auto' }}
         />

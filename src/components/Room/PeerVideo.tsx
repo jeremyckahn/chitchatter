@@ -17,6 +17,7 @@ export const PeerVideo = ({ videoStream }: PeerVideoProps) => {
 
   return (
     <video
+      playsInline
       ref={videoRef}
       style={{ margin: '1em', marginTop: 'auto', marginBottom: 'auto' }}
     />
