@@ -14,17 +14,19 @@ interface UseRoomVideoConfig {
 export function useRoomVideo({ peerRoom }: UseRoomVideoConfig) {
   const shellContext = useContext(ShellContext)
   const [isCameraEnabled, setIsCameraEnabled] = useState(false)
-
   const [videoDevices, setVideoDevices] = useState<MediaDeviceInfo[]>([])
   const [selectedVideoDeviceId, setSelectedVideoDeviceId] = useState<
     string | null
   >(null)
 
   const {
+    peerList,
+    peerVideoStreams,
     selfVideoStream,
+    setPeerList,
+    setPeerVideoStreams,
     setSelfVideoStream,
     setVideoState,
-    setPeerVideoStreams,
   } = shellContext
 
   useEffect(() => {
@@ -48,7 +50,7 @@ export function useRoomVideo({ peerRoom }: UseRoomVideoConfig) {
 
       setVideoDevices(newVideoDevices)
 
-      if (newVideoDevices.length > 0 && !shellContext.selfVideoStream) {
+      if (newVideoDevices.length > 0 && !selfVideoStream) {
         const [firstVideoDevice] = newVideoDevices
         const newSelfStream = await navigator.mediaDevices.getUserMedia({
           audio: false,
@@ -60,10 +62,10 @@ export function useRoomVideo({ peerRoom }: UseRoomVideoConfig) {
         peerRoom.addStream(newSelfStream)
         setSelfVideoStream(newSelfStream)
 
-        shellContext.setSelfVideoStream(newSelfStream)
+        setSelfVideoStream(newSelfStream)
       }
     })()
-  }, [peerRoom, shellContext, selfVideoStream, setSelfVideoStream])
+  }, [peerRoom, selfVideoStream, setSelfVideoStream])
 
   const [sendVideoChange, receiveVideoChange] = usePeerRoomAction<VideoState>(
     peerRoom,
@@ -71,7 +73,7 @@ export function useRoomVideo({ peerRoom }: UseRoomVideoConfig) {
   )
 
   receiveVideoChange((videoState, peerId) => {
-    const newPeerList = shellContext.peerList.map(peer => {
+    const newPeerList = peerList.map(peer => {
       const newPeer: Peer = { ...peer }
 
       if (peer.peerId === peerId) {
@@ -85,7 +87,7 @@ export function useRoomVideo({ peerRoom }: UseRoomVideoConfig) {
       return newPeer
     })
 
-    shellContext.setPeerList(newPeerList)
+    setPeerList(newPeerList)
   })
 
   peerRoom.onPeerStream(PeerStreamType.VIDEO, (stream, peerId) => {
@@ -93,8 +95,8 @@ export function useRoomVideo({ peerRoom }: UseRoomVideoConfig) {
 
     if (videoTracks.length === 0) return
 
-    shellContext.setPeerVideoStreams({
-      ...shellContext.peerVideoStreams,
+    setPeerVideoStreams({
+      ...peerVideoStreams,
       [peerId]: stream,
     })
   })
@@ -121,7 +123,7 @@ export function useRoomVideo({ peerRoom }: UseRoomVideoConfig) {
 
           peerRoom.addStream(newSelfStream)
           sendVideoChange(VideoState.PLAYING)
-          shellContext.setVideoState(VideoState.PLAYING)
+          setVideoState(VideoState.PLAYING)
           setSelfVideoStream(newSelfStream)
         }
       } else {
@@ -130,9 +132,9 @@ export function useRoomVideo({ peerRoom }: UseRoomVideoConfig) {
 
           peerRoom.removeStream(selfVideoStream, peerRoom.getPeers())
           sendVideoChange(VideoState.STOPPED)
-          shellContext.setVideoState(VideoState.STOPPED)
+          setVideoState(VideoState.STOPPED)
           setSelfVideoStream(null)
-          shellContext.setSelfVideoStream(null)
+          setSelfVideoStream(null)
         }
       }
     })()
@@ -142,9 +144,9 @@ export function useRoomVideo({ peerRoom }: UseRoomVideoConfig) {
     selfVideoStream,
     selectedVideoDeviceId,
     sendVideoChange,
-    shellContext,
     cleanupVideo,
     setSelfVideoStream,
+    setVideoState,
   ])
 
   useEffect(() => {
@@ -191,13 +193,13 @@ export function useRoomVideo({ peerRoom }: UseRoomVideoConfig) {
     peerRoom.addStream(newSelfStream)
     setSelfVideoStream(newSelfStream)
 
-    shellContext.setSelfVideoStream(newSelfStream)
+    setSelfVideoStream(newSelfStream)
   }
 
   const deletePeerVideo = (peerId: string) => {
-    const newPeerVideos = { ...shellContext.peerVideoStreams }
+    const newPeerVideos = { ...peerVideoStreams }
     delete newPeerVideos[peerId]
-    shellContext.setPeerVideoStreams(newPeerVideos)
+    setPeerVideoStreams(newPeerVideos)
   }
 
   const handleVideoForNewPeer = (peerId: string) => {

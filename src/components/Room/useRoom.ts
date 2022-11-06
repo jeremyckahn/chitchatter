@@ -110,8 +110,8 @@ export function useRoom(
       shellContext.setPeerList([
         ...shellContext.peerList,
         {
-          peerId: peerId,
-          userId: userId,
+          peerId,
+          userId,
           audioState: AudioState.STOPPED,
           videoState: VideoState.STOPPED,
         },
