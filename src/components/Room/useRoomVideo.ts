@@ -159,10 +159,14 @@ export function useRoomVideo({ peerRoom }: UseRoomVideoConfig) {
         setSelfVideoStream(null)
         setVideoState(VideoState.STOPPED)
       }
+    }
+  }, [selfVideoStream, setSelfVideoStream, setVideoState])
 
+  useEffect(() => {
+    return () => {
       setPeerVideoStreams({})
     }
-  }, [selfVideoStream, setSelfVideoStream, setVideoState, setPeerVideoStreams])
+  }, [setPeerVideoStreams])
 
   const handleVideoDeviceSelect = async (videoDevice: MediaDeviceInfo) => {
     const { deviceId } = videoDevice
