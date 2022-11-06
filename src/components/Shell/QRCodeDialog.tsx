@@ -28,7 +28,7 @@ export function QRCodeDialog({ isOpen, handleClose }: QRCodeDialogProps) {
       aria-describedby="alert-dialog-description"
     >
       <DialogTitle id="alert-dialog-title">
-        {'Room QR Code'}
+        Room QR Code
         <IconButton
           aria-label="close"
           onClick={handleClose}

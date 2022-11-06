@@ -8,7 +8,6 @@ import IconButton from '@mui/material/IconButton'
 import MenuIcon from '@mui/icons-material/Menu'
 import LinkIcon from '@mui/icons-material/Link'
 import QrCode2Icon from '@mui/icons-material/QrCode2'
-import { Box } from '@mui/material'
 
 import { drawerWidth } from './Drawer'
 import { peerListWidth } from './PeerList'
@@ -101,12 +100,12 @@ export const ShellAppBar = ({
           {title}
         </Typography>
         {doShowPeers ? (
-          <Box display="inline-flex">
-            <Tooltip title="Open QR Code">
+          <>
+            <Tooltip title="Show QR Code">
               <IconButton
                 size="large"
                 color="inherit"
-                aria-label="Open QR Code"
+                aria-label="Show QR Code"
                 onClick={handleQRCodeClick}
               >
                 <QrCode2Icon />
@@ -133,7 +132,7 @@ export const ShellAppBar = ({
                 <StepIcon icon={numberOfPeers} />
               </IconButton>
             </Tooltip>
-          </Box>
+          </>
         ) : null}
       </Toolbar>
     </AppBar>
