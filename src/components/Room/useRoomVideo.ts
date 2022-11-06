@@ -192,8 +192,6 @@ export function useRoomVideo({ peerRoom }: UseRoomVideoConfig) {
 
     peerRoom.addStream(newSelfStream)
     setSelfVideoStream(newSelfStream)
-
-    setSelfVideoStream(newSelfStream)
   }
 
   const deletePeerVideo = (peerId: string) => {
