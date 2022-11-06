@@ -13,7 +13,7 @@ interface UseRoomVideoConfig {
 
 export function useRoomVideo({ peerRoom }: UseRoomVideoConfig) {
   const shellContext = useContext(ShellContext)
-  const [isSpeakingToRoom, setIsSpeakingToRoom] = useState(false)
+  const [isCameraEnabled, setIsCameraEnabled] = useState(false)
 
   const [videoDevices, setVideoDevices] = useState<MediaDeviceInfo[]>([])
   const [selectedVideoDeviceId, setSelectedVideoDeviceId] = useState<
@@ -110,7 +110,7 @@ export function useRoomVideo({ peerRoom }: UseRoomVideoConfig) {
 
   useEffect(() => {
     ;(async () => {
-      if (isSpeakingToRoom) {
+      if (isCameraEnabled) {
         if (!selfVideoStream) {
           const newSelfStream = await navigator.mediaDevices.getUserMedia({
             audio: false,
@@ -137,7 +137,7 @@ export function useRoomVideo({ peerRoom }: UseRoomVideoConfig) {
       }
     })()
   }, [
-    isSpeakingToRoom,
+    isCameraEnabled,
     peerRoom,
     selfVideoStream,
     selectedVideoDeviceId,
@@ -223,8 +223,8 @@ export function useRoomVideo({ peerRoom }: UseRoomVideoConfig) {
 
   return {
     videoDevices,
-    isSpeakingToRoom,
-    setIsSpeakingToRoom,
+    isCameraEnabled,
+    setIsCameraEnabled,
     handleVideoDeviceSelect,
   }
 }

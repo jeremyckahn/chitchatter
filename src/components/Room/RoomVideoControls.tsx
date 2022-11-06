@@ -8,6 +8,7 @@ import ListItemText from '@mui/material/ListItemText'
 import Menu from '@mui/material/Menu'
 import MenuItem from '@mui/material/MenuItem'
 import Fab from '@mui/material/Fab'
+import Tooltip from '@mui/material/Tooltip'
 
 import { PeerRoom } from 'services/PeerRoom/PeerRoom'
 
@@ -20,8 +21,8 @@ export interface RoomVideoControlsProps {
 export function RoomVideoControls({ peerRoom }: RoomVideoControlsProps) {
   const {
     videoDevices,
-    isSpeakingToRoom,
-    setIsSpeakingToRoom,
+    isCameraEnabled,
+    setIsCameraEnabled,
     handleVideoDeviceSelect,
   } = useRoomVideo({ peerRoom })
 
@@ -29,8 +30,8 @@ export function RoomVideoControls({ peerRoom }: RoomVideoControlsProps) {
   const isVideoDeviceSelectOpen = Boolean(videoAnchorEl)
   const [selectedVideoDeviceIdx, setSelectedVideoDeviceIdx] = useState(0)
 
-  const handleVoiceCallClick = () => {
-    setIsSpeakingToRoom(!isSpeakingToRoom)
+  const handleEnableCameraClick = () => {
+    setIsCameraEnabled(!isCameraEnabled)
   }
 
   const handleVideoDeviceListItemClick = (
@@ -62,24 +63,15 @@ export function RoomVideoControls({ peerRoom }: RoomVideoControlsProps) {
         px: 1,
       }}
     >
-      <Fab
-        variant="extended"
-        color={isSpeakingToRoom ? 'error' : 'success'}
-        aria-label="call"
-        onClick={handleVoiceCallClick}
-      >
-        {isSpeakingToRoom ? (
-          <>
-            <VideocamOff sx={{ mr: 1 }} />
-            Turn off camera
-          </>
-        ) : (
-          <>
-            <Videocam sx={{ mr: 1 }} />
-            Turn on camera
-          </>
-        )}
-      </Fab>
+      <Tooltip title={isCameraEnabled ? 'Turn off camera' : 'Turn on camera'}>
+        <Fab
+          color={isCameraEnabled ? 'error' : 'success'}
+          aria-label="call"
+          onClick={handleEnableCameraClick}
+        >
+          {isCameraEnabled ? <VideocamOff /> : <Videocam />}
+        </Fab>
+      </Tooltip>
       {videoDevices.length > 0 && (
         <Box sx={{ mt: 1 }}>
           <List

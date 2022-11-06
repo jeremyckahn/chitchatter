@@ -8,6 +8,7 @@ import ListItemText from '@mui/material/ListItemText'
 import Menu from '@mui/material/Menu'
 import MenuItem from '@mui/material/MenuItem'
 import Fab from '@mui/material/Fab'
+import Tooltip from '@mui/material/Tooltip'
 
 import { PeerRoom } from 'services/PeerRoom/PeerRoom'
 
@@ -62,24 +63,19 @@ export function RoomAudioControls({ peerRoom }: RoomAudioControlsProps) {
         px: 1,
       }}
     >
-      <Fab
-        variant="extended"
-        color={isSpeakingToRoom ? 'error' : 'success'}
-        aria-label="call"
-        onClick={handleVoiceCallClick}
+      <Tooltip
+        title={
+          isSpeakingToRoom ? 'Turn off mic' : 'Turn on mic and speak to room'
+        }
       >
-        {isSpeakingToRoom ? (
-          <>
-            <VoiceOverOff sx={{ mr: 1 }} />
-            Stop speaking to room
-          </>
-        ) : (
-          <>
-            <RecordVoiceOver sx={{ mr: 1 }} />
-            Start speaking to room
-          </>
-        )}
-      </Fab>
+        <Fab
+          color={isSpeakingToRoom ? 'error' : 'success'}
+          aria-label="call"
+          onClick={handleVoiceCallClick}
+        >
+          {isSpeakingToRoom ? <VoiceOverOff /> : <RecordVoiceOver />}
+        </Fab>
+      </Tooltip>
       {audioDevices.length > 0 && (
         <Box sx={{ mt: 1 }}>
           <List
