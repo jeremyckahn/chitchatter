@@ -76,7 +76,7 @@ export function RoomVideoControls({ peerRoom }: RoomVideoControlsProps) {
         <Box sx={{ mt: 1 }}>
           <List
             component="nav"
-            aria-label="Video device selection"
+            aria-label="Camera selection"
             sx={{ bgcolor: 'background.paper' }}
           >
             <ListItem
@@ -84,12 +84,12 @@ export function RoomVideoControls({ peerRoom }: RoomVideoControlsProps) {
               id="video-input-select-button"
               aria-haspopup="listbox"
               aria-controls="video-input-select-menu"
-              aria-label="Video input device to use"
+              aria-label="Camera to use"
               aria-expanded={isVideoDeviceSelectOpen ? 'true' : undefined}
               onClick={handleVideoDeviceListItemClick}
             >
               <ListItemText
-                primary="Selected video input device"
+                primary="Selected camera"
                 secondary={videoDevices[selectedVideoDeviceIdx]?.label}
               />
             </ListItem>

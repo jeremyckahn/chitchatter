@@ -65,7 +65,9 @@ export function RoomAudioControls({ peerRoom }: RoomAudioControlsProps) {
     >
       <Tooltip
         title={
-          isSpeakingToRoom ? 'Turn off mic' : 'Turn on mic and speak to room'
+          isSpeakingToRoom
+            ? 'Turn off microphone'
+            : 'Turn on microphone and speak to room'
         }
       >
         <Fab
@@ -80,7 +82,7 @@ export function RoomAudioControls({ peerRoom }: RoomAudioControlsProps) {
         <Box sx={{ mt: 1 }}>
           <List
             component="nav"
-            aria-label="Audio device selection"
+            aria-label="Microphone selection"
             sx={{ bgcolor: 'background.paper' }}
           >
             <ListItem
@@ -88,12 +90,12 @@ export function RoomAudioControls({ peerRoom }: RoomAudioControlsProps) {
               id="audio-input-select-button"
               aria-haspopup="listbox"
               aria-controls="audio-input-select-menu"
-              aria-label="Audio input device to use"
+              aria-label="Microphone to use"
               aria-expanded={isAudioDeviceSelectOpen ? 'true' : undefined}
               onClick={handleAudioDeviceListItemClick}
             >
               <ListItemText
-                primary="Selected audio input device"
+                primary="Selected microphone"
                 secondary={audioDevices[selectedAudioDeviceIdx]?.label}
               />
             </ListItem>
