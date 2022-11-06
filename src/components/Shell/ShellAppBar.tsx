@@ -101,7 +101,7 @@ export const ShellAppBar = ({
           {title}
         </Typography>
         {doShowPeers ? (
-          <Box>
+          <Box display="inline-flex">
             <Tooltip title="Open QR Code">
               <IconButton
                 size="large"
@@ -115,10 +115,8 @@ export const ShellAppBar = ({
             <Tooltip title="Copy current URL">
               <IconButton
                 size="large"
-                edge="start"
                 color="inherit"
                 aria-label="Copy current URL"
-                sx={{ ml: 'auto' }}
                 onClick={onLinkButtonClick}
               >
                 <LinkIcon />
