@@ -28,6 +28,7 @@ Open https://chitchatter.im/ and join a room to start chatting with anyone else 
 
 - Multiple peers per room (limited only by the number of peer connections your browser supports).
 - Public and private rooms
+- Video and audio chatting
 - Markdown support via [`react-markdown`](https://github.com/remarkjs/react-markdown).
   - Includes support for syntax highlighting of code.
 - Conversation backfilling from peers when a new participant joins
@@ -37,9 +38,9 @@ Open https://chitchatter.im/ and join a room to start chatting with anyone else 
 ## Anti-features
 
 - Messages are never persisted to disk. When you leave a peer room, messages are cleared from memory and cannot be retrieved.
-- Chitchatter is an entirely client-side communication app. It uses external general-purpose WebTorrent and STUN/TURN servers as for necessary communication, but there is no Chitchatter API server.
+- Chitchatter is an entirely client-side communication app. It uses public WebTorrent servers to establish peer connections and STUN/TURN relay servers when direct peer-to-peer connections cannot be established, but there is no Chitchatter API server.
 - No analytics, tracking, or telemetry.
-- This is a community-driven, unfunded project that makes no money. This is necessary to prevent corporate influence from harming users.
+- This is a community-driven and unfunded project that makes no money. The users come first and there are no corporate or financial interests.
 
 ## Why another chat app?
 
@@ -89,12 +90,9 @@ Chitchatter is an open source project, so community contributions and support ar
 
 This is a non-exhaustive list of things that are in Chitchatter's future:
 
-- Password-protected rooms
-- Voice calling
-- Video calling
+- Screen sharing
 - File sharing
 - Indicators for when others are typing
-- Transcript backfilling for peers who join a room after there has already been activity
 
 See the full ticket backlog [here](https://github.com/users/jeremyckahn/projects/1).
 
