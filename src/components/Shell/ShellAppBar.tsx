@@ -99,6 +99,16 @@ export const ShellAppBar = ({
         >
           {title}
         </Typography>
+        <Tooltip title="Copy current URL">
+          <IconButton
+            size="large"
+            color="inherit"
+            aria-label="Copy current URL"
+            onClick={onLinkButtonClick}
+          >
+            <LinkIcon />
+          </IconButton>
+        </Tooltip>
         {doShowPeers ? (
           <>
             <Tooltip title="Show QR Code">
@@ -109,16 +119,6 @@ export const ShellAppBar = ({
                 onClick={handleQRCodeClick}
               >
                 <QrCode2Icon />
-              </IconButton>
-            </Tooltip>
-            <Tooltip title="Copy current URL">
-              <IconButton
-                size="large"
-                color="inherit"
-                aria-label="Copy current URL"
-                onClick={onLinkButtonClick}
-              >
-                <LinkIcon />
               </IconButton>
             </Tooltip>
             <Tooltip title="Click to show peer list">
