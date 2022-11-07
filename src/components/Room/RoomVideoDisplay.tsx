@@ -35,27 +35,37 @@ export const RoomVideoDisplay = ({ userId }: RoomVideoDisplayProps) => {
     []
   )
 
+  const numberOfPeers = (selfVideoStream ? 1 : 0) + peersWithVideo.length
+
   return (
     <Paper
       className="RoomVideoDisplay"
       elevation={3}
       square
       sx={{
-        alignItems: 'stretch',
+        alignContent: 'center',
+        alignItems: 'center',
         display: 'flex',
-        flexDirection: 'column',
+        flexDirection: numberOfPeers === 1 ? 'column' : 'row',
         flexGrow: 1,
+        flexWrap: 'wrap',
         justifyContent: 'center',
         overflow: 'auto',
         width: '75%',
       }}
     >
       {selfVideoStream && (
-        <PeerVideo isSelf userId={userId} videoStream={selfVideoStream} />
+        <PeerVideo
+          isSelf
+          numberOfPeers={numberOfPeers}
+          userId={userId}
+          videoStream={selfVideoStream}
+        />
       )}
       {peersWithVideo.map(peerWithVideo => (
         <PeerVideo
           key={peerWithVideo.peer.peerId}
+          numberOfPeers={numberOfPeers}
           userId={peerWithVideo.peer.userId}
           videoStream={peerWithVideo.videoStream}
         />

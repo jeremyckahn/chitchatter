@@ -5,11 +5,24 @@ import { PeerNameDisplay } from 'components/PeerNameDisplay'
 
 interface PeerVideoProps {
   isSelf?: boolean
+  numberOfPeers: number
   userId: string
   videoStream: MediaStream
 }
 
-export const PeerVideo = ({ isSelf, userId, videoStream }: PeerVideoProps) => {
+// Adapted from https://www.geeksforgeeks.org/find-the-next-perfect-square-greater-than-a-given-number/
+const nextPerfectSquare = (base: number) => {
+  const nextInteger = Math.floor(Math.sqrt(base)) + 1
+
+  return nextInteger * nextInteger
+}
+
+export const PeerVideo = ({
+  isSelf,
+  numberOfPeers,
+  userId,
+  videoStream,
+}: PeerVideoProps) => {
   const videoRef = useRef<HTMLVideoElement>(null)
 
   useEffect(() => {
@@ -20,15 +33,20 @@ export const PeerVideo = ({ isSelf, userId, videoStream }: PeerVideoProps) => {
     video.srcObject = videoStream
   }, [videoRef, videoStream])
 
+  const sizePercent = 100 / Math.sqrt(nextPerfectSquare(numberOfPeers - 1))
+
   return (
     <Paper
       sx={{
-        py: 2,
-        margin: '0.5em',
-        flexShrink: 1,
-        overflow: 'auto',
         display: 'flex',
         flexDirection: 'column',
+        flexShrink: 1,
+        justifyContent: 'center',
+        margin: '0.5em',
+        overflow: 'auto',
+        py: 2,
+        width: `calc(${sizePercent}% - 1em)`,
+        height: `calc(${sizePercent}% - 1em)`,
       }}
       elevation={10}
     >
