@@ -1,5 +1,6 @@
 import { useContext, useEffect, useCallback, useState } from 'react'
 
+import { RoomContext } from 'contexts/RoomContext'
 import { ShellContext } from 'contexts/ShellContext'
 import { PeerActions } from 'models/network'
 import { VideoState, Peer } from 'models/chat'
@@ -13,21 +14,21 @@ interface UseRoomVideoConfig {
 
 export function useRoomVideo({ peerRoom }: UseRoomVideoConfig) {
   const shellContext = useContext(ShellContext)
+  const roomContext = useContext(RoomContext)
   const [isCameraEnabled, setIsCameraEnabled] = useState(false)
   const [videoDevices, setVideoDevices] = useState<MediaDeviceInfo[]>([])
   const [selectedVideoDeviceId, setSelectedVideoDeviceId] = useState<
     string | null
   >(null)
 
+  const { peerList, setPeerList, setVideoState } = shellContext
+
   const {
-    peerList,
     peerVideoStreams,
     selfVideoStream,
-    setPeerList,
     setPeerVideoStreams,
     setSelfVideoStream,
-    setVideoState,
-  } = shellContext
+  } = roomContext
 
   useEffect(() => {
     ;(async () => {

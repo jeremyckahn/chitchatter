@@ -8,6 +8,7 @@ import { v4 as uuid } from 'uuid'
 
 import { rtcConfig } from 'config/rtcConfig'
 import { trackerUrls } from 'config/trackerUrls'
+import { RoomContext } from 'contexts/RoomContext'
 import { MessageForm } from 'components/MessageForm'
 import { ChatTranscript } from 'components/ChatTranscript'
 
@@ -35,6 +36,7 @@ export function Room({
     isMessageSending,
     messageLog,
     peerRoom,
+    roomContextValue,
     sendMessage,
     showVideoDisplay,
   } = useRoom(
@@ -56,54 +58,56 @@ export function Room({
   }
 
   return (
-    <Box
-      className="Room"
-      sx={{
-        height: '100%',
-        display: 'flex',
-        flexGrow: '1',
-        overflow: 'auto',
-      }}
-    >
-      {showVideoDisplay && <RoomVideoDisplay userId={userId} />}
+    <RoomContext.Provider value={roomContextValue}>
       <Box
+        className="Room"
         sx={{
+          height: '100%',
           display: 'flex',
-          flexDirection: 'column',
           flexGrow: '1',
           overflow: 'auto',
         }}
       >
-        <Accordion>
-          <AccordionSummary
-            expandIcon={<ExpandMoreIcon />}
-            aria-controls="panel1a-content"
-            id="panel1a-header"
-          ></AccordionSummary>
-          <AccordionDetails>
-            <Box
-              sx={{
-                alignItems: 'flex-start',
-                display: 'flex',
-                justifyContent: 'center',
-              }}
-            >
-              <RoomAudioControls peerRoom={peerRoom} />
-              <RoomVideoControls peerRoom={peerRoom} />
-            </Box>
-          </AccordionDetails>
-        </Accordion>
-        <ChatTranscript
-          messageLog={messageLog}
-          userId={userId}
-          className="grow overflow-auto px-4"
-        />
-        <Divider />
-        <MessageForm
-          onMessageSubmit={handleMessageSubmit}
-          isMessageSending={isMessageSending}
-        />
+        {showVideoDisplay && <RoomVideoDisplay userId={userId} />}
+        <Box
+          sx={{
+            display: 'flex',
+            flexDirection: 'column',
+            flexGrow: '1',
+            overflow: 'auto',
+          }}
+        >
+          <Accordion>
+            <AccordionSummary
+              expandIcon={<ExpandMoreIcon />}
+              aria-controls="panel1a-content"
+              id="panel1a-header"
+            ></AccordionSummary>
+            <AccordionDetails>
+              <Box
+                sx={{
+                  alignItems: 'flex-start',
+                  display: 'flex',
+                  justifyContent: 'center',
+                }}
+              >
+                <RoomAudioControls peerRoom={peerRoom} />
+                <RoomVideoControls peerRoom={peerRoom} />
+              </Box>
+            </AccordionDetails>
+          </Accordion>
+          <ChatTranscript
+            messageLog={messageLog}
+            userId={userId}
+            className="grow overflow-auto px-4"
+          />
+          <Divider />
+          <MessageForm
+            onMessageSubmit={handleMessageSubmit}
+            isMessageSending={isMessageSending}
+          />
+        </Box>
       </Box>
-    </Box>
+    </RoomContext.Provider>
   )
 }

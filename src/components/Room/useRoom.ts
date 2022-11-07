@@ -1,7 +1,8 @@
-import { useContext, useEffect, useState } from 'react'
+import { useContext, useEffect, useMemo, useState } from 'react'
 import { BaseRoomConfig } from 'trystero'
 import { TorrentRoomConfig } from 'trystero/torrent'
 import { v4 as uuid } from 'uuid'
+import { funAnimalName } from 'fun-animal-names'
 
 import { ShellContext } from 'contexts/ShellContext'
 import { SettingsContext } from 'contexts/SettingsContext'
@@ -14,7 +15,6 @@ import {
   VideoState,
   isMessageReceived,
 } from 'models/chat'
-import { funAnimalName } from 'fun-animal-names'
 import { getPeerName } from 'components/PeerNameDisplay'
 import { NotificationService } from 'services/Notification'
 import { Audio as AudioService } from 'services/Audio'
@@ -54,6 +54,23 @@ export function useRoom(
   const setMessageLog = (messages: Message[]) => {
     _setMessageLog(messages.slice(-messageTranscriptSizeLimit))
   }
+
+  const [selfVideoStream, setSelfVideoStream] = useState<MediaStream | null>(
+    null
+  )
+  const [peerVideoStreams, setPeerVideoStreams] = useState<
+    Record<string, MediaStream>
+  >({})
+
+  const roomContextValue = useMemo(
+    () => ({
+      selfVideoStream,
+      setSelfVideoStream,
+      peerVideoStreams,
+      setPeerVideoStreams,
+    }),
+    [selfVideoStream, setSelfVideoStream, peerVideoStreams, setPeerVideoStreams]
+  )
 
   useEffect(() => {
     return () => {
@@ -200,13 +217,13 @@ export function useRoom(
   })
 
   const showVideoDisplay =
-    shellContext.selfVideoStream ||
-    Object.values(shellContext.peerVideoStreams).length > 0
+    selfVideoStream || Object.values(peerVideoStreams).length > 0
 
   return {
     isMessageSending,
     messageLog,
     peerRoom,
+    roomContextValue,
     sendMessage,
     showVideoDisplay,
   }

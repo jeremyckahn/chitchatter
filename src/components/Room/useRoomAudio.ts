@@ -24,6 +24,8 @@ export function useRoomAudio({ peerRoom }: UseRoomAudioConfig) {
     string | null
   >(null)
 
+  const { peerList, setPeerList, setAudioState } = shellContext
+
   useEffect(() => {
     ;(async () => {
       if (!audioStream) return
@@ -40,7 +42,7 @@ export function useRoomAudio({ peerRoom }: UseRoomAudioConfig) {
   )
 
   receiveAudioChange((audioState, peerId) => {
-    const newPeerList = shellContext.peerList.map(peer => {
+    const newPeerList = peerList.map(peer => {
       const newPeer: Peer = { ...peer }
 
       if (peer.peerId === peerId) {
@@ -54,7 +56,7 @@ export function useRoomAudio({ peerRoom }: UseRoomAudioConfig) {
       return newPeer
     })
 
-    shellContext.setPeerList(newPeerList)
+    setPeerList(newPeerList)
   })
 
   peerRoom.onPeerStream(PeerStreamType.AUDIO, (stream, peerId) => {
@@ -91,7 +93,7 @@ export function useRoomAudio({ peerRoom }: UseRoomAudioConfig) {
 
           peerRoom.addStream(newSelfStream)
           sendAudioChange(AudioState.PLAYING)
-          shellContext.setAudioState(AudioState.PLAYING)
+          setAudioState(AudioState.PLAYING)
           setAudioStream(newSelfStream)
         }
       } else {
@@ -100,20 +102,20 @@ export function useRoomAudio({ peerRoom }: UseRoomAudioConfig) {
 
           peerRoom.removeStream(audioStream, peerRoom.getPeers())
           sendAudioChange(AudioState.STOPPED)
-          shellContext.setAudioState(AudioState.STOPPED)
+          setAudioState(AudioState.STOPPED)
           setAudioStream(null)
         }
       }
     })()
   }, [
+    audioStream,
+    cleanupAudio,
     isSpeakingToRoom,
     peerAudios,
     peerRoom,
-    audioStream,
     selectedAudioDeviceId,
     sendAudioChange,
-    shellContext,
-    cleanupAudio,
+    setAudioState,
   ])
 
   useEffect(() => {

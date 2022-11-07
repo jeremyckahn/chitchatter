@@ -1,8 +1,9 @@
 import { useContext } from 'react'
 import Paper from '@mui/material/Paper'
 
-import { Peer } from 'models/chat'
+import { RoomContext } from 'contexts/RoomContext'
 import { ShellContext } from 'contexts/ShellContext'
+import { Peer } from 'models/chat'
 
 import { PeerVideo } from './PeerVideo'
 
@@ -14,10 +15,14 @@ export interface RoomVideoDisplayProps {
 
 export const RoomVideoDisplay = ({ userId }: RoomVideoDisplayProps) => {
   const shellContext = useContext(ShellContext)
+  const roomContext = useContext(RoomContext)
 
-  const peersWithVideo: PeerWithVideo[] = shellContext.peerList.reduce(
+  const { peerList } = shellContext
+  const { peerVideoStreams, selfVideoStream } = roomContext
+
+  const peersWithVideo: PeerWithVideo[] = peerList.reduce(
     (acc: PeerWithVideo[], peer: Peer) => {
-      const videoStream = shellContext.peerVideoStreams[peer.peerId]
+      const videoStream = peerVideoStreams[peer.peerId]
       if (videoStream) {
         acc.push({
           peer,
@@ -45,12 +50,8 @@ export const RoomVideoDisplay = ({ userId }: RoomVideoDisplayProps) => {
         width: '75%',
       }}
     >
-      {shellContext.selfVideoStream && (
-        <PeerVideo
-          isSelf
-          userId={userId}
-          videoStream={shellContext.selfVideoStream}
-        />
+      {selfVideoStream && (
+        <PeerVideo isSelf userId={userId} videoStream={selfVideoStream} />
       )}
       {peersWithVideo.map(peerWithVideo => (
         <PeerVideo

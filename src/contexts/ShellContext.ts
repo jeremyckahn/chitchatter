@@ -18,10 +18,6 @@ interface ShellContextProps {
   setAudioState: Dispatch<SetStateAction<AudioState>>
   videoState: VideoState
   setVideoState: Dispatch<SetStateAction<VideoState>>
-  selfVideoStream: MediaStream | null
-  setSelfVideoStream: Dispatch<SetStateAction<MediaStream | null>>
-  peerVideoStreams: Record<string, MediaStream>
-  setPeerVideoStreams: Dispatch<SetStateAction<Record<string, MediaStream>>>
 }
 
 export const ShellContext = createContext<ShellContextProps>({
@@ -39,8 +35,4 @@ export const ShellContext = createContext<ShellContextProps>({
   setAudioState: () => {},
   videoState: VideoState.STOPPED,
   setVideoState: () => {},
-  selfVideoStream: null,
-  setSelfVideoStream: () => {},
-  peerVideoStreams: {},
-  setPeerVideoStreams: () => {},
 })
