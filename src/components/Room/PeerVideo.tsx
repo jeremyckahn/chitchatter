@@ -54,15 +54,19 @@ export const PeerVideo = ({
         playsInline
         ref={videoRef}
         style={{
-          borderRadius: '1.25em',
+          borderRadius: '.25em',
           overflow: 'auto',
-          padding: '1em',
+          marginLeft: 'auto',
+          marginRight: 'auto',
+          height: '100%',
           ...(isSelf && {
             transform: 'rotateY(180deg)',
           }),
         }}
       />
-      <PeerNameDisplay sx={{ textAlign: 'center', display: 'block' }}>
+      <PeerNameDisplay
+        sx={{ textAlign: 'center', display: 'block', marginTop: '1em' }}
+      >
         {userId}
       </PeerNameDisplay>
     </Paper>
