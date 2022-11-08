@@ -15,11 +15,17 @@ export enum VideoState {
   STOPPED = 'STOPPED',
 }
 
+export enum ScreenShareState {
+  SHARING = 'SHARING',
+  NOT_SHARING = 'NOT_SHARING',
+}
+
 export interface Peer {
   peerId: string
   userId: string
   audioState: AudioState
   videoState: VideoState
+  screenShareState: ScreenShareState
 }
 
 export interface ReceivedMessage extends UnsentMessage {

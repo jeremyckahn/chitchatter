@@ -5,11 +5,13 @@ export enum PeerHookType {
   NEW_PEER = 'NEW_PEER',
   AUDIO = 'AUDIO',
   VIDEO = 'VIDEO',
+  SCREEN = 'SCREEN',
 }
 
 export enum PeerStreamType {
   AUDIO = 'AUDIO',
   VIDEO = 'VIDEO',
+  SCREEN = 'SCREEN',
 }
 
 export class PeerRoom {

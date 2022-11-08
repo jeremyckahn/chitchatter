@@ -13,6 +13,7 @@ import {
   ReceivedMessage,
   UnsentMessage,
   VideoState,
+  ScreenShareState,
   isMessageReceived,
 } from 'models/chat'
 import { getPeerName } from 'components/PeerNameDisplay'
@@ -62,14 +63,34 @@ export function useRoom(
     Record<string, MediaStream>
   >({})
 
+  const [selfScreenStream, setSelfScreenStream] = useState<MediaStream | null>(
+    null
+  )
+  const [peerScreenStreams, setPeerScreenStreams] = useState<
+    Record<string, MediaStream>
+  >({})
+
   const roomContextValue = useMemo(
     () => ({
       selfVideoStream,
       setSelfVideoStream,
       peerVideoStreams,
       setPeerVideoStreams,
+      selfScreenStream,
+      setSelfScreenStream,
+      peerScreenStreams,
+      setPeerScreenStreams,
     }),
-    [selfVideoStream, setSelfVideoStream, peerVideoStreams, setPeerVideoStreams]
+    [
+      selfVideoStream,
+      setSelfVideoStream,
+      peerVideoStreams,
+      setPeerVideoStreams,
+      selfScreenStream,
+      setSelfScreenStream,
+      peerScreenStreams,
+      setPeerScreenStreams,
+    ]
   )
 
   useEffect(() => {
@@ -131,6 +152,7 @@ export function useRoom(
           userId,
           audioState: AudioState.STOPPED,
           videoState: VideoState.STOPPED,
+          screenShareState: ScreenShareState.NOT_SHARING,
         },
       ])
     } else {
