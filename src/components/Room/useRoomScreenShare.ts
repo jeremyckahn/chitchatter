@@ -26,20 +26,6 @@ export function useRoomScreenShare({ peerRoom }: UseRoomScreenShareConfig) {
     setSelfScreenStream,
   } = roomContext
 
-  useEffect(() => {
-    ;(async () => {
-      if (!selfScreenStream) return
-
-      const displayMedia = await window.navigator.mediaDevices.getDisplayMedia({
-        audio: true,
-        video: true,
-      })
-
-      peerRoom.addStream(displayMedia)
-      setSelfScreenStream(displayMedia)
-    })()
-  }, [peerRoom, selfScreenStream, setSelfScreenStream])
-
   const [sendScreenShare, receiveScreenShare] =
     usePeerRoomAction<ScreenShareState>(peerRoom, PeerActions.SCREEN_SHARE)
 
@@ -81,42 +67,31 @@ export function useRoomScreenShare({ peerRoom }: UseRoomScreenShareConfig) {
     }
   }, [selfScreenStream])
 
-  useEffect(() => {
-    ;(async () => {
-      if (isSharingScreen) {
-        if (!selfScreenStream) {
-          const displayMedia =
-            await window.navigator.mediaDevices.getDisplayMedia({
-              audio: true,
-              video: true,
-            })
+  const handleScreenShareStart = async () => {
+    if (selfScreenStream) return
 
-          peerRoom.addStream(displayMedia)
-          setSelfScreenStream(displayMedia)
-          sendScreenShare(ScreenShareState.SHARING)
-          setScreenState(ScreenShareState.SHARING)
-        }
-      } else {
-        if (selfScreenStream) {
-          cleanupScreen()
+    const displayMedia = await window.navigator.mediaDevices.getDisplayMedia({
+      audio: true,
+      video: true,
+    })
 
-          peerRoom.removeStream(selfScreenStream, peerRoom.getPeers())
-          sendScreenShare(ScreenShareState.NOT_SHARING)
-          setScreenState(ScreenShareState.NOT_SHARING)
-          setSelfScreenStream(null)
-          setSelfScreenStream(null)
-        }
-      }
-    })()
-  }, [
-    cleanupScreen,
-    isSharingScreen,
-    peerRoom,
-    selfScreenStream,
-    sendScreenShare,
-    setScreenState,
-    setSelfScreenStream,
-  ])
+    peerRoom.addStream(displayMedia)
+    setSelfScreenStream(displayMedia)
+    sendScreenShare(ScreenShareState.SHARING)
+    setScreenState(ScreenShareState.SHARING)
+    setIsSharingScreen(true)
+  }
+
+  const handleScreenShareStop = () => {
+    if (!selfScreenStream) return
+
+    cleanupScreen()
+    peerRoom.removeStream(selfScreenStream, peerRoom.getPeers())
+    sendScreenShare(ScreenShareState.NOT_SHARING)
+    setScreenState(ScreenShareState.NOT_SHARING)
+    setSelfScreenStream(null)
+    setIsSharingScreen(false)
+  }
 
   useEffect(() => {
     return () => {
@@ -167,6 +142,8 @@ export function useRoomScreenShare({ peerRoom }: UseRoomScreenShareConfig) {
   })
 
   return {
+    handleScreenShareStart,
+    handleScreenShareStop,
     isSharingScreen,
     setIsSharingScreen,
   }

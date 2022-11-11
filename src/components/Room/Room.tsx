@@ -15,6 +15,7 @@ import { ChatTranscript } from 'components/ChatTranscript'
 import { useRoom } from './useRoom'
 import { RoomAudioControls } from './RoomAudioControls'
 import { RoomVideoControls } from './RoomVideoControls'
+import { RoomScreenShareControls } from './RoomScreenShareControls'
 import { RoomVideoDisplay } from './RoomVideoDisplay'
 
 export interface RoomProps {
@@ -93,6 +94,7 @@ export function Room({
               >
                 <RoomAudioControls peerRoom={peerRoom} />
                 <RoomVideoControls peerRoom={peerRoom} />
+                <RoomScreenShareControls peerRoom={peerRoom} />
               </Box>
             </AccordionDetails>
           </Accordion>
