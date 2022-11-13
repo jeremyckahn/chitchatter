@@ -240,6 +240,7 @@ export function useRoom(
 
   const showVideoDisplay =
     selfVideoStream ||
+    selfScreenStream ||
     Object.values({ ...peerVideoStreams, ...peerScreenStreams }).length > 0
 
   return {

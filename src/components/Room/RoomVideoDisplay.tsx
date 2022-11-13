@@ -76,7 +76,7 @@ export const RoomVideoDisplay = ({ userId }: RoomVideoDisplayProps) => {
     >
       {selfVideoStream && (
         <PeerVideo
-          isSelf
+          isSelfVideo
           numberOfVideos={numberOfVideos}
           userId={userId}
           videoStream={selfVideoStream}
@@ -84,7 +84,6 @@ export const RoomVideoDisplay = ({ userId }: RoomVideoDisplayProps) => {
       )}
       {selfScreenStream && (
         <PeerVideo
-          isSelf
           numberOfVideos={numberOfVideos}
           userId={userId}
           videoStream={selfScreenStream}
