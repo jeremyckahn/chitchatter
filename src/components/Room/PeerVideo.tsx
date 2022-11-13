@@ -4,8 +4,8 @@ import Paper from '@mui/material/Paper'
 import { PeerNameDisplay } from 'components/PeerNameDisplay'
 
 interface PeerVideoProps {
-  isSelf?: boolean
-  numberOfPeers: number
+  isSelfVideo?: boolean
+  numberOfVideos: number
   userId: string
   videoStream: MediaStream
 }
@@ -18,8 +18,8 @@ const nextPerfectSquare = (base: number) => {
 }
 
 export const PeerVideo = ({
-  isSelf,
-  numberOfPeers,
+  isSelfVideo,
+  numberOfVideos,
   userId,
   videoStream,
 }: PeerVideoProps) => {
@@ -33,7 +33,7 @@ export const PeerVideo = ({
     video.srcObject = videoStream
   }, [videoRef, videoStream])
 
-  const sizePercent = 100 / Math.sqrt(nextPerfectSquare(numberOfPeers - 1))
+  const sizePercent = 100 / Math.sqrt(nextPerfectSquare(numberOfVideos - 1))
 
   return (
     <Paper
@@ -59,7 +59,7 @@ export const PeerVideo = ({
           marginLeft: 'auto',
           marginRight: 'auto',
           height: '100%',
-          ...(isSelf && {
+          ...(isSelfVideo && {
             transform: 'rotateY(180deg)',
           }),
         }}

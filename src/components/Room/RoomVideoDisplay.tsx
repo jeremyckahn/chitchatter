@@ -1,4 +1,4 @@
-import { useContext } from 'react'
+import { Fragment, useContext } from 'react'
 import Paper from '@mui/material/Paper'
 
 import { RoomContext } from 'contexts/RoomContext'
@@ -7,7 +7,11 @@ import { Peer } from 'models/chat'
 
 import { PeerVideo } from './PeerVideo'
 
-type PeerWithVideo = { peer: Peer; videoStream: MediaStream }
+type PeerWithVideo = {
+  peer: Peer
+  videoStream?: MediaStream
+  screenStream?: MediaStream
+}
 
 export interface RoomVideoDisplayProps {
   userId: string
@@ -18,15 +22,23 @@ export const RoomVideoDisplay = ({ userId }: RoomVideoDisplayProps) => {
   const roomContext = useContext(RoomContext)
 
   const { peerList } = shellContext
-  const { peerVideoStreams, selfVideoStream } = roomContext
+  const {
+    peerVideoStreams,
+    selfVideoStream,
+    peerScreenStreams,
+    selfScreenStream,
+  } = roomContext
 
   const peersWithVideo: PeerWithVideo[] = peerList.reduce(
     (acc: PeerWithVideo[], peer: Peer) => {
       const videoStream = peerVideoStreams[peer.peerId]
-      if (videoStream) {
+      const screenStream = peerScreenStreams[peer.peerId]
+
+      if (videoStream || screenStream) {
         acc.push({
           peer,
           videoStream,
+          screenStream,
         })
       }
 
@@ -35,7 +47,15 @@ export const RoomVideoDisplay = ({ userId }: RoomVideoDisplayProps) => {
     []
   )
 
-  const numberOfPeers = (selfVideoStream ? 1 : 0) + peersWithVideo.length
+  const numberOfVideos =
+    (selfVideoStream ? 1 : 0) +
+    (selfScreenStream ? 1 : 0) +
+    peersWithVideo.reduce((sum, peerWithVideo) => {
+      if (peerWithVideo.videoStream) sum++
+      if (peerWithVideo.screenStream) sum++
+
+      return sum
+    }, 0)
 
   return (
     <Paper
@@ -46,7 +66,7 @@ export const RoomVideoDisplay = ({ userId }: RoomVideoDisplayProps) => {
         alignContent: 'center',
         alignItems: 'center',
         display: 'flex',
-        flexDirection: numberOfPeers === 1 ? 'column' : 'row',
+        flexDirection: numberOfVideos === 1 ? 'column' : 'row',
         flexGrow: 1,
         flexWrap: 'wrap',
         justifyContent: 'center',
@@ -56,19 +76,36 @@ export const RoomVideoDisplay = ({ userId }: RoomVideoDisplayProps) => {
     >
       {selfVideoStream && (
         <PeerVideo
-          isSelf
-          numberOfPeers={numberOfPeers}
+          isSelfVideo
+          numberOfVideos={numberOfVideos}
           userId={userId}
           videoStream={selfVideoStream}
         />
       )}
-      {peersWithVideo.map(peerWithVideo => (
+      {selfScreenStream && (
         <PeerVideo
-          key={peerWithVideo.peer.peerId}
-          numberOfPeers={numberOfPeers}
-          userId={peerWithVideo.peer.userId}
-          videoStream={peerWithVideo.videoStream}
+          numberOfVideos={numberOfVideos}
+          userId={userId}
+          videoStream={selfScreenStream}
         />
+      )}
+      {peersWithVideo.map(peerWithVideo => (
+        <Fragment key={peerWithVideo.peer.peerId}>
+          {peerWithVideo.videoStream && (
+            <PeerVideo
+              numberOfVideos={numberOfVideos}
+              userId={peerWithVideo.peer.userId}
+              videoStream={peerWithVideo.videoStream}
+            />
+          )}
+          {peerWithVideo.screenStream && (
+            <PeerVideo
+              numberOfVideos={numberOfVideos}
+              userId={peerWithVideo.peer.userId}
+              videoStream={peerWithVideo.screenStream}
+            />
+          )}
+        </Fragment>
       ))}
     </Paper>
   )

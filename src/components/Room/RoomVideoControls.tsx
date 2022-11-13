@@ -66,7 +66,7 @@ export function RoomVideoControls({ peerRoom }: RoomVideoControlsProps) {
       <Tooltip title={isCameraEnabled ? 'Turn off camera' : 'Turn on camera'}>
         <Fab
           color={isCameraEnabled ? 'error' : 'success'}
-          aria-label="call"
+          aria-label="toggle camera"
           onClick={handleEnableCameraClick}
         >
           {isCameraEnabled ? <VideocamOff /> : <Videocam />}
