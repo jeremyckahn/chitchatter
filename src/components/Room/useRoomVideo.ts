@@ -3,8 +3,10 @@ import { useContext, useEffect, useCallback, useState } from 'react'
 import { RoomContext } from 'contexts/RoomContext'
 import { ShellContext } from 'contexts/ShellContext'
 import { PeerActions } from 'models/network'
-import { VideoState, Peer } from 'models/chat'
+import { VideoState, Peer, VideoStreamType } from 'models/chat'
 import { PeerRoom, PeerHookType, PeerStreamType } from 'services/PeerRoom'
+
+import { isRecord } from 'utils'
 
 import { usePeerRoomAction } from './usePeerRoomAction'
 
@@ -60,7 +62,9 @@ export function useRoomVideo({ peerRoom }: UseRoomVideoConfig) {
           },
         })
 
-        peerRoom.addStream(newSelfStream)
+        peerRoom.addStream(newSelfStream, null, {
+          type: VideoStreamType.WEBCAM,
+        })
         setSelfVideoStream(newSelfStream)
 
         setSelfVideoStream(newSelfStream)
@@ -91,10 +95,13 @@ export function useRoomVideo({ peerRoom }: UseRoomVideoConfig) {
     setPeerList(newPeerList)
   })
 
-  peerRoom.onPeerStream(PeerStreamType.VIDEO, (stream, peerId) => {
-    const videoTracks = stream.getVideoTracks()
+  peerRoom.onPeerStream(PeerStreamType.VIDEO, (stream, peerId, metadata) => {
+    const isWebcamStream =
+      isRecord(metadata) &&
+      'type' in metadata &&
+      metadata.type === VideoStreamType.WEBCAM
 
-    if (videoTracks.length === 0) return
+    if (!isWebcamStream) return
 
     setPeerVideoStreams({
       ...peerVideoStreams,
@@ -122,7 +129,9 @@ export function useRoomVideo({ peerRoom }: UseRoomVideoConfig) {
               : true,
           })
 
-          peerRoom.addStream(newSelfStream)
+          peerRoom.addStream(newSelfStream, null, {
+            type: VideoStreamType.WEBCAM,
+          })
           sendVideoChange(VideoState.PLAYING)
           setVideoState(VideoState.PLAYING)
           setSelfVideoStream(newSelfStream)
@@ -191,7 +200,7 @@ export function useRoomVideo({ peerRoom }: UseRoomVideoConfig) {
       },
     })
 
-    peerRoom.addStream(newSelfStream)
+    peerRoom.addStream(newSelfStream, null, { type: VideoStreamType.WEBCAM })
     setSelfVideoStream(newSelfStream)
   }
 
@@ -203,7 +212,9 @@ export function useRoomVideo({ peerRoom }: UseRoomVideoConfig) {
 
   const handleVideoForNewPeer = (peerId: string) => {
     if (selfVideoStream) {
-      peerRoom.addStream(selfVideoStream, peerId)
+      peerRoom.addStream(selfVideoStream, peerId, {
+        type: VideoStreamType.WEBCAM,
+      })
     }
   }
 

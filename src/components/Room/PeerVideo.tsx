@@ -5,7 +5,7 @@ import { PeerNameDisplay } from 'components/PeerNameDisplay'
 
 interface PeerVideoProps {
   isSelf?: boolean
-  numberOfPeers: number
+  numberOfVideos: number
   userId: string
   videoStream: MediaStream
 }
@@ -19,7 +19,7 @@ const nextPerfectSquare = (base: number) => {
 
 export const PeerVideo = ({
   isSelf,
-  numberOfPeers,
+  numberOfVideos,
   userId,
   videoStream,
 }: PeerVideoProps) => {
@@ -33,7 +33,7 @@ export const PeerVideo = ({
     video.srcObject = videoStream
   }, [videoRef, videoStream])
 
-  const sizePercent = 100 / Math.sqrt(nextPerfectSquare(numberOfPeers - 1))
+  const sizePercent = 100 / Math.sqrt(nextPerfectSquare(numberOfVideos - 1))
 
   return (
     <Paper

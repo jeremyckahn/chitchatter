@@ -109,8 +109,8 @@ export class PeerRoom {
     return this.room.makeAction<T>(namespace)
   }
 
-  addStream: Room['addStream'] = stream => {
-    return this.room.addStream(stream)
+  addStream: Room['addStream'] = (...args) => {
+    return this.room.addStream(...args)
   }
 
   removeStream: Room['removeStream'] = (stream, targetPeers) => {

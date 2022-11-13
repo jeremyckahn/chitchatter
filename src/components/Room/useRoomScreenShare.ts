@@ -1,9 +1,10 @@
 import { useContext, useEffect, useCallback, useState } from 'react'
 
+import { isRecord } from 'utils'
 import { RoomContext } from 'contexts/RoomContext'
 import { ShellContext } from 'contexts/ShellContext'
 import { PeerActions } from 'models/network'
-import { ScreenShareState, Peer } from 'models/chat'
+import { ScreenShareState, Peer, VideoStreamType } from 'models/chat'
 import { PeerRoom, PeerHookType, PeerStreamType } from 'services/PeerRoom'
 
 import { usePeerRoomAction } from './usePeerRoomAction'
@@ -47,7 +48,13 @@ export function useRoomScreenShare({ peerRoom }: UseRoomScreenShareConfig) {
     setPeerList(newPeerList)
   })
 
-  peerRoom.onPeerStream(PeerStreamType.SCREEN, (stream, peerId) => {
+  peerRoom.onPeerStream(PeerStreamType.SCREEN, (stream, peerId, metadata) => {
+    const isScreenShareStream =
+      isRecord(metadata) &&
+      'type' in metadata &&
+      metadata.type === VideoStreamType.SCREEN_SHARE
+
+    if (!isScreenShareStream) return
     const screenTracks = stream.getVideoTracks()
 
     if (screenTracks.length === 0) return
@@ -75,7 +82,9 @@ export function useRoomScreenShare({ peerRoom }: UseRoomScreenShareConfig) {
       video: true,
     })
 
-    peerRoom.addStream(displayMedia)
+    peerRoom.addStream(displayMedia, null, {
+      type: VideoStreamType.SCREEN_SHARE,
+    })
     setSelfScreenStream(displayMedia)
     sendScreenShare(ScreenShareState.SHARING)
     setScreenState(ScreenShareState.SHARING)
@@ -122,7 +131,9 @@ export function useRoomScreenShare({ peerRoom }: UseRoomScreenShareConfig) {
 
   const handleScreenForNewPeer = (peerId: string) => {
     if (selfScreenStream) {
-      peerRoom.addStream(selfScreenStream, peerId)
+      peerRoom.addStream(selfScreenStream, peerId, {
+        type: VideoStreamType.SCREEN_SHARE,
+      })
     }
   }
 

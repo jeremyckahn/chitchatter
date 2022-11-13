@@ -239,7 +239,8 @@ export function useRoom(
   })
 
   const showVideoDisplay =
-    selfVideoStream || Object.values(peerVideoStreams).length > 0
+    selfVideoStream ||
+    Object.values({ ...peerVideoStreams, ...peerScreenStreams }).length > 0
 
   return {
     isMessageSending,
