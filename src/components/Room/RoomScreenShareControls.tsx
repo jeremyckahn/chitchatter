@@ -26,6 +26,10 @@ export function RoomScreenShareControls({ peerRoom }: RoomVideoControlsProps) {
     }
   }
 
+  if (!window.navigator?.mediaDevices?.getDisplayMedia) {
+    return <></>
+  }
+
   return (
     <Box
       sx={{
