@@ -29,6 +29,7 @@ Open https://chitchatter.im/ and join a room to start chatting with anyone else 
 - Multiple peers per room (limited only by the number of peer connections your browser supports).
 - Public and private rooms
 - Video and audio chatting
+- Screen sharing
 - Markdown support via [`react-markdown`](https://github.com/remarkjs/react-markdown).
   - Includes support for syntax highlighting of code.
 - Conversation backfilling from peers when a new participant joins
@@ -90,7 +91,6 @@ Chitchatter is an open source project, so community contributions and support ar
 
 This is a non-exhaustive list of things that are in Chitchatter's future:
 
-- Screen sharing
 - File sharing
 - Indicators for when others are typing
 
