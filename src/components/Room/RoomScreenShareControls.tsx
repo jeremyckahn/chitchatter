@@ -47,7 +47,7 @@ export function RoomScreenShareControls({ peerRoom }: RoomVideoControlsProps) {
       >
         <Fab
           color={isSharingScreen ? 'error' : 'success'}
-          aria-label="call"
+          aria-label="share screen"
           onClick={handleToggleScreenShareButtonClick}
         >
           {isSharingScreen ? <StopScreenShare /> : <ScreenShare />}

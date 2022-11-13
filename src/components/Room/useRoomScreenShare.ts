@@ -55,9 +55,6 @@ export function useRoomScreenShare({ peerRoom }: UseRoomScreenShareConfig) {
       metadata.type === VideoStreamType.SCREEN_SHARE
 
     if (!isScreenShareStream) return
-    const screenTracks = stream.getVideoTracks()
-
-    if (screenTracks.length === 0) return
 
     setPeerScreenStreams({
       ...peerScreenStreams,
@@ -65,12 +62,12 @@ export function useRoomScreenShare({ peerRoom }: UseRoomScreenShareConfig) {
     })
   })
 
-  const cleanupScreen = useCallback(() => {
+  const cleanupScreenStream = useCallback(() => {
     if (!selfScreenStream) return
 
-    for (const screenTrack of selfScreenStream.getTracks()) {
-      screenTrack.stop()
-      selfScreenStream.removeTrack(screenTrack)
+    for (const screenStreamTrack of selfScreenStream.getTracks()) {
+      screenStreamTrack.stop()
+      selfScreenStream.removeTrack(screenStreamTrack)
     }
   }, [selfScreenStream])
 
@@ -94,7 +91,7 @@ export function useRoomScreenShare({ peerRoom }: UseRoomScreenShareConfig) {
   const handleScreenShareStop = () => {
     if (!selfScreenStream) return
 
-    cleanupScreen()
+    cleanupScreenStream()
     peerRoom.removeStream(selfScreenStream, peerRoom.getPeers())
     sendScreenShare(ScreenShareState.NOT_SHARING)
     setScreenState(ScreenShareState.NOT_SHARING)
@@ -104,9 +101,9 @@ export function useRoomScreenShare({ peerRoom }: UseRoomScreenShareConfig) {
 
   useEffect(() => {
     return () => {
-      cleanupScreen()
+      cleanupScreenStream()
     }
-  }, [cleanupScreen])
+  }, [cleanupScreenStream])
 
   useEffect(() => {
     return () => {
@@ -140,8 +137,9 @@ export function useRoomScreenShare({ peerRoom }: UseRoomScreenShareConfig) {
   const handleScreenForLeavingPeer = (peerId: string) => {
     if (selfScreenStream) {
       peerRoom.removeStream(selfScreenStream, peerId)
-      deletePeerScreen(peerId)
     }
+
+    deletePeerScreen(peerId)
   }
 
   peerRoom.onPeerJoin(PeerHookType.SCREEN, (peerId: string) => {

@@ -221,8 +221,9 @@ export function useRoomVideo({ peerRoom }: UseRoomVideoConfig) {
   const handleVideoForLeavingPeer = (peerId: string) => {
     if (selfVideoStream) {
       peerRoom.removeStream(selfVideoStream, peerId)
-      deletePeerVideo(peerId)
     }
+
+    deletePeerVideo(peerId)
   }
 
   peerRoom.onPeerJoin(PeerHookType.VIDEO, (peerId: string) => {

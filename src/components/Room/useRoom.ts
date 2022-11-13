@@ -238,10 +238,11 @@ export function useRoom(
     }
   })
 
-  const showVideoDisplay =
+  const showVideoDisplay = Boolean(
     selfVideoStream ||
-    selfScreenStream ||
-    Object.values({ ...peerVideoStreams, ...peerScreenStreams }).length > 0
+      selfScreenStream ||
+      Object.values({ ...peerVideoStreams, ...peerScreenStreams }).length > 0
+  )
 
   return {
     isMessageSending,
