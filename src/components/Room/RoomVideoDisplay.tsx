@@ -1,16 +1,23 @@
-import { Fragment, useContext } from 'react'
+import { Fragment, useContext, useState } from 'react'
+import Box from '@mui/material/Box'
 import Paper from '@mui/material/Paper'
 
 import { RoomContext } from 'contexts/RoomContext'
 import { ShellContext } from 'contexts/ShellContext'
-import { Peer } from 'models/chat'
+import { Peer, VideoStreamType } from 'models/chat'
 
 import { PeerVideo } from './PeerVideo'
 
-type PeerWithVideo = {
+interface PeerWithVideo {
   peer: Peer
   videoStream?: MediaStream
   screenStream?: MediaStream
+}
+
+export interface SelectedPeerStream {
+  peerId: string
+  videoStreamType: VideoStreamType
+  videoStream: MediaStream
 }
 
 export interface RoomVideoDisplayProps {
@@ -20,6 +27,8 @@ export interface RoomVideoDisplayProps {
 export const RoomVideoDisplay = ({ userId }: RoomVideoDisplayProps) => {
   const shellContext = useContext(ShellContext)
   const roomContext = useContext(RoomContext)
+  const [selectedPeerStream, setSelectedPeerStream] =
+    useState<SelectedPeerStream | null>(null)
 
   const { peerList } = shellContext
   const {
@@ -57,6 +66,18 @@ export const RoomVideoDisplay = ({ userId }: RoomVideoDisplayProps) => {
       return sum
     }, 0)
 
+  const handleVideoClick = (
+    peerId: string,
+    videoStreamType: VideoStreamType,
+    videoStream: MediaStream
+  ) => {
+    if (selectedPeerStream?.videoStream === videoStream) {
+      setSelectedPeerStream(null)
+    } else {
+      setSelectedPeerStream({ peerId, videoStreamType, videoStream })
+    }
+  }
+
   return (
     <Paper
       className="RoomVideoDisplay"
@@ -66,47 +87,86 @@ export const RoomVideoDisplay = ({ userId }: RoomVideoDisplayProps) => {
         alignContent: 'center',
         alignItems: 'center',
         display: 'flex',
-        flexDirection: numberOfVideos === 1 ? 'column' : 'row',
-        flexGrow: 1,
-        flexWrap: 'wrap',
-        justifyContent: 'center',
+        flexDirection: 'column',
         overflow: 'auto',
-        width: '75%',
+        width: '85%',
       }}
     >
-      {selfVideoStream && (
-        <PeerVideo
-          isSelfVideo
-          numberOfVideos={numberOfVideos}
-          userId={userId}
-          videoStream={selfVideoStream}
-        />
+      {selectedPeerStream && (
+        <Box sx={{ height: 'calc(85% - 1em)', mb: 'auto' }}>
+          <PeerVideo
+            numberOfVideos={numberOfVideos}
+            onVideoClick={handleVideoClick}
+            userId={userId}
+            selectedPeerStream={selectedPeerStream}
+            videoStream={selectedPeerStream.videoStream}
+            videoStreamType={selectedPeerStream.videoStreamType}
+          />
+        </Box>
       )}
-      {selfScreenStream && (
-        <PeerVideo
-          numberOfVideos={numberOfVideos}
-          userId={userId}
-          videoStream={selfScreenStream}
-        />
-      )}
-      {peersWithVideo.map(peerWithVideo => (
-        <Fragment key={peerWithVideo.peer.peerId}>
-          {peerWithVideo.videoStream && (
-            <PeerVideo
-              numberOfVideos={numberOfVideos}
-              userId={peerWithVideo.peer.userId}
-              videoStream={peerWithVideo.videoStream}
-            />
-          )}
-          {peerWithVideo.screenStream && (
-            <PeerVideo
-              numberOfVideos={numberOfVideos}
-              userId={peerWithVideo.peer.userId}
-              videoStream={peerWithVideo.screenStream}
-            />
-          )}
-        </Fragment>
-      ))}
+      <Box
+        sx={{
+          alignContent: 'center',
+          alignItems: 'center',
+          display: 'flex',
+          flexDirection:
+            numberOfVideos === 1 || !selectedPeerStream ? 'column' : 'row',
+          flexGrow: 1,
+          flexWrap: selectedPeerStream ? 'nowrap' : 'wrap',
+          overflow: 'auto',
+          width: '100%',
+          ...(selectedPeerStream && {
+            height: '15%',
+            maxHeight: '15%',
+          }),
+        }}
+      >
+        {selfVideoStream && (
+          <PeerVideo
+            isSelfVideo
+            numberOfVideos={numberOfVideos}
+            onVideoClick={handleVideoClick}
+            userId={userId}
+            selectedPeerStream={selectedPeerStream}
+            videoStream={selfVideoStream}
+            videoStreamType={VideoStreamType.WEBCAM}
+          />
+        )}
+        {selfScreenStream && (
+          <PeerVideo
+            numberOfVideos={numberOfVideos}
+            onVideoClick={handleVideoClick}
+            userId={userId}
+            selectedPeerStream={selectedPeerStream}
+            videoStream={selfScreenStream}
+            videoStreamType={VideoStreamType.SCREEN_SHARE}
+          />
+        )}
+        {peersWithVideo.map(peerWithVideo => (
+          <Fragment key={peerWithVideo.peer.peerId}>
+            {peerWithVideo.videoStream && (
+              <PeerVideo
+                numberOfVideos={numberOfVideos}
+                onVideoClick={handleVideoClick}
+                userId={peerWithVideo.peer.userId}
+                selectedPeerStream={selectedPeerStream}
+                videoStream={peerWithVideo.videoStream}
+                videoStreamType={VideoStreamType.WEBCAM}
+              />
+            )}
+            {peerWithVideo.screenStream && (
+              <PeerVideo
+                numberOfVideos={numberOfVideos}
+                onVideoClick={handleVideoClick}
+                userId={peerWithVideo.peer.userId}
+                selectedPeerStream={selectedPeerStream}
+                videoStream={peerWithVideo.screenStream}
+                videoStreamType={VideoStreamType.SCREEN_SHARE}
+              />
+            )}
+          </Fragment>
+        ))}
+      </Box>
     </Paper>
   )
 }
