@@ -16,7 +16,7 @@ export enum PeerStreamType {
   SCREEN = 'SCREEN',
 }
 
-const streamQueueAddDelay = 500
+const streamQueueAddDelay = 1000
 
 export class PeerRoom {
   private room: Room
