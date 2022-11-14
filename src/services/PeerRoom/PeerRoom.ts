@@ -1,6 +1,8 @@
 import { joinRoom, Room, BaseRoomConfig } from 'trystero'
 import { TorrentRoomConfig } from 'trystero/torrent'
 
+import { sleep } from 'utils'
+
 export enum PeerHookType {
   NEW_PEER = 'NEW_PEER',
   AUDIO = 'AUDIO',
@@ -13,6 +15,8 @@ export enum PeerStreamType {
   VIDEO = 'VIDEO',
   SCREEN = 'SCREEN',
 }
+
+const streamQueueAddDelay = 500
 
 export class PeerRoom {
   private room: Room
@@ -33,6 +37,10 @@ export class PeerRoom {
     PeerStreamType,
     Parameters<Room['onPeerStream']>[0]
   > = new Map()
+
+  private streamQueue: (() => Promise<any>)[] = []
+
+  private isProcessingPendingStreams = false
 
   constructor(config: TorrentRoomConfig & BaseRoomConfig, roomId: string) {
     this.roomConfig = config
@@ -109,8 +117,28 @@ export class PeerRoom {
     return this.room.makeAction<T>(namespace)
   }
 
-  addStream: Room['addStream'] = (...args) => {
-    return this.room.addStream(...args)
+  addStream = (...args: Parameters<Room['addStream']>) => {
+    // New streams need to be added as a delayed queue to prevent race
+    // conditions on the receiver's end where streams and their metadata get
+    // mixed up.
+    this.streamQueue.push(
+      () => Promise.all(this.room.addStream(...args)),
+      () => sleep(streamQueueAddDelay)
+    )
+
+    this.processPendingStreams()
+  }
+
+  private processPendingStreams = async () => {
+    if (this.isProcessingPendingStreams) return
+
+    this.isProcessingPendingStreams = true
+
+    while (this.streamQueue.length > 0) {
+      await this.streamQueue.shift()?.()
+    }
+
+    this.isProcessingPendingStreams = false
   }
 
   removeStream: Room['removeStream'] = (stream, targetPeers) => {
