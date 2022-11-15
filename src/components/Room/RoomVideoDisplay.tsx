@@ -38,31 +38,6 @@ export const RoomVideoDisplay = ({ userId }: RoomVideoDisplayProps) => {
     selfScreenStream,
   } = roomContext
 
-  useEffect(() => {
-    if (!selectedPeerStream) return
-
-    const allMediaStreams = [
-      ...Object.values(peerVideoStreams),
-      ...Object.values(peerScreenStreams),
-      selfVideoStream,
-      selfScreenStream,
-    ]
-
-    for (const mediaStream of allMediaStreams) {
-      if (mediaStream?.id === selectedPeerStream.videoStream.id) {
-        return
-      }
-    }
-
-    setSelectedPeerStream(null)
-  }, [
-    peerScreenStreams,
-    peerVideoStreams,
-    selectedPeerStream,
-    selfScreenStream,
-    selfVideoStream,
-  ])
-
   const peersWithVideo: PeerWithVideo[] = peerList.reduce(
     (acc: PeerWithVideo[], peer: Peer) => {
       const videoStream = peerVideoStreams[peer.peerId]
@@ -91,6 +66,37 @@ export const RoomVideoDisplay = ({ userId }: RoomVideoDisplayProps) => {
       return sum
     }, 0)
 
+  useEffect(() => {
+    if (!selectedPeerStream) return
+
+    if (numberOfVideos < 2) {
+      setSelectedPeerStream(null)
+      return
+    }
+
+    const allMediaStreams = [
+      ...Object.values(peerVideoStreams),
+      ...Object.values(peerScreenStreams),
+      selfVideoStream,
+      selfScreenStream,
+    ]
+
+    for (const mediaStream of allMediaStreams) {
+      if (mediaStream?.id === selectedPeerStream.videoStream.id) {
+        return
+      }
+    }
+
+    setSelectedPeerStream(null)
+  }, [
+    numberOfVideos,
+    peerScreenStreams,
+    peerVideoStreams,
+    selectedPeerStream,
+    selfScreenStream,
+    selfVideoStream,
+  ])
+
   const handleVideoClick = (
     peerId: string,
     videoStreamType: VideoStreamType,
@@ -98,7 +104,7 @@ export const RoomVideoDisplay = ({ userId }: RoomVideoDisplayProps) => {
   ) => {
     if (selectedPeerStream?.videoStream === videoStream) {
       setSelectedPeerStream(null)
-    } else {
+    } else if (numberOfVideos > 1) {
       setSelectedPeerStream({ peerId, videoStreamType, videoStream })
     }
   }
