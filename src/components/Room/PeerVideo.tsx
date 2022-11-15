@@ -2,12 +2,22 @@ import { useEffect, useRef } from 'react'
 import Paper from '@mui/material/Paper'
 
 import { PeerNameDisplay } from 'components/PeerNameDisplay'
+import { VideoStreamType } from 'models/chat'
+
+import { SelectedPeerStream } from './RoomVideoDisplay'
 
 interface PeerVideoProps {
   isSelfVideo?: boolean
   numberOfVideos: number
+  onVideoClick?: (
+    userId: string,
+    videoStreamType: VideoStreamType,
+    videoStream: MediaStream
+  ) => void
+  selectedPeerStream: SelectedPeerStream | null
   userId: string
   videoStream: MediaStream
+  videoStreamType: VideoStreamType
 }
 
 // Adapted from https://www.geeksforgeeks.org/find-the-next-perfect-square-greater-than-a-given-number/
@@ -20,8 +30,11 @@ const nextPerfectSquare = (base: number) => {
 export const PeerVideo = ({
   isSelfVideo,
   numberOfVideos,
+  onVideoClick,
   userId,
+  selectedPeerStream,
   videoStream,
+  videoStreamType,
 }: PeerVideoProps) => {
   const videoRef = useRef<HTMLVideoElement>(null)
 
@@ -35,6 +48,10 @@ export const PeerVideo = ({
 
   const sizePercent = 100 / Math.sqrt(nextPerfectSquare(numberOfVideos - 1))
 
+  const handleVideoClick = () => {
+    onVideoClick?.(userId, videoStreamType, videoStream)
+  }
+
   return (
     <Paper
       sx={{
@@ -42,19 +59,27 @@ export const PeerVideo = ({
         flexDirection: 'column',
         flexShrink: 1,
         justifyContent: 'center',
-        margin: '0.5em',
+        margin: '0 0.5em 0.5em 0.5em',
         overflow: 'auto',
         py: 2,
-        width: `calc(${sizePercent}% - 1em)`,
-        height: `calc(${sizePercent}% - 1em)`,
+        ...(selectedPeerStream
+          ? {
+              height: 'calc(100% - 0.5em)',
+            }
+          : {
+              width: `calc(${sizePercent}% - 1em)`,
+              height: `calc(${sizePercent}% - 1em)`,
+            }),
       }}
       elevation={10}
     >
       <video
         playsInline
         ref={videoRef}
+        onClick={handleVideoClick}
         style={{
           borderRadius: '.25em',
+          cursor: 'pointer',
           overflow: 'auto',
           marginLeft: 'auto',
           marginRight: 'auto',
