@@ -134,8 +134,7 @@ export const RoomVideoDisplay = ({ userId }: RoomVideoDisplayProps) => {
           alignContent: 'center',
           alignItems: 'center',
           display: 'flex',
-          flexDirection:
-            numberOfVideos === 1 || !selectedPeerStream ? 'column' : 'row',
+          flexDirection: 'row',
           flexGrow: 1,
           flexWrap: selectedPeerStream ? 'nowrap' : 'wrap',
           overflow: 'auto',
