@@ -59,12 +59,12 @@ export const PeerVideo = ({
         flexDirection: 'column',
         flexShrink: 1,
         justifyContent: 'center',
-        margin: '0.5em',
+        margin: '0 0.5em 0.5em 0.5em',
         overflow: 'auto',
         py: 2,
         ...(selectedPeerStream
           ? {
-              height: '100%',
+              height: 'calc(100% - 0.5em)',
             }
           : {
               width: `calc(${sizePercent}% - 1em)`,
@@ -79,6 +79,7 @@ export const PeerVideo = ({
         onClick={handleVideoClick}
         style={{
           borderRadius: '.25em',
+          cursor: 'pointer',
           overflow: 'auto',
           marginLeft: 'auto',
           marginRight: 'auto',
