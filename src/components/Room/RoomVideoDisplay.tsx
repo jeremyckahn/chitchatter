@@ -1,4 +1,4 @@
-import { Fragment, useContext, useState } from 'react'
+import { Fragment, useContext, useEffect, useState } from 'react'
 import Box from '@mui/material/Box'
 import Paper from '@mui/material/Paper'
 
@@ -37,6 +37,31 @@ export const RoomVideoDisplay = ({ userId }: RoomVideoDisplayProps) => {
     peerScreenStreams,
     selfScreenStream,
   } = roomContext
+
+  useEffect(() => {
+    if (!selectedPeerStream) return
+
+    const allMediaStreams = [
+      ...Object.values(peerVideoStreams),
+      ...Object.values(peerScreenStreams),
+      selfVideoStream,
+      selfScreenStream,
+    ]
+
+    for (const mediaStream of allMediaStreams) {
+      if (mediaStream?.id === selectedPeerStream.videoStream.id) {
+        return
+      }
+    }
+
+    setSelectedPeerStream(null)
+  }, [
+    peerScreenStreams,
+    peerVideoStreams,
+    selectedPeerStream,
+    selfScreenStream,
+    selfVideoStream,
+  ])
 
   const peersWithVideo: PeerWithVideo[] = peerList.reduce(
     (acc: PeerWithVideo[], peer: Peer) => {
