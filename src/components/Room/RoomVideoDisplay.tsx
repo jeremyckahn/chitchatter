@@ -120,12 +120,14 @@ export const RoomVideoDisplay = ({ userId }: RoomVideoDisplayProps) => {
         display: 'flex',
         flexDirection: 'column',
         overflow: 'auto',
+        padding: 1,
         width: '85%',
       }}
     >
       {selectedPeerStream && (
-        <Box sx={{ height: 'calc(85% - 1em)', mb: 'auto' }}>
+        <Box sx={{ height: '85%' }}>
           <PeerVideo
+            isSelectedVideo
             numberOfVideos={numberOfVideos}
             onVideoClick={handleVideoClick}
             userId={userId}
@@ -143,6 +145,7 @@ export const RoomVideoDisplay = ({ userId }: RoomVideoDisplayProps) => {
           flexDirection: 'row',
           flexGrow: 1,
           flexWrap: selectedPeerStream ? 'nowrap' : 'wrap',
+          justifyContent: 'center',
           overflow: 'auto',
           width: '100%',
           ...(selectedPeerStream && {

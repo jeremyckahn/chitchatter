@@ -7,6 +7,7 @@ import { VideoStreamType } from 'models/chat'
 import { SelectedPeerStream } from './RoomVideoDisplay'
 
 interface PeerVideoProps {
+  isSelectedVideo?: boolean
   isSelfVideo?: boolean
   numberOfVideos: number
   onVideoClick?: (
@@ -28,6 +29,7 @@ const nextPerfectSquare = (base: number) => {
 }
 
 export const PeerVideo = ({
+  isSelectedVideo,
   isSelfVideo,
   numberOfVideos,
   onVideoClick,
@@ -59,7 +61,7 @@ export const PeerVideo = ({
         flexDirection: 'column',
         flexShrink: 1,
         justifyContent: 'center',
-        margin: '0 0.5em 0.5em 0.5em',
+        mx: 'auto',
         overflow: 'auto',
         py: 2,
         ...(selectedPeerStream
@@ -70,6 +72,10 @@ export const PeerVideo = ({
               width: `calc(${sizePercent}% - 1em)`,
               height: `calc(${sizePercent}% - 1em)`,
             }),
+        ...(selectedPeerStream &&
+          !isSelectedVideo && {
+            width: 'min-content',
+          }),
       }}
       elevation={10}
     >
@@ -90,7 +96,7 @@ export const PeerVideo = ({
         }}
       />
       <PeerNameDisplay
-        sx={{ textAlign: 'center', display: 'block', marginTop: '1em' }}
+        sx={{ textAlign: 'center', display: 'block', marginTop: 1, px: 1 }}
       >
         {userId}
       </PeerNameDisplay>
