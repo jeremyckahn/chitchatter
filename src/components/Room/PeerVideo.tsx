@@ -71,6 +71,7 @@ export const PeerVideo = ({
           : {
               width: `calc(${sizePercent}% - 1em)`,
               height: `calc(${sizePercent}% - 1em)`,
+              my: 1,
             }),
         ...(selectedPeerStream &&
           !isSelectedVideo && {

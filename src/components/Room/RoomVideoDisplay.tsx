@@ -139,7 +139,7 @@ export const RoomVideoDisplay = ({ userId }: RoomVideoDisplayProps) => {
       )}
       <Box
         sx={{
-          alignContent: 'space-around',
+          alignContent: 'center',
           display: 'flex',
           flexDirection: 'row',
           flexGrow: 1,
