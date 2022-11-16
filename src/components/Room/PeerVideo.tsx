@@ -63,10 +63,10 @@ export const PeerVideo = ({
         justifyContent: 'center',
         mx: 'auto',
         overflow: 'auto',
-        py: 2,
+        padding: 2,
         ...(selectedPeerStream
           ? {
-              height: 'calc(100% - 0.5em)',
+              height: '100%',
             }
           : {
               width: `calc(${sizePercent}% - 1em)`,

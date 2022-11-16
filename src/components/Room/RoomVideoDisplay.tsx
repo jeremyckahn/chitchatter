@@ -125,7 +125,7 @@ export const RoomVideoDisplay = ({ userId }: RoomVideoDisplayProps) => {
       }}
     >
       {selectedPeerStream && (
-        <Box sx={{ height: '85%' }}>
+        <Box sx={{ height: '80%' }}>
           <PeerVideo
             isSelectedVideo
             numberOfVideos={numberOfVideos}
@@ -139,8 +139,7 @@ export const RoomVideoDisplay = ({ userId }: RoomVideoDisplayProps) => {
       )}
       <Box
         sx={{
-          alignContent: 'center',
-          alignItems: 'center',
+          alignContent: 'space-around',
           display: 'flex',
           flexDirection: 'row',
           flexGrow: 1,
@@ -149,8 +148,9 @@ export const RoomVideoDisplay = ({ userId }: RoomVideoDisplayProps) => {
           overflow: 'auto',
           width: '100%',
           ...(selectedPeerStream && {
-            height: '15%',
-            maxHeight: '15%',
+            height: '20%',
+            maxHeight: '20%',
+            pt: '0.5em',
           }),
         }}
       >
