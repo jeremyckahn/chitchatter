@@ -1,30 +1,30 @@
 import Box from '@mui/material/Box'
-import ScreenShare from '@mui/icons-material/ScreenShare'
-import StopScreenShare from '@mui/icons-material/StopScreenShare'
+import UploadFile from '@mui/icons-material/UploadFile'
+import Cancel from '@mui/icons-material/Cancel'
 import Fab from '@mui/material/Fab'
 import Tooltip from '@mui/material/Tooltip'
 
 import { PeerRoom } from 'services/PeerRoom/PeerRoom'
 
-import { useRoomScreenShare } from './useRoomScreenShare'
+import { useRoomFileShare } from './useRoomFileShare'
 
 export interface RoomFileUploadControlsProps {
   peerRoom: PeerRoom
 }
 
-export function RoomScreenShareControls({
+export function RoomFileUploadControls({
   peerRoom,
 }: RoomFileUploadControlsProps) {
-  const { isSharingScreen, handleScreenShareStart, handleScreenShareStop } =
-    useRoomScreenShare({
+  const { isSharingFile, handleFileShareStart, handleFileShareStop } =
+    useRoomFileShare({
       peerRoom,
     })
 
   const handleToggleScreenShareButtonClick = () => {
-    if (isSharingScreen) {
-      handleScreenShareStop()
+    if (isSharingFile) {
+      handleFileShareStop()
     } else {
-      handleScreenShareStart()
+      handleFileShareStart()
     }
   }
 
@@ -44,15 +44,16 @@ export function RoomScreenShareControls({
     >
       <Tooltip
         title={
-          isSharingScreen ? 'Stop sharing screen' : 'Share screen with room'
+          // TODO: Display the file name here
+          isSharingFile ? 'Stop sharing files' : 'Share a file with the room'
         }
       >
         <Fab
-          color={isSharingScreen ? 'error' : 'success'}
+          color={isSharingFile ? 'error' : 'success'}
           aria-label="share screen"
           onClick={handleToggleScreenShareButtonClick}
         >
-          {isSharingScreen ? <StopScreenShare /> : <ScreenShare />}
+          {isSharingFile ? <Cancel /> : <UploadFile />}
         </Fab>
       </Tooltip>
     </Box>

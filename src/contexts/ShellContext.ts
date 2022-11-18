@@ -1,7 +1,13 @@
 import { createContext, Dispatch, SetStateAction } from 'react'
 
 import { AlertOptions } from 'models/shell'
-import { AudioState, ScreenShareState, VideoState, Peer } from 'models/chat'
+import {
+  AudioState,
+  FileShareState,
+  ScreenShareState,
+  VideoState,
+  Peer,
+} from 'models/chat'
 
 interface ShellContextProps {
   numberOfPeers: number
@@ -20,6 +26,8 @@ interface ShellContextProps {
   setVideoState: Dispatch<SetStateAction<VideoState>>
   screenState: ScreenShareState
   setScreenState: Dispatch<SetStateAction<ScreenShareState>>
+  fileShareState: FileShareState
+  setFileShareState: Dispatch<SetStateAction<FileShareState>>
 }
 
 export const ShellContext = createContext<ShellContextProps>({
@@ -39,4 +47,6 @@ export const ShellContext = createContext<ShellContextProps>({
   setVideoState: () => {},
   screenState: ScreenShareState.NOT_SHARING,
   setScreenState: () => {},
+  fileShareState: FileShareState.NOT_SHARING,
+  setFileShareState: () => {},
 })

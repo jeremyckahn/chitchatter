@@ -15,6 +15,7 @@ import {
   VideoState,
   ScreenShareState,
   isMessageReceived,
+  FileShareState,
 } from 'models/chat'
 import { getPeerName } from 'components/PeerNameDisplay'
 import { NotificationService } from 'services/Notification'
@@ -153,6 +154,7 @@ export function useRoom(
           audioState: AudioState.STOPPED,
           videoState: VideoState.STOPPED,
           screenShareState: ScreenShareState.NOT_SHARING,
+          fileShareState: FileShareState.NOT_SHARING,
         },
       ])
     } else {

@@ -16,6 +16,7 @@ import { useRoom } from './useRoom'
 import { RoomAudioControls } from './RoomAudioControls'
 import { RoomVideoControls } from './RoomVideoControls'
 import { RoomScreenShareControls } from './RoomScreenShareControls'
+import { RoomFileUploadControls } from './RoomFileUploadControls'
 import { RoomVideoDisplay } from './RoomVideoDisplay'
 
 export interface RoomProps {
@@ -95,6 +96,7 @@ export function Room({
                 <RoomAudioControls peerRoom={peerRoom} />
                 <RoomVideoControls peerRoom={peerRoom} />
                 <RoomScreenShareControls peerRoom={peerRoom} />
+                <RoomFileUploadControls peerRoom={peerRoom} />
               </Box>
             </AccordionDetails>
           </Accordion>

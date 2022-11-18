@@ -25,12 +25,18 @@ export enum ScreenShareState {
   NOT_SHARING = 'NOT_SHARING',
 }
 
+export enum FileShareState {
+  SHARING = 'SHARING',
+  NOT_SHARING = 'NOT_SHARING',
+}
+
 export interface Peer {
   peerId: string
   userId: string
   audioState: AudioState
   videoState: VideoState
   screenShareState: ScreenShareState
+  fileShareState: FileShareState
 }
 
 export interface ReceivedMessage extends UnsentMessage {

@@ -15,7 +15,13 @@ import { AlertColor } from '@mui/material/Alert'
 import { ShellContext } from 'contexts/ShellContext'
 import { SettingsContext } from 'contexts/SettingsContext'
 import { AlertOptions } from 'models/shell'
-import { AudioState, ScreenShareState, VideoState, Peer } from 'models/chat'
+import {
+  AudioState,
+  FileShareState,
+  ScreenShareState,
+  VideoState,
+  Peer,
+} from 'models/chat'
 import { ErrorBoundary } from 'components/ErrorBoundary'
 
 import { Drawer } from './Drawer'
@@ -49,6 +55,9 @@ export const Shell = ({ appNeedsUpdate, children, userPeerId }: ShellProps) => {
   const [screenState, setScreenState] = useState<ScreenShareState>(
     ScreenShareState.NOT_SHARING
   )
+  const [fileShareState, setFileShareState] = useState<FileShareState>(
+    FileShareState.NOT_SHARING
+  )
 
   const showAlert = useCallback<
     (message: string, options?: AlertOptions) => void
@@ -77,6 +86,8 @@ export const Shell = ({ appNeedsUpdate, children, userPeerId }: ShellProps) => {
       setVideoState,
       screenState,
       setScreenState,
+      fileShareState,
+      setFileShareState,
     }),
     [
       isPeerListOpen,
@@ -94,6 +105,8 @@ export const Shell = ({ appNeedsUpdate, children, userPeerId }: ShellProps) => {
       setVideoState,
       screenState,
       setScreenState,
+      fileShareState,
+      setFileShareState,
     ]
   )
 
