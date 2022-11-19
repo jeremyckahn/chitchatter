@@ -1,4 +1,4 @@
-import { ChangeEventHandler } from 'react'
+import { ChangeEventHandler, useRef } from 'react'
 import Box from '@mui/material/Box'
 import UploadFile from '@mui/icons-material/UploadFile'
 import Cancel from '@mui/icons-material/Cancel'
@@ -16,16 +16,26 @@ export interface RoomFileUploadControlsProps {
 export function RoomFileUploadControls({
   peerRoom,
 }: RoomFileUploadControlsProps) {
-  const { isSharingFile, handleFileShareStart, handleFileShareStop } =
-    useRoomFileShare({
-      peerRoom,
-    })
+  const fileInputRef = useRef<HTMLInputElement>(null)
+
+  const {
+    isSharingFile,
+    handleFileShareStart,
+    handleFileShareStop,
+    sharedFile,
+  } = useRoomFileShare({
+    peerRoom,
+  })
 
   const handleToggleScreenShareButtonClick = () => {
+    const { current: fileInput } = fileInputRef
+
     if (isSharingFile) {
       handleFileShareStop()
     } else {
-      handleFileShareStart()
+      if (!fileInput) return
+
+      fileInput.click()
     }
   }
 
@@ -34,12 +44,14 @@ export function RoomFileUploadControls({
 
     if (!file) return
 
-    console.log({ file })
+    handleFileShareStart(file)
   }
 
   if (!window.navigator?.mediaDevices?.getDisplayMedia) {
     return <></>
   }
+
+  const shareFileLabel = sharedFile?.name ?? 'file'
 
   return (
     <Box
@@ -51,29 +63,28 @@ export function RoomFileUploadControls({
         px: 1,
       }}
     >
+      <input
+        ref={fileInputRef}
+        type="file"
+        id="file-upload"
+        className="hidden"
+        onChange={handleFileSelect}
+      />
       <Tooltip
         title={
           // TODO: Display the file name here
-          isSharingFile ? 'Stop sharing files' : 'Share a file with the room'
+          isSharingFile
+            ? `Stop sharing ${shareFileLabel}`
+            : 'Share a file with the room'
         }
       >
-        <>
-          <input
-            type="file"
-            id="file-upload"
-            className="hidden"
-            onChange={handleFileSelect}
-          />
-          <label htmlFor={isSharingFile ? 'file-upload' : ''}>
-            <Fab
-              color={isSharingFile ? 'error' : 'success'}
-              aria-label="share screen"
-              onClick={handleToggleScreenShareButtonClick}
-            >
-              {isSharingFile ? <Cancel /> : <UploadFile />}
-            </Fab>
-          </label>
-        </>
+        <Fab
+          color={isSharingFile ? 'error' : 'success'}
+          aria-label="share screen"
+          onClick={handleToggleScreenShareButtonClick}
+        >
+          {isSharingFile ? <Cancel /> : <UploadFile />}
+        </Fab>
       </Tooltip>
     </Box>
   )
