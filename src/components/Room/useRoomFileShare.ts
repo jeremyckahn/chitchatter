@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import { useContext, useEffect, useState } from 'react'
 import { Metadata } from 'trystero'
+import fileSaver from 'file-saver'
 
 import { isRecord } from 'utils'
 import { RoomContext } from 'contexts/RoomContext'
@@ -15,7 +16,7 @@ interface UseRoomFileShareConfig {
   peerRoom: PeerRoom
 }
 
-type FileMetadata = Pick<File, 'name' | 'size'>
+type FileMetadata = Pick<File, 'name' | 'size' | 'type'>
 
 const isFileMetadata = (metadata: Metadata): metadata is FileMetadata => {
   return (
@@ -23,7 +24,9 @@ const isFileMetadata = (metadata: Metadata): metadata is FileMetadata => {
     'name' in metadata &&
     typeof metadata.name === 'string' &&
     'size' in metadata &&
-    typeof metadata.size === 'number'
+    typeof metadata.size === 'number' &&
+    'type' in metadata &&
+    typeof metadata.type === 'string'
   )
 }
 
@@ -38,7 +41,7 @@ export function useRoomFileShare({ peerRoom }: UseRoomFileShareConfig) {
   const [sendFileShareState, receiveFileShareState] =
     usePeerRoomAction<FileShareState>(peerRoom, PeerActions.FILE_SHARE_STATE)
 
-  const [sendFileShare, receiveFileShare] = usePeerRoomAction<File>(
+  const [sendFileShare, receiveFileShare] = usePeerRoomAction<ArrayBuffer>(
     peerRoom,
     PeerActions.FILE_SHARE
   )
@@ -61,13 +64,16 @@ export function useRoomFileShare({ peerRoom }: UseRoomFileShareConfig) {
     setPeerList(newPeerList)
   })
 
-  receiveFileShare((file, peerId, metadata) => {
+  receiveFileShare((fileData, _peerId, metadata) => {
     if (!isFileMetadata(metadata)) {
       console.error('Received invalid file data')
       return
     }
 
-    console.log('received file from peer', { file, peerId, metadata })
+    const { type } = metadata
+    const blob = new Blob([fileData], { type })
+
+    fileSaver(blob, metadata.name)
   })
 
   const handleFileShareStart = async (file: File) => {
@@ -76,8 +82,9 @@ export function useRoomFileShare({ peerRoom }: UseRoomFileShareConfig) {
     sendFileShareState(FileShareState.SHARING)
 
     // FIXME: Don't automatically send to peers. Wait for them to request it.
-    const { name, size }: FileMetadata = file
-    sendFileShare(file, null, { name, size })
+    const { name, size, type }: FileMetadata = file
+    const arrayBuffer = await file.arrayBuffer()
+    sendFileShare(arrayBuffer, null, { name, size, type })
   }
 
   const handleFileShareStop = () => {
