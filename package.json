@@ -18,7 +18,6 @@
     "@types/react-dom": "^18.0.6",
     "classnames": "^2.3.1",
     "fast-memoize": "^2.5.2",
-    "file-saver": "^2.0.5",
     "fun-animal-names": "^0.1.1",
     "localforage": "^1.10.0",
     "mui-markdown": "^0.5.5",
@@ -73,7 +72,6 @@
     ]
   },
   "devDependencies": {
-    "@types/file-saver": "^2.0.5",
     "@types/react-syntax-highlighter": "^15.5.5",
     "@types/streamsaver": "^2.0.1",
     "@types/uuid": "^8.3.4",

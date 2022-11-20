@@ -2,7 +2,6 @@
 import { useContext, useEffect, useState } from 'react'
 import { Metadata } from 'trystero'
 import { WebTorrent as WebTorrentType } from 'webtorrent'
-import fileSaver from 'file-saver'
 import streamSaver from 'streamsaver'
 
 import { isRecord } from 'utils'
