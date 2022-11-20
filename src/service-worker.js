@@ -71,14 +71,6 @@ self.addEventListener('message', event => {
 })
 
 // Any other custom service worker logic can go here.
-self.addEventListener('install', () => {
-  self.skipWaiting()
-})
-
-self.addEventListener('activate', event => {
-  event.waitUntil(self.clients.claim())
-})
-
 const map = new Map()
 
 // This should be called once per download
@@ -146,7 +138,7 @@ function createStream(port) {
   })
 }
 
-self.onfetch = event => {
+self.addEventListener('onfetch', event => {
   const url = event.request.url
 
   // this only works for Firefox
@@ -210,4 +202,4 @@ self.onfetch = event => {
   event.respondWith(new Response(stream, { headers: responseHeaders }))
 
   port.postMessage({ debug: 'Download started' })
-}
+})
