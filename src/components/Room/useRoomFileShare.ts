@@ -22,7 +22,8 @@ interface UseRoomFileShareConfig {
 
 type FileMetadata = Pick<File, 'name' | 'size' | 'type'>
 
-streamSaver.mitm = '/streamsaver-mitm.html'
+// FIXME: Make this configurable
+streamSaver.mitm = 'https://jeremyckahn.github.io/StreamSaver.js/mitm.html'
 
 const isFileMetadata = (metadata: Metadata): metadata is FileMetadata => {
   return (
