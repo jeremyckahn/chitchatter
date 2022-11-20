@@ -12,7 +12,8 @@ import { PeerActions } from 'models/network'
 import { FileShareState, Peer, VideoStreamType } from 'models/chat'
 import { PeerRoom, PeerHookType, PeerStreamType } from 'services/PeerRoom'
 
-import WebTorrent from '../../vendor/webtorrent.min.js'
+// @ts-ignore
+import WebTorrent from 'webtorrent/webtorrent.min.js'
 
 import { usePeerRoomAction } from './usePeerRoomAction'
 
@@ -21,6 +22,8 @@ interface UseRoomFileShareConfig {
 }
 
 type FileMetadata = Pick<File, 'name' | 'size' | 'type'>
+
+streamSaver.mitm = '/streamsaver-mitm.html'
 
 const isFileMetadata = (metadata: Metadata): metadata is FileMetadata => {
   return (
