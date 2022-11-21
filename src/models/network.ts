@@ -1,5 +1,3 @@
-import { Torrent } from 'webtorrent'
-
 // NOTE: Action names are limited to 12 characters, otherwise Trystero breaks.
 export enum PeerActions {
   MESSAGE = 'MESSAGE',
@@ -9,7 +7,5 @@ export enum PeerActions {
   VIDEO_CHANGE = 'VIDEO_CHANGE',
   SCREEN_SHARE = 'SCREEN_SHARE',
   FILE_SHARE_STATE = 'FS_STATE',
-  FILE_SHARE = 'FILE_SHARE',
+  FILE_OFFER = 'FILE_OFFER',
 }
-
-export type TorrentMetadata = Pick<Torrent, 'magnetURI'>

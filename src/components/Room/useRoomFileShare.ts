@@ -5,7 +5,7 @@ import { Torrent } from 'webtorrent'
 
 import { RoomContext } from 'contexts/RoomContext'
 import { ShellContext } from 'contexts/ShellContext'
-import { PeerActions, TorrentMetadata } from 'models/network'
+import { PeerActions } from 'models/network'
 import { Peer } from 'models/chat'
 import { PeerRoom, PeerHookType } from 'services/PeerRoom'
 
@@ -21,29 +21,30 @@ export function useRoomFileShare({ peerRoom }: UseRoomFileShareConfig) {
   const shellContext = useContext(ShellContext)
   const roomContext = useContext(RoomContext)
   const [sharedFile, setSharedFile] = useState<File | null>(null)
-  const [selfTorrent, setSelfTorrent] = useState<Torrent | null>(null)
+  const [selfFileOfferId, setFileOfferId] = useState<string | null>(null)
 
   const { peerList, setPeerList } = shellContext
-  const { peerTorrents, setPeerTorrents } = roomContext
+  const { peerOfferedFileIds, setPeerOfferedFileIds } = roomContext
 
-  const [sendTorrentMetadata, receiveTorrentMetadata] =
-    usePeerRoomAction<TorrentMetadata | null>(peerRoom, PeerActions.FILE_SHARE)
+  const [sendFileOfferId, receiveFileOfferId] = usePeerRoomAction<
+    string | null
+  >(peerRoom, PeerActions.FILE_OFFER)
 
-  receiveTorrentMetadata((torrentMetadata, peerId) => {
+  receiveFileOfferId((torrentMetadata, peerId) => {
     if (torrentMetadata) {
-      setPeerTorrents({ [peerId]: torrentMetadata })
+      setPeerOfferedFileIds({ [peerId]: torrentMetadata })
     } else {
-      const newPeerTorrents = { ...peerTorrents }
+      const newPeerTorrents = { ...peerOfferedFileIds }
       delete newPeerTorrents[peerId]
 
-      setPeerTorrents(newPeerTorrents)
+      setPeerOfferedFileIds(newPeerTorrents)
     }
 
     const newPeerList = peerList.map(peer => {
       const newPeer: Peer = { ...peer }
 
       if (peer.peerId === peerId) {
-        newPeer.torrentMetadata = torrentMetadata
+        newPeer.offeredFileId = torrentMetadata
       }
 
       return newPeer
@@ -53,31 +54,29 @@ export function useRoomFileShare({ peerRoom }: UseRoomFileShareConfig) {
   })
 
   peerRoom.onPeerJoin(PeerHookType.FILE_SHARE, (peerId: string) => {
-    if (!selfTorrent) return
+    if (!selfFileOfferId) return
 
-    const { magnetURI } = selfTorrent
-    sendTorrentMetadata({ magnetURI }, peerId)
+    sendFileOfferId(selfFileOfferId, peerId)
   })
 
   peerRoom.onPeerLeave(PeerHookType.FILE_SHARE, (peerId: string) => {
-    const newPeerTorrents = { ...peerTorrents }
+    const newPeerTorrents = { ...peerOfferedFileIds }
     delete newPeerTorrents[peerId]
 
-    setPeerTorrents(newPeerTorrents)
+    setPeerOfferedFileIds(newPeerTorrents)
   })
 
   const handleFileShareStart = async (file: File) => {
     setSharedFile(file)
 
-    const torrent = await torrentClient.seed(file)
-    const { magnetURI } = torrent
-    sendTorrentMetadata({ magnetURI })
-    setSelfTorrent(torrent)
+    const fileOfferId = await torrentClient.offer(file)
+    sendFileOfferId(fileOfferId)
+    setFileOfferId(fileOfferId)
   }
 
   const handleFileShareStop = () => {
-    sendTorrentMetadata(null)
-    setSelfTorrent(null)
+    sendFileOfferId(null)
+    setFileOfferId(null)
     // TODO
   }
 
@@ -100,7 +99,7 @@ export function useRoomFileShare({ peerRoom }: UseRoomFileShareConfig) {
     // TODO
   }
 
-  const isSharingFile = Boolean(selfTorrent)
+  const isSharingFile = Boolean(selfFileOfferId)
 
   return {
     handleFileShareStart,

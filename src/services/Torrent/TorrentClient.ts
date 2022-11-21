@@ -47,14 +47,14 @@ export class TorrentClient {
     await this.streamTorrentFilesToDisk(torrent)
   }
 
-  async seed(file: File) {
+  async offer(file: File) {
     const torrent = await new Promise<Torrent>(res => {
       this.webTorrentClient.seed(file, torrent => {
         res(torrent)
       })
     })
 
-    return torrent
+    return torrent.magnetURI
   }
 }
 

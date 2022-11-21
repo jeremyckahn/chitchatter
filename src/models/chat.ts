@@ -1,5 +1,3 @@
-import { TorrentMetadata } from './network'
-
 export interface UnsentMessage {
   id: string
   text: string
@@ -38,7 +36,7 @@ export interface Peer {
   audioState: AudioState
   videoState: VideoState
   screenShareState: ScreenShareState
-  torrentMetadata: TorrentMetadata | null
+  offeredFileId: string | null
 }
 
 export interface ReceivedMessage extends UnsentMessage {

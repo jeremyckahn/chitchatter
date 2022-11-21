@@ -11,14 +11,14 @@ interface PeerDownloadFileButtonProps {
 export const PeerDownloadFileButton = ({
   peer,
 }: PeerDownloadFileButtonProps) => {
-  const { torrentMetadata } = peer
+  const { offeredFileId } = peer
 
-  if (!torrentMetadata) {
+  if (!offeredFileId) {
     return <></>
   }
 
   const handleDownloadFileClick = async () => {
-    await torrentClient.download(torrentMetadata.magnetURI)
+    await torrentClient.download(offeredFileId)
   }
 
   return (
