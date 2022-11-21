@@ -9,7 +9,7 @@ import { PeerActions } from 'models/network'
 import { Peer } from 'models/chat'
 import { PeerRoom, PeerHookType } from 'services/PeerRoom'
 
-import { torrentClient } from 'services/Torrent'
+import { fileTransfer } from 'services/FileTransfer/index'
 
 import { usePeerRoomAction } from './usePeerRoomAction'
 
@@ -69,7 +69,7 @@ export function useRoomFileShare({ peerRoom }: UseRoomFileShareConfig) {
   const handleFileShareStart = async (file: File) => {
     setSharedFile(file)
 
-    const fileOfferId = await torrentClient.offer(file)
+    const fileOfferId = await fileTransfer.offer(file)
     sendFileOfferId(fileOfferId)
     setFileOfferId(fileOfferId)
   }

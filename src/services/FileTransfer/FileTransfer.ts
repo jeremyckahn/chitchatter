@@ -7,7 +7,7 @@ import WebTorrent from 'webtorrent/webtorrent.min.js'
 // FIXME: Make this configurable
 streamSaver.mitm = 'https://jeremyckahn.github.io/StreamSaver.js/mitm.html'
 
-export class TorrentClient {
+export class FileTransfer {
   private webTorrentClient = new (WebTorrent as unknown as WebTorrentType)()
 
   private torrents: Record<Torrent['magnetURI'], Torrent> = {}
@@ -58,4 +58,4 @@ export class TorrentClient {
   }
 }
 
-export const torrentClient = new TorrentClient()
+export const fileTransfer = new FileTransfer()

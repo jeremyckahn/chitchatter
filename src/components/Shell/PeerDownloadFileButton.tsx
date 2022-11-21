@@ -1,7 +1,7 @@
 import Fab from '@mui/material/Fab'
 import Download from '@mui/icons-material/Download'
 
-import { torrentClient } from 'services/Torrent'
+import { fileTransfer } from 'services/FileTransfer/index'
 import { Peer } from 'models/chat'
 
 interface PeerDownloadFileButtonProps {
@@ -18,7 +18,7 @@ export const PeerDownloadFileButton = ({
   }
 
   const handleDownloadFileClick = async () => {
-    await torrentClient.download(offeredFileId)
+    await fileTransfer.download(offeredFileId)
   }
 
   return (
