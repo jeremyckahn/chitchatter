@@ -1,12 +1,8 @@
-import { useState } from 'react'
-import { WebTorrent as WebTorrentType } from 'webtorrent'
 import streamSaver from 'streamsaver'
 import Fab from '@mui/material/Fab'
 import Download from '@mui/icons-material/Download'
 
-// @ts-ignore
-import WebTorrent from 'webtorrent/webtorrent.min.js'
-
+import { torrentClient } from 'services/Torrent'
 import { Peer } from 'models/chat'
 
 interface PeerDownloadFileButtonProps {
@@ -21,16 +17,12 @@ export const PeerDownloadFileButton = ({
 }: PeerDownloadFileButtonProps) => {
   const { torrentMetadata } = peer
 
-  const [webTorrentClient] = useState(
-    () => new (WebTorrent as unknown as WebTorrentType)()
-  )
-
   if (!torrentMetadata) {
     return <></>
   }
 
   const handleDownloadFileClick = () => {
-    webTorrentClient.add(torrentMetadata.magnetURI, torrent => {
+    torrentClient.add(torrentMetadata.magnetURI, torrent => {
       for (const file of torrent.files) {
         const fileStream = streamSaver.createWriteStream(file.name)
         const writer = fileStream.getWriter()

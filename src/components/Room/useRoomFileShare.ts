@@ -1,17 +1,15 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import { useContext, useEffect, useState } from 'react'
 import { Metadata } from 'trystero'
-import { Torrent, WebTorrent as WebTorrentType } from 'webtorrent'
+import { Torrent } from 'webtorrent'
 
-import { isRecord } from 'utils'
 import { RoomContext } from 'contexts/RoomContext'
 import { ShellContext } from 'contexts/ShellContext'
 import { PeerActions, TorrentMetadata } from 'models/network'
 import { Peer } from 'models/chat'
-import { PeerRoom, PeerHookType, PeerStreamType } from 'services/PeerRoom'
+import { PeerRoom, PeerHookType } from 'services/PeerRoom'
 
-// @ts-ignore
-import WebTorrent from 'webtorrent/webtorrent.min.js'
+import { torrentClient } from 'services/Torrent'
 
 import { usePeerRoomAction } from './usePeerRoomAction'
 
@@ -27,10 +25,6 @@ export function useRoomFileShare({ peerRoom }: UseRoomFileShareConfig) {
 
   const { peerList, setPeerList } = shellContext
   const { peerTorrents, setPeerTorrents } = roomContext
-
-  const [webTorrentClient] = useState(
-    () => new (WebTorrent as unknown as WebTorrentType)()
-  )
 
   const [sendTorrentMetadata, receiveTorrentMetadata] =
     usePeerRoomAction<TorrentMetadata | null>(peerRoom, PeerActions.FILE_SHARE)
@@ -75,7 +69,7 @@ export function useRoomFileShare({ peerRoom }: UseRoomFileShareConfig) {
   const handleFileShareStart = async (file: File) => {
     setSharedFile(file)
 
-    webTorrentClient.seed(file, torrent => {
+    torrentClient.seed(file, torrent => {
       const { magnetURI } = torrent
       sendTorrentMetadata({ magnetURI })
       setSelfTorrent(torrent)
