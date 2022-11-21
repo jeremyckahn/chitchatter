@@ -1,7 +1,6 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import { useContext, useEffect, useState } from 'react'
 import { Metadata } from 'trystero'
-import { Torrent } from 'webtorrent'
 
 import { RoomContext } from 'contexts/RoomContext'
 import { ShellContext } from 'contexts/ShellContext'
@@ -30,21 +29,21 @@ export function useRoomFileShare({ peerRoom }: UseRoomFileShareConfig) {
     string | null
   >(peerRoom, PeerActions.FILE_OFFER)
 
-  receiveFileOfferId((torrentMetadata, peerId) => {
-    if (torrentMetadata) {
-      setPeerOfferedFileIds({ [peerId]: torrentMetadata })
+  receiveFileOfferId((fileOfferId, peerId) => {
+    if (fileOfferId) {
+      setPeerOfferedFileIds({ [peerId]: fileOfferId })
     } else {
-      const newPeerTorrents = { ...peerOfferedFileIds }
-      delete newPeerTorrents[peerId]
+      const newFileOfferIds = { ...peerOfferedFileIds }
+      delete newFileOfferIds[peerId]
 
-      setPeerOfferedFileIds(newPeerTorrents)
+      setPeerOfferedFileIds(newFileOfferIds)
     }
 
     const newPeerList = peerList.map(peer => {
       const newPeer: Peer = { ...peer }
 
       if (peer.peerId === peerId) {
-        newPeer.offeredFileId = torrentMetadata
+        newPeer.offeredFileId = fileOfferId
       }
 
       return newPeer
@@ -60,10 +59,10 @@ export function useRoomFileShare({ peerRoom }: UseRoomFileShareConfig) {
   })
 
   peerRoom.onPeerLeave(PeerHookType.FILE_SHARE, (peerId: string) => {
-    const newPeerTorrents = { ...peerOfferedFileIds }
-    delete newPeerTorrents[peerId]
+    const newFileOfferIds = { ...peerOfferedFileIds }
+    delete newFileOfferIds[peerId]
 
-    setPeerOfferedFileIds(newPeerTorrents)
+    setPeerOfferedFileIds(newFileOfferIds)
   })
 
   const handleFileShareStart = async (file: File) => {
