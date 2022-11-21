@@ -3,9 +3,10 @@ import streamSaver from 'streamsaver'
 
 // @ts-ignore
 import WebTorrent from 'webtorrent/webtorrent.min.js'
+import { trackerUrls } from 'config/trackerUrls'
+import { streamSaverUrl } from 'config/streamSaverUrl'
 
-// FIXME: Make this configurable
-streamSaver.mitm = 'https://jeremyckahn.github.io/StreamSaver.js/mitm.html'
+streamSaver.mitm = streamSaverUrl
 
 export class FileTransfer {
   private webTorrentClient = new (WebTorrent as unknown as WebTorrentType)()
@@ -36,9 +37,13 @@ export class FileTransfer {
 
     if (!torrent) {
       torrent = await new Promise<Torrent>(res => {
-        this.webTorrentClient.add(magnetURI, torrent => {
-          res(torrent)
-        })
+        this.webTorrentClient.add(
+          magnetURI,
+          { announce: trackerUrls },
+          torrent => {
+            res(torrent)
+          }
+        )
       })
 
       this.torrents[torrent.magnetURI] = torrent
@@ -49,7 +54,7 @@ export class FileTransfer {
 
   async offer(files: FileList) {
     const torrent = await new Promise<Torrent>(res => {
-      this.webTorrentClient.seed(files, torrent => {
+      this.webTorrentClient.seed(files, { announce: trackerUrls }, torrent => {
         res(torrent)
       })
     })
