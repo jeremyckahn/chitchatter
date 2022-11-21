@@ -1,4 +1,4 @@
-import { WebTorrent as WebTorrentType } from 'webtorrent'
+import { WebTorrent as WebTorrentType, Torrent } from 'webtorrent'
 
 // @ts-ignore
 import WebTorrent from 'webtorrent/webtorrent.min.js'
@@ -6,12 +6,24 @@ import WebTorrent from 'webtorrent/webtorrent.min.js'
 export class TorrentClient {
   private webTorrentClient = new (WebTorrent as unknown as WebTorrentType)()
 
-  add(...args: Parameters<typeof this.webTorrentClient.add>) {
-    this.webTorrentClient.add(...args)
+  async add(magnetURI: string) {
+    const torrent = await new Promise<Torrent>(res => {
+      this.webTorrentClient.add(magnetURI, torrent => {
+        res(torrent)
+      })
+    })
+
+    return torrent
   }
 
-  seed(...args: Parameters<typeof this.webTorrentClient.seed>) {
-    this.webTorrentClient.seed(...args)
+  async seed(file: File) {
+    const torrent = await new Promise<Torrent>(res => {
+      this.webTorrentClient.seed(file, torrent => {
+        res(torrent)
+      })
+    })
+
+    return torrent
   }
 }
 

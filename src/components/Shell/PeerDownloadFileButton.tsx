@@ -21,21 +21,21 @@ export const PeerDownloadFileButton = ({
     return <></>
   }
 
-  const handleDownloadFileClick = () => {
-    torrentClient.add(torrentMetadata.magnetURI, torrent => {
-      for (const file of torrent.files) {
-        const fileStream = streamSaver.createWriteStream(file.name)
-        const writer = fileStream.getWriter()
-        file
-          .createReadStream()
-          .on('data', data => {
-            writer.write(data)
-          })
-          .on('end', () => {
-            writer.close()
-          })
-      }
-    })
+  const handleDownloadFileClick = async () => {
+    const torrent = await torrentClient.add(torrentMetadata.magnetURI)
+
+    for (const file of torrent.files) {
+      const fileStream = streamSaver.createWriteStream(file.name)
+      const writer = fileStream.getWriter()
+      file
+        .createReadStream()
+        .on('data', data => {
+          writer.write(data)
+        })
+        .on('end', () => {
+          writer.close()
+        })
+    }
   }
 
   return (

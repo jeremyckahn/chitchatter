@@ -69,11 +69,10 @@ export function useRoomFileShare({ peerRoom }: UseRoomFileShareConfig) {
   const handleFileShareStart = async (file: File) => {
     setSharedFile(file)
 
-    torrentClient.seed(file, torrent => {
-      const { magnetURI } = torrent
-      sendTorrentMetadata({ magnetURI })
-      setSelfTorrent(torrent)
-    })
+    const torrent = await torrentClient.seed(file)
+    const { magnetURI } = torrent
+    sendTorrentMetadata({ magnetURI })
+    setSelfTorrent(torrent)
   }
 
   const handleFileShareStop = () => {
