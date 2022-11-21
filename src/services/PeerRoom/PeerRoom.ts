@@ -8,6 +8,7 @@ export enum PeerHookType {
   AUDIO = 'AUDIO',
   VIDEO = 'VIDEO',
   SCREEN = 'SCREEN',
+  FILE_SHARE = 'FILE_SHARE',
 }
 
 export enum PeerStreamType {

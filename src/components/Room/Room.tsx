@@ -96,9 +96,7 @@ export function Room({
                 <RoomAudioControls peerRoom={peerRoom} />
                 <RoomVideoControls peerRoom={peerRoom} />
                 <RoomScreenShareControls peerRoom={peerRoom} />
-                {process.env.NODE_ENV !== 'test' && (
-                  <RoomFileUploadControls peerRoom={peerRoom} />
-                )}
+                <RoomFileUploadControls peerRoom={peerRoom} />
               </Box>
             </AccordionDetails>
           </Accordion>

@@ -1,5 +1,7 @@
 import { createContext, Dispatch, SetStateAction } from 'react'
 
+import { TorrentMetadata } from 'models/network'
+
 interface RoomContextProps {
   selfVideoStream: MediaStream | null
   setSelfVideoStream: Dispatch<SetStateAction<MediaStream | null>>
@@ -9,6 +11,8 @@ interface RoomContextProps {
   setSelfScreenStream: Dispatch<SetStateAction<MediaStream | null>>
   peerScreenStreams: Record<string, MediaStream>
   setPeerScreenStreams: Dispatch<SetStateAction<Record<string, MediaStream>>>
+  peerTorrents: Record<string, TorrentMetadata>
+  setPeerTorrents: Dispatch<SetStateAction<Record<string, TorrentMetadata>>>
 }
 
 export const RoomContext = createContext<RoomContextProps>({
@@ -20,4 +24,6 @@ export const RoomContext = createContext<RoomContextProps>({
   setSelfScreenStream: () => {},
   peerScreenStreams: {},
   setPeerScreenStreams: () => {},
+  peerTorrents: {},
+  setPeerTorrents: () => {},
 })

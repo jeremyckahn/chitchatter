@@ -1,14 +1,13 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import { useContext, useEffect, useState } from 'react'
 import { Metadata } from 'trystero'
-import { WebTorrent as WebTorrentType } from 'webtorrent'
-import streamSaver from 'streamsaver'
+import { Torrent, WebTorrent as WebTorrentType } from 'webtorrent'
 
 import { isRecord } from 'utils'
 import { RoomContext } from 'contexts/RoomContext'
 import { ShellContext } from 'contexts/ShellContext'
-import { PeerActions } from 'models/network'
-import { FileShareState, Peer, VideoStreamType } from 'models/chat'
+import { PeerActions, TorrentMetadata } from 'models/network'
+import { Peer } from 'models/chat'
 import { PeerRoom, PeerHookType, PeerStreamType } from 'services/PeerRoom'
 
 // @ts-ignore
@@ -20,53 +19,37 @@ interface UseRoomFileShareConfig {
   peerRoom: PeerRoom
 }
 
-type FileMetadata = Pick<File, 'name' | 'size' | 'type'>
-
-// FIXME: Make this configurable
-streamSaver.mitm = 'https://jeremyckahn.github.io/StreamSaver.js/mitm.html'
-
-const isFileMetadata = (metadata: Metadata): metadata is FileMetadata => {
-  return (
-    isRecord(metadata) &&
-    'name' in metadata &&
-    typeof metadata.name === 'string' &&
-    'size' in metadata &&
-    typeof metadata.size === 'number' &&
-    'type' in metadata &&
-    typeof metadata.type === 'string'
-  )
-}
-
 export function useRoomFileShare({ peerRoom }: UseRoomFileShareConfig) {
   const shellContext = useContext(ShellContext)
   const roomContext = useContext(RoomContext)
-  const [isSharingFile, setIsSharingFile] = useState(false)
   const [sharedFile, setSharedFile] = useState<File | null>(null)
+  const [selfTorrent, setSelfTorrent] = useState<Torrent | null>(null)
 
   const { peerList, setPeerList } = shellContext
-
-  const [sendFileShareState, receiveFileShareState] =
-    usePeerRoomAction<FileShareState>(peerRoom, PeerActions.FILE_SHARE_STATE)
+  const { peerTorrents, setPeerTorrents } = roomContext
 
   const [webTorrentClient] = useState(
     () => new (WebTorrent as unknown as WebTorrentType)()
   )
 
-  const [sendMagnetURI, receiveMagnetURI] = usePeerRoomAction<string>(
-    peerRoom,
-    PeerActions.FILE_SHARE
-  )
+  const [sendTorrentMetadata, receiveTorrentMetadata] =
+    usePeerRoomAction<TorrentMetadata | null>(peerRoom, PeerActions.FILE_SHARE)
 
-  receiveFileShareState((fileShareState, peerId) => {
+  receiveTorrentMetadata((torrentMetadata, peerId) => {
+    if (torrentMetadata) {
+      setPeerTorrents({ [peerId]: torrentMetadata })
+    } else {
+      const newPeerTorrents = { ...peerTorrents }
+      delete newPeerTorrents[peerId]
+
+      setPeerTorrents(newPeerTorrents)
+    }
+
     const newPeerList = peerList.map(peer => {
       const newPeer: Peer = { ...peer }
 
       if (peer.peerId === peerId) {
-        newPeer.fileShareState = fileShareState
-
-        if (fileShareState === FileShareState.NOT_SHARING) {
-          stopPeerFileShare(peerId)
-        }
+        newPeer.torrentMetadata = torrentMetadata
       }
 
       return newPeer
@@ -75,40 +58,33 @@ export function useRoomFileShare({ peerRoom }: UseRoomFileShareConfig) {
     setPeerList(newPeerList)
   })
 
-  receiveMagnetURI((magnet, _peerId) => {
-    const fileStream = streamSaver.createWriteStream('saved-file')
-    const writer = fileStream.getWriter()
+  peerRoom.onPeerJoin(PeerHookType.FILE_SHARE, (peerId: string) => {
+    if (!selfTorrent) return
 
-    webTorrentClient.add(magnet, torrent => {
-      for (const file of torrent.files) {
-        file
-          .createReadStream()
-          .on('data', data => {
-            writer.write(data)
-          })
-          .on('end', () => {
-            writer.close()
-          })
-      }
-    })
+    const { magnetURI } = selfTorrent
+    sendTorrentMetadata({ magnetURI }, peerId)
+  })
+
+  peerRoom.onPeerLeave(PeerHookType.FILE_SHARE, (peerId: string) => {
+    const newPeerTorrents = { ...peerTorrents }
+    delete newPeerTorrents[peerId]
+
+    setPeerTorrents(newPeerTorrents)
   })
 
   const handleFileShareStart = async (file: File) => {
-    setIsSharingFile(true)
     setSharedFile(file)
-    sendFileShareState(FileShareState.SHARING)
-
-    // FIXME: Don't automatically send to peers. Wait for them to request it.
-    const { name, size, type }: FileMetadata = file
-    const arrayBuffer = await file.arrayBuffer()
 
     webTorrentClient.seed(file, torrent => {
-      sendMagnetURI(torrent.magnetURI)
+      const { magnetURI } = torrent
+      sendTorrentMetadata({ magnetURI })
+      setSelfTorrent(torrent)
     })
   }
 
   const handleFileShareStop = () => {
-    setIsSharingFile(false)
+    sendTorrentMetadata(null)
+    setSelfTorrent(null)
     // TODO
   }
 
@@ -131,11 +107,12 @@ export function useRoomFileShare({ peerRoom }: UseRoomFileShareConfig) {
     // TODO
   }
 
+  const isSharingFile = Boolean(selfTorrent)
+
   return {
     handleFileShareStart,
     handleFileShareStop,
     isSharingFile,
-    setIsSharingFile,
     sharedFile,
   }
 }

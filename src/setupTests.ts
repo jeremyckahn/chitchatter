@@ -7,3 +7,8 @@ import '@testing-library/jest-dom'
 afterEach(() => {
   jest.restoreAllMocks()
 })
+
+jest.mock('webtorrent/webtorrent.min.js', () => ({
+  __esModule: true,
+  default: class WebTorrent {},
+}))

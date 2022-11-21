@@ -6,7 +6,7 @@ import { funAnimalName } from 'fun-animal-names'
 
 import { ShellContext } from 'contexts/ShellContext'
 import { SettingsContext } from 'contexts/SettingsContext'
-import { PeerActions } from 'models/network'
+import { PeerActions, TorrentMetadata } from 'models/network'
 import {
   AudioState,
   Message,
@@ -15,7 +15,6 @@ import {
   VideoState,
   ScreenShareState,
   isMessageReceived,
-  FileShareState,
 } from 'models/chat'
 import { getPeerName } from 'components/PeerNameDisplay'
 import { NotificationService } from 'services/Notification'
@@ -71,6 +70,10 @@ export function useRoom(
     Record<string, MediaStream>
   >({})
 
+  const [peerTorrents, setPeerTorrents] = useState<
+    Record<string, TorrentMetadata>
+  >({})
+
   const roomContextValue = useMemo(
     () => ({
       selfVideoStream,
@@ -81,6 +84,8 @@ export function useRoom(
       setSelfScreenStream,
       peerScreenStreams,
       setPeerScreenStreams,
+      peerTorrents,
+      setPeerTorrents,
     }),
     [
       selfVideoStream,
@@ -91,6 +96,8 @@ export function useRoom(
       setSelfScreenStream,
       peerScreenStreams,
       setPeerScreenStreams,
+      peerTorrents,
+      setPeerTorrents,
     ]
   )
 
@@ -154,7 +161,7 @@ export function useRoom(
           audioState: AudioState.STOPPED,
           videoState: VideoState.STOPPED,
           screenShareState: ScreenShareState.NOT_SHARING,
-          fileShareState: FileShareState.NOT_SHARING,
+          torrentMetadata: null,
         },
       ])
     } else {

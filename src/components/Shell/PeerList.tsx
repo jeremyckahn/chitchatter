@@ -7,12 +7,13 @@ import Divider from '@mui/material/Divider'
 import IconButton from '@mui/material/IconButton'
 import ChevronRightIcon from '@mui/icons-material/ChevronRight'
 import VolumeUp from '@mui/icons-material/VolumeUp'
-import ListItemButton from '@mui/material/ListItemButton'
+import ListItem from '@mui/material/ListItem'
 
 import { PeerListHeader } from 'components/Shell/PeerListHeader'
 import { PeerNameDisplay } from 'components/PeerNameDisplay'
-
 import { AudioState, Peer } from 'models/chat'
+
+import { PeerDownloadFileButton } from './PeerDownloadFileButton'
 
 export const peerListWidth = 300
 
@@ -51,7 +52,7 @@ export const PeerList = ({
       </PeerListHeader>
       <Divider />
       <List>
-        <ListItemButton disableRipple={true}>
+        <ListItem>
           {audioState === AudioState.PLAYING && (
             <ListItemIcon>
               <VolumeUp />
@@ -60,18 +61,19 @@ export const PeerList = ({
           <ListItemText>
             <PeerNameDisplay>{userId}</PeerNameDisplay> (you)
           </ListItemText>
-        </ListItemButton>
+        </ListItem>
         {peerList.map((peer: Peer) => (
-          <ListItemButton key={peer.peerId} disableRipple={true}>
+          <ListItem key={peer.peerId}>
+            <PeerDownloadFileButton peer={peer} />
+            <ListItemText>
+              <PeerNameDisplay>{peer.userId}</PeerNameDisplay>
+            </ListItemText>
             {peer.audioState === AudioState.PLAYING && (
               <ListItemIcon>
                 <VolumeUp />
               </ListItemIcon>
             )}
-            <ListItemText>
-              <PeerNameDisplay>{peer.userId}</PeerNameDisplay>
-            </ListItemText>
-          </ListItemButton>
+          </ListItem>
         ))}
       </List>
       <Divider />
