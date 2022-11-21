@@ -19,7 +19,7 @@ interface UseRoomFileShareConfig {
 export function useRoomFileShare({ peerRoom }: UseRoomFileShareConfig) {
   const shellContext = useContext(ShellContext)
   const roomContext = useContext(RoomContext)
-  const [sharedFile, setSharedFile] = useState<File | null>(null)
+  const [sharedFiles, setSharedFiles] = useState<FileList | null>(null)
   const [selfFileOfferId, setFileOfferId] = useState<string | null>(null)
 
   const { peerList, setPeerList } = shellContext
@@ -65,10 +65,10 @@ export function useRoomFileShare({ peerRoom }: UseRoomFileShareConfig) {
     setPeerOfferedFileIds(newFileOfferIds)
   })
 
-  const handleFileShareStart = async (file: File) => {
-    setSharedFile(file)
+  const handleFileShareStart = async (files: FileList) => {
+    setSharedFiles(files)
 
-    const fileOfferId = await fileTransfer.offer(file)
+    const fileOfferId = await fileTransfer.offer(files)
     sendFileOfferId(fileOfferId)
     setFileOfferId(fileOfferId)
   }
@@ -104,6 +104,6 @@ export function useRoomFileShare({ peerRoom }: UseRoomFileShareConfig) {
     handleFileShareStart,
     handleFileShareStop,
     isSharingFile,
-    sharedFile,
+    sharedFiles,
   }
 }

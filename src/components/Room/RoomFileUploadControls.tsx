@@ -22,7 +22,7 @@ export function RoomFileUploadControls({
     isSharingFile,
     handleFileShareStart,
     handleFileShareStop,
-    sharedFile,
+    sharedFiles,
   } = useRoomFileShare({
     peerRoom,
   })
@@ -40,18 +40,19 @@ export function RoomFileUploadControls({
   }
 
   const handleFileSelect: ChangeEventHandler<HTMLInputElement> = e => {
-    const file = e.target.files?.[0]
+    const { files } = e.target
 
-    if (!file) return
+    if (!files) return
 
-    handleFileShareStart(file)
+    handleFileShareStart(files)
   }
 
   if (!window.navigator?.mediaDevices?.getDisplayMedia) {
     return <></>
   }
 
-  const shareFileLabel = sharedFile?.name ?? 'file'
+  const shareFileLabel =
+    (sharedFiles && sharedFiles.length === 1 && sharedFiles[0].name) || 'files'
 
   return (
     <Box
@@ -64,6 +65,7 @@ export function RoomFileUploadControls({
       }}
     >
       <input
+        multiple
         ref={fileInputRef}
         type="file"
         id="file-upload"
@@ -72,10 +74,9 @@ export function RoomFileUploadControls({
       />
       <Tooltip
         title={
-          // TODO: Display the file name here
           isSharingFile
             ? `Stop sharing ${shareFileLabel}`
-            : 'Share a file with the room'
+            : 'Share files with the room'
         }
       >
         <Fab

@@ -47,9 +47,9 @@ export class FileTransfer {
     await this.streamTorrentFilesToDisk(torrent)
   }
 
-  async offer(file: File) {
+  async offer(files: FileList) {
     const torrent = await new Promise<Torrent>(res => {
-      this.webTorrentClient.seed(file, torrent => {
+      this.webTorrentClient.seed(files, torrent => {
         res(torrent)
       })
     })
