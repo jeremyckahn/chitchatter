@@ -1,4 +1,7 @@
+// @ts-ignore
+import idbChunkStore from 'idb-chunk-store'
 import { WebTorrent as WebTorrentType, Torrent } from 'webtorrent'
+// @ts-ignore
 import streamSaver from 'streamsaver'
 
 // @ts-ignore
@@ -13,6 +16,7 @@ export class FileTransfer {
 
   private torrents: Record<Torrent['magnetURI'], Torrent> = {}
 
+  // FIXME: Delete the chunk store after it is no longer needed.
   private async streamTorrentFilesToDisk(torrent: Torrent) {
     return new Promise<void>(res => {
       for (const file of torrent.files) {
@@ -39,7 +43,7 @@ export class FileTransfer {
       torrent = await new Promise<Torrent>(res => {
         this.webTorrentClient.add(
           magnetURI,
-          { announce: trackerUrls },
+          { announce: trackerUrls, store: idbChunkStore },
           torrent => {
             res(torrent)
           }
@@ -54,9 +58,13 @@ export class FileTransfer {
 
   async offer(files: FileList) {
     const torrent = await new Promise<Torrent>(res => {
-      this.webTorrentClient.seed(files, { announce: trackerUrls }, torrent => {
-        res(torrent)
-      })
+      this.webTorrentClient.seed(
+        files,
+        { announce: trackerUrls, store: idbChunkStore },
+        torrent => {
+          res(torrent)
+        }
+      )
     })
 
     return torrent.magnetURI
