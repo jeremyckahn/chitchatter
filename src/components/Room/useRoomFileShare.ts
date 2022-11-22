@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
-import { useContext, useEffect, useState } from 'react'
-import { Metadata } from 'trystero'
+import { useCallback, useContext, useEffect, useState } from 'react'
 
+import { sleep } from 'utils'
 import { RoomContext } from 'contexts/RoomContext'
 import { ShellContext } from 'contexts/ShellContext'
 import { PeerActions } from 'models/network'
@@ -33,6 +33,12 @@ export function useRoomFileShare({ peerRoom }: UseRoomFileShareConfig) {
     if (fileOfferId) {
       setPeerOfferedFileIds({ [peerId]: fileOfferId })
     } else {
+      const fileOfferId = peerOfferedFileIds[peerId]
+
+      if (fileOfferId) {
+        fileTransfer.rescind(fileOfferId)
+      }
+
       const newFileOfferIds = { ...peerOfferedFileIds }
       delete newFileOfferIds[peerId]
 
@@ -52,18 +58,30 @@ export function useRoomFileShare({ peerRoom }: UseRoomFileShareConfig) {
     setPeerList(newPeerList)
   })
 
-  peerRoom.onPeerJoin(PeerHookType.FILE_SHARE, (peerId: string) => {
+  peerRoom.onPeerJoin(PeerHookType.FILE_SHARE, async (peerId: string) => {
     if (!selfFileOfferId) return
 
+    await sleep(1)
     sendFileOfferId(selfFileOfferId, peerId)
   })
 
   peerRoom.onPeerLeave(PeerHookType.FILE_SHARE, (peerId: string) => {
+    const fileOfferId = peerOfferedFileIds[peerId]
+
+    if (!fileOfferId) return
+
+    fileTransfer.rescind(fileOfferId)
+
     const newFileOfferIds = { ...peerOfferedFileIds }
     delete newFileOfferIds[peerId]
-
     setPeerOfferedFileIds(newFileOfferIds)
   })
+
+  const cleanupFileShare = useCallback(() => {
+    if (selfFileOfferId) {
+      fileTransfer.rescind(selfFileOfferId)
+    }
+  }, [selfFileOfferId])
 
   const handleFileShareStart = async (files: FileList) => {
     setSharedFiles(files)
@@ -76,29 +94,17 @@ export function useRoomFileShare({ peerRoom }: UseRoomFileShareConfig) {
   const handleFileShareStop = () => {
     sendFileOfferId(null)
     setFileOfferId(null)
-    // TODO
-  }
-
-  // TODO: Clean up on unmount
-  // useEffect(() => {
-  // return () => {
-  // cleanupFileShare()
-  // }
-  // }, [cleanupFileShare])
-
-  const stopPeerFileShare = (peerId: string) => {
-    // TODO
-  }
-
-  const handleFileShareForNewPeer = (peerId: string) => {
-    // TODO
-  }
-
-  const handleFileShareForLeavingPeer = (peerId: string) => {
-    // TODO
+    cleanupFileShare()
   }
 
   const isSharingFile = Boolean(selfFileOfferId)
+
+  // TODO: Test that this works
+  useEffect(() => {
+    return () => {
+      cleanupFileShare()
+    }
+  }, [cleanupFileShare])
 
   return {
     handleFileShareStart,

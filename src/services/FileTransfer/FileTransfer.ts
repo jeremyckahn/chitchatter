@@ -16,7 +16,6 @@ export class FileTransfer {
 
   private torrents: Record<Torrent['magnetURI'], Torrent> = {}
 
-  // FIXME: Delete the chunk store after it is no longer needed.
   private async saveTorrentFiles(torrent: Torrent) {
     return new Promise<void>((resolve, reject) => {
       for (const file of torrent.files) {
@@ -52,7 +51,11 @@ export class FileTransfer {
       torrent = await new Promise<Torrent>(res => {
         this.webTorrentClient.add(
           magnetURI,
-          { announce: trackerUrls, store: idbChunkStore },
+          {
+            announce: trackerUrls,
+            store: idbChunkStore,
+            destroyStoreOnDestroy: true,
+          },
           torrent => {
             res(torrent)
           }
@@ -69,14 +72,32 @@ export class FileTransfer {
     const torrent = await new Promise<Torrent>(res => {
       this.webTorrentClient.seed(
         files,
-        { announce: trackerUrls, store: idbChunkStore },
+        {
+          announce: trackerUrls,
+          store: idbChunkStore,
+          destroyStoreOnDestroy: true,
+        },
         torrent => {
           res(torrent)
         }
       )
     })
 
-    return torrent.magnetURI
+    const { magnetURI } = torrent
+    this.torrents[magnetURI] = torrent
+
+    return magnetURI
+  }
+
+  // FIXME: Rescind all offers on unload
+  rescind(magnetURI: string) {
+    const torrent = this.torrents[magnetURI]
+
+    if (torrent) {
+      torrent.destroy()
+    } else {
+      console.error(`Attempted to clean up nonexistent torrent: ${magnetURI}`)
+    }
   }
 }
 
