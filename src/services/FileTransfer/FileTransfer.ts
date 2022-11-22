@@ -17,20 +17,29 @@ export class FileTransfer {
   private torrents: Record<Torrent['magnetURI'], Torrent> = {}
 
   // FIXME: Delete the chunk store after it is no longer needed.
-  private async streamTorrentFilesToDisk(torrent: Torrent) {
-    return new Promise<void>(res => {
+  private async saveTorrentFiles(torrent: Torrent) {
+    return new Promise<void>((resolve, reject) => {
       for (const file of torrent.files) {
         const fileStream = streamSaver.createWriteStream(file.name)
         const writer = fileStream.getWriter()
+        let aborted = false
 
         file
           .createReadStream()
-          .on('data', data => {
-            writer.write(data)
+          .on('data', async data => {
+            try {
+              await writer.write(data)
+            } catch (e) {
+              await writer.abort()
+              aborted = true
+              reject(new Error('Download aborted'))
+            }
           })
-          .on('end', () => {
-            writer.close()
-            res()
+          .on('end', async () => {
+            if (aborted) return
+
+            await writer.close()
+            resolve()
           })
       }
     })
@@ -53,7 +62,7 @@ export class FileTransfer {
       this.torrents[torrent.magnetURI] = torrent
     }
 
-    await this.streamTorrentFilesToDisk(torrent)
+    await this.saveTorrentFiles(torrent)
   }
 
   async offer(files: FileList) {
