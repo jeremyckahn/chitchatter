@@ -44,6 +44,10 @@ export class FileTransfer {
     })
   }
 
+  constructor() {
+    window.addEventListener('beforeunload', this.handlePageUnload)
+  }
+
   async download(magnetURI: string) {
     let torrent = this.torrents[magnetURI]
 
@@ -89,7 +93,6 @@ export class FileTransfer {
     return magnetURI
   }
 
-  // FIXME: Rescind all offers on unload
   rescind(magnetURI: string) {
     const torrent = this.torrents[magnetURI]
 
@@ -97,6 +100,12 @@ export class FileTransfer {
       torrent.destroy()
     } else {
       console.error(`Attempted to clean up nonexistent torrent: ${magnetURI}`)
+    }
+  }
+
+  handlePageUnload = () => {
+    for (const torrent of Object.values(this.torrents)) {
+      this.rescind(torrent.magnetURI)
     }
   }
 }
