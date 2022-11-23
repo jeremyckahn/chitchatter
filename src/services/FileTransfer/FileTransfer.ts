@@ -116,6 +116,8 @@ export class FileTransfer {
     } else {
       console.error(`Attempted to clean up nonexistent torrent: ${magnetURI}`)
     }
+
+    delete this.torrents[magnetURI]
   }
 
   isOffering(magnetURI: string) {

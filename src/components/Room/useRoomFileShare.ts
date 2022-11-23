@@ -80,7 +80,7 @@ export function useRoomFileShare({ peerRoom }: UseRoomFileShareConfig) {
   })
 
   const cleanupFileShare = useCallback(() => {
-    if (selfFileOfferId) {
+    if (selfFileOfferId && fileTransfer.isOffering(selfFileOfferId)) {
       fileTransfer.rescind(selfFileOfferId)
     }
   }, [selfFileOfferId])
