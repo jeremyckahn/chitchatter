@@ -21,31 +21,36 @@ export class FileTransfer {
   private torrents: Record<Torrent['magnetURI'], Torrent> = {}
 
   private async saveTorrentFiles(torrent: Torrent) {
-    return new Promise<void>((resolve, reject) => {
-      for (const file of torrent.files) {
-        const fileStream = streamSaver.createWriteStream(file.name)
-        const writer = fileStream.getWriter()
-        let aborted = false
+    for (const file of torrent.files) {
+      try {
+        await new Promise<void>((resolve, reject) => {
+          const fileStream = streamSaver.createWriteStream(file.name)
+          const writer = fileStream.getWriter()
 
-        file
-          .createReadStream()
-          .on('data', async data => {
-            try {
-              await writer.write(data)
-            } catch (e) {
-              await writer.abort()
-              aborted = true
-              reject(new Error('Download aborted'))
-            }
-          })
-          .on('end', async () => {
-            if (aborted) return
+          let aborted = false
 
-            await writer.close()
-            resolve()
-          })
+          file
+            .createReadStream()
+            .on('data', async data => {
+              try {
+                await writer.write(data)
+              } catch (e) {
+                await writer.abort()
+                aborted = true
+                reject(new Error('Download aborted'))
+              }
+            })
+            .on('end', async () => {
+              if (aborted) return
+
+              await writer.close()
+              resolve()
+            })
+        })
+      } catch (e) {
+        break
       }
-    })
+    }
   }
 
   constructor() {
