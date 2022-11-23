@@ -11,6 +11,10 @@ import { streamSaverUrl } from 'config/streamSaverUrl'
 
 streamSaver.mitm = streamSaverUrl
 
+interface DownloadOpts {
+  onProgress?: (progress: number) => void
+}
+
 export class FileTransfer {
   private webTorrentClient = new (WebTorrent as unknown as WebTorrentType)()
 
@@ -48,7 +52,7 @@ export class FileTransfer {
     window.addEventListener('beforeunload', this.handlePageUnload)
   }
 
-  async download(magnetURI: string) {
+  async download(magnetURI: string, { onProgress }: DownloadOpts = {}) {
     let torrent = this.torrents[magnetURI]
 
     if (!torrent) {
@@ -67,6 +71,12 @@ export class FileTransfer {
       })
 
       this.torrents[torrent.magnetURI] = torrent
+    }
+
+    if (onProgress) {
+      torrent.on('download', () => {
+        onProgress(torrent.progress)
+      })
     }
 
     await this.saveTorrentFiles(torrent)
