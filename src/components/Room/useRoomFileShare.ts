@@ -70,11 +70,13 @@ export function useRoomFileShare({ peerRoom }: UseRoomFileShareConfig) {
 
     if (!fileOfferId) return
 
-    fileTransfer.rescind(fileOfferId)
+    if (fileTransfer.isOffering(fileOfferId)) {
+      fileTransfer.rescind(fileOfferId)
+    }
 
-    const newFileOfferIds = { ...peerOfferedFileIds }
-    delete newFileOfferIds[peerId]
-    setPeerOfferedFileIds(newFileOfferIds)
+    const newPeerFileOfferIds = { ...peerOfferedFileIds }
+    delete newPeerFileOfferIds[peerId]
+    setPeerOfferedFileIds(newPeerFileOfferIds)
   })
 
   const cleanupFileShare = useCallback(() => {

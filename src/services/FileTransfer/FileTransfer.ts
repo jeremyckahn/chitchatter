@@ -103,6 +103,10 @@ export class FileTransfer {
     }
   }
 
+  isOffering(magnetURI: string) {
+    return magnetURI in this.torrents
+  }
+
   handlePageUnload = () => {
     for (const torrent of Object.values(this.torrents)) {
       this.rescind(torrent.magnetURI)
