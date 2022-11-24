@@ -1,6 +1,7 @@
 import { useCallback, useContext, useState } from 'react'
 import Box from '@mui/material/Box'
 import Fab from '@mui/material/Fab'
+import Tooltip from '@mui/material/Tooltip'
 import Download from '@mui/icons-material/Download'
 import CircularProgress from '@mui/material/CircularProgress'
 
@@ -10,6 +11,7 @@ import { Peer } from 'models/chat'
 import { ShellContext } from 'contexts/ShellContext'
 
 import './PeerDownloadFileButton.sass'
+import { getPeerName } from 'components/PeerNameDisplay/getPeerName'
 
 interface PeerDownloadFileButtonProps {
   peer: Peer
@@ -57,9 +59,13 @@ export const PeerDownloadFileButton = ({
           value={downloadProgress === null ? undefined : downloadProgress}
         />
       ) : (
-        <Fab color="primary" size="small" onClick={handleDownloadFileClick}>
-          <Download />
-        </Fab>
+        <Tooltip
+          title={`Download files being offered by ${getPeerName(peer.userId)}`}
+        >
+          <Fab color="primary" size="small" onClick={handleDownloadFileClick}>
+            <Download />
+          </Fab>
+        </Tooltip>
       )}
     </Box>
   )
