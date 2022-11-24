@@ -4,7 +4,7 @@
 
 <sub>Logo provided by [@ramyashreeshetty](https://github.com/ramyashreeshetty)</sub>
 
-Chitchatter is a free (as in both price and freedom) communication tool. It is designed with security and privacy in mind. To that end, it is:
+Chitchatter is a free (as in both price and freedom) communication tool. It is designed to be the simplest way to connect with others privately and securely. It is:
 
 - Fully open source (licensed under [GPL v2](./LICENSE))
 - Peer-to-peer
@@ -18,11 +18,11 @@ Chitchatter is a free (as in both price and freedom) communication tool. It is d
   - There is no API server. All that's required for Chitchatter to function is availability of GitHub for static assets and public WebTorrent and STUN/TURN relay servers for establishing peer communication.
 - [Self-hostable](#self-hosting)
 
-Chitchatter was bootstrapped with [Create React App](https://github.com/facebook/create-react-app). The secure networking magic would not be possible without [Trystero](https://github.com/dmotz/trystero).
+Chitchatter uses the [Create React App](https://github.com/facebook/create-react-app) tool chain. The secure networking and streaming magic would not be possible without [Trystero](https://github.com/dmotz/trystero).
 
 ## How to use it
 
-Open https://chitchatter.im/ and join a room to start chatting with anyone else who is in the room. By default, room names are random [UUID](https://en.wikipedia.org/wiki/Universally_unique_identifier)s that are generated client-side. To securely communicate with someone, it is recommended to join one of these randomly-generated rooms and share the URL (via the "🔗" button at the top of the page) to whoever you wish to communicate with via a secure medium of your choosing (such as [Burner Note](https://burnernote.com/) or [Yopass](https://yopass.se/)). Your static user name will be presented to you, and it would be good share that with who you will be chatting with so they know they're talking to you.
+Open https://chitchatter.im/ and join a room to start chatting with anyone else who is in the room. By default, room names are random [UUID](https://en.wikipedia.org/wiki/Universally_unique_identifier)s that are generated client-side. To privately communicate with someone, it is recommended to join one of these randomly-generated rooms and share the URL (via the "🔗" button at the top of the page) to whomever you wish to communicate with via a secure medium of your choosing (such as [Burner Note](https://burnernote.com/) or [Yopass](https://yopass.se/)). Your user name will be presented to you, and it would be good to share that with who you will be chatting with beforehand so they know they're talking to you.
 
 ## Features
 
@@ -30,6 +30,8 @@ Open https://chitchatter.im/ and join a room to start chatting with anyone else 
 - Public and private rooms
 - Video and audio chatting
 - Screen sharing
+- File sharing
+  - Powered by [WebTorrent](https://webtorrent.io/) and [StreamSaver.js](https://github.com/jimmywarting/StreamSaver.js) to support unlimited file size transfers
 - Markdown support via [`react-markdown`](https://github.com/remarkjs/react-markdown).
   - Includes support for syntax highlighting of code.
 - Conversation backfilling from peers when a new participant joins
@@ -47,9 +49,19 @@ Open https://chitchatter.im/ and join a room to start chatting with anyone else 
 
 There is no shortage of user-friendly chat apps available, but most of them rely on a central service to facilitate communication. It is difficult to trust these central services, as commercial interests and [government pressure](https://www.npr.org/2022/08/12/1117092169/nebraska-cops-used-facebook-messages-to-investigate-an-alleged-illegal-abortion) can compel service operators to work against the best interest of the users. Even when when user data is handled in good faith by service operators, the possibility remains that [encrypted data held at rest may be decrypted](https://www.cbsnews.com/news/fbi-may-have-found-way-to-unlock-san-bernardino-shooters-iphone/) against the user's will.
 
-Chitchatter designs around these concerns by not having a central service operator and never storing communication data. Some services are required to establish a connection between peers, but the app relies on direct peer-to-peer communication as much as possible. Any services that are used by the app have no association with Chitchatter project and are publicly available for all to use.
+Chitchatter designs around these concerns by not having a central service operator and never storing communication data. Some services are required to establish an initial connection between peers, but the app uses direct peer-to-peer communication as much as possible. Any services that are used by the app have no association with Chitchatter project and are publicly available for all to use.
 
-Chitchatter is inspired by [Cryptocat](https://en.wikipedia.org/wiki/Cryptocat) and [Tox](<https://en.wikipedia.org/wiki/Tox_(protocol)>).
+## Use cases
+
+Chitchatter offers a private and secure solution for:
+
+- Organizing groups of people, such as unions or political movements
+- Video chatting with friends and family across operating systems (such as Android and iOS)
+- Sharing files without an intermediary service
+- IT troublshooting via screen sharing
+- Livestreaming
+- Sharing sensitive information like passwords
+- Much more!
 
 ### Veracity
 
@@ -81,18 +93,7 @@ jeremyckahn.github.io.  231     IN      A       185.199.108.153
 
 To examine the static assets that are served to end users, you can audit the [`gh-pages` branch](https://github.com/jeremyckahn/chitchatter/tree/gh-pages).
 
-## Project status
-
-Chitchatter is in [MVP](https://en.wikipedia.org/wiki/Minimum_viable_product) state. A lot of basic features and UX polish are missing, but [much is planned](#Project-roadmap) for the future.
-
-Chitchatter is an open source project, so community contributions and support are welcome! If there's something you'd like to see changed in the project, please [open an issue](https://github.com/jeremyckahn/chitchatter/issues) or [Pull Request](https://github.com/jeremyckahn/chitchatter/pulls) on GitHub and share your ideas.
-
 ## Project roadmap
-
-This is a non-exhaustive list of things that are in Chitchatter's future:
-
-- File sharing
-- Indicators for when others are typing
 
 See the full ticket backlog [here](https://github.com/users/jeremyckahn/projects/1).
 
