@@ -19,6 +19,7 @@ export function RoomFileUploadControls({
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   const {
+    isFileShareButtonEnabled,
     isSharingFile,
     handleFileShareStart,
     handleFileShareStop,
@@ -83,6 +84,7 @@ export function RoomFileUploadControls({
           color={isSharingFile ? 'error' : 'success'}
           aria-label="share screen"
           onClick={handleToggleScreenShareButtonClick}
+          disabled={!isFileShareButtonEnabled}
         >
           {isSharingFile ? <Cancel /> : <UploadFile />}
         </Fab>
