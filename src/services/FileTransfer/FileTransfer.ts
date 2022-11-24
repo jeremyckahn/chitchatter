@@ -1,8 +1,9 @@
-// @ts-ignore
-import idbChunkStore from 'idb-chunk-store'
 import { WebTorrent as WebTorrentType, Torrent } from 'webtorrent'
 // @ts-ignore
 import streamSaver from 'streamsaver'
+// @ts-ignore
+import idbChunkStore from 'idb-chunk-store'
+import { detectIncognito } from 'detectincognitojs'
 
 // @ts-ignore
 import WebTorrent from 'webtorrent/webtorrent.min.js'
@@ -78,12 +79,18 @@ export class FileTransfer {
     let torrent = this.torrents[magnetURI]
 
     if (!torrent) {
+      const { isPrivate } = await detectIncognito()
+
       torrent = await new Promise<Torrent>(res => {
         this.webTorrentClient.add(
           magnetURI,
           {
             announce: trackerUrls,
-            store: idbChunkStore,
+            // If the user is running using their browser's private mode,
+            // IndexedDB will be unavailable and idbChunkStore will break all
+            // transfers. In that case, fall back to the default in-memory data
+            // store.
+            store: isPrivate ? undefined : idbChunkStore,
             destroyStoreOnDestroy: true,
           },
           torrent => {
@@ -112,12 +119,18 @@ export class FileTransfer {
   }
 
   async offer(files: FileList) {
+    const { isPrivate } = await detectIncognito()
+
     const torrent = await new Promise<Torrent>(res => {
       this.webTorrentClient.seed(
         files,
         {
           announce: trackerUrls,
-          store: idbChunkStore,
+          // If the user is running using their browser's private mode,
+          // IndexedDB will be unavailable and idbChunkStore will break all
+          // transfers. In that case, fall back to the default in-memory data
+          // store.
+          store: isPrivate ? undefined : idbChunkStore,
           destroyStoreOnDestroy: true,
         },
         torrent => {
