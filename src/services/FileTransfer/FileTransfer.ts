@@ -120,6 +120,12 @@ export class FileTransfer {
     delete this.torrents[magnetURI]
   }
 
+  rescindAll() {
+    for (const magnetURI in this.torrents) {
+      this.rescind(magnetURI)
+    }
+  }
+
   isOffering(magnetURI: string) {
     return magnetURI in this.torrents
   }

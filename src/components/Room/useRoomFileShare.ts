@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
-import { useCallback, useContext, useEffect, useState } from 'react'
+import { useContext, useEffect, useState } from 'react'
 
 import { sleep } from 'utils'
 import { RoomContext } from 'contexts/RoomContext'
@@ -61,6 +61,8 @@ export function useRoomFileShare({ peerRoom }: UseRoomFileShareConfig) {
   peerRoom.onPeerJoin(PeerHookType.FILE_SHARE, async (peerId: string) => {
     if (!selfFileOfferId) return
 
+    // This is needed to enable this peer to show up on the new peers' peer list.
+    // TODO: Find a better solution to this than simply sleep-ing.
     await sleep(1)
     sendFileOfferId(selfFileOfferId, peerId)
   })
@@ -79,12 +81,6 @@ export function useRoomFileShare({ peerRoom }: UseRoomFileShareConfig) {
     setPeerOfferedFileIds(newPeerFileOfferIds)
   })
 
-  const cleanupFileShare = useCallback(() => {
-    if (selfFileOfferId && fileTransfer.isOffering(selfFileOfferId)) {
-      fileTransfer.rescind(selfFileOfferId)
-    }
-  }, [selfFileOfferId])
-
   const handleFileShareStart = async (files: FileList) => {
     setSharedFiles(files)
 
@@ -96,17 +92,20 @@ export function useRoomFileShare({ peerRoom }: UseRoomFileShareConfig) {
   const handleFileShareStop = () => {
     sendFileOfferId(null)
     setFileOfferId(null)
-    cleanupFileShare()
+
+    if (selfFileOfferId && fileTransfer.isOffering(selfFileOfferId)) {
+      fileTransfer.rescind(selfFileOfferId)
+    }
   }
 
-  const isSharingFile = Boolean(selfFileOfferId)
-
-  // TODO: Test that this works
   useEffect(() => {
     return () => {
-      cleanupFileShare()
+      fileTransfer.rescindAll()
+      sendFileOfferId(null)
     }
-  }, [cleanupFileShare])
+  }, [sendFileOfferId])
+
+  const isSharingFile = Boolean(selfFileOfferId)
 
   return {
     handleFileShareStart,
