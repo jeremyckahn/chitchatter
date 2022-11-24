@@ -48,10 +48,6 @@ export function RoomFileUploadControls({
     handleFileShareStart(files)
   }
 
-  if (!window.navigator?.mediaDevices?.getDisplayMedia) {
-    return <></>
-  }
-
   const shareFileLabel =
     (sharedFiles && sharedFiles.length === 1 && sharedFiles[0].name) || 'files'
 
