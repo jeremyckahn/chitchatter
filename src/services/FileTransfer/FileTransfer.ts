@@ -86,10 +86,9 @@ export class FileTransfer {
           magnetURI,
           {
             announce: trackerUrls,
-            // If the user is running using their browser's private mode,
-            // IndexedDB will be unavailable and idbChunkStore will break all
-            // transfers. In that case, fall back to the default in-memory data
-            // store.
+            // If the user is using their browser's private mode, IndexedDB
+            // will be unavailable and idbChunkStore will break all transfers.
+            // In that case, fall back to the default in-memory data store.
             store: isPrivate ? undefined : idbChunkStore,
             destroyStoreOnDestroy: true,
           },
@@ -126,10 +125,9 @@ export class FileTransfer {
         files,
         {
           announce: trackerUrls,
-          // If the user is running using their browser's private mode,
-          // IndexedDB will be unavailable and idbChunkStore will break all
-          // transfers. In that case, fall back to the default in-memory data
-          // store.
+          // If the user is using their browser's private mode, IndexedDB will
+          // be unavailable and idbChunkStore will break all transfers. In that
+          // case, fall back to the default in-memory data store.
           store: isPrivate ? undefined : idbChunkStore,
           destroyStoreOnDestroy: true,
         },
@@ -168,9 +166,7 @@ export class FileTransfer {
   }
 
   handleBeforePageUnload = () => {
-    for (const torrent of Object.values(this.torrents)) {
-      this.rescind(torrent.magnetURI)
-    }
+    this.rescindAll()
   }
 }
 

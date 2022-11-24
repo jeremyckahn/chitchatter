@@ -61,12 +61,13 @@ export function useRoomFileShare({ peerRoom }: UseRoomFileShareConfig) {
   peerRoom.onPeerJoin(PeerHookType.FILE_SHARE, async (peerId: string) => {
     if (!selfFileOfferId) return
 
-    // This sleep is needed to prevent this peer from ever appearing on other
+    // This sleep is needed to prevent this peer from not appearing on other
     // peers' peer lists. This is because Trystero's interaction between
-    // onPeerJoin and actions is not totally compatible with React's lifecycle
-    // hooks. In this case, the reference to peerList in receiveFileOfferId is
-    // out of date and prevents this peer from ever being added to the
-    // receiver's peer list.
+    // onPeerJoin and its actions is not totally compatible with React's
+    // lifecycle hooks. In this case, the reference to peerList in
+    // receiveFileOfferId is out of date and prevents this peer from ever being
+    // added to the receiver's peer list. Deferring the sendFileOfferId call to
+    // the next tick serves as a workaround.
     await sleep(1)
 
     sendFileOfferId(selfFileOfferId, peerId)
@@ -88,11 +89,12 @@ export function useRoomFileShare({ peerRoom }: UseRoomFileShareConfig) {
 
   const handleFileShareStart = async (files: FileList) => {
     setSharedFiles(files)
-
     setIsFileShareButtonEnabled(false)
+
     const fileOfferId = await fileTransfer.offer(files)
     sendFileOfferId(fileOfferId)
     setFileOfferId(fileOfferId)
+
     setIsFileShareButtonEnabled(true)
   }
 

@@ -25,11 +25,6 @@ export enum ScreenShareState {
   NOT_SHARING = 'NOT_SHARING',
 }
 
-export enum FileShareState {
-  SHARING = 'SHARING',
-  NOT_SHARING = 'NOT_SHARING',
-}
-
 export interface Peer {
   peerId: string
   userId: string

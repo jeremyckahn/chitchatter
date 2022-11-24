@@ -1,4 +1,4 @@
-import { useCallback, useContext, useState } from 'react'
+import { useContext, useState } from 'react'
 import Box from '@mui/material/Box'
 import Fab from '@mui/material/Fab'
 import Tooltip from '@mui/material/Tooltip'
@@ -25,9 +25,9 @@ export const PeerDownloadFileButton = ({
   const shellContext = useContext(ShellContext)
   const { offeredFileId } = peer
 
-  const onProgress = useCallback((progress: number) => {
+  const onProgress = (progress: number) => {
     setDownloadProgress(progress * 100)
-  }, [])
+  }
 
   if (!offeredFileId) {
     return <></>
