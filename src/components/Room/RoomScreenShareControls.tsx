@@ -8,11 +8,13 @@ import { PeerRoom } from 'services/PeerRoom/PeerRoom'
 
 import { useRoomScreenShare } from './useRoomScreenShare'
 
-export interface RoomVideoControlsProps {
+export interface RoomFileUploadControlsProps {
   peerRoom: PeerRoom
 }
 
-export function RoomScreenShareControls({ peerRoom }: RoomVideoControlsProps) {
+export function RoomScreenShareControls({
+  peerRoom,
+}: RoomFileUploadControlsProps) {
   const { isSharingScreen, handleScreenShareStart, handleScreenShareStop } =
     useRoomScreenShare({
       peerRoom,

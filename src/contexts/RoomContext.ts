@@ -9,6 +9,8 @@ interface RoomContextProps {
   setSelfScreenStream: Dispatch<SetStateAction<MediaStream | null>>
   peerScreenStreams: Record<string, MediaStream>
   setPeerScreenStreams: Dispatch<SetStateAction<Record<string, MediaStream>>>
+  peerOfferedFileIds: Record<string, string>
+  setPeerOfferedFileIds: Dispatch<SetStateAction<Record<string, string>>>
 }
 
 export const RoomContext = createContext<RoomContextProps>({
@@ -20,4 +22,6 @@ export const RoomContext = createContext<RoomContextProps>({
   setSelfScreenStream: () => {},
   peerScreenStreams: {},
   setPeerScreenStreams: () => {},
+  peerOfferedFileIds: {},
+  setPeerOfferedFileIds: () => {},
 })

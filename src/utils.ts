@@ -10,3 +10,7 @@ export const isRecord = (variable: any): variable is Record<string, any> => {
     variable !== null
   )
 }
+
+export const isError = (e: any): e is Error => {
+  return e instanceof Error
+}

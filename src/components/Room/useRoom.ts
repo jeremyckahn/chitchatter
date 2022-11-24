@@ -70,6 +70,10 @@ export function useRoom(
     Record<string, MediaStream>
   >({})
 
+  const [peerOfferedFileIds, setPeerOfferedFileIds] = useState<
+    Record<string, string>
+  >({})
+
   const roomContextValue = useMemo(
     () => ({
       selfVideoStream,
@@ -80,6 +84,8 @@ export function useRoom(
       setSelfScreenStream,
       peerScreenStreams,
       setPeerScreenStreams,
+      peerOfferedFileIds,
+      setPeerOfferedFileIds,
     }),
     [
       selfVideoStream,
@@ -90,6 +96,8 @@ export function useRoom(
       setSelfScreenStream,
       peerScreenStreams,
       setPeerScreenStreams,
+      peerOfferedFileIds,
+      setPeerOfferedFileIds,
     ]
   )
 
@@ -153,6 +161,7 @@ export function useRoom(
           audioState: AudioState.STOPPED,
           videoState: VideoState.STOPPED,
           screenShareState: ScreenShareState.NOT_SHARING,
+          offeredFileId: null,
         },
       ])
     } else {

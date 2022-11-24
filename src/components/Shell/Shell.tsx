@@ -49,7 +49,6 @@ export const Shell = ({ appNeedsUpdate, children, userPeerId }: ShellProps) => {
   const [screenState, setScreenState] = useState<ScreenShareState>(
     ScreenShareState.NOT_SHARING
   )
-
   const showAlert = useCallback<
     (message: string, options?: AlertOptions) => void
   >((message, options) => {

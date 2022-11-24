@@ -31,6 +31,7 @@ export interface Peer {
   audioState: AudioState
   videoState: VideoState
   screenShareState: ScreenShareState
+  offeredFileId: string | null
 }
 
 export interface ReceivedMessage extends UnsentMessage {
