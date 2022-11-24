@@ -1,4 +1,5 @@
 import { useCallback, useContext, useState } from 'react'
+import Box from '@mui/material/Box'
 import Fab from '@mui/material/Fab'
 import Download from '@mui/icons-material/Download'
 import CircularProgress from '@mui/material/CircularProgress'
@@ -7,6 +8,8 @@ import { isError } from 'utils'
 import { fileTransfer } from 'services/FileTransfer/index'
 import { Peer } from 'models/chat'
 import { ShellContext } from 'contexts/ShellContext'
+
+import './PeerDownloadFileButton.sass'
 
 interface PeerDownloadFileButtonProps {
   peer: Peer
@@ -47,23 +50,17 @@ export const PeerDownloadFileButton = ({
   }
 
   return (
-    <>
+    <Box className="PeerDownloadFileButton" sx={{ mr: 2 }}>
       {isDownloading ? (
         <CircularProgress
           variant={downloadProgress === null ? 'indeterminate' : 'determinate'}
           value={downloadProgress === null ? undefined : downloadProgress}
-          sx={{ mr: 2 }}
         />
       ) : (
-        <Fab
-          color="primary"
-          size="small"
-          onClick={handleDownloadFileClick}
-          sx={{ mr: 2 }}
-        >
+        <Fab color="primary" size="small" onClick={handleDownloadFileClick}>
           <Download />
         </Fab>
       )}
-    </>
+    </Box>
   )
 }
