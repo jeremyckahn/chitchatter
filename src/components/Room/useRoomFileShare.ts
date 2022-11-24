@@ -35,7 +35,7 @@ export function useRoomFileShare({ peerRoom }: UseRoomFileShareConfig) {
     } else {
       const fileOfferId = peerOfferedFileIds[peerId]
 
-      if (fileOfferId) {
+      if (fileOfferId && fileTransfer.isOffering(fileOfferId)) {
         fileTransfer.rescind(fileOfferId)
       }
 

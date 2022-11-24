@@ -24,31 +24,36 @@ export class FileTransfer {
     for (const file of torrent.files) {
       try {
         await new Promise<void>((resolve, reject) => {
-          const fileStream = streamSaver.createWriteStream(file.name)
-          const writer = fileStream.getWriter()
+          const fileStream = streamSaver.createWriteStream(file.name, {
+            size: file.length,
+          })
 
+          const writeStream = fileStream.getWriter()
+          const readStream = file.createReadStream()
           let aborted = false
 
-          file
-            .createReadStream()
-            .on('data', async data => {
-              try {
-                await writer.write(data)
-              } catch (e) {
-                await writer.abort()
-                aborted = true
-                reject(new Error('Download aborted'))
-              }
-            })
-            .on('end', async () => {
-              if (aborted) return
+          const handleData = async (data: ArrayBuffer) => {
+            try {
+              await writeStream.write(data)
+            } catch (e) {
+              writeStream.abort()
+              readStream.off('data', handleData)
+              aborted = true
+              reject()
+            }
+          }
 
-              await writer.close()
-              resolve()
-            })
+          const handleEnd = async () => {
+            if (aborted) return
+
+            await writeStream.close()
+            resolve()
+          }
+
+          readStream.on('data', handleData).on('end', handleEnd)
         })
       } catch (e) {
-        break
+        throw new Error('Download aborted')
       }
     }
   }
@@ -78,13 +83,20 @@ export class FileTransfer {
       this.torrents[torrent.magnetURI] = torrent
     }
 
-    if (onProgress) {
-      torrent.on('download', () => {
-        onProgress(torrent.progress)
-      })
+    const handleDownload = () => {
+      onProgress?.(torrent.progress)
     }
 
-    await this.saveTorrentFiles(torrent)
+    torrent.on('download', handleDownload)
+
+    try {
+      await this.saveTorrentFiles(torrent)
+    } catch (e) {
+      torrent.off('download', handleDownload)
+
+      // Propagate error to the UI
+      throw e
+    }
   }
 
   async offer(files: FileList) {
