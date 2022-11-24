@@ -43,7 +43,19 @@ export class FileTransfer {
             }
           }
 
+          const handleBeforePageUnloadForFile = () => {
+            // Clean up any broken downloads
+            writeStream.abort()
+          }
+
+          window.addEventListener('beforeunload', handleBeforePageUnloadForFile)
+
           const handleEnd = async () => {
+            window.removeEventListener(
+              'beforeunload',
+              handleBeforePageUnloadForFile
+            )
+
             if (aborted) return
 
             await writeStream.close()
@@ -59,7 +71,7 @@ export class FileTransfer {
   }
 
   constructor() {
-    window.addEventListener('beforeunload', this.handlePageUnload)
+    window.addEventListener('beforeunload', this.handleBeforePageUnload)
   }
 
   async download(magnetURI: string, { onProgress }: DownloadOpts = {}) {
@@ -142,7 +154,7 @@ export class FileTransfer {
     return magnetURI in this.torrents
   }
 
-  handlePageUnload = () => {
+  handleBeforePageUnload = () => {
     for (const torrent of Object.values(this.torrents)) {
       this.rescind(torrent.magnetURI)
     }
