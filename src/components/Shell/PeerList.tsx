@@ -36,10 +36,15 @@ export const PeerList = ({
     <MuiDrawer
       sx={{
         flexShrink: 0,
+        pointerEvents: 'none',
+        width: peerListWidth,
         '& .MuiDrawer-paper': {
           width: peerListWidth,
           boxSizing: 'border-box',
         },
+        ...(isPeerListOpen && {
+          pointerEvents: 'auto',
+        }),
       }}
       variant="persistent"
       anchor="right"
