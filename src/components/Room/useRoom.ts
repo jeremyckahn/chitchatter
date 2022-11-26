@@ -41,8 +41,14 @@ export function useRoom(
   )
 
   const [numberOfPeers, setNumberOfPeers] = useState(1) // Includes this peer
-  const { setDoShowPeers, peerList, setPeerList, tabHasFocus, showAlert } =
-    useContext(ShellContext)
+  const {
+    setDoShowPeers,
+    peerList,
+    setPeerList,
+    tabHasFocus,
+    showAlert,
+    setIsPeerListOpen,
+  } = useContext(ShellContext)
   const settingsContext = useContext(SettingsContext)
   const [isMessageSending, setIsMessageSending] = useState(false)
   const [messageLog, _setMessageLog] = useState<
@@ -104,8 +110,9 @@ export function useRoom(
   useEffect(() => {
     return () => {
       peerRoom.leaveRoom()
+      setIsPeerListOpen(false)
     }
-  }, [peerRoom])
+  }, [peerRoom, setIsPeerListOpen])
 
   useEffect(() => {
     setDoShowPeers(true)
