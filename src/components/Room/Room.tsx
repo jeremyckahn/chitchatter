@@ -3,6 +3,7 @@ import AccordionSummary from '@mui/material/AccordionSummary'
 import AccordionDetails from '@mui/material/AccordionDetails'
 import Box from '@mui/material/Box'
 import Divider from '@mui/material/Divider'
+import Typography from '@mui/material/Typography'
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore'
 import { v4 as uuid } from 'uuid'
 
@@ -84,7 +85,17 @@ export function Room({
               expandIcon={<ExpandMoreIcon />}
               aria-controls="panel1a-content"
               id="panel1a-header"
-            ></AccordionSummary>
+            >
+              <Typography
+                sx={{
+                  color: 'text.secondary',
+                  textAlign: 'center',
+                  flexGrow: 1,
+                }}
+              >
+                Room tools
+              </Typography>
+            </AccordionSummary>
             <AccordionDetails>
               <Box
                 sx={{
