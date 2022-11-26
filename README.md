@@ -49,7 +49,7 @@ Open https://chitchatter.im/ and join a room to start chatting with anyone else 
 
 There is no shortage of user-friendly chat apps available, but most of them rely on a central service to facilitate communication. It is difficult to trust these central services, as commercial interests and [government pressure](https://www.npr.org/2022/08/12/1117092169/nebraska-cops-used-facebook-messages-to-investigate-an-alleged-illegal-abortion) can compel service operators to work against the best interest of the users. Even when when user data is handled in good faith by service operators, the possibility remains that [encrypted data held at rest may be decrypted](https://www.cbsnews.com/news/fbi-may-have-found-way-to-unlock-san-bernardino-shooters-iphone/) against the user's will.
 
-Chitchatter designs around these concerns by not having a central service operator and never storing communication data. Some services are required to establish an initial connection between peers, but the app uses direct peer-to-peer communication as much as possible. Any services that are used by the app have no association with Chitchatter project and are publicly available for all to use.
+Chitchatter designs around these risks with [web meshes](https://dev.to/jeremyckahn/taking-the-power-back-with-web-meshes-omg). There is no central service operator that stores or potentially mishandles communication data. Some services are required to establish an initial connection between peers, but the app uses direct peer-to-peer communication as much as possible. Any services that are used by the app have no association with the Chitchatter project and are publicly available for all to use.
 
 ## Use cases
 
@@ -147,7 +147,7 @@ When hosted on GitHub Pages and the configuration above has been done, the Produ
 
 ##### On non-GitHub hosts
 
-Build the app with `npm run build`, and then serve the `build` directory. Any static file serving solution should work.
+Build the app with `npm run build`, and then serve the `build` directory. Any static file serving solution should work provided it is using a [secure context](https://developer.mozilla.org/en-US/docs/Web/Security/Secure_Contexts).
 
 #### Runtime configuration
 
