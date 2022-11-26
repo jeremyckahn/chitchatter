@@ -28,19 +28,21 @@ export const AppBar = styled(MuiAppBar, {
   ...(isDrawerOpen && {
     width: `calc(100% - ${drawerWidth}px)`,
     marginLeft: `${drawerWidth}px`,
-    transition: theme.transitions.create(['margin', 'width'], {
-      easing: theme.transitions.easing.easeOut,
-      duration: theme.transitions.duration.enteringScreen,
-    }),
   }),
   ...(isPeerListOpen && {
     width: `calc(100% - ${peerListWidth}px)`,
     marginRight: `${peerListWidth}px`,
+  }),
+  ...((isDrawerOpen || isPeerListOpen) && {
     transition: theme.transitions.create(['margin', 'width'], {
       easing: theme.transitions.easing.easeOut,
       duration: theme.transitions.duration.enteringScreen,
     }),
   }),
+  ...(isDrawerOpen &&
+    isPeerListOpen && {
+      width: `calc(100% - ${drawerWidth}px - ${peerListWidth}px)`,
+    }),
 }))
 
 interface ShellAppBarProps {
