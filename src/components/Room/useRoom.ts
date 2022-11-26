@@ -42,7 +42,8 @@ export function useRoom(
   )
 
   const [numberOfPeers, setNumberOfPeers] = useState(1) // Includes this peer
-  const shellContext = useContext(ShellContext)
+  const { setDoShowPeers, peerList, setPeerList, tabHasFocus, showAlert } =
+    useContext(ShellContext)
   const settingsContext = useContext(SettingsContext)
   const [isMessageSending, setIsMessageSending] = useState(false)
   const [messageLog, _setMessageLog] = useState<
@@ -108,12 +109,12 @@ export function useRoom(
   }, [peerRoom])
 
   useEffect(() => {
-    shellContext.setDoShowPeers(true)
+    setDoShowPeers(true)
 
     return () => {
-      shellContext.setDoShowPeers(false)
+      setDoShowPeers(false)
     }
-  }, [shellContext])
+  }, [setDoShowPeers])
 
   const [sendPeerId, receivePeerId] = usePeerRoomAction<string>(
     peerRoom,
@@ -149,12 +150,10 @@ export function useRoom(
   }
 
   receivePeerId((userId: string, peerId: string) => {
-    const peerIndex = shellContext.peerList.findIndex(
-      peer => peer.peerId === peerId
-    )
+    const peerIndex = peerList.findIndex(peer => peer.peerId === peerId)
     if (peerIndex === -1) {
-      shellContext.setPeerList([
-        ...shellContext.peerList,
+      setPeerList([
+        ...peerList,
         {
           peerId,
           userId,
@@ -165,9 +164,9 @@ export function useRoom(
         },
       ])
     } else {
-      const newPeerList = [...shellContext.peerList]
+      const newPeerList = [...peerList]
       newPeerList[peerIndex].userId = userId
-      shellContext.setPeerList(newPeerList)
+      setPeerList(newPeerList)
     }
   })
 
@@ -180,7 +179,7 @@ export function useRoom(
   receivePeerMessage(message => {
     const userSettings = settingsContext.getUserSettings()
 
-    if (!shellContext.tabHasFocus) {
+    if (!tabHasFocus) {
       if (userSettings.playSoundOnNewMessage) {
         newMessageAudio.play()
       }
@@ -196,13 +195,13 @@ export function useRoom(
   })
 
   peerRoom.onPeerJoin(PeerHookType.NEW_PEER, (peerId: string) => {
-    shellContext.showAlert(`Someone has joined the room`, {
+    showAlert(`Someone has joined the room`, {
       severity: 'success',
     })
 
     const newNumberOfPeers = numberOfPeers + 1
     setNumberOfPeers(newNumberOfPeers)
-    shellContext.setNumberOfPeers(newNumberOfPeers)
+    setNumberOfPeers(newNumberOfPeers)
     ;(async () => {
       try {
         const promises: Promise<any>[] = [sendPeerId(userId, peerId)]
@@ -221,15 +220,11 @@ export function useRoom(
   })
 
   peerRoom.onPeerLeave(PeerHookType.NEW_PEER, (peerId: string) => {
-    const peerIndex = shellContext.peerList.findIndex(
-      peer => peer.peerId === peerId
-    )
+    const peerIndex = peerList.findIndex(peer => peer.peerId === peerId)
     const peerExist = peerIndex !== -1
-    shellContext.showAlert(
+    showAlert(
       `${
-        peerExist
-          ? funAnimalName(shellContext.peerList[peerIndex].userId)
-          : 'Someone'
+        peerExist ? funAnimalName(peerList[peerIndex].userId) : 'Someone'
       } has left the room`,
       {
         severity: 'warning',
@@ -238,12 +233,12 @@ export function useRoom(
 
     const newNumberOfPeers = numberOfPeers - 1
     setNumberOfPeers(newNumberOfPeers)
-    shellContext.setNumberOfPeers(newNumberOfPeers)
+    setNumberOfPeers(newNumberOfPeers)
 
     if (peerExist) {
-      const peerListClone = [...shellContext.peerList]
+      const peerListClone = [...peerList]
       peerListClone.splice(peerIndex, 1)
-      shellContext.setPeerList(peerListClone)
+      setPeerList(peerListClone)
     }
   })
 
