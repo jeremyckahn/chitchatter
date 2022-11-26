@@ -2,7 +2,6 @@ import { useContext, useEffect, useMemo, useState } from 'react'
 import { BaseRoomConfig } from 'trystero'
 import { TorrentRoomConfig } from 'trystero/torrent'
 import { v4 as uuid } from 'uuid'
-import { funAnimalName } from 'fun-animal-names'
 
 import { ShellContext } from 'contexts/ShellContext'
 import { SettingsContext } from 'contexts/SettingsContext'
@@ -224,7 +223,7 @@ export function useRoom(
     const peerExist = peerIndex !== -1
     showAlert(
       `${
-        peerExist ? funAnimalName(peerList[peerIndex].userId) : 'Someone'
+        peerExist ? getPeerName(peerList[peerIndex].userId) : 'Someone'
       } has left the room`,
       {
         severity: 'warning',
