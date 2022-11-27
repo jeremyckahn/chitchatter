@@ -12,10 +12,18 @@ import { fileTransfer } from 'services/FileTransfer/index'
 import { usePeerRoomAction } from './usePeerRoomAction'
 
 interface UseRoomFileShareConfig {
+  onInlineMediaUpload: (files: File[]) => void
   peerRoom: PeerRoom
 }
 
-export function useRoomFileShare({ peerRoom }: UseRoomFileShareConfig) {
+const isInlineMediaFile = (file: File) => {
+  return ['image', 'audio', 'video'].includes(file.type.split('/')[0])
+}
+
+export function useRoomFileShare({
+  onInlineMediaUpload,
+  peerRoom,
+}: UseRoomFileShareConfig) {
   const shellContext = useContext(ShellContext)
   const roomContext = useContext(RoomContext)
   const [sharedFiles, setSharedFiles] = useState<FileList | null>(null)
@@ -88,10 +96,25 @@ export function useRoomFileShare({ peerRoom }: UseRoomFileShareConfig) {
   })
 
   const handleFileShareStart = async (files: FileList) => {
+    const [inlineMediaFiles, genericFiles] = [...files].reduce(
+      ([inlineMediaFiles, genericFiles]: [File[], File[]], file) => {
+        if (isInlineMediaFile(file)) {
+          inlineMediaFiles.push(file)
+        } else {
+          genericFiles.push(file)
+        }
+
+        return [inlineMediaFiles, genericFiles]
+      },
+      [[], []]
+    )
     setSharedFiles(files)
     setIsFileShareButtonEnabled(false)
 
-    const fileOfferId = await fileTransfer.offer(files)
+    const fileOfferId = await fileTransfer.offer(genericFiles)
+
+    onInlineMediaUpload(inlineMediaFiles)
+
     sendFileOfferId(fileOfferId)
     setFileOfferId(fileOfferId)
 

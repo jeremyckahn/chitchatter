@@ -10,11 +10,13 @@ import { PeerRoom } from 'services/PeerRoom/PeerRoom'
 import { useRoomFileShare } from './useRoomFileShare'
 
 export interface RoomFileUploadControlsProps {
+  onInlineMediaUpload: (files: File[]) => void
   peerRoom: PeerRoom
 }
 
 export function RoomFileUploadControls({
   peerRoom,
+  onInlineMediaUpload,
 }: RoomFileUploadControlsProps) {
   const fileInputRef = useRef<HTMLInputElement>(null)
 
@@ -26,6 +28,7 @@ export function RoomFileUploadControls({
     sharedFiles,
   } = useRoomFileShare({
     peerRoom,
+    onInlineMediaUpload,
   })
 
   const handleToggleScreenShareButtonClick = () => {

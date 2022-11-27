@@ -254,7 +254,12 @@ export function useRoom(
       Object.values({ ...peerVideoStreams, ...peerScreenStreams }).length > 0
   )
 
+  const handleInlineMediaUpload = (files: File[]) => {
+    console.log({ files })
+  }
+
   return {
+    handleInlineMediaUpload,
     isMessageSending,
     messageLog,
     peerRoom,

@@ -117,7 +117,7 @@ export class FileTransfer {
     }
   }
 
-  async offer(files: FileList) {
+  async offer(files: Parameters<typeof this.webTorrentClient.seed>[0]) {
     const { isPrivate } = await detectIncognito()
 
     const torrent = await new Promise<Torrent>(res => {
