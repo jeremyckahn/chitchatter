@@ -38,7 +38,7 @@ export const PeerDownloadFileButton = ({
     setDownloadProgress(null)
 
     try {
-      await fileTransfer.download(offeredFileId, { onProgress })
+      await fileTransfer.download(offeredFileId, { doSave: true, onProgress })
     } catch (e) {
       if (isError(e)) {
         shellContext.showAlert(e.message, {
