@@ -117,7 +117,12 @@ export function useRoomFileShare({
     sendFileOfferId(null)
     setFileOfferId(null)
 
-    if (selfFileOfferId && fileTransfer.isOffering(selfFileOfferId)) {
+    if (
+      selfFileOfferId &&
+      fileTransfer.isOffering(selfFileOfferId) &&
+      sharedFiles &&
+      ![...sharedFiles].every(isInlineMediaFile)
+    ) {
       fileTransfer.rescind(selfFileOfferId)
     }
   }
