@@ -20,13 +20,19 @@ import { CodeProps } from 'react-markdown/lib/ast-to-react'
 // @ts-ignore
 import remarkGfm from 'remark-gfm'
 
-import { Message as IMessage, isMessageReceived } from 'models/chat'
+import {
+  InlineMedia as I_InlineMedia,
+  Message as IMessage,
+  isMessageReceived,
+  isInlineMedia,
+} from 'models/chat'
 import { PeerNameDisplay } from 'components/PeerNameDisplay'
 
+import { InlineMedia } from './InlineMedia'
 import './Message.sass'
 
 export interface MessageProps {
-  message: IMessage
+  message: IMessage | I_InlineMedia
   showAuthor: boolean
   userId: string
 }
@@ -123,13 +129,17 @@ export const Message = ({ message, showAuthor, userId }: MessageProps) => {
           }}
           maxWidth="85%"
         >
-          <Markdown
-            components={componentMap}
-            remarkPlugins={[remarkGfm]}
-            linkTarget="_blank"
-          >
-            {message.text}
-          </Markdown>
+          {isInlineMedia(message) ? (
+            <InlineMedia magnetURI={message.magnetURI} />
+          ) : (
+            <Markdown
+              components={componentMap}
+              remarkPlugins={[remarkGfm]}
+              linkTarget="_blank"
+            >
+              {message.text}
+            </Markdown>
+          )}
         </Box>
       </Tooltip>
     </Box>

@@ -2,11 +2,11 @@ import { HTMLAttributes, useRef, useEffect, useState } from 'react'
 import cx from 'classnames'
 import Box from '@mui/material/Box'
 
-import { Message as IMessage } from 'models/chat'
+import { Message as IMessage, InlineMedia } from 'models/chat'
 import { Message } from 'components/Message'
 
 export interface ChatTranscriptProps extends HTMLAttributes<HTMLDivElement> {
-  messageLog: Array<IMessage>
+  messageLog: Array<IMessage | InlineMedia>
   userId: string
 }
 

@@ -96,24 +96,16 @@ export function useRoomFileShare({
   })
 
   const handleFileShareStart = async (files: FileList) => {
-    const [inlineMediaFiles, genericFiles] = [...files].reduce(
-      ([inlineMediaFiles, genericFiles]: [File[], File[]], file) => {
-        if (isInlineMediaFile(file)) {
-          inlineMediaFiles.push(file)
-        } else {
-          genericFiles.push(file)
-        }
+    const inlineMediaFiles = [...files].filter(isInlineMediaFile)
 
-        return [inlineMediaFiles, genericFiles]
-      },
-      [[], []]
-    )
     setSharedFiles(files)
     setIsFileShareButtonEnabled(false)
 
-    const fileOfferId = await fileTransfer.offer(genericFiles)
+    const fileOfferId = await fileTransfer.offer(files)
 
-    onInlineMediaUpload(inlineMediaFiles)
+    if (inlineMediaFiles.length > 0) {
+      onInlineMediaUpload(inlineMediaFiles)
+    }
 
     sendFileOfferId(fileOfferId)
     setFileOfferId(fileOfferId)

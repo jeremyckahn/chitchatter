@@ -11,6 +11,9 @@ import {
   Message,
   ReceivedMessage,
   UnsentMessage,
+  InlineMedia,
+  ReceivedInlineMedia,
+  UnsentInlineMedia,
   VideoState,
   ScreenShareState,
   isMessageReceived,
@@ -19,6 +22,7 @@ import { getPeerName } from 'components/PeerNameDisplay'
 import { NotificationService } from 'services/Notification'
 import { Audio as AudioService } from 'services/Audio'
 import { PeerRoom, PeerHookType } from 'services/PeerRoom'
+import { fileTransfer } from 'services/FileTransfer'
 
 import { messageTranscriptSizeLimit } from 'config/messaging'
 
@@ -51,14 +55,15 @@ export function useRoom(
   } = useContext(ShellContext)
   const settingsContext = useContext(SettingsContext)
   const [isMessageSending, setIsMessageSending] = useState(false)
-  const [messageLog, _setMessageLog] = useState<
-    Array<ReceivedMessage | UnsentMessage>
-  >([])
+  const [messageLog, _setMessageLog] = useState<Array<Message | InlineMedia>>(
+    []
+  )
   const [newMessageAudio] = useState(
     () => new AudioService(process.env.PUBLIC_URL + '/sounds/new-message.aac')
   )
 
-  const setMessageLog = (messages: Message[]) => {
+  const setMessageLog = (messages: Array<Message | InlineMedia>) => {
+    // TODO: Rescind any evicted inline media
     _setMessageLog(messages.slice(-messageTranscriptSizeLimit))
   }
 
@@ -128,11 +133,14 @@ export function useRoom(
   )
 
   const [sendMessageTranscript, receiveMessageTranscript] = usePeerRoomAction<
-    ReceivedMessage[]
+    Array<ReceivedMessage | ReceivedInlineMedia>
   >(peerRoom, PeerActions.MESSAGE_TRANSCRIPT)
 
   const [sendPeerMessage, receivePeerMessage] =
     usePeerRoomAction<UnsentMessage>(peerRoom, PeerActions.MESSAGE)
+
+  const [sendPeerInlineMedia, receivePeerInlineMedia] =
+    usePeerRoomAction<UnsentInlineMedia>(peerRoom, PeerActions.MEDIA_MESSAGE)
 
   const sendMessage = async (message: string) => {
     if (isMessageSending) return
@@ -254,9 +262,49 @@ export function useRoom(
       Object.values({ ...peerVideoStreams, ...peerScreenStreams }).length > 0
   )
 
-  const handleInlineMediaUpload = (files: File[]) => {
-    console.log({ files })
+  const handleInlineMediaUpload = async (files: File[]) => {
+    // TODO: Prevent the user from using upload controls if message is
+    // currently sending
+    if (isMessageSending) return
+
+    const fileOfferId = await fileTransfer.offer(files)
+
+    const unsentInlineMedia: UnsentInlineMedia = {
+      authorId: userId,
+      magnetURI: fileOfferId,
+      timeSent: Date.now(),
+      id: getUuid(),
+    }
+
+    setIsMessageSending(true)
+    setMessageLog([...messageLog, unsentInlineMedia])
+
+    await sendPeerInlineMedia(unsentInlineMedia)
+
+    setMessageLog([
+      ...messageLog,
+      { ...unsentInlineMedia, timeReceived: Date.now() },
+    ])
+    setIsMessageSending(false)
   }
+
+  receivePeerInlineMedia(inlineMedia => {
+    const userSettings = settingsContext.getUserSettings()
+
+    if (!tabHasFocus) {
+      if (userSettings.playSoundOnNewMessage) {
+        newMessageAudio.play()
+      }
+
+      if (userSettings.showNotificationOnNewMessage) {
+        NotificationService.showNotification(
+          `${getPeerName(inlineMedia.authorId)} shared media`
+        )
+      }
+    }
+
+    setMessageLog([...messageLog, { ...inlineMedia, timeReceived: Date.now() }])
+  })
 
   return {
     handleInlineMediaUpload,
