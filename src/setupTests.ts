@@ -8,7 +8,7 @@ afterEach(() => {
   jest.restoreAllMocks()
 })
 
-jest.mock('webtorrent/webtorrent.min.js', () => ({
+jest.mock('webtorrent', () => ({
   __esModule: true,
   default: class WebTorrent {},
 }))
