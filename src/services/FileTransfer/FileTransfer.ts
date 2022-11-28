@@ -1,12 +1,9 @@
-import { WebTorrent as WebTorrentType, Torrent } from 'webtorrent'
-// @ts-ignore
+import WebTorrent, { Torrent } from 'webtorrent'
 import streamSaver from 'streamsaver'
 // @ts-ignore
 import idbChunkStore from 'idb-chunk-store'
 import { detectIncognito } from 'detectincognitojs'
 
-// @ts-ignore
-import WebTorrent from 'webtorrent/webtorrent.min.js'
 import { trackerUrls } from 'config/trackerUrls'
 import { streamSaverUrl } from 'config/streamSaverUrl'
 
@@ -18,7 +15,7 @@ interface DownloadOpts {
 }
 
 export class FileTransfer {
-  private webTorrentClient = new (WebTorrent as unknown as WebTorrentType)()
+  private webTorrentClient = new WebTorrent()
 
   private torrents: Record<Torrent['magnetURI'], Torrent> = {}
 
