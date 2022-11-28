@@ -20,6 +20,10 @@ const isInlineMediaFile = (file: File) => {
   return ['image', 'audio', 'video'].includes(file.type.split('/')[0])
 }
 
+interface FileOfferMetadata {
+  magnetURI: string
+}
+
 export function useRoomFileShare({
   onInlineMediaUpload,
   peerRoom,
@@ -33,13 +37,15 @@ export function useRoomFileShare({
   const { peerList, setPeerList } = shellContext
   const { peerOfferedFileIds, setPeerOfferedFileIds } = roomContext
 
-  const [sendFileOfferId, receiveFileOfferId] = usePeerRoomAction<
-    string | null
-  >(peerRoom, PeerActions.FILE_OFFER)
+  const [sendFileOfferMetadata, receiveFileOfferMetadata] =
+    usePeerRoomAction<FileOfferMetadata | null>(
+      peerRoom,
+      PeerActions.FILE_OFFER
+    )
 
-  receiveFileOfferId((fileOfferId, peerId) => {
-    if (fileOfferId) {
-      setPeerOfferedFileIds({ [peerId]: fileOfferId })
+  receiveFileOfferMetadata((fileOfferMetadata, peerId) => {
+    if (fileOfferMetadata) {
+      setPeerOfferedFileIds({ [peerId]: fileOfferMetadata.magnetURI })
     } else {
       const fileOfferId = peerOfferedFileIds[peerId]
 
@@ -57,7 +63,7 @@ export function useRoomFileShare({
       const newPeer: Peer = { ...peer }
 
       if (peer.peerId === peerId) {
-        newPeer.offeredFileId = fileOfferId
+        newPeer.offeredFileId = fileOfferMetadata?.magnetURI ?? null
       }
 
       return newPeer
@@ -78,7 +84,7 @@ export function useRoomFileShare({
     // the next tick serves as a workaround.
     await sleep(1)
 
-    sendFileOfferId(selfFileOfferId, peerId)
+    sendFileOfferMetadata({ magnetURI: selfFileOfferId }, peerId)
   })
 
   peerRoom.onPeerLeave(PeerHookType.FILE_SHARE, (peerId: string) => {
@@ -107,14 +113,14 @@ export function useRoomFileShare({
       onInlineMediaUpload(inlineMediaFiles)
     }
 
-    sendFileOfferId(fileOfferId)
+    sendFileOfferMetadata({ magnetURI: fileOfferId })
     setFileOfferId(fileOfferId)
 
     setIsFileShareButtonEnabled(true)
   }
 
   const handleFileShareStop = () => {
-    sendFileOfferId(null)
+    sendFileOfferMetadata(null)
     setFileOfferId(null)
 
     if (
@@ -130,9 +136,9 @@ export function useRoomFileShare({
   useEffect(() => {
     return () => {
       fileTransfer.rescindAll()
-      sendFileOfferId(null)
+      sendFileOfferMetadata(null)
     }
-  }, [sendFileOfferId])
+  }, [sendFileOfferMetadata])
 
   const isSharingFile = Boolean(selfFileOfferId)
 
