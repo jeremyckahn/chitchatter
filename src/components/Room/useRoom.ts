@@ -44,8 +44,9 @@ export function useRoom(
     () => new PeerRoom({ password: password ?? roomId, ...roomConfig }, roomId)
   )
 
-  const [numberOfPeers, setNumberOfPeers] = useState(1) // Includes this peer
   const {
+    numberOfPeers,
+    setNumberOfPeers,
     setDoShowPeers,
     peerList,
     setPeerList,
@@ -214,7 +215,6 @@ export function useRoom(
     })
 
     const newNumberOfPeers = numberOfPeers + 1
-    setNumberOfPeers(newNumberOfPeers)
     setNumberOfPeers(newNumberOfPeers)
     ;(async () => {
       try {
