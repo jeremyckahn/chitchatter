@@ -59,3 +59,8 @@ export const isInlineMedia = (
 ): message is InlineMedia => {
   return 'magnetURI' in message
 }
+
+export interface FileOfferMetadata {
+  magnetURI: string
+  isAllInlineMedia: boolean
+}

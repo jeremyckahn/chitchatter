@@ -17,6 +17,7 @@ import {
   VideoState,
   ScreenShareState,
   isMessageReceived,
+  FileOfferMetadata,
 } from 'models/chat'
 import { getPeerName } from 'components/PeerNameDisplay'
 import { NotificationService } from 'services/Notification'
@@ -82,8 +83,8 @@ export function useRoom(
     Record<string, MediaStream>
   >({})
 
-  const [peerOfferedFileIds, setPeerOfferedFileIds] = useState<
-    Record<string, string>
+  const [peerOfferedFileMetadata, setPeerOfferedFileMetadata] = useState<
+    Record<string, FileOfferMetadata>
   >({})
 
   const roomContextValue = useMemo(
@@ -96,8 +97,8 @@ export function useRoom(
       setSelfScreenStream,
       peerScreenStreams,
       setPeerScreenStreams,
-      peerOfferedFileIds,
-      setPeerOfferedFileIds,
+      peerOfferedFileMetadata,
+      setPeerOfferedFileMetadata,
     }),
     [
       selfVideoStream,
@@ -108,8 +109,8 @@ export function useRoom(
       setSelfScreenStream,
       peerScreenStreams,
       setPeerScreenStreams,
-      peerOfferedFileIds,
-      setPeerOfferedFileIds,
+      peerOfferedFileMetadata,
+      setPeerOfferedFileMetadata,
     ]
   )
 
