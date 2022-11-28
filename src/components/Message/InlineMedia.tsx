@@ -1,4 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
+import CircularProgress from '@mui/material/CircularProgress'
+
 import { fileTransfer } from 'services/FileTransfer'
 
 type TorrentFiles = Awaited<ReturnType<typeof fileTransfer.download>>
@@ -41,9 +43,11 @@ export const InlineMedia = ({ magnetURI }: InlineMediaProps) => {
 
   return (
     <>
-      {downloadedFiles.map(file => (
-        <InlineFile file={file} key={file.name} />
-      ))}
+      {hasDownloadInitiated && downloadedFiles.length === 0 ? (
+        <CircularProgress variant="indeterminate" color="inherit" />
+      ) : (
+        downloadedFiles.map(file => <InlineFile file={file} key={file.name} />)
+      )}
     </>
   )
 }
