@@ -17,6 +17,7 @@ import {
   VideoState,
   ScreenShareState,
   isMessageReceived,
+  isInlineMedia,
   FileOfferMetadata,
 } from 'models/chat'
 import { getPeerName } from 'components/PeerNameDisplay'
@@ -65,7 +66,22 @@ export function useRoom(
   )
 
   const setMessageLog = (messages: Array<Message | InlineMedia>) => {
-    // TODO: Rescind any evicted inline media
+    if (messages.length > messageTranscriptSizeLimit) {
+      const evictedMessages = messages.slice(
+        0,
+        messages.length - messageTranscriptSizeLimit
+      )
+
+      for (const message of evictedMessages) {
+        if (
+          isInlineMedia(message) &&
+          fileTransfer.isOffering(message.magnetURI)
+        ) {
+          fileTransfer.rescind(message.magnetURI)
+        }
+      }
+    }
+
     _setMessageLog(messages.slice(-messageTranscriptSizeLimit))
   }
 
