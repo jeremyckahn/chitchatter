@@ -37,6 +37,7 @@ export function Room({
 }: RoomProps) {
   const {
     isMessageSending,
+    handleInlineMediaUpload,
     messageLog,
     peerRoom,
     roomContextValue,
@@ -107,7 +108,10 @@ export function Room({
                 <RoomAudioControls peerRoom={peerRoom} />
                 <RoomVideoControls peerRoom={peerRoom} />
                 <RoomScreenShareControls peerRoom={peerRoom} />
-                <RoomFileUploadControls peerRoom={peerRoom} />
+                <RoomFileUploadControls
+                  peerRoom={peerRoom}
+                  onInlineMediaUpload={handleInlineMediaUpload}
+                />
               </Box>
             </AccordionDetails>
           </Accordion>

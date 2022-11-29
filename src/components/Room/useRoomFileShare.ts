@@ -4,7 +4,7 @@ import { sleep } from 'utils'
 import { RoomContext } from 'contexts/RoomContext'
 import { ShellContext } from 'contexts/ShellContext'
 import { PeerActions } from 'models/network'
-import { Peer } from 'models/chat'
+import { FileOfferMetadata, Peer } from 'models/chat'
 import { PeerRoom, PeerHookType } from 'services/PeerRoom'
 
 import { fileTransfer } from 'services/FileTransfer/index'
@@ -12,44 +12,61 @@ import { fileTransfer } from 'services/FileTransfer/index'
 import { usePeerRoomAction } from './usePeerRoomAction'
 
 interface UseRoomFileShareConfig {
+  onInlineMediaUpload: (files: File[]) => void
   peerRoom: PeerRoom
 }
 
-export function useRoomFileShare({ peerRoom }: UseRoomFileShareConfig) {
+const isInlineMediaFile = (file: File) => {
+  return ['image', 'audio', 'video'].includes(file.type.split('/')[0])
+}
+
+export function useRoomFileShare({
+  onInlineMediaUpload,
+  peerRoom,
+}: UseRoomFileShareConfig) {
   const shellContext = useContext(ShellContext)
   const roomContext = useContext(RoomContext)
   const [sharedFiles, setSharedFiles] = useState<FileList | null>(null)
-  const [selfFileOfferId, setFileOfferId] = useState<string | null>(null)
-  const [isFileShareButtonEnabled, setIsFileShareButtonEnabled] = useState(true)
+  const [selfFileOfferMagnetUri, setFileOfferMagnetUri] = useState<
+    string | null
+  >(null)
+  const [isFileSharingEnabled, setIsFileSharingEnabled] = useState(true)
 
   const { peerList, setPeerList } = shellContext
-  const { peerOfferedFileIds, setPeerOfferedFileIds } = roomContext
+  const { peerOfferedFileMetadata, setPeerOfferedFileMetadata } = roomContext
 
-  const [sendFileOfferId, receiveFileOfferId] = usePeerRoomAction<
-    string | null
-  >(peerRoom, PeerActions.FILE_OFFER)
+  const [sendFileOfferMetadata, receiveFileOfferMetadata] =
+    usePeerRoomAction<FileOfferMetadata | null>(
+      peerRoom,
+      PeerActions.FILE_OFFER
+    )
 
-  receiveFileOfferId((fileOfferId, peerId) => {
-    if (fileOfferId) {
-      setPeerOfferedFileIds({ [peerId]: fileOfferId })
+  receiveFileOfferMetadata((fileOfferMetadata, peerId) => {
+    if (fileOfferMetadata) {
+      setPeerOfferedFileMetadata({ [peerId]: fileOfferMetadata })
     } else {
-      const fileOfferId = peerOfferedFileIds[peerId]
+      const fileOfferMetadata = peerOfferedFileMetadata[peerId]
+      const { magnetURI, isAllInlineMedia } = fileOfferMetadata
 
-      if (fileOfferId && fileTransfer.isOffering(fileOfferId)) {
-        fileTransfer.rescind(fileOfferId)
+      if (
+        fileOfferMetadata &&
+        fileTransfer.isOffering(magnetURI) &&
+        !isAllInlineMedia
+      ) {
+        fileTransfer.rescind(magnetURI)
       }
 
-      const newFileOfferIds = { ...peerOfferedFileIds }
-      delete newFileOfferIds[peerId]
+      const newFileOfferMetadata = { ...peerOfferedFileMetadata }
+      delete newFileOfferMetadata[peerId]
 
-      setPeerOfferedFileIds(newFileOfferIds)
+      setPeerOfferedFileMetadata(newFileOfferMetadata)
     }
 
     const newPeerList = peerList.map(peer => {
       const newPeer: Peer = { ...peer }
 
       if (peer.peerId === peerId) {
-        newPeer.offeredFileId = fileOfferId
+        newPeer.offeredFileId = fileOfferMetadata?.magnetURI ?? null
       }
 
       return newPeer
@@ -58,68 +75,93 @@ export function useRoomFileShare({ peerRoom }: UseRoomFileShareConfig) {
     setPeerList(newPeerList)
   })
 
+  const isEveryFileInlineMedia = (files: FileList | null) =>
+    Boolean(files && [...files].every(isInlineMediaFile))
+
   peerRoom.onPeerJoin(PeerHookType.FILE_SHARE, async (peerId: string) => {
-    if (!selfFileOfferId) return
+    if (!selfFileOfferMagnetUri) return
 
     // This sleep is needed to prevent this peer from not appearing on other
     // peers' peer lists. This is because Trystero's interaction between
     // onPeerJoin and its actions is not totally compatible with React's
     // lifecycle hooks. In this case, the reference to peerList in
-    // receiveFileOfferId is out of date and prevents this peer from ever being
-    // added to the receiver's peer list. Deferring the sendFileOfferId call to
-    // the next tick serves as a workaround.
+    // receiveFileOfferMetadata is out of date and prevents this peer from ever
+    // being added to the receiver's peer list. Deferring the
+    // sendFileOfferMetadata call to the next tick serves as a workaround.
     await sleep(1)
 
-    sendFileOfferId(selfFileOfferId, peerId)
+    sendFileOfferMetadata(
+      {
+        magnetURI: selfFileOfferMagnetUri,
+        isAllInlineMedia: isEveryFileInlineMedia(sharedFiles),
+      },
+      peerId
+    )
   })
 
   peerRoom.onPeerLeave(PeerHookType.FILE_SHARE, (peerId: string) => {
-    const fileOfferId = peerOfferedFileIds[peerId]
+    const fileOfferMetadata = peerOfferedFileMetadata[peerId]
 
-    if (!fileOfferId) return
+    if (!fileOfferMetadata) return
 
-    if (fileTransfer.isOffering(fileOfferId)) {
-      fileTransfer.rescind(fileOfferId)
+    const { magnetURI, isAllInlineMedia } = fileOfferMetadata
+
+    if (fileTransfer.isOffering(magnetURI) && !isAllInlineMedia) {
+      fileTransfer.rescind(magnetURI)
     }
 
-    const newPeerFileOfferIds = { ...peerOfferedFileIds }
-    delete newPeerFileOfferIds[peerId]
-    setPeerOfferedFileIds(newPeerFileOfferIds)
+    const newPeerFileOfferMetadata = { ...peerOfferedFileMetadata }
+    delete newPeerFileOfferMetadata[peerId]
+    setPeerOfferedFileMetadata(newPeerFileOfferMetadata)
   })
 
   const handleFileShareStart = async (files: FileList) => {
+    const inlineMediaFiles = [...files].filter(isInlineMediaFile)
+
     setSharedFiles(files)
-    setIsFileShareButtonEnabled(false)
+    setIsFileSharingEnabled(false)
 
-    const fileOfferId = await fileTransfer.offer(files)
-    sendFileOfferId(fileOfferId)
-    setFileOfferId(fileOfferId)
+    const magnetURI = await fileTransfer.offer(files)
 
-    setIsFileShareButtonEnabled(true)
+    if (inlineMediaFiles.length > 0) {
+      onInlineMediaUpload(inlineMediaFiles)
+    }
+
+    sendFileOfferMetadata({
+      magnetURI,
+      isAllInlineMedia: isEveryFileInlineMedia(files),
+    })
+
+    setFileOfferMagnetUri(magnetURI)
+    setIsFileSharingEnabled(true)
   }
 
   const handleFileShareStop = () => {
-    sendFileOfferId(null)
-    setFileOfferId(null)
+    sendFileOfferMetadata(null)
+    setFileOfferMagnetUri(null)
 
-    if (selfFileOfferId && fileTransfer.isOffering(selfFileOfferId)) {
-      fileTransfer.rescind(selfFileOfferId)
+    if (
+      selfFileOfferMagnetUri &&
+      fileTransfer.isOffering(selfFileOfferMagnetUri) &&
+      !isEveryFileInlineMedia(sharedFiles)
+    ) {
+      fileTransfer.rescind(selfFileOfferMagnetUri)
     }
   }
 
   useEffect(() => {
     return () => {
       fileTransfer.rescindAll()
-      sendFileOfferId(null)
+      sendFileOfferMetadata(null)
     }
-  }, [sendFileOfferId])
+  }, [sendFileOfferMetadata])
 
-  const isSharingFile = Boolean(selfFileOfferId)
+  const isSharingFile = Boolean(selfFileOfferMagnetUri)
 
   return {
     handleFileShareStart,
     handleFileShareStop,
-    isFileShareButtonEnabled,
+    isFileSharingEnabled,
     isSharingFile,
     sharedFiles,
   }

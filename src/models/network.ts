@@ -1,6 +1,7 @@
 // NOTE: Action names are limited to 12 characters, otherwise Trystero breaks.
 export enum PeerActions {
   MESSAGE = 'MESSAGE',
+  MEDIA_MESSAGE = 'MEDIA_MSG',
   MESSAGE_TRANSCRIPT = 'MSG_XSCRIPT',
   PEER_NAME = 'PEER_NAME',
   AUDIO_CHANGE = 'AUDIO_CHANGE',

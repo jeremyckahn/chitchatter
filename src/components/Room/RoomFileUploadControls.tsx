@@ -1,31 +1,38 @@
-import { ChangeEventHandler, useRef } from 'react'
+import { ChangeEventHandler, useContext, useRef } from 'react'
 import Box from '@mui/material/Box'
 import UploadFile from '@mui/icons-material/UploadFile'
 import Cancel from '@mui/icons-material/Cancel'
 import Fab from '@mui/material/Fab'
 import Tooltip from '@mui/material/Tooltip'
 
+import { RoomContext } from 'contexts/RoomContext'
 import { PeerRoom } from 'services/PeerRoom/PeerRoom'
 
 import { useRoomFileShare } from './useRoomFileShare'
 
 export interface RoomFileUploadControlsProps {
+  onInlineMediaUpload: (files: File[]) => void
   peerRoom: PeerRoom
 }
 
 export function RoomFileUploadControls({
   peerRoom,
+  onInlineMediaUpload,
 }: RoomFileUploadControlsProps) {
+  const roomContext = useContext(RoomContext)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
+  const { isMessageSending } = roomContext
+
   const {
-    isFileShareButtonEnabled,
+    isFileSharingEnabled,
     isSharingFile,
     handleFileShareStart,
     handleFileShareStop,
     sharedFiles,
   } = useRoomFileShare({
     peerRoom,
+    onInlineMediaUpload,
   })
 
   const handleToggleScreenShareButtonClick = () => {
@@ -50,6 +57,8 @@ export function RoomFileUploadControls({
 
   const shareFileLabel =
     (sharedFiles && sharedFiles.length === 1 && sharedFiles[0].name) || 'files'
+
+  const disableFileUpload = !isFileSharingEnabled || isMessageSending
 
   return (
     <Box
@@ -80,7 +89,7 @@ export function RoomFileUploadControls({
           color={isSharingFile ? 'error' : 'success'}
           aria-label="share screen"
           onClick={handleToggleScreenShareButtonClick}
-          disabled={!isFileShareButtonEnabled}
+          disabled={disableFileUpload}
         >
           {isSharingFile ? <Cancel /> : <UploadFile />}
         </Fab>

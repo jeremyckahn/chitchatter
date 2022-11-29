@@ -1,6 +1,8 @@
 import { createContext, Dispatch, SetStateAction } from 'react'
+import { FileOfferMetadata } from 'models/chat'
 
 interface RoomContextProps {
+  isMessageSending: boolean
   selfVideoStream: MediaStream | null
   setSelfVideoStream: Dispatch<SetStateAction<MediaStream | null>>
   peerVideoStreams: Record<string, MediaStream>
@@ -9,11 +11,14 @@ interface RoomContextProps {
   setSelfScreenStream: Dispatch<SetStateAction<MediaStream | null>>
   peerScreenStreams: Record<string, MediaStream>
   setPeerScreenStreams: Dispatch<SetStateAction<Record<string, MediaStream>>>
-  peerOfferedFileIds: Record<string, string>
-  setPeerOfferedFileIds: Dispatch<SetStateAction<Record<string, string>>>
+  peerOfferedFileMetadata: Record<string, FileOfferMetadata>
+  setPeerOfferedFileMetadata: Dispatch<
+    SetStateAction<Record<string, FileOfferMetadata>>
+  >
 }
 
 export const RoomContext = createContext<RoomContextProps>({
+  isMessageSending: false,
   selfVideoStream: null,
   setSelfVideoStream: () => {},
   peerVideoStreams: {},
@@ -22,6 +27,6 @@ export const RoomContext = createContext<RoomContextProps>({
   setSelfScreenStream: () => {},
   peerScreenStreams: {},
   setPeerScreenStreams: () => {},
-  peerOfferedFileIds: {},
-  setPeerOfferedFileIds: () => {},
+  peerOfferedFileMetadata: {},
+  setPeerOfferedFileMetadata: () => {},
 })

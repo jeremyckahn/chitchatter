@@ -5,6 +5,22 @@ export interface UnsentMessage {
   authorId: string
 }
 
+export interface ReceivedMessage extends UnsentMessage {
+  timeReceived: number
+}
+
+export type Message = UnsentMessage | ReceivedMessage
+
+export interface UnsentInlineMedia extends Omit<UnsentMessage, 'text'> {
+  magnetURI: string
+}
+
+export interface ReceivedInlineMedia extends UnsentInlineMedia {
+  timeReceived: number
+}
+
+export type InlineMedia = UnsentInlineMedia | ReceivedInlineMedia
+
 export enum AudioState {
   PLAYING = 'PLAYING',
   STOPPED = 'STOPPED',
@@ -34,12 +50,17 @@ export interface Peer {
   offeredFileId: string | null
 }
 
-export interface ReceivedMessage extends UnsentMessage {
-  timeReceived: number
+export const isMessageReceived = (
+  message: Message | InlineMedia
+): message is ReceivedMessage | ReceivedInlineMedia => 'timeReceived' in message
+
+export const isInlineMedia = (
+  message: Message | InlineMedia
+): message is InlineMedia => {
+  return 'magnetURI' in message
 }
 
-export const isMessageReceived = (
-  message: Message
-): message is ReceivedMessage => 'timeReceived' in message
-
-export type Message = UnsentMessage | ReceivedMessage
+export interface FileOfferMetadata {
+  magnetURI: string
+  isAllInlineMedia: boolean
+}
