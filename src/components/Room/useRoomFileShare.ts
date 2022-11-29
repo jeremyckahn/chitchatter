@@ -86,8 +86,8 @@ export function useRoomFileShare({
     // onPeerJoin and its actions is not totally compatible with React's
     // lifecycle hooks. In this case, the reference to peerList in
     // receiveFileOfferMetadata is out of date and prevents this peer from ever
-    // being added to the receiver's peer list. Deferring the sendFileOfferId
-    // call to the next tick serves as a workaround.
+    // being added to the receiver's peer list. Deferring the
+    // sendFileOfferMetadata call to the next tick serves as a workaround.
     await sleep(1)
 
     sendFileOfferMetadata(
