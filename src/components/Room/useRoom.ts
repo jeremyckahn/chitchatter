@@ -105,6 +105,7 @@ export function useRoom(
 
   const roomContextValue = useMemo(
     () => ({
+      isMessageSending,
       selfVideoStream,
       setSelfVideoStream,
       peerVideoStreams,
@@ -117,6 +118,7 @@ export function useRoom(
       setPeerOfferedFileMetadata,
     }),
     [
+      isMessageSending,
       selfVideoStream,
       setSelfVideoStream,
       peerVideoStreams,
@@ -280,10 +282,6 @@ export function useRoom(
   )
 
   const handleInlineMediaUpload = async (files: File[]) => {
-    // TODO: Prevent the user from using upload controls if message is
-    // currently sending
-    if (isMessageSending) return
-
     const fileOfferId = await fileTransfer.offer(files)
 
     const unsentInlineMedia: UnsentInlineMedia = {

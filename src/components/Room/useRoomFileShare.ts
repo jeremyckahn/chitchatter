@@ -30,7 +30,7 @@ export function useRoomFileShare({
   const [selfFileOfferMagnetUri, setFileOfferMagnetUri] = useState<
     string | null
   >(null)
-  const [isFileShareButtonEnabled, setIsFileShareButtonEnabled] = useState(true)
+  const [isFileSharingEnabled, setIsFileSharingEnabled] = useState(true)
 
   const { peerList, setPeerList } = shellContext
   const { peerOfferedFileMetadata, setPeerOfferedFileMetadata } = roomContext
@@ -119,7 +119,7 @@ export function useRoomFileShare({
     const inlineMediaFiles = [...files].filter(isInlineMediaFile)
 
     setSharedFiles(files)
-    setIsFileShareButtonEnabled(false)
+    setIsFileSharingEnabled(false)
 
     const magnetURI = await fileTransfer.offer(files)
 
@@ -133,7 +133,7 @@ export function useRoomFileShare({
     })
 
     setFileOfferMagnetUri(magnetURI)
-    setIsFileShareButtonEnabled(true)
+    setIsFileSharingEnabled(true)
   }
 
   const handleFileShareStop = () => {
@@ -161,7 +161,7 @@ export function useRoomFileShare({
   return {
     handleFileShareStart,
     handleFileShareStop,
-    isFileShareButtonEnabled,
+    isFileSharingEnabled,
     isSharingFile,
     sharedFiles,
   }
