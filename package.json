@@ -34,7 +34,7 @@
     "remark-gfm": "^3.0.1",
     "sass": "^1.54.3",
     "streamsaver": "^2.0.6",
-    "trystero": "github:jeremyckahn/trystero#bugfix/stream-metadata-type",
+    "trystero": "github:jeremyckahn/trystero#bugfix/29__clean-up-peers",
     "typeface-public-sans": "^1.1.13",
     "typeface-roboto": "^1.1.13",
     "typescript": "^4.7.4",
