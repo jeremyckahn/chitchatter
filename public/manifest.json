@@ -1,6 +1,7 @@
 {
   "short_name": "Chitchatter",
   "name": "Chitchatter",
+  "description": "This is a communication tool that is free, open source, and designed for simplicity and security. All communication between you and your online peers is encrypted. There is no trace of your conversation once you leave.",
   "icons": [
     {
       "src": "favicon.ico",
@@ -21,5 +22,40 @@
   "start_url": "./",
   "display": "standalone",
   "theme_color": "#000000",
-  "background_color": "#222222"
+  "background_color": "#222222",
+  "screenshots": [
+    {
+      "src": "logo192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    }
+  ],
+
+
+  "shortcuts": [
+    {
+      "name": "About",
+      "url": "./about",
+      "icons": [
+        {
+          "src": "logo512.png",
+          "sizes": "512x512",
+          "type": "image/png",
+          "purpose": "any"
+        }
+      ]
+    },
+    {
+      "name": "Disclaimer",
+      "url": "./disclaimer",
+      "icons": [
+        {
+          "src": "logo512.png",
+          "sizes": "512x512",
+          "type": "image/png",
+          "purpose": "any"
+        }
+      ]
+    }
+  ]
 }
