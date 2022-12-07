@@ -13,7 +13,11 @@ interface PublicRoomProps {
 export function PrivateRoom({ userId }: PublicRoomProps) {
   const { roomId = '' } = useParams()
   const { setTitle } = useContext(ShellContext)
-  const [password, setPassword] = useState('')
+
+  const urlParams = new URLSearchParams(window.location.hash.substring(1))
+  const urlSecret = urlParams.get('secret') ?? ''
+  window.location.hash = ''
+  const [secret, setSecret] = useState(urlSecret)
 
   useEffect(() => {
     NotificationService.requestPermission()
@@ -23,18 +27,22 @@ export function PrivateRoom({ userId }: PublicRoomProps) {
     setTitle(`Room: ${roomId}`)
   }, [roomId, setTitle])
 
-  const handlePasswordEntered = (password: string) => {
-    setPassword(password)
+  const handlePasswordEntered = async (password: string) => {
+    const data = new TextEncoder().encode(password)
+    const digest = await window.crypto.subtle.digest('SHA-256', data)
+    const bytes = new Uint8Array(digest)
+    const secret = window.btoa(String.fromCharCode(...bytes))
+    setSecret(secret)
   }
 
-  const isPasswordEntered = password.length === 0
+  const hasSecret = secret.length === 0
 
-  return isPasswordEntered ? (
+  return hasSecret ? (
     <PasswordPrompt
-      isOpen={isPasswordEntered}
+      isOpen={hasSecret}
       onPasswordEntered={handlePasswordEntered}
     />
   ) : (
-    <Room userId={userId} roomId={roomId} password={password} />
+    <Room userId={userId} roomId={roomId} password={secret} />
   )
 }
