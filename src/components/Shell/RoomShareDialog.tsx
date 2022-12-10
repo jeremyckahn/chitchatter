@@ -93,10 +93,10 @@ export function RoomShareDialog(props: RoomShareDialogProps) {
         </Alert>
         <Alert severity="warning">
           While the secret will not leave the browser when using the URL
-          containing the password, keep in mind that some browsers will record
-          the full URL in its address history, and may even synchronize history
-          on the cloud. If this is a problem, consider sharing the room URL
-          without the password and sending the password separately.
+          containing the password, keep in mind that browsers can record the
+          full URL in the address history, and may even store the history in the
+          cloud. If this is a problem, consider sharing the room URL without the
+          password and sending the password separately.
         </Alert>
         <FormControlLabel
           label="I understand the risks"
