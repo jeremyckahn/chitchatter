@@ -92,10 +92,13 @@ export function RoomShareDialog(props: RoomShareDialogProps) {
           password itself.
         </Alert>
         <Alert severity="warning">
-          While the secret will not leave the browser when using the URL
-          containing the password, keep in mind that browsers can record the
-          full URL in the address history, and may even store the history in the
-          cloud. If this is a problem, consider sharing the room URL without the
+          By design, the secret will not leave the user's browser when this link
+          is used to access the room. However, keep in mind that the user's
+          browser can still independently record the full URL in the address
+          history, and may even store the history in the cloud if configured to
+          do so.
+          <br />
+          If this would be problem, consider sharing the room URL without the
           password and sending the password separately.
         </Alert>
         <FormControlLabel
@@ -121,7 +124,9 @@ export function RoomShareDialog(props: RoomShareDialogProps) {
         />
         <Alert severity="info" sx={showIf(isUnderstood)}>
           If you enter a different password, users will enter the room but be
-          unable to connect to the existing members. No error will be shown.
+          unable to connect to the existing members. No error will be shown. The
+          URL will contain an unreadable encoding of the password, not the
+          password itself.
         </Alert>
       </DialogContent>
       <DialogActions>
