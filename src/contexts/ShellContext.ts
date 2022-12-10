@@ -10,6 +10,8 @@ interface ShellContextProps {
   setNumberOfPeers: Dispatch<SetStateAction<number>>
   setTitle: Dispatch<SetStateAction<string>>
   showAlert: (message: string, options?: AlertOptions) => void
+  isPrivateRoom: boolean
+  setIsPrivateRoom: Dispatch<SetStateAction<boolean>>
   isPeerListOpen: boolean
   setIsPeerListOpen: Dispatch<SetStateAction<boolean>>
   peerList: Peer[]
@@ -29,6 +31,8 @@ export const ShellContext = createContext<ShellContextProps>({
   setNumberOfPeers: () => {},
   setTitle: () => {},
   showAlert: () => {},
+  isPrivateRoom: false,
+  setIsPrivateRoom: () => {},
   isPeerListOpen: false,
   setIsPeerListOpen: () => {},
   peerList: [],

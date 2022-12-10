@@ -40,7 +40,7 @@ export function useRoom(
   { password, ...roomConfig }: BaseRoomConfig & TorrentRoomConfig,
   { roomId, userId, getUuid = uuid }: UseRoomConfig
 ) {
-  const isPublicRoom = !password
+  const isPrivate = password !== undefined
 
   const [peerRoom] = useState(
     () => new PeerRoom({ password: password ?? roomId, ...roomConfig }, roomId)
@@ -54,8 +54,10 @@ export function useRoom(
     setPeerList,
     tabHasFocus,
     showAlert,
+    setIsPrivateRoom,
     setIsPeerListOpen,
   } = useContext(ShellContext)
+
   const settingsContext = useContext(SettingsContext)
   const [isMessageSending, setIsMessageSending] = useState(false)
   const [messageLog, _setMessageLog] = useState<Array<Message | InlineMedia>>(
@@ -105,6 +107,7 @@ export function useRoom(
 
   const roomContextValue = useMemo(
     () => ({
+      isPrivate,
       isMessageSending,
       selfVideoStream,
       setSelfVideoStream,
@@ -118,6 +121,7 @@ export function useRoom(
       setPeerOfferedFileMetadata,
     }),
     [
+      isPrivate,
       isMessageSending,
       selfVideoStream,
       setSelfVideoStream,
@@ -138,6 +142,14 @@ export function useRoom(
       setIsPeerListOpen(false)
     }
   }, [peerRoom, setIsPeerListOpen])
+
+  useEffect(() => {
+    setIsPrivateRoom(isPrivate)
+
+    return () => {
+      setIsPrivateRoom(false)
+    }
+  }, [isPrivate, setIsPrivateRoom])
 
   useEffect(() => {
     setDoShowPeers(true)
@@ -239,7 +251,7 @@ export function useRoom(
       try {
         const promises: Promise<any>[] = [sendPeerId(userId, peerId)]
 
-        if (isPublicRoom) {
+        if (!isPrivate) {
           promises.push(
             sendMessageTranscript(messageLog.filter(isMessageReceived), peerId)
           )
@@ -322,6 +334,7 @@ export function useRoom(
   })
 
   return {
+    isPrivate,
     handleInlineMediaUpload,
     isMessageSending,
     messageLog,
