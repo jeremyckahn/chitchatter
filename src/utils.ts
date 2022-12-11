@@ -15,8 +15,8 @@ export const isError = (e: any): e is Error => {
   return e instanceof Error
 }
 
-export const encodePassword = async (password: string) => {
-  const data = new TextEncoder().encode(password)
+export const encodePassword = async (roomId: string, password: string) => {
+  const data = new TextEncoder().encode(`${roomId}_${password}`)
   const digest = await window.crypto.subtle.digest('SHA-256', data)
   const bytes = new Uint8Array(digest)
   return window.btoa(String.fromCharCode(...bytes))

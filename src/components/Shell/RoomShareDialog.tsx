@@ -16,6 +16,7 @@ import { useEffect, useState } from 'react'
 import { encodePassword } from 'utils'
 
 export interface RoomShareDialogProps {
+  roomId: string
   isOpen: boolean
   handleClose: () => void
   copyToClipboard: (
@@ -45,7 +46,7 @@ export function RoomShareDialog(props: RoomShareDialogProps) {
   const url = window.location.href.split('#')[0]
 
   const copyWithPass = async () => {
-    const secret = await encodePassword(password)
+    const secret = await encodePassword(props.roomId, password)
     const params = new URLSearchParams()
     params.set('secret', secret)
     await props.copyToClipboard(
@@ -82,24 +83,21 @@ export function RoomShareDialog(props: RoomShareDialogProps) {
       </DialogTitle>
       <DialogContent sx={showIf(isAdvanced)}>
         <DialogContentText sx={{ mb: 2 }}>
-          Share a link to this private room with the password. When using this
-          link, users will not need to enter a password themselves.
+          Copy URL to this private room containing an indecipherable hash of the
+          password. When using this URL, users will not need to enter the
+          password themselves.
         </DialogContentText>
         <Alert severity="error" sx={{ mb: 2 }}>
-          Be careful where and how this link is shared. Anybody who obtains it
+          Be careful where and how this URL is shared. Anybody who obtains it
           can enter the room. The sharing medium must be trusted, as well as all
-          potential recipients of the link, just as if you were sharing the
+          potential recipients of the URL, just as if you were sharing the
           password itself.
         </Alert>
         <Alert severity="warning">
-          By design, the secret will not leave the user's browser when this link
-          is used to access the room. However, keep in mind that the user's
-          browser can still independently record the full URL in the address
-          history, and may even store the history in the cloud if configured to
-          do so.
-          <br />
-          If this would be problem, consider sharing the room URL without the
-          password and sending the password separately.
+          By design, the password hash does not leave the web browser when this
+          URL is used to access the room. However, web browsers can still
+          independently record the full URL in the address history, and may even
+          store the history in the cloud if configured to do so.
         </Alert>
         <FormControlLabel
           label="I understand the risks"
@@ -124,9 +122,7 @@ export function RoomShareDialog(props: RoomShareDialogProps) {
         />
         <Alert severity="info" sx={showIf(isUnderstood)}>
           If you enter a different password, users will enter the room but be
-          unable to connect to the existing members. No error will be shown. The
-          URL will contain an unreadable encoding of the password, not the
-          password itself.
+          unable to connect to the existing members. No error will be shown.
         </Alert>
       </DialogContent>
       <DialogActions>

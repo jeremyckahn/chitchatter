@@ -44,6 +44,7 @@ export const Shell = ({ appNeedsUpdate, children, userPeerId }: ShellProps) => {
   const [alertText, setAlertText] = useState('')
   const [numberOfPeers, setNumberOfPeers] = useState(1)
   const [isPrivateRoom, setIsPrivateRoom] = useState(false)
+  const [roomId, setRoomId] = useState<string | null>(null)
   const [isPeerListOpen, setIsPeerListOpen] = useState(false)
   const [peerList, setPeerList] = useState<Peer[]>([]) // except you
   const [tabHasFocus, setTabHasFocus] = useState(true)
@@ -72,6 +73,8 @@ export const Shell = ({ appNeedsUpdate, children, userPeerId }: ShellProps) => {
       setIsQRCodeDialogOpen,
       isPrivateRoom,
       setIsPrivateRoom,
+      roomId,
+      setRoomId,
       setIsPeerListOpen,
       peerList,
       setPeerList,
@@ -87,6 +90,8 @@ export const Shell = ({ appNeedsUpdate, children, userPeerId }: ShellProps) => {
       setIsQRCodeDialogOpen,
       isPrivateRoom,
       setIsPrivateRoom,
+      roomId,
+      setRoomId,
       numberOfPeers,
       peerList,
       tabHasFocus,
@@ -255,6 +260,7 @@ export const Shell = ({ appNeedsUpdate, children, userPeerId }: ShellProps) => {
             handleClose={handleQRCodeDialogClose}
           />
           <RoomShareDialog
+            roomId={roomId ?? ''}
             isOpen={isRoomShareDialogOpen}
             handleClose={handleRoomShareDialogClose}
             copyToClipboard={copyToClipboard}
