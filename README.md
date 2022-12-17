@@ -163,6 +163,16 @@ This could happen for a variety of reasons. The most likely of which is that one
 
 Per [#36](https://github.com/jeremyckahn/chitchatter/issues/36), check your `about:config` settings and ensure that `media.peerconnection.enabled` is **enabled**.
 
+### Contributors
+
+<p align="center">
+<a href="https://github.com/jeremyckahn/chitchatter/graphs/contributors">
+  <img src="https://contrib.rocks/image?repo=jeremyckahn/chitchatter" />
+</a>
+</p>
+
+
+
 ## ⚠️ Disclaimer
 
 By using Chitchatter, you agree to accept **full responsibility** for your actions related to its use. Additionally, you agree **not** to hold any contributors to the Chitchatter project responsible for any result of your use of it. The developers of Chitchatter do not endorse illegal activity and provide the software strictly for the purposes of lawful use.
