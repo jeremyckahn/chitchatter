@@ -160,16 +160,18 @@ export function RoomShareDialog(props: RoomShareDialogProps) {
         <DialogActions>
           {isAdvanced ? (
             <Tooltip title="Copy room URL with password. No password entry required to access room.">
-              <Button
-                type="submit"
-                onClick={copyWithPass}
-                color="error"
-                disabled={
-                  password.length === 0 || !isUnderstood || passThrottled
-                }
-              >
-                Copy URL with password
-              </Button>
+              <span>
+                <Button
+                  type="submit"
+                  onClick={copyWithPass}
+                  color="error"
+                  disabled={
+                    password.length === 0 || !isUnderstood || passThrottled
+                  }
+                >
+                  Copy URL with password
+                </Button>
+              </span>
             </Tooltip>
           ) : (
             <Button onClick={() => setIsAdvanced(true)} color="error">
