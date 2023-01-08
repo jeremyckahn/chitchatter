@@ -1,0 +1,1 @@
+"use strict";(self.webpackChunkchitchatter=self.webpackChunkchitchatter||[]).push([[879],{1879:function(t,e,n){n.r(e),n.d(e,{default:function(){return u.Z},getTableUtilityClass:function(){return c.K},tableClasses:function(){return c.Z}});var u=n(15416),c=n(55275)}}]);
