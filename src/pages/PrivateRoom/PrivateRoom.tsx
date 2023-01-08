@@ -5,6 +5,7 @@ import { useParams } from 'react-router-dom'
 import { ShellContext } from 'contexts/ShellContext'
 import { NotificationService } from 'services/Notification'
 import { PasswordPrompt } from 'components/PasswordPrompt/PasswordPrompt'
+import { encodePassword } from 'utils'
 
 interface PublicRoomProps {
   userId: string
@@ -13,7 +14,12 @@ interface PublicRoomProps {
 export function PrivateRoom({ userId }: PublicRoomProps) {
   const { roomId = '' } = useParams()
   const { setTitle } = useContext(ShellContext)
-  const [password, setPassword] = useState('')
+
+  const urlParams = new URLSearchParams(window.location.hash.substring(1))
+  // Clear secret from address bar
+  if (window.location.hash.length > 0)
+    window.history.replaceState(window.history.state, '', '#')
+  const [secret, setSecret] = useState(urlParams.get('secret') ?? '')
 
   useEffect(() => {
     NotificationService.requestPermission()
@@ -23,18 +29,21 @@ export function PrivateRoom({ userId }: PublicRoomProps) {
     setTitle(`Room: ${roomId}`)
   }, [roomId, setTitle])
 
-  const handlePasswordEntered = (password: string) => {
-    setPassword(password)
+  const handlePasswordEntered = async (password: string) => {
+    if (password.length !== 0) setSecret(await encodePassword(roomId, password))
   }
 
-  const isPasswordEntered = password.length === 0
+  if (urlParams.has('pwd') && !urlParams.has('secret'))
+    handlePasswordEntered(urlParams.get('pwd') ?? '')
 
-  return isPasswordEntered ? (
+  const awaitingSecret = secret.length === 0
+
+  return awaitingSecret ? (
     <PasswordPrompt
-      isOpen={isPasswordEntered}
+      isOpen={awaitingSecret}
       onPasswordEntered={handlePasswordEntered}
     />
   ) : (
-    <Room userId={userId} roomId={roomId} password={password} />
+    <Room userId={userId} roomId={roomId} password={secret} />
   )
 }

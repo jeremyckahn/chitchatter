@@ -25,6 +25,7 @@ import { NotificationArea } from './NotificationArea'
 import { RouteContent } from './RouteContent'
 import { PeerList } from './PeerList'
 import { QRCodeDialog } from './QRCodeDialog'
+import { RoomShareDialog } from './RoomShareDialog'
 
 export interface ShellProps extends PropsWithChildren {
   userPeerId: string
@@ -36,11 +37,14 @@ export const Shell = ({ appNeedsUpdate, children, userPeerId }: ShellProps) => {
   const [isAlertShowing, setIsAlertShowing] = useState(false)
   const [isDrawerOpen, setIsDrawerOpen] = useState(false)
   const [isQRCodeDialogOpen, setIsQRCodeDialogOpen] = useState(false)
+  const [isRoomShareDialogOpen, setIsRoomShareDialogOpen] = useState(false)
   const [doShowPeers, setDoShowPeers] = useState(false)
   const [alertSeverity, setAlertSeverity] = useState<AlertColor>('info')
   const [title, setTitle] = useState('')
   const [alertText, setAlertText] = useState('')
   const [numberOfPeers, setNumberOfPeers] = useState(1)
+  const [roomId, setRoomId] = useState<string | undefined>(undefined)
+  const [password, setPassword] = useState<string | undefined>(undefined)
   const [isPeerListOpen, setIsPeerListOpen] = useState(false)
   const [peerList, setPeerList] = useState<Peer[]>([]) // except you
   const [tabHasFocus, setTabHasFocus] = useState(true)
@@ -67,6 +71,10 @@ export const Shell = ({ appNeedsUpdate, children, userPeerId }: ShellProps) => {
       showAlert,
       isPeerListOpen,
       setIsQRCodeDialogOpen,
+      roomId,
+      setRoomId,
+      password,
+      setPassword,
       setIsPeerListOpen,
       peerList,
       setPeerList,
@@ -80,6 +88,10 @@ export const Shell = ({ appNeedsUpdate, children, userPeerId }: ShellProps) => {
     [
       isPeerListOpen,
       setIsQRCodeDialogOpen,
+      roomId,
+      setRoomId,
+      password,
+      setPassword,
       numberOfPeers,
       peerList,
       tabHasFocus,
@@ -146,12 +158,21 @@ export const Shell = ({ appNeedsUpdate, children, userPeerId }: ShellProps) => {
     setIsPeerListOpen(!isPeerListOpen)
   }
 
-  const handleLinkButtonClick = async () => {
-    await navigator.clipboard.writeText(window.location.href)
+  const copyToClipboard = async (
+    content: string,
+    alert: string,
+    severity: AlertColor = 'success'
+  ) => {
+    await navigator.clipboard.writeText(content)
+    shellContextValue.showAlert(alert, { severity })
+  }
 
-    shellContextValue.showAlert('Current URL copied to clipboard', {
-      severity: 'success',
-    })
+  const handleLinkButtonClick = async () => {
+    if (roomId !== undefined && password !== undefined) {
+      setIsRoomShareDialogOpen(true)
+    } else {
+      copyToClipboard(window.location.href, 'Current URL copied to clipboard')
+    }
   }
 
   const handleDrawerClose = () => {
@@ -176,6 +197,10 @@ export const Shell = ({ appNeedsUpdate, children, userPeerId }: ShellProps) => {
 
   const handleQRCodeDialogClose = () => {
     setIsQRCodeDialogOpen(false)
+  }
+
+  const handleRoomShareDialogClose = () => {
+    setIsRoomShareDialogOpen(false)
   }
 
   return (
@@ -233,6 +258,14 @@ export const Shell = ({ appNeedsUpdate, children, userPeerId }: ShellProps) => {
           <QRCodeDialog
             isOpen={isQRCodeDialogOpen}
             handleClose={handleQRCodeDialogClose}
+          />
+          <RoomShareDialog
+            isOpen={isRoomShareDialogOpen}
+            handleClose={handleRoomShareDialogClose}
+            roomId={roomId ?? ''}
+            password={password ?? ''}
+            showAlert={showAlert}
+            copyToClipboard={copyToClipboard}
           />
         </Box>
       </ThemeProvider>
