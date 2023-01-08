@@ -54,8 +54,8 @@ export function useRoom(
     setPeerList,
     tabHasFocus,
     showAlert,
-    setIsPrivateRoom,
     setRoomId,
+    setPassword,
     setIsPeerListOpen,
   } = useContext(ShellContext)
 
@@ -145,18 +145,18 @@ export function useRoom(
   }, [peerRoom, setIsPeerListOpen])
 
   useEffect(() => {
-    setIsPrivateRoom(isPrivate)
+    setPassword(password)
 
     return () => {
-      setIsPrivateRoom(false)
+      setPassword(undefined)
     }
-  }, [isPrivate, setIsPrivateRoom])
+  }, [password, setPassword])
 
   useEffect(() => {
     setRoomId(roomId)
 
     return () => {
-      setRoomId(null)
+      setRoomId(undefined)
     }
   }, [roomId, setRoomId])
 

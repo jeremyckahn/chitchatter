@@ -43,8 +43,8 @@ export const Shell = ({ appNeedsUpdate, children, userPeerId }: ShellProps) => {
   const [title, setTitle] = useState('')
   const [alertText, setAlertText] = useState('')
   const [numberOfPeers, setNumberOfPeers] = useState(1)
-  const [isPrivateRoom, setIsPrivateRoom] = useState(false)
-  const [roomId, setRoomId] = useState<string | null>(null)
+  const [roomId, setRoomId] = useState<string | undefined>(undefined)
+  const [password, setPassword] = useState<string | undefined>(undefined)
   const [isPeerListOpen, setIsPeerListOpen] = useState(false)
   const [peerList, setPeerList] = useState<Peer[]>([]) // except you
   const [tabHasFocus, setTabHasFocus] = useState(true)
@@ -71,10 +71,10 @@ export const Shell = ({ appNeedsUpdate, children, userPeerId }: ShellProps) => {
       showAlert,
       isPeerListOpen,
       setIsQRCodeDialogOpen,
-      isPrivateRoom,
-      setIsPrivateRoom,
       roomId,
       setRoomId,
+      password,
+      setPassword,
       setIsPeerListOpen,
       peerList,
       setPeerList,
@@ -88,10 +88,10 @@ export const Shell = ({ appNeedsUpdate, children, userPeerId }: ShellProps) => {
     [
       isPeerListOpen,
       setIsQRCodeDialogOpen,
-      isPrivateRoom,
-      setIsPrivateRoom,
       roomId,
       setRoomId,
+      password,
+      setPassword,
       numberOfPeers,
       peerList,
       tabHasFocus,
@@ -168,7 +168,7 @@ export const Shell = ({ appNeedsUpdate, children, userPeerId }: ShellProps) => {
   }
 
   const handleLinkButtonClick = async () => {
-    if (isPrivateRoom) {
+    if (roomId !== undefined && password !== undefined) {
       setIsRoomShareDialogOpen(true)
     } else {
       copyToClipboard(window.location.href, 'Current URL copied to clipboard')
@@ -260,9 +260,11 @@ export const Shell = ({ appNeedsUpdate, children, userPeerId }: ShellProps) => {
             handleClose={handleQRCodeDialogClose}
           />
           <RoomShareDialog
-            roomId={roomId ?? ''}
             isOpen={isRoomShareDialogOpen}
+            roomId={roomId ?? ''}
+            password={password ?? ''}
             handleClose={handleRoomShareDialogClose}
+            showAlert={showAlert}
             copyToClipboard={copyToClipboard}
           />
         </Box>
