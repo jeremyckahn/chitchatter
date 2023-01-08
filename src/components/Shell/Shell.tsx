@@ -261,9 +261,9 @@ export const Shell = ({ appNeedsUpdate, children, userPeerId }: ShellProps) => {
           />
           <RoomShareDialog
             isOpen={isRoomShareDialogOpen}
+            handleClose={handleRoomShareDialogClose}
             roomId={roomId ?? ''}
             password={password ?? ''}
-            handleClose={handleRoomShareDialogClose}
             showAlert={showAlert}
             copyToClipboard={copyToClipboard}
           />

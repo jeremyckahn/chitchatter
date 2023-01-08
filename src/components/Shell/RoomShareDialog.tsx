@@ -21,9 +21,9 @@ import { encodePassword, sleep } from 'utils'
 
 export interface RoomShareDialogProps {
   isOpen: boolean
+  handleClose: () => void
   roomId: string
   password: string
-  handleClose: () => void
   showAlert: (message: string, options?: AlertOptions) => void
   copyToClipboard: (
     content: string,
