@@ -146,7 +146,6 @@ export function Room({
                   flexDirection: 'column',
                   flexGrow: '1',
                   width: showVideoDisplay && landscape ? '400px' : '100%',
-                  minHeight: '300px',
                   height: landscape ? '100%' : '40%',
                 }}
               >

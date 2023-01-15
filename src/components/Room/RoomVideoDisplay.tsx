@@ -129,7 +129,6 @@ export const RoomVideoDisplay = ({
         padding: 1,
         width: { width },
         height: { height },
-        minHeight: '400px',
       }}
     >
       {selectedPeerStream && (
