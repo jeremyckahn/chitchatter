@@ -19,6 +19,7 @@ import { RoomVideoControls } from './RoomVideoControls'
 import { RoomScreenShareControls } from './RoomScreenShareControls'
 import { RoomFileUploadControls } from './RoomFileUploadControls'
 import { RoomVideoDisplay } from './RoomVideoDisplay'
+import { RoomShowMessagesControls } from './RoomShowMessagesControls'
 
 export interface RoomProps {
   appId?: string
@@ -61,6 +62,8 @@ export function Room({
     await sendMessage(message)
   }
 
+  const showMessages = roomContextValue.isShowingMessages
+
   return (
     <RoomContext.Provider value={roomContextValue}>
       <Box
@@ -72,7 +75,6 @@ export function Room({
           overflow: 'auto',
         }}
       >
-        {showVideoDisplay && <RoomVideoDisplay userId={userId} />}
         <Box
           sx={{
             display: 'flex',
@@ -112,19 +114,46 @@ export function Room({
                   peerRoom={peerRoom}
                   onInlineMediaUpload={handleInlineMediaUpload}
                 />
+                {showVideoDisplay && <RoomShowMessagesControls />}
               </Box>
             </AccordionDetails>
           </Accordion>
-          <ChatTranscript
-            messageLog={messageLog}
-            userId={userId}
-            className="grow overflow-auto px-4"
-          />
-          <Divider />
-          <MessageForm
-            onMessageSubmit={handleMessageSubmit}
-            isMessageSending={isMessageSending}
-          />
+          <Box
+            sx={{
+              display: 'flex',
+              flexDirection: 'row',
+              height: '100%',
+              width: '100%',
+              overflow: 'auto',
+            }}
+          >
+            {showVideoDisplay && (
+              <RoomVideoDisplay
+                userId={userId}
+                width={showMessages ? '85%' : '100%'}
+              />
+            )}
+            {showMessages && (
+              <Box
+                sx={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  width: showVideoDisplay ? '15%' : '100%',
+                }}
+              >
+                <ChatTranscript
+                  messageLog={messageLog}
+                  userId={userId}
+                  className="grow overflow-auto px-4"
+                />
+                <Divider />
+                <MessageForm
+                  onMessageSubmit={handleMessageSubmit}
+                  isMessageSending={isMessageSending}
+                />
+              </Box>
+            )}
+          </Box>
         </Box>
       </Box>
     </RoomContext.Provider>

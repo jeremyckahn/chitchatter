@@ -22,9 +22,10 @@ export interface SelectedPeerStream {
 
 export interface RoomVideoDisplayProps {
   userId: string
+  width: string
 }
 
-export const RoomVideoDisplay = ({ userId }: RoomVideoDisplayProps) => {
+export const RoomVideoDisplay = ({ userId, width }: RoomVideoDisplayProps) => {
   const shellContext = useContext(ShellContext)
   const roomContext = useContext(RoomContext)
   const [selectedPeerStream, setSelectedPeerStream] =
@@ -121,7 +122,7 @@ export const RoomVideoDisplay = ({ userId }: RoomVideoDisplayProps) => {
         flexDirection: 'column',
         overflow: 'auto',
         padding: 1,
-        width: '85%',
+        width: { width },
       }}
     >
       {selectedPeerStream && (
