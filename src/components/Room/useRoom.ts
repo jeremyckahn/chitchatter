@@ -247,7 +247,11 @@ export function useRoom(
   receivePeerMessage(message => {
     const userSettings = settingsContext.getUserSettings()
 
-    if (!tabHasFocus) {
+    if (!isShowingMessages) {
+      setUnreadMessages(unreadMessages + 1)
+    }
+
+    if (!tabHasFocus || !isShowingMessages) {
       if (userSettings.playSoundOnNewMessage) {
         newMessageAudio.play()
       }
@@ -257,8 +261,6 @@ export function useRoom(
           `${getPeerName(message.authorId)}: ${message.text}`
         )
       }
-    } else if (!isShowingMessages) {
-      setUnreadMessages(unreadMessages + 1)
     }
 
     setMessageLog([...messageLog, { ...message, timeReceived: Date.now() }])

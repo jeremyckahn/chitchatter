@@ -1,3 +1,5 @@
+import { Dimensions } from 'react-native'
+
 import Accordion from '@mui/material/Accordion'
 import AccordionSummary from '@mui/material/AccordionSummary'
 import AccordionDetails from '@mui/material/AccordionDetails'
@@ -64,6 +66,9 @@ export function Room({
 
   const showMessages = roomContextValue.isShowingMessages
 
+  const display = Dimensions.get('window')
+  const landscape = display.width > display.height
+
   return (
     <RoomContext.Provider value={roomContextValue}>
       <Box
@@ -121,7 +126,7 @@ export function Room({
           <Box
             sx={{
               display: 'flex',
-              flexDirection: 'row',
+              flexDirection: landscape ? 'row' : 'column',
               height: '100%',
               width: '100%',
               overflow: 'auto',
@@ -130,7 +135,8 @@ export function Room({
             {showVideoDisplay && (
               <RoomVideoDisplay
                 userId={userId}
-                width={showMessages ? '85%' : '100%'}
+                width="100%"
+                height={landscape ? '100%' : '60%'}
               />
             )}
             {showMessages && (
@@ -138,7 +144,10 @@ export function Room({
                 sx={{
                   display: 'flex',
                   flexDirection: 'column',
-                  width: showVideoDisplay ? '15%' : '100%',
+                  flexGrow: '1',
+                  width: showVideoDisplay && landscape ? '400px' : '100%',
+                  minHeight: '300px',
+                  height: landscape ? '100%' : '40%',
                 }}
               >
                 <ChatTranscript

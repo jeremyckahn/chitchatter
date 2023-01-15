@@ -27,6 +27,8 @@
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-markdown": "^8.0.3",
+    "react-native": "^0.71.0",
+    "react-native-web": "^0.18.10",
     "react-qrcode-logo": "^2.8.0",
     "react-router-dom": "^6.3.0",
     "react-scripts": "5.0.1",
