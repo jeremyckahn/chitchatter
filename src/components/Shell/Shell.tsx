@@ -40,7 +40,7 @@ export const Shell = ({ appNeedsUpdate, children, userPeerId }: ShellProps) => {
   const [isRoomShareDialogOpen, setIsRoomShareDialogOpen] = useState(false)
   const [doShowPeers, setDoShowPeers] = useState(false)
   const [alertSeverity, setAlertSeverity] = useState<AlertColor>('info')
-  const [showRoomControls, setShowRoomControls] = useState(false)
+  const [showRoomControls, setShowRoomControls] = useState(true)
   const [title, setTitle] = useState('')
   const [alertText, setAlertText] = useState('')
   const [numberOfPeers, setNumberOfPeers] = useState(1)
@@ -69,6 +69,7 @@ export const Shell = ({ appNeedsUpdate, children, userPeerId }: ShellProps) => {
       setDoShowPeers,
       setNumberOfPeers,
       showRoomControls,
+      setShowRoomControls,
       setTitle,
       showAlert,
       isPeerListOpen,
@@ -100,6 +101,7 @@ export const Shell = ({ appNeedsUpdate, children, userPeerId }: ShellProps) => {
       setDoShowPeers,
       setNumberOfPeers,
       showRoomControls,
+      setShowRoomControls,
       setTitle,
       showAlert,
       audioState,

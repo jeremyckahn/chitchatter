@@ -22,6 +22,7 @@ import { RoomScreenShareControls } from './RoomScreenShareControls'
 import { RoomFileUploadControls } from './RoomFileUploadControls'
 import { RoomVideoDisplay } from './RoomVideoDisplay'
 import { RoomShowMessagesControls } from './RoomShowMessagesControls'
+import { RoomHideRoomControls } from './RoomHideRoomControls'
 
 export interface RoomProps {
   appId?: string
@@ -108,6 +109,7 @@ export function Room({
                 onInlineMediaUpload={handleInlineMediaUpload}
               />
               {showVideoDisplay && <RoomShowMessagesControls />}
+              <RoomHideRoomControls />
             </Box>
           </Collapse>
           <Box
