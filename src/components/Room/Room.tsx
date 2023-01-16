@@ -1,17 +1,17 @@
 import { Dimensions } from 'react-native'
 
-import Accordion from '@mui/material/Accordion'
-import AccordionSummary from '@mui/material/AccordionSummary'
-import AccordionDetails from '@mui/material/AccordionDetails'
+import { useContext, useState } from 'react'
+
+import { Collapse } from '@mui/material'
+
 import Box from '@mui/material/Box'
 import Divider from '@mui/material/Divider'
-import Typography from '@mui/material/Typography'
-import ExpandMoreIcon from '@mui/icons-material/ExpandMore'
 import { v4 as uuid } from 'uuid'
 
 import { rtcConfig } from 'config/rtcConfig'
 import { trackerUrls } from 'config/trackerUrls'
 import { RoomContext } from 'contexts/RoomContext'
+import { ShellContext } from 'contexts/ShellContext'
 import { MessageForm } from 'components/MessageForm'
 import { ChatTranscript } from 'components/ChatTranscript'
 
@@ -66,7 +66,10 @@ export function Room({
 
   const showMessages = roomContextValue.isShowingMessages
 
-  const display = Dimensions.get('window')
+  const { showRoomControls } = useContext(ShellContext)
+
+  const [display, setDisplay] = useState(Dimensions.get('window'))
+  Dimensions.addEventListener('change', ({ screen }) => setDisplay(screen))
   const landscape = display.width > display.height
 
   return (
@@ -88,41 +91,25 @@ export function Room({
             overflow: 'auto',
           }}
         >
-          <Accordion>
-            <AccordionSummary
-              expandIcon={<ExpandMoreIcon />}
-              aria-controls="panel1a-content"
-              id="panel1a-header"
+          <Collapse in={showRoomControls}>
+            <Box
+              sx={{
+                alignItems: 'flex-start',
+                display: 'flex',
+                justifyContent: 'center',
+                padding: 1,
+              }}
             >
-              <Typography
-                sx={{
-                  color: 'text.secondary',
-                  textAlign: 'center',
-                  flexGrow: 1,
-                }}
-              >
-                Room tools
-              </Typography>
-            </AccordionSummary>
-            <AccordionDetails>
-              <Box
-                sx={{
-                  alignItems: 'flex-start',
-                  display: 'flex',
-                  justifyContent: 'center',
-                }}
-              >
-                <RoomAudioControls peerRoom={peerRoom} />
-                <RoomVideoControls peerRoom={peerRoom} />
-                <RoomScreenShareControls peerRoom={peerRoom} />
-                <RoomFileUploadControls
-                  peerRoom={peerRoom}
-                  onInlineMediaUpload={handleInlineMediaUpload}
-                />
-                {showVideoDisplay && <RoomShowMessagesControls />}
-              </Box>
-            </AccordionDetails>
-          </Accordion>
+              <RoomAudioControls peerRoom={peerRoom} />
+              <RoomVideoControls peerRoom={peerRoom} />
+              <RoomScreenShareControls peerRoom={peerRoom} />
+              <RoomFileUploadControls
+                peerRoom={peerRoom}
+                onInlineMediaUpload={handleInlineMediaUpload}
+              />
+              {showVideoDisplay && <RoomShowMessagesControls />}
+            </Box>
+          </Collapse>
           <Box
             sx={{
               display: 'flex',
@@ -136,7 +123,7 @@ export function Room({
               <RoomVideoDisplay
                 userId={userId}
                 width="100%"
-                height={landscape ? '100%' : '60%'}
+                height={landscape || !showMessages ? '100%' : '60%'}
               />
             )}
             {showMessages && (

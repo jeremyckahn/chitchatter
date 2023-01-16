@@ -29,12 +29,10 @@ export function RoomShowMessagesControls() {
         >
           {isShowingMessages ? (
             <CommentsDisabled />
-          ) : unreadMessages ? (
+          ) : (
             <Badge color="error" badgeContent={unreadMessages}>
               <Comment />
             </Badge>
-          ) : (
-            <Comment />
           )}
         </Fab>
       </Tooltip>

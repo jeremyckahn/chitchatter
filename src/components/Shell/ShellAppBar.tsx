@@ -1,13 +1,13 @@
 import { styled } from '@mui/material/styles'
 import MuiAppBar, { AppBarProps as MuiAppBarProps } from '@mui/material/AppBar'
-import Toolbar from '@mui/material/Toolbar'
-import Typography from '@mui/material/Typography'
-import StepIcon from '@mui/material/StepIcon'
-import Tooltip from '@mui/material/Tooltip'
-import IconButton from '@mui/material/IconButton'
-import MenuIcon from '@mui/icons-material/Menu'
-import LinkIcon from '@mui/icons-material/Link'
-import QrCode2Icon from '@mui/icons-material/QrCode2'
+import {
+  Toolbar,
+  Typography,
+  StepIcon,
+  Tooltip,
+  IconButton,
+} from '@mui/material'
+import { Menu, Link, RoomPreferences, QrCode2 } from '@mui/icons-material'
 
 import { drawerWidth } from './Drawer'
 import { peerListWidth } from './PeerList'
@@ -54,6 +54,7 @@ interface ShellAppBarProps {
   numberOfPeers: number
   title: string
   onPeerListClick: () => void
+  onRoomControlsClick: () => void
   setIsQRCodeDialogOpen: (isOpen: boolean) => void
 }
 
@@ -67,6 +68,7 @@ export const ShellAppBar = ({
   numberOfPeers,
   title,
   onPeerListClick,
+  onRoomControlsClick,
 }: ShellAppBarProps) => {
   const handleQRCodeClick = () => setIsQRCodeDialogOpen(true)
   return (
@@ -91,7 +93,7 @@ export const ShellAppBar = ({
           sx={{ mr: 2, ...(isDrawerOpen && { display: 'none' }) }}
           onClick={onDrawerOpen}
         >
-          <MenuIcon />
+          <Menu />
         </IconButton>
         <Typography
           variant="h6"
@@ -108,7 +110,7 @@ export const ShellAppBar = ({
             aria-label="Copy current URL"
             onClick={onLinkButtonClick}
           >
-            <LinkIcon />
+            <Link />
           </IconButton>
         </Tooltip>
         {doShowPeers ? (
@@ -120,7 +122,17 @@ export const ShellAppBar = ({
                 aria-label="Show QR Code"
                 onClick={handleQRCodeClick}
               >
-                <QrCode2Icon />
+                <QrCode2 />
+              </IconButton>
+            </Tooltip>
+            <Tooltip title="Show Room Controls">
+              <IconButton
+                size="large"
+                color="inherit"
+                aria-label="Show Room Controls"
+                onClick={onRoomControlsClick}
+              >
+                <RoomPreferences />
               </IconButton>
             </Tooltip>
             <Tooltip title="Click to show peer list">

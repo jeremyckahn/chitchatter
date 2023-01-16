@@ -40,6 +40,7 @@ export const Shell = ({ appNeedsUpdate, children, userPeerId }: ShellProps) => {
   const [isRoomShareDialogOpen, setIsRoomShareDialogOpen] = useState(false)
   const [doShowPeers, setDoShowPeers] = useState(false)
   const [alertSeverity, setAlertSeverity] = useState<AlertColor>('info')
+  const [showRoomControls, setShowRoomControls] = useState(false)
   const [title, setTitle] = useState('')
   const [alertText, setAlertText] = useState('')
   const [numberOfPeers, setNumberOfPeers] = useState(1)
@@ -67,6 +68,7 @@ export const Shell = ({ appNeedsUpdate, children, userPeerId }: ShellProps) => {
       tabHasFocus,
       setDoShowPeers,
       setNumberOfPeers,
+      showRoomControls,
       setTitle,
       showAlert,
       isPeerListOpen,
@@ -97,6 +99,7 @@ export const Shell = ({ appNeedsUpdate, children, userPeerId }: ShellProps) => {
       tabHasFocus,
       setDoShowPeers,
       setNumberOfPeers,
+      showRoomControls,
       setTitle,
       showAlert,
       audioState,
@@ -230,6 +233,7 @@ export const Shell = ({ appNeedsUpdate, children, userPeerId }: ShellProps) => {
             numberOfPeers={numberOfPeers}
             title={title}
             onPeerListClick={handlePeerListClick}
+            onRoomControlsClick={() => setShowRoomControls(!showRoomControls)}
             setIsQRCodeDialogOpen={setIsQRCodeDialogOpen}
           />
           <Drawer
