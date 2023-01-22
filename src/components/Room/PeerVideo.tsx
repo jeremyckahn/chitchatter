@@ -1,7 +1,8 @@
 import { useEffect, useRef } from 'react'
 import Paper from '@mui/material/Paper'
+import Tooltip from '@mui/material/Tooltip'
 
-import { PeerNameDisplay } from 'components/PeerNameDisplay'
+import { getPeerName } from 'components/PeerNameDisplay'
 import { VideoStreamType } from 'models/chat'
 
 import { SelectedPeerStream } from './RoomVideoDisplay'
@@ -68,38 +69,34 @@ export const PeerVideo = ({
         ...(selectedPeerStream
           ? {
               height: '100%',
-              width: isSelectedVideo ? '100%' : 'min-content',
+              width: '100%',
             }
           : {
-              width: `calc(${100 / cols}% - 1em)`,
-              height: `calc(${100 / rows}% - 1em)`,
-              my: 1,
+              width: `calc(${100 / cols}% - 1px)`,
+              height: `calc(${100 / rows}% - 1px)`,
             }),
       }}
       elevation={10}
     >
-      <video
-        playsInline
-        ref={videoRef}
-        onClick={handleVideoClick}
-        style={{
-          borderRadius: '.25em',
-          cursor: 'pointer',
-          overflow: 'auto',
-          marginLeft: 'auto',
-          marginRight: 'auto',
-          height: '100%',
-          width: '100%',
-          ...(isSelfVideo && {
-            transform: 'rotateY(180deg)',
-          }),
-        }}
-      />
-      <PeerNameDisplay
-        sx={{ textAlign: 'center', display: 'block', marginTop: 1, px: 1 }}
-      >
-        {userId}
-      </PeerNameDisplay>
+      <Tooltip title={getPeerName(userId)}>
+        <video
+          playsInline
+          ref={videoRef}
+          onClick={handleVideoClick}
+          style={{
+            borderRadius: '.25em',
+            cursor: 'pointer',
+            overflow: 'auto',
+            marginLeft: 'auto',
+            marginRight: 'auto',
+            height: '100%',
+            width: '100%',
+            ...(isSelfVideo && {
+              transform: 'rotateY(180deg)',
+            }),
+          }}
+        />
+      </Tooltip>
     </Paper>
   )
 }
