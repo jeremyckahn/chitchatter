@@ -99,6 +99,7 @@ export function Room({
                 display: 'flex',
                 justifyContent: 'center',
                 padding: 1,
+                overflowX: 'scroll',
               }}
             >
               <RoomAudioControls peerRoom={peerRoom} />

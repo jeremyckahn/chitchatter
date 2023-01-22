@@ -12,6 +12,7 @@ import Zoom from '@mui/material/Zoom'
 
 import ExpandMore from '@mui/icons-material/ExpandMore'
 import Fullscreen from '@mui/icons-material/Fullscreen'
+import FullscreenExit from '@mui/icons-material/FullscreenExit'
 import Link from '@mui/icons-material/Link'
 import Menu from '@mui/icons-material/Menu'
 import QrCode2 from '@mui/icons-material/QrCode2'
@@ -65,7 +66,8 @@ interface ShellAppBarProps {
   onRoomControlsClick: () => void
   setIsQRCodeDialogOpen: (isOpen: boolean) => void
   showAppBar: boolean
-  setShowAppBar: (showAppBar: boolean) => void
+  isFullscreen: boolean
+  setIsFullscreen: (isFullscreen: boolean) => void
 }
 
 export const ShellAppBar = ({
@@ -80,13 +82,11 @@ export const ShellAppBar = ({
   onPeerListClick,
   onRoomControlsClick,
   showAppBar,
-  setShowAppBar,
+  isFullscreen,
+  setIsFullscreen,
 }: ShellAppBarProps) => {
   const handleQRCodeClick = () => setIsQRCodeDialogOpen(true)
-  const onFullscreen = () => {
-    document.body.requestFullscreen()
-    setShowAppBar(false)
-  }
+  const onClickFullscreen = () => setIsFullscreen(!isFullscreen)
   return (
     <>
       <Slide appear={false} in={showAppBar} mountOnEnter unmountOnExit>
@@ -147,21 +147,23 @@ export const ShellAppBar = ({
                   <IconButton
                     size="large"
                     color="inherit"
-                    aria-label="Show Room Controls"
+                    aria-label="show room controls"
                     onClick={onRoomControlsClick}
                   >
                     <RoomPreferences />
                   </IconButton>
                 </Tooltip>
-                <Tooltip title="Enter fullscreen">
+                <Tooltip
+                  title={isFullscreen ? 'Exit fullscreen' : 'Enter fullscreen'}
+                >
                   <IconButton
                     size="large"
                     edge="end"
                     color="inherit"
                     aria-label="fullscreen"
-                    onClick={onFullscreen}
+                    onClick={onClickFullscreen}
                   >
-                    <Fullscreen />
+                    {isFullscreen ? <FullscreenExit /> : <Fullscreen />}
                   </IconButton>
                 </Tooltip>
                 <Tooltip title="Click to show peer list">
@@ -185,14 +187,16 @@ export const ShellAppBar = ({
         in={!showAppBar}
         unmountOnExit
       >
-        <Fab
-          size="small"
-          aria-label="show app bar"
-          color="primary"
-          onClick={() => setShowAppBar(!showAppBar)}
-        >
-          <ExpandMore />
-        </Fab>
+        <Tooltip title="Show room controls">
+          <Fab
+            size="small"
+            aria-label="show room controls"
+            color="primary"
+            onClick={onRoomControlsClick}
+          >
+            <ExpandMore />
+          </Fab>
+        </Tooltip>
       </Zoom>
     </>
   )

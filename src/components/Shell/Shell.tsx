@@ -42,6 +42,7 @@ export const Shell = ({ appNeedsUpdate, children, userPeerId }: ShellProps) => {
   const [alertSeverity, setAlertSeverity] = useState<AlertColor>('info')
   const [showAppBar, setShowAppBar] = useState(true)
   const [showRoomControls, setShowRoomControls] = useState(true)
+  const [isFullscreen, setIsFullscreen] = useState(false)
   const [title, setTitle] = useState('')
   const [alertText, setAlertText] = useState('')
   const [numberOfPeers, setNumberOfPeers] = useState(1)
@@ -142,8 +143,28 @@ export const Shell = ({ appNeedsUpdate, children, userPeerId }: ShellProps) => {
   }, [title])
 
   useEffect(() => {
-    setShowRoomControls(showAppBar)
-  }, [showAppBar, setShowRoomControls])
+    if (isFullscreen) {
+      document.body.requestFullscreen()
+      setShowRoomControls(false)
+      setShowAppBar(false)
+    } else {
+      if (document.exitFullscreen) {
+        document.exitFullscreen()
+      } else if (document.mozCancelFullScreen) {
+        document.mozCancelFullScreen()
+      } else if (document.webkitExitFullscreen) {
+        document.webkitExitFullscreen()
+      } else if (document.msExitFullScreen) {
+        document.msExitFullScreen()
+      }
+      setShowAppBar(true)
+      setShowRoomControls(true)
+    }
+  }, [isFullscreen, setShowRoomControls, setShowAppBar])
+
+  useEffect(() => {
+    if (isFullscreen) setShowAppBar(showRoomControls)
+  }, [isFullscreen, showRoomControls, setShowAppBar])
 
   useEffect(() => {
     const handleFocus = () => {
@@ -153,11 +174,7 @@ export const Shell = ({ appNeedsUpdate, children, userPeerId }: ShellProps) => {
       setTabHasFocus(false)
     }
     const handleFullscreen = (event: Event) => {
-      if (document.fullscreenElement) {
-        setShowAppBar(false)
-      } else {
-        setShowAppBar(true)
-      }
+      setIsFullscreen(!!document.fullscreenElement)
     }
     window.addEventListener('focus', handleFocus)
     window.addEventListener('blur', handleBlur)
@@ -252,7 +269,8 @@ export const Shell = ({ appNeedsUpdate, children, userPeerId }: ShellProps) => {
             onRoomControlsClick={() => setShowRoomControls(!showRoomControls)}
             setIsQRCodeDialogOpen={setIsQRCodeDialogOpen}
             showAppBar={showAppBar}
-            setShowAppBar={setShowAppBar}
+            isFullscreen={isFullscreen}
+            setIsFullscreen={setIsFullscreen}
           />
           <Drawer
             isDrawerOpen={isDrawerOpen}

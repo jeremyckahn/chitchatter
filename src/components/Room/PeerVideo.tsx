@@ -48,7 +48,8 @@ export const PeerVideo = ({
     video.srcObject = videoStream
   }, [videoRef, videoStream])
 
-  const sizePercent = 100 / Math.sqrt(nextPerfectSquare(numberOfVideos - 1))
+  const cols = Math.sqrt(nextPerfectSquare(numberOfVideos - 1))
+  const rows = Math.ceil(numberOfVideos / cols)
 
   const handleVideoClick = () => {
     onVideoClick?.(userId, videoStreamType, videoStream)
@@ -69,8 +70,8 @@ export const PeerVideo = ({
               height: '100%',
             }
           : {
-              width: `calc(${sizePercent}% - 1em)`,
-              height: `calc(${sizePercent}% - 1em)`,
+              width: `${100 / cols}%`,
+              height: `calc(${100 / rows}% - 1em)`,
               my: 1,
             }),
         ...(selectedPeerStream &&

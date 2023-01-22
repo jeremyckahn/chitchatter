@@ -71,11 +71,11 @@ export function RoomAudioControls({ peerRoom }: RoomAudioControlsProps) {
         }
       >
         <Fab
-          color={isSpeakingToRoom ? 'success' : 'info'}
+          color={isSpeakingToRoom ? 'error' : 'success'}
           aria-label="call"
           onClick={handleVoiceCallClick}
         >
-          {isSpeakingToRoom ? <RecordVoiceOver /> : <VoiceOverOff />}
+          {isSpeakingToRoom ? <VoiceOverOff /> : <RecordVoiceOver />}
         </Fab>
       </Tooltip>
       {audioDevices.length > 0 && (

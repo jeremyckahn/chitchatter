@@ -1,5 +1,6 @@
 import { PropsWithChildren } from 'react'
 import Box from '@mui/material/Box'
+import Collapse from '@mui/material/Collapse'
 import { styled } from '@mui/material/styles'
 
 import { DrawerHeader } from './DrawerHeader'
@@ -57,7 +58,9 @@ export const RouteContent = ({
         width: '100%',
       }}
     >
-      {showAppBar && <DrawerHeader />}
+      <Collapse in={showAppBar}>
+        <DrawerHeader />
+      </Collapse>
       <Box sx={{ overflow: 'auto', flexGrow: 1 }}>{children}</Box>
     </Main>
   )
