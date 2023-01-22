@@ -161,7 +161,7 @@ export const Shell = ({ appNeedsUpdate, children, userPeerId }: ShellProps) => {
     return () => {
       window.removeEventListener('focus', handleFocus)
       window.removeEventListener('blur', handleBlur)
-      document.removeEventListener('blur', handleFullscreen)
+      document.removeEventListener('fullscreenchange', handleFullscreen)
     }
   }, [])
 
