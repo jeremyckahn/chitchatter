@@ -68,17 +68,13 @@ export const PeerVideo = ({
         ...(selectedPeerStream
           ? {
               height: '100%',
-              width: '100%',
+              width: isSelectedVideo ? '100%' : 'min-content',
             }
           : {
               width: `calc(${100 / cols}% - 1em)`,
               height: `calc(${100 / rows}% - 1em)`,
               my: 1,
             }),
-        ...(selectedPeerStream &&
-          !isSelectedVideo && {
-            width: 'min-content',
-          }),
       }}
       elevation={10}
     >
