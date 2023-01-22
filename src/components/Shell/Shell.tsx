@@ -142,21 +142,39 @@ export const Shell = ({ appNeedsUpdate, children, userPeerId }: ShellProps) => {
     document.title = title
   }, [title])
 
+  const enterFullscreen = () => {
+    const body: any = document.body
+    if (body.requestFullscreen) {
+      body.requestFullscreen()
+    } else if (body.webkitRequestFullscreen) {
+      body.webkitRequestFullscreen()
+    } else if (body.mozRequestFullScreen) {
+      body.mozRequestFullScreen()
+    } else if (body.msRequestFullscreen) {
+      body.msRequestFullscreen()
+    }
+  }
+
+  const exitFullscreen = () => {
+    const document: any = window.document
+    if (document.exitFullscreen) {
+      document.exitFullscreen()
+    } else if (document.webkitExitFullscreen) {
+      document.webkitExitFullscreen()
+    } else if (document.mozCancelFullScreen) {
+      document.mozCancelFullScreen()
+    } else if (document.msExitFullScreen) {
+      document.msExitFullScreen()
+    }
+  }
+
   useEffect(() => {
     if (isFullscreen) {
-      document.body.requestFullscreen()
+      enterFullscreen()
       setShowRoomControls(false)
       setShowAppBar(false)
     } else {
-      if (document.exitFullscreen) {
-        document.exitFullscreen()
-      } else if (document.mozCancelFullScreen) {
-        document.mozCancelFullScreen()
-      } else if (document.webkitExitFullscreen) {
-        document.webkitExitFullscreen()
-      } else if (document.msExitFullScreen) {
-        document.msExitFullScreen()
-      }
+      exitFullscreen()
       setShowAppBar(true)
       setShowRoomControls(true)
     }
