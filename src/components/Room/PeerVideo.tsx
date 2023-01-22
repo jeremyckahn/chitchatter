@@ -68,9 +68,10 @@ export const PeerVideo = ({
         ...(selectedPeerStream
           ? {
               height: '100%',
+              width: '100%',
             }
           : {
-              width: `${100 / cols}%`,
+              width: `calc(${100 / cols}% - 1em)`,
               height: `calc(${100 / rows}% - 1em)`,
               my: 1,
             }),
@@ -92,6 +93,7 @@ export const PeerVideo = ({
           marginLeft: 'auto',
           marginRight: 'auto',
           height: '100%',
+          width: '100%',
           ...(isSelfVideo && {
             transform: 'rotateY(180deg)',
           }),
