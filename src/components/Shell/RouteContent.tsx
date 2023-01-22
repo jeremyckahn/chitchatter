@@ -58,7 +58,7 @@ export const RouteContent = ({
         width: '100%',
       }}
     >
-      <Collapse in={showAppBar}>
+      <Collapse in={showAppBar} sx={{ flex: 'none' }}>
         <DrawerHeader />
       </Collapse>
       <Box sx={{ overflow: 'auto', flexGrow: 1 }}>{children}</Box>
