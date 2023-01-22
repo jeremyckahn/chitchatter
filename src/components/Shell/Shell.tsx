@@ -142,6 +142,10 @@ export const Shell = ({ appNeedsUpdate, children, userPeerId }: ShellProps) => {
   }, [title])
 
   useEffect(() => {
+    setShowRoomControls(showAppBar)
+  }, [showAppBar, setShowRoomControls])
+
+  useEffect(() => {
     const handleFocus = () => {
       setTabHasFocus(true)
     }
