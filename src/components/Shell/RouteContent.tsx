@@ -38,12 +38,14 @@ const Main = styled('main', {
 interface RouteContentProps extends PropsWithChildren {
   isDrawerOpen: boolean
   isPeerListOpen: boolean
+  showAppBar: boolean
 }
 
 export const RouteContent = ({
   children,
   isDrawerOpen,
   isPeerListOpen,
+  showAppBar,
 }: RouteContentProps) => {
   return (
     <Main
@@ -55,7 +57,7 @@ export const RouteContent = ({
         width: '100%',
       }}
     >
-      <DrawerHeader />
+      {showAppBar && <DrawerHeader />}
       <Box sx={{ overflow: 'auto', flexGrow: 1 }}>{children}</Box>
     </Main>
   )

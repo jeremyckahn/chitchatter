@@ -22,7 +22,8 @@ export function RoomHideRoomControls() {
     >
       <Tooltip title="Hide controls">
         <Fab
-          aria-label="Hide controls"
+          color="primary"
+          aria-label="hide controls"
           onClick={() => setShowRoomControls(false)}
         >
           <ExpandLess />

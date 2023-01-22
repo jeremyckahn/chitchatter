@@ -23,7 +23,7 @@ export function RoomShowMessagesControls() {
     >
       <Tooltip title={isShowingMessages ? 'Hide messages' : 'Show messages'}>
         <Fab
-          color={isShowingMessages ? 'inherit' : 'success'}
+          color="info"
           aria-label="show messages"
           onClick={() => setIsShowingMessages(!isShowingMessages)}
         >

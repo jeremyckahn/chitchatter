@@ -86,7 +86,7 @@ export function RoomFileUploadControls({
         }
       >
         <Fab
-          color={isSharingFile ? 'error' : 'success'}
+          color={isSharingFile ? 'success' : 'info'}
           aria-label="share screen"
           onClick={handleToggleScreenShareButtonClick}
           disabled={disableFileUpload}

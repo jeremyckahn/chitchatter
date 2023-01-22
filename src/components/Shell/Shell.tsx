@@ -40,6 +40,7 @@ export const Shell = ({ appNeedsUpdate, children, userPeerId }: ShellProps) => {
   const [isRoomShareDialogOpen, setIsRoomShareDialogOpen] = useState(false)
   const [doShowPeers, setDoShowPeers] = useState(false)
   const [alertSeverity, setAlertSeverity] = useState<AlertColor>('info')
+  const [showAppBar, setShowAppBar] = useState(true)
   const [showRoomControls, setShowRoomControls] = useState(true)
   const [title, setTitle] = useState('')
   const [alertText, setAlertText] = useState('')
@@ -147,11 +148,20 @@ export const Shell = ({ appNeedsUpdate, children, userPeerId }: ShellProps) => {
     const handleBlur = () => {
       setTabHasFocus(false)
     }
+    const handleFullscreen = (event: Event) => {
+      if (document.fullscreenElement) {
+        setShowAppBar(false)
+      } else {
+        setShowAppBar(true)
+      }
+    }
     window.addEventListener('focus', handleFocus)
     window.addEventListener('blur', handleBlur)
+    document.addEventListener('fullscreenchange', handleFullscreen)
     return () => {
       window.removeEventListener('focus', handleFocus)
       window.removeEventListener('blur', handleBlur)
+      document.removeEventListener('blur', handleFullscreen)
     }
   }, [])
 
@@ -237,6 +247,8 @@ export const Shell = ({ appNeedsUpdate, children, userPeerId }: ShellProps) => {
             onPeerListClick={handlePeerListClick}
             onRoomControlsClick={() => setShowRoomControls(!showRoomControls)}
             setIsQRCodeDialogOpen={setIsQRCodeDialogOpen}
+            showAppBar={showAppBar}
+            setShowAppBar={setShowAppBar}
           />
           <Drawer
             isDrawerOpen={isDrawerOpen}
@@ -251,6 +263,7 @@ export const Shell = ({ appNeedsUpdate, children, userPeerId }: ShellProps) => {
           <RouteContent
             isDrawerOpen={isDrawerOpen}
             isPeerListOpen={isPeerListOpen}
+            showAppBar={showAppBar}
           >
             <ErrorBoundary>{children}</ErrorBoundary>
           </RouteContent>
