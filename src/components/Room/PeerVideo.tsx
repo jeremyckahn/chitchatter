@@ -70,8 +70,8 @@ export const PeerVideo = ({
         marginRight: '5px',
         ...(selectedPeerStream
           ? {
-              height: '100%',
-              width: '100%',
+              height: 'calc(100% - 5px)',
+              width: 'calc(100% - 5px)',
             }
           : {
               width: `calc(${100 / cols}% - 5px)`,
