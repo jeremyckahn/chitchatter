@@ -145,26 +145,26 @@ export const Shell = ({ appNeedsUpdate, children, userPeerId }: ShellProps) => {
   const enterFullscreen = () => {
     const body: any = document.body
     if (body.requestFullscreen) {
-      body.requestFullscreen()
+      body.requestFullscreen().catch()
     } else if (body.webkitRequestFullscreen) {
-      body.webkitRequestFullscreen()
+      body.webkitRequestFullscreen().catch()
     } else if (body.mozRequestFullScreen) {
-      body.mozRequestFullScreen()
+      body.mozRequestFullScreen().catch()
     } else if (body.msRequestFullscreen) {
-      body.msRequestFullscreen()
+      body.msRequestFullscreen().catch()
     }
   }
 
   const exitFullscreen = () => {
     const document: any = window.document
     if (document.exitFullscreen) {
-      document.exitFullscreen()
+      document.exitFullscreen().catch()
     } else if (document.webkitExitFullscreen) {
-      document.webkitExitFullscreen()
+      document.webkitExitFullscreen().catch()
     } else if (document.mozCancelFullScreen) {
-      document.mozCancelFullScreen()
+      document.mozCancelFullScreen().catch()
     } else if (document.msExitFullScreen) {
-      document.msExitFullScreen()
+      document.msExitFullScreen().catch()
     }
   }
 

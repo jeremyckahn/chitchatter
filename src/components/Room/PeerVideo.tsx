@@ -65,20 +65,28 @@ export const PeerVideo = ({
         justifyContent: 'center',
         mx: 'auto',
         overflow: 'auto',
-        padding: 2,
+        padding: '0px',
+        marginBottom: '5px',
+        marginRight: '5px',
         ...(selectedPeerStream
           ? {
               height: '100%',
               width: '100%',
             }
           : {
-              width: `calc(${100 / cols}% - 1px)`,
-              height: `calc(${100 / rows}% - 1px)`,
+              width: `calc(${100 / cols}% - 5px)`,
+              height: `calc(${100 / rows}% - 5px)`,
             }),
       }}
       elevation={10}
     >
-      <Tooltip title={getPeerName(userId)}>
+      <Tooltip
+        title={getPeerName(userId)}
+        placement="top"
+        componentsProps={{
+          tooltip: { sx: { position: 'absolute', top: '25px' } },
+        }}
+      >
         <video
           playsInline
           ref={videoRef}

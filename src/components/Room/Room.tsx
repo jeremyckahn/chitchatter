@@ -1,8 +1,9 @@
-import { Dimensions } from 'react-native'
+import { useContext } from 'react'
 
-import { useContext, useState } from 'react'
+import { useWindowSize } from '@react-hook/window-size'
 
-import { Collapse } from '@mui/material'
+import Collapse from '@mui/material/Collapse'
+import Zoom from '@mui/material/Zoom'
 
 import Box from '@mui/material/Box'
 import Divider from '@mui/material/Divider'
@@ -69,9 +70,8 @@ export function Room({
 
   const { showRoomControls } = useContext(ShellContext)
 
-  const [display, setDisplay] = useState(Dimensions.get('window'))
-  Dimensions.addEventListener('change', ({ screen }) => setDisplay(screen))
-  const landscape = display.width > display.height
+  const [windowWidth, windowHeight] = useWindowSize()
+  const landscape = windowWidth > windowHeight
 
   return (
     <RoomContext.Provider value={roomContextValue}>
@@ -99,7 +99,7 @@ export function Room({
                 display: 'flex',
                 justifyContent: 'center',
                 padding: 1,
-                overflowX: 'scroll',
+                overflowX: 'auto',
               }}
             >
               <RoomAudioControls peerRoom={peerRoom} />
@@ -109,7 +109,11 @@ export function Room({
                 peerRoom={peerRoom}
                 onInlineMediaUpload={handleInlineMediaUpload}
               />
-              {showVideoDisplay && <RoomShowMessagesControls />}
+              <Zoom in={showVideoDisplay} mountOnEnter unmountOnExit>
+                <span>
+                  <RoomShowMessagesControls />
+                </span>
+              </Zoom>
               <RoomHideRoomControls />
             </Box>
           </Collapse>
