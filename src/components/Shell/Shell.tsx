@@ -142,29 +142,38 @@ export const Shell = ({ appNeedsUpdate, children, userPeerId }: ShellProps) => {
     document.title = title
   }, [title])
 
-  const enterFullscreen = () => {
+  const enterFullscreen = async () => {
     const body: any = document.body
-    if (body.requestFullscreen) {
-      body.requestFullscreen().catch()
-    } else if (body.webkitRequestFullscreen) {
-      body.webkitRequestFullscreen().catch()
-    } else if (body.mozRequestFullScreen) {
-      body.mozRequestFullScreen().catch()
-    } else if (body.msRequestFullscreen) {
-      body.msRequestFullscreen().catch()
+
+    try {
+      if (body.requestFullscreen) {
+        await body.requestFullscreen()
+      } else if (body.webkitRequestFullscreen) {
+        await body.webkitRequestFullscreen()
+      } else if (body.mozRequestFullScreen) {
+        await body.mozRequestFullScreen()
+      } else if (body.msRequestFullscreen) {
+        await body.msRequestFullscreen()
+      }
+    } catch (e) {
+      // Silence harmless errors
     }
   }
 
-  const exitFullscreen = () => {
+  const exitFullscreen = async () => {
     const document: any = window.document
-    if (document.exitFullscreen) {
-      document.exitFullscreen().catch()
-    } else if (document.webkitExitFullscreen) {
-      document.webkitExitFullscreen().catch()
-    } else if (document.mozCancelFullScreen) {
-      document.mozCancelFullScreen().catch()
-    } else if (document.msExitFullScreen) {
-      document.msExitFullScreen().catch()
+    try {
+      if (document.exitFullscreen) {
+        await document.exitFullscreen()
+      } else if (document.webkitExitFullscreen) {
+        await document.webkitExitFullscreen()
+      } else if (document.mozCancelFullScreen) {
+        await document.mozCancelFullScreen()
+      } else if (document.msExitFullScreen) {
+        await document.msExitFullScreen()
+      }
+    } catch (e) {
+      // Silence harmless errors
     }
   }
 
