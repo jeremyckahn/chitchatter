@@ -1,13 +1,22 @@
 import { styled } from '@mui/material/styles'
-import MuiAppBar, { AppBarProps as MuiAppBarProps } from '@mui/material/AppBar'
-import Toolbar from '@mui/material/Toolbar'
-import Typography from '@mui/material/Typography'
-import StepIcon from '@mui/material/StepIcon'
-import Tooltip from '@mui/material/Tooltip'
+
 import IconButton from '@mui/material/IconButton'
-import MenuIcon from '@mui/icons-material/Menu'
-import LinkIcon from '@mui/icons-material/Link'
-import QrCode2Icon from '@mui/icons-material/QrCode2'
+import MuiAppBar, { AppBarProps as MuiAppBarProps } from '@mui/material/AppBar'
+import Fab from '@mui/material/Fab'
+import StepIcon from '@mui/material/StepIcon'
+import Toolbar from '@mui/material/Toolbar'
+import Tooltip from '@mui/material/Tooltip'
+import Typography from '@mui/material/Typography'
+import Slide from '@mui/material/Slide'
+import Zoom from '@mui/material/Zoom'
+
+import ExpandMore from '@mui/icons-material/ExpandMore'
+import Fullscreen from '@mui/icons-material/Fullscreen'
+import FullscreenExit from '@mui/icons-material/FullscreenExit'
+import Link from '@mui/icons-material/Link'
+import Menu from '@mui/icons-material/Menu'
+import QrCode2 from '@mui/icons-material/QrCode2'
+import RoomPreferences from '@mui/icons-material/RoomPreferences'
 
 import { drawerWidth } from './Drawer'
 import { peerListWidth } from './PeerList'
@@ -54,7 +63,11 @@ interface ShellAppBarProps {
   numberOfPeers: number
   title: string
   onPeerListClick: () => void
+  onRoomControlsClick: () => void
   setIsQRCodeDialogOpen: (isOpen: boolean) => void
+  showAppBar: boolean
+  isFullscreen: boolean
+  setIsFullscreen: (isFullscreen: boolean) => void
 }
 
 export const ShellAppBar = ({
@@ -67,76 +80,124 @@ export const ShellAppBar = ({
   numberOfPeers,
   title,
   onPeerListClick,
+  onRoomControlsClick,
+  showAppBar,
+  isFullscreen,
+  setIsFullscreen,
 }: ShellAppBarProps) => {
   const handleQRCodeClick = () => setIsQRCodeDialogOpen(true)
+  const onClickFullscreen = () => setIsFullscreen(!isFullscreen)
   return (
-    <AppBar
-      position="fixed"
-      isDrawerOpen={isDrawerOpen}
-      isPeerListOpen={isPeerListOpen}
-    >
-      <Toolbar
-        variant="regular"
-        sx={{
-          display: 'flex',
-          flexDirection: 'row',
-          justifyContent: 'space-between',
-        }}
-      >
-        <IconButton
-          size="large"
-          edge="start"
-          color="inherit"
-          aria-label="Open menu"
-          sx={{ mr: 2, ...(isDrawerOpen && { display: 'none' }) }}
-          onClick={onDrawerOpen}
+    <>
+      <Slide appear={false} in={showAppBar} mountOnEnter unmountOnExit>
+        <AppBar
+          position="fixed"
+          isDrawerOpen={isDrawerOpen}
+          isPeerListOpen={isPeerListOpen}
         >
-          <MenuIcon />
-        </IconButton>
-        <Typography
-          variant="h6"
-          noWrap
-          component="div"
-          sx={{ marginRight: 'auto' }}
-        >
-          {title}
-        </Typography>
-        <Tooltip title="Copy current URL">
-          <IconButton
-            size="large"
-            color="inherit"
-            aria-label="Copy current URL"
-            onClick={onLinkButtonClick}
+          <Toolbar
+            variant="regular"
+            sx={{
+              display: 'flex',
+              flexDirection: 'row',
+              justifyContent: 'space-between',
+            }}
           >
-            <LinkIcon />
-          </IconButton>
+            <IconButton
+              size="large"
+              edge="start"
+              color="inherit"
+              aria-label="Open menu"
+              sx={{ mr: 2, ...(isDrawerOpen && { display: 'none' }) }}
+              onClick={onDrawerOpen}
+            >
+              <Menu />
+            </IconButton>
+            <Typography
+              variant="h6"
+              noWrap
+              component="div"
+              sx={{ marginRight: 'auto' }}
+            >
+              {title}
+            </Typography>
+            <Tooltip title="Copy current URL">
+              <IconButton
+                size="large"
+                color="inherit"
+                aria-label="Copy current URL"
+                onClick={onLinkButtonClick}
+              >
+                <Link />
+              </IconButton>
+            </Tooltip>
+            {doShowPeers ? (
+              <>
+                <Tooltip title="Show QR Code">
+                  <IconButton
+                    size="large"
+                    color="inherit"
+                    aria-label="Show QR Code"
+                    onClick={handleQRCodeClick}
+                  >
+                    <QrCode2 />
+                  </IconButton>
+                </Tooltip>
+                <Tooltip title="Show Room Controls">
+                  <IconButton
+                    size="large"
+                    color="inherit"
+                    aria-label="show room controls"
+                    onClick={onRoomControlsClick}
+                  >
+                    <RoomPreferences />
+                  </IconButton>
+                </Tooltip>
+                <Tooltip
+                  title={isFullscreen ? 'Exit fullscreen' : 'Enter fullscreen'}
+                >
+                  <IconButton
+                    size="large"
+                    edge="end"
+                    color="inherit"
+                    aria-label="fullscreen"
+                    onClick={onClickFullscreen}
+                  >
+                    {isFullscreen ? <FullscreenExit /> : <Fullscreen />}
+                  </IconButton>
+                </Tooltip>
+                <Tooltip title="Click to show peer list">
+                  <IconButton
+                    size="large"
+                    edge="end"
+                    color="inherit"
+                    aria-label="Peer list"
+                    onClick={onPeerListClick}
+                  >
+                    <StepIcon icon={numberOfPeers} />
+                  </IconButton>
+                </Tooltip>
+              </>
+            ) : null}
+          </Toolbar>
+        </AppBar>
+      </Slide>
+      <Zoom
+        style={{ position: 'absolute', left: '16px', top: '16px' }}
+        in={!showAppBar}
+        unmountOnExit
+      >
+        <Tooltip title="Show room controls">
+          <Fab
+            size="small"
+            aria-label="show room controls"
+            color="primary"
+            onClick={onRoomControlsClick}
+          >
+            <ExpandMore />
+          </Fab>
         </Tooltip>
-        {doShowPeers ? (
-          <>
-            <Tooltip title="Show QR Code">
-              <IconButton
-                size="large"
-                color="inherit"
-                aria-label="Show QR Code"
-                onClick={handleQRCodeClick}
-              >
-                <QrCode2Icon />
-              </IconButton>
-            </Tooltip>
-            <Tooltip title="Click to show peer list">
-              <IconButton
-                size="large"
-                edge="end"
-                color="inherit"
-                aria-label="Peer list"
-                onClick={onPeerListClick}
-              >
-                <StepIcon icon={numberOfPeers} />
-              </IconButton>
-            </Tooltip>
-          </>
-        ) : null}
-      </Toolbar>
-    </AppBar>
+      </Zoom>
+    </>
   )
 }

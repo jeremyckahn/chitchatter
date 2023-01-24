@@ -8,6 +8,8 @@ interface ShellContextProps {
   tabHasFocus: boolean
   setDoShowPeers: Dispatch<SetStateAction<boolean>>
   setNumberOfPeers: Dispatch<SetStateAction<number>>
+  showRoomControls: boolean
+  setShowRoomControls: Dispatch<SetStateAction<boolean>>
   setTitle: Dispatch<SetStateAction<string>>
   showAlert: (message: string, options?: AlertOptions) => void
   roomId?: string
@@ -31,6 +33,8 @@ export const ShellContext = createContext<ShellContextProps>({
   tabHasFocus: true,
   setDoShowPeers: () => {},
   setNumberOfPeers: () => {},
+  showRoomControls: false,
+  setShowRoomControls: () => {},
   setTitle: () => {},
   showAlert: () => {},
   roomId: undefined,

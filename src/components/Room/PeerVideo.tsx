@@ -1,7 +1,8 @@
 import { useEffect, useRef } from 'react'
 import Paper from '@mui/material/Paper'
+import Tooltip from '@mui/material/Tooltip'
 
-import { PeerNameDisplay } from 'components/PeerNameDisplay'
+import { getPeerName } from 'components/PeerNameDisplay'
 import { VideoStreamType } from 'models/chat'
 
 import { SelectedPeerStream } from './RoomVideoDisplay'
@@ -48,7 +49,8 @@ export const PeerVideo = ({
     video.srcObject = videoStream
   }, [videoRef, videoStream])
 
-  const sizePercent = 100 / Math.sqrt(nextPerfectSquare(numberOfVideos - 1))
+  const cols = Math.sqrt(nextPerfectSquare(numberOfVideos - 1))
+  const rows = Math.ceil(numberOfVideos / cols)
 
   const handleVideoClick = () => {
     onVideoClick?.(userId, videoStreamType, videoStream)
@@ -63,44 +65,46 @@ export const PeerVideo = ({
         justifyContent: 'center',
         mx: 'auto',
         overflow: 'auto',
-        padding: 2,
+        padding: '0px',
+        marginBottom: '5px',
+        marginRight: '5px',
         ...(selectedPeerStream
           ? {
-              height: '100%',
+              height: 'calc(100% - 5px)',
+              width: 'calc(100% - 5px)',
             }
           : {
-              width: `calc(${sizePercent}% - 1em)`,
-              height: `calc(${sizePercent}% - 1em)`,
-              my: 1,
+              width: `calc(${100 / cols}% - 5px)`,
+              height: `calc(${100 / rows}% - 5px)`,
             }),
-        ...(selectedPeerStream &&
-          !isSelectedVideo && {
-            width: 'min-content',
-          }),
       }}
       elevation={10}
     >
-      <video
-        playsInline
-        ref={videoRef}
-        onClick={handleVideoClick}
-        style={{
-          borderRadius: '.25em',
-          cursor: 'pointer',
-          overflow: 'auto',
-          marginLeft: 'auto',
-          marginRight: 'auto',
-          height: '100%',
-          ...(isSelfVideo && {
-            transform: 'rotateY(180deg)',
-          }),
+      <Tooltip
+        title={getPeerName(userId)}
+        placement="top"
+        componentsProps={{
+          tooltip: { sx: { position: 'absolute', top: '25px' } },
         }}
-      />
-      <PeerNameDisplay
-        sx={{ textAlign: 'center', display: 'block', marginTop: 1, px: 1 }}
       >
-        {userId}
-      </PeerNameDisplay>
+        <video
+          playsInline
+          ref={videoRef}
+          onClick={handleVideoClick}
+          style={{
+            borderRadius: '.25em',
+            cursor: 'pointer',
+            overflow: 'auto',
+            marginLeft: 'auto',
+            marginRight: 'auto',
+            height: '100%',
+            width: '100%',
+            ...(isSelfVideo && {
+              transform: 'rotateY(180deg)',
+            }),
+          }}
+        />
+      </Tooltip>
     </Paper>
   )
 }

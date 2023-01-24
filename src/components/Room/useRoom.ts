@@ -88,6 +88,9 @@ export function useRoom(
     _setMessageLog(messages.slice(-messageTranscriptSizeLimit))
   }
 
+  const [isShowingMessages, setIsShowingMessages] = useState(true)
+  const [unreadMessages, setUnreadMessages] = useState(0)
+
   const [selfVideoStream, setSelfVideoStream] = useState<MediaStream | null>(
     null
   )
@@ -110,6 +113,9 @@ export function useRoom(
     () => ({
       isPrivate,
       isMessageSending,
+      isShowingMessages,
+      setIsShowingMessages,
+      unreadMessages,
       selfVideoStream,
       setSelfVideoStream,
       peerVideoStreams,
@@ -124,6 +130,9 @@ export function useRoom(
     [
       isPrivate,
       isMessageSending,
+      isShowingMessages,
+      setIsShowingMessages,
+      unreadMessages,
       selfVideoStream,
       setSelfVideoStream,
       peerVideoStreams,
@@ -167,6 +176,10 @@ export function useRoom(
       setDoShowPeers(false)
     }
   }, [setDoShowPeers])
+
+  useEffect(() => {
+    if (isShowingMessages) setUnreadMessages(0)
+  }, [isShowingMessages, setUnreadMessages])
 
   const [sendPeerId, receivePeerId] = usePeerRoomAction<string>(
     peerRoom,
@@ -234,7 +247,11 @@ export function useRoom(
   receivePeerMessage(message => {
     const userSettings = settingsContext.getUserSettings()
 
-    if (!tabHasFocus) {
+    if (!isShowingMessages) {
+      setUnreadMessages(unreadMessages + 1)
+    }
+
+    if (!tabHasFocus || !isShowingMessages) {
       if (userSettings.playSoundOnNewMessage) {
         newMessageAudio.play()
       }
@@ -301,6 +318,8 @@ export function useRoom(
       selfScreenStream ||
       Object.values({ ...peerVideoStreams, ...peerScreenStreams }).length > 0
   )
+
+  if (!showVideoDisplay && !isShowingMessages) setIsShowingMessages(true)
 
   const handleInlineMediaUpload = async (files: File[]) => {
     const fileOfferId = await fileTransfer.offer(files)

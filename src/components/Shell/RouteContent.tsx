@@ -1,5 +1,6 @@
 import { PropsWithChildren } from 'react'
 import Box from '@mui/material/Box'
+import Collapse from '@mui/material/Collapse'
 import { styled } from '@mui/material/styles'
 
 import { DrawerHeader } from './DrawerHeader'
@@ -38,12 +39,14 @@ const Main = styled('main', {
 interface RouteContentProps extends PropsWithChildren {
   isDrawerOpen: boolean
   isPeerListOpen: boolean
+  showAppBar: boolean
 }
 
 export const RouteContent = ({
   children,
   isDrawerOpen,
   isPeerListOpen,
+  showAppBar,
 }: RouteContentProps) => {
   return (
     <Main
@@ -55,7 +58,9 @@ export const RouteContent = ({
         width: '100%',
       }}
     >
-      <DrawerHeader />
+      <Collapse in={showAppBar} sx={{ flex: 'none' }}>
+        <DrawerHeader />
+      </Collapse>
       <Box sx={{ overflow: 'auto', flexGrow: 1 }}>{children}</Box>
     </Main>
   )

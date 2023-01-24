@@ -40,6 +40,9 @@ export const Shell = ({ appNeedsUpdate, children, userPeerId }: ShellProps) => {
   const [isRoomShareDialogOpen, setIsRoomShareDialogOpen] = useState(false)
   const [doShowPeers, setDoShowPeers] = useState(false)
   const [alertSeverity, setAlertSeverity] = useState<AlertColor>('info')
+  const [showAppBar, setShowAppBar] = useState(true)
+  const [showRoomControls, setShowRoomControls] = useState(true)
+  const [isFullscreen, setIsFullscreen] = useState(false)
   const [title, setTitle] = useState('')
   const [alertText, setAlertText] = useState('')
   const [numberOfPeers, setNumberOfPeers] = useState(1)
@@ -67,6 +70,8 @@ export const Shell = ({ appNeedsUpdate, children, userPeerId }: ShellProps) => {
       tabHasFocus,
       setDoShowPeers,
       setNumberOfPeers,
+      showRoomControls,
+      setShowRoomControls,
       setTitle,
       showAlert,
       isPeerListOpen,
@@ -97,6 +102,8 @@ export const Shell = ({ appNeedsUpdate, children, userPeerId }: ShellProps) => {
       tabHasFocus,
       setDoShowPeers,
       setNumberOfPeers,
+      showRoomControls,
+      setShowRoomControls,
       setTitle,
       showAlert,
       audioState,
@@ -135,6 +142,57 @@ export const Shell = ({ appNeedsUpdate, children, userPeerId }: ShellProps) => {
     document.title = title
   }, [title])
 
+  const enterFullscreen = async () => {
+    const body: any = document.body
+
+    try {
+      if (body.requestFullscreen) {
+        await body.requestFullscreen()
+      } else if (body.webkitRequestFullscreen) {
+        await body.webkitRequestFullscreen()
+      } else if (body.mozRequestFullScreen) {
+        await body.mozRequestFullScreen()
+      } else if (body.msRequestFullscreen) {
+        await body.msRequestFullscreen()
+      }
+    } catch (e) {
+      // Silence harmless errors
+    }
+  }
+
+  const exitFullscreen = async () => {
+    const document: any = window.document
+    try {
+      if (document.exitFullscreen) {
+        await document.exitFullscreen()
+      } else if (document.webkitExitFullscreen) {
+        await document.webkitExitFullscreen()
+      } else if (document.mozCancelFullScreen) {
+        await document.mozCancelFullScreen()
+      } else if (document.msExitFullScreen) {
+        await document.msExitFullScreen()
+      }
+    } catch (e) {
+      // Silence harmless errors
+    }
+  }
+
+  useEffect(() => {
+    if (isFullscreen) {
+      enterFullscreen()
+      setShowRoomControls(false)
+      setShowAppBar(false)
+    } else {
+      exitFullscreen()
+      setShowAppBar(true)
+      setShowRoomControls(true)
+    }
+  }, [isFullscreen, setShowRoomControls, setShowAppBar])
+
+  useEffect(() => {
+    if (isFullscreen) setShowAppBar(showRoomControls)
+  }, [isFullscreen, showRoomControls, setShowAppBar])
+
   useEffect(() => {
     const handleFocus = () => {
       setTabHasFocus(true)
@@ -142,11 +200,16 @@ export const Shell = ({ appNeedsUpdate, children, userPeerId }: ShellProps) => {
     const handleBlur = () => {
       setTabHasFocus(false)
     }
+    const handleFullscreen = (event: Event) => {
+      setIsFullscreen(!!document.fullscreenElement)
+    }
     window.addEventListener('focus', handleFocus)
     window.addEventListener('blur', handleBlur)
+    document.addEventListener('fullscreenchange', handleFullscreen)
     return () => {
       window.removeEventListener('focus', handleFocus)
       window.removeEventListener('blur', handleBlur)
+      document.removeEventListener('fullscreenchange', handleFullscreen)
     }
   }, [])
 
@@ -230,7 +293,11 @@ export const Shell = ({ appNeedsUpdate, children, userPeerId }: ShellProps) => {
             numberOfPeers={numberOfPeers}
             title={title}
             onPeerListClick={handlePeerListClick}
+            onRoomControlsClick={() => setShowRoomControls(!showRoomControls)}
             setIsQRCodeDialogOpen={setIsQRCodeDialogOpen}
+            showAppBar={showAppBar}
+            isFullscreen={isFullscreen}
+            setIsFullscreen={setIsFullscreen}
           />
           <Drawer
             isDrawerOpen={isDrawerOpen}
@@ -245,6 +312,7 @@ export const Shell = ({ appNeedsUpdate, children, userPeerId }: ShellProps) => {
           <RouteContent
             isDrawerOpen={isDrawerOpen}
             isPeerListOpen={isPeerListOpen}
+            showAppBar={showAppBar}
           >
             <ErrorBoundary>{children}</ErrorBoundary>
           </RouteContent>
