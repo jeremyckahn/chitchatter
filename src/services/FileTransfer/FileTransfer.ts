@@ -1,12 +1,17 @@
 import WebTorrent, { Torrent } from 'webtorrent'
 import streamSaver from 'streamsaver'
 // @ts-ignore
+import { Keychain } from 'wormhole-crypto'
+// @ts-ignore
 import idbChunkStore from 'idb-chunk-store'
 import { detectIncognito } from 'detectincognitojs'
 
 import { trackerUrls } from 'config/trackerUrls'
 import { streamSaverUrl } from 'config/streamSaverUrl'
 
+import { ReadableWebToNodeStream } from 'readable-web-to-node-stream'
+
+const keychain = new Keychain()
 streamSaver.mitm = streamSaverUrl
 
 interface DownloadOpts {
@@ -119,12 +124,26 @@ export class FileTransfer {
     return torrent.files
   }
 
-  async offer(files: Parameters<typeof this.webTorrentClient.seed>[0]) {
+  async offer(files: File[] | FileList) {
     const { isPrivate } = await detectIncognito()
+
+    const filesToSeed: File[] =
+      files instanceof FileList ? Array.from(files) : files
+
+    const encryptedFiles = await Promise.all(
+      filesToSeed.map(async file => {
+        const encryptedStream = await keychain.encryptStream(file.stream())
+
+        // WebTorrent only accepts Node-style ReadableStreams
+        const nodeStream = new ReadableWebToNodeStream(encryptedStream)
+        return nodeStream
+      })
+    )
 
     const torrent = await new Promise<Torrent>(res => {
       this.webTorrentClient.seed(
-        files,
+        // @ts-ignore
+        encryptedFiles,
         {
           announce: trackerUrls,
           // If the user is using their browser's private mode, IndexedDB will
