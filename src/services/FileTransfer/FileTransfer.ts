@@ -10,9 +10,20 @@ import { trackerUrls } from 'config/trackerUrls'
 import { streamSaverUrl } from 'config/streamSaverUrl'
 
 import { ReadableWebToNodeStream } from 'readable-web-to-node-stream'
+// @ts-ignore
+import nodeToWebStream from 'readable-stream-node-to-web'
 
-const keychain = new Keychain()
 streamSaver.mitm = streamSaverUrl
+
+const getKeychain = () => {
+  // FIXME: Get key from room name
+  const encoder = new TextEncoder()
+  const keychain = new Keychain(
+    encoder.encode(new Array(50).join('.').slice(0, 16))
+  )
+
+  return keychain
+}
 
 interface DownloadOpts {
   doSave?: boolean
@@ -27,48 +38,18 @@ export class FileTransfer {
   private async saveTorrentFiles(torrent: Torrent) {
     for (const file of torrent.files) {
       try {
-        await new Promise<void>((resolve, reject) => {
-          const fileStream = streamSaver.createWriteStream(file.name, {
-            size: file.length,
-          })
+        const readStream: ReadableStream = await getKeychain().decryptStream(
+          nodeToWebStream(file.createReadStream())
+        )
 
-          const writeStream = fileStream.getWriter()
-          const readStream = file.createReadStream()
-          let aborted = false
-
-          const handleData = async (data: ArrayBuffer) => {
-            try {
-              await writeStream.write(data)
-            } catch (e) {
-              writeStream.abort()
-              readStream.off('data', handleData)
-              aborted = true
-              reject()
-            }
-          }
-
-          const handleBeforePageUnloadForFile = () => {
-            // Clean up any broken downloads
-            writeStream.abort()
-          }
-
-          window.addEventListener('beforeunload', handleBeforePageUnloadForFile)
-
-          const handleEnd = async () => {
-            window.removeEventListener(
-              'beforeunload',
-              handleBeforePageUnloadForFile
-            )
-
-            if (aborted) return
-
-            await writeStream.close()
-            resolve()
-          }
-
-          readStream.on('data', handleData).on('end', handleEnd)
+        // FIXME: Get ream file name and size
+        const fileStream = streamSaver.createWriteStream(file.name, {
+          // size: file.length,
         })
+
+        await readStream.pipeTo(fileStream)
       } catch (e) {
+        console.error(e)
         throw new Error('Download aborted')
       }
     }
@@ -132,7 +113,7 @@ export class FileTransfer {
 
     const encryptedFiles = await Promise.all(
       filesToSeed.map(async file => {
-        const encryptedStream = await keychain.encryptStream(file.stream())
+        const encryptedStream = await getKeychain().encryptStream(file.stream())
 
         // WebTorrent only accepts Node-style ReadableStreams
         const nodeStream = new ReadableWebToNodeStream(encryptedStream)
