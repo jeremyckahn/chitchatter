@@ -1,7 +1,7 @@
 import WebTorrent, { Torrent } from 'webtorrent'
 import streamSaver from 'streamsaver'
 // @ts-ignore
-import { Keychain } from 'wormhole-crypto'
+import { Keychain, plaintextSize } from 'wormhole-crypto'
 // @ts-ignore
 import idbChunkStore from 'idb-chunk-store'
 import { detectIncognito } from 'detectincognitojs'
@@ -38,13 +38,14 @@ export class FileTransfer {
   private async saveTorrentFiles(torrent: Torrent) {
     for (const file of torrent.files) {
       try {
-        const readStream: ReadableStream = await getKeychain().decryptStream(
+        const keychain = getKeychain()
+        const readStream: ReadableStream = await keychain.decryptStream(
           nodeToWebStream(file.createReadStream())
         )
 
-        // FIXME: Get ream file name and size
+        // FIXME: Get real file name
         const fileStream = streamSaver.createWriteStream(file.name, {
-          // size: file.length,
+          size: plaintextSize(file.length),
         })
 
         await readStream.pipeTo(fileStream)
