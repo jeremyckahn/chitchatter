@@ -38,7 +38,14 @@ export const PeerDownloadFileButton = ({
     setDownloadProgress(null)
 
     try {
-      await fileTransfer.download(offeredFileId, { doSave: true, onProgress })
+      if (typeof shellContext.roomId !== 'string') {
+        throw new Error('shellContext.roomId is not a string')
+      }
+
+      await fileTransfer.download(offeredFileId, shellContext.roomId, {
+        doSave: true,
+        onProgress,
+      })
     } catch (e) {
       if (isError(e)) {
         shellContext.showAlert(e.message, {

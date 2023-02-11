@@ -322,7 +322,7 @@ export function useRoom(
   if (!showVideoDisplay && !isShowingMessages) setIsShowingMessages(true)
 
   const handleInlineMediaUpload = async (files: File[]) => {
-    const fileOfferId = await fileTransfer.offer(files)
+    const fileOfferId = await fileTransfer.offer(files, roomId)
 
     const unsentInlineMedia: UnsentInlineMedia = {
       authorId: userId,

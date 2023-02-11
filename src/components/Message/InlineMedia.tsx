@@ -1,10 +1,11 @@
-import { useEffect, useRef, useState } from 'react'
+import { useContext, useEffect, useRef, useState } from 'react'
 import { TorrentFile } from 'webtorrent'
 import { ReadableWebToNodeStream } from 'readable-web-to-node-stream'
 import CircularProgress from '@mui/material/CircularProgress'
+import { Typography } from '@mui/material'
 
 import { fileTransfer } from 'services/FileTransfer'
-import { Typography } from '@mui/material'
+import { ShellContext } from 'contexts/ShellContext'
 
 type TorrentFiles = Awaited<ReturnType<typeof fileTransfer.download>>
 
@@ -19,6 +20,7 @@ interface InlineFileProps {
 export const InlineFile = ({ file }: InlineFileProps) => {
   const containerRef = useRef(null)
   const [didRenderingMediaFail, setDidRenderingMediaFail] = useState(false)
+  const shellContext = useContext(ShellContext)
 
   useEffect(() => {
     ;(async () => {
@@ -27,8 +29,15 @@ export const InlineFile = ({ file }: InlineFileProps) => {
       if (!container) return
 
       try {
+        if (typeof shellContext.roomId !== 'string') {
+          throw new Error('shellContext.roomId is not a string')
+        }
+
         const readStream: NodeJS.ReadableStream = new ReadableWebToNodeStream(
-          await fileTransfer.getDecryptedFileReadStream(file)
+          await fileTransfer.getDecryptedFileReadStream(
+            file,
+            shellContext.roomId
+          )
           // ReadableWebToNodeStream is the same as NodeJS.ReadableStream. The
           // library's typing is wrong.
         ) as any
@@ -47,7 +56,7 @@ export const InlineFile = ({ file }: InlineFileProps) => {
         setDidRenderingMediaFail(true)
       }
     })()
-  }, [file, containerRef])
+  }, [file, containerRef, shellContext.roomId])
 
   return (
     <div ref={containerRef}>
@@ -63,16 +72,20 @@ export const InlineFile = ({ file }: InlineFileProps) => {
 export const InlineMedia = ({ magnetURI }: InlineMediaProps) => {
   const [hasDownloadInitiated, setHasDownloadInitiated] = useState(false)
   const [downloadedFiles, setDownloadedFiles] = useState<TorrentFiles>([])
+  const shellContext = useContext(ShellContext)
 
   useEffect(() => {
     ;(async () => {
       if (hasDownloadInitiated) return
+      if (typeof shellContext.roomId !== 'string') {
+        throw new Error('shellContext.roomId is not a string')
+      }
 
       setHasDownloadInitiated(true)
-      const files = await fileTransfer.download(magnetURI)
+      const files = await fileTransfer.download(magnetURI, shellContext.roomId)
       setDownloadedFiles(files)
     })()
-  }, [hasDownloadInitiated, magnetURI])
+  }, [hasDownloadInitiated, magnetURI, shellContext.roomId])
 
   return (
     <>

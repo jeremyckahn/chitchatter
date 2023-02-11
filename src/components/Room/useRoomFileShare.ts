@@ -121,7 +121,11 @@ export function useRoomFileShare({
     setSharedFiles(files)
     setIsFileSharingEnabled(false)
 
-    const magnetURI = await fileTransfer.offer(files)
+    if (typeof shellContext.roomId !== 'string') {
+      throw new Error('shellContext.roomId is not a string')
+    }
+
+    const magnetURI = await fileTransfer.offer(files, shellContext.roomId)
 
     if (inlineMediaFiles.length > 0) {
       onInlineMediaUpload(inlineMediaFiles)

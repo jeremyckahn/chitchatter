@@ -19,12 +19,17 @@ interface NamedReadableWebToNodeStream extends ReadableWebToNodeStream {
   name?: string
 }
 
-const getKeychain = () => {
-  // FIXME: Get key from room name
+const getKeychain = (password: string) => {
   const encoder = new TextEncoder()
-  const keychain = new Keychain(
-    encoder.encode(new Array(50).join('.').slice(0, 16))
-  )
+  const keyLength = 16
+  const key = password
+    .concat(new Array(keyLength).join('0'))
+    .slice(0, keyLength)
+  const salt = window.location.origin
+    .concat(new Array(keyLength).join('0'))
+    .slice(0, keyLength)
+
+  const keychain = new Keychain(encoder.encode(key), encoder.encode(salt))
 
   return keychain
 }
@@ -39,10 +44,10 @@ export class FileTransfer {
 
   private torrents: Record<Torrent['magnetURI'], Torrent> = {}
 
-  private async saveTorrentFiles(torrent: Torrent) {
+  private async saveTorrentFiles(torrent: Torrent, password: string) {
     for (const file of torrent.files) {
       try {
-        const readStream = await this.getDecryptedFileReadStream(file)
+        const readStream = await this.getDecryptedFileReadStream(file, password)
 
         const writeStream = streamSaver.createWriteStream(file.name, {
           size: plaintextSize(file.length),
@@ -60,8 +65,8 @@ export class FileTransfer {
     window.addEventListener('beforeunload', this.handleBeforePageUnload)
   }
 
-  async getDecryptedFileReadStream(file: TorrentFile) {
-    const keychain = getKeychain()
+  async getDecryptedFileReadStream(file: TorrentFile, password: string) {
+    const keychain = getKeychain(password)
     const readStream: ReadableStream = await keychain.decryptStream(
       nodeToWebStream(file.createReadStream())
     )
@@ -69,7 +74,11 @@ export class FileTransfer {
     return readStream
   }
 
-  async download(magnetURI: string, { onProgress, doSave }: DownloadOpts = {}) {
+  async download(
+    magnetURI: string,
+    password: string,
+    { onProgress, doSave }: DownloadOpts = {}
+  ) {
     let torrent = this.torrents[magnetURI]
 
     if (!torrent) {
@@ -103,7 +112,7 @@ export class FileTransfer {
 
     if (doSave) {
       try {
-        await this.saveTorrentFiles(torrent)
+        await this.saveTorrentFiles(torrent, password)
       } catch (e) {
         torrent.off('download', handleDownload)
 
@@ -115,7 +124,7 @@ export class FileTransfer {
     return torrent.files
   }
 
-  async offer(files: File[] | FileList) {
+  async offer(files: File[] | FileList, password: string) {
     const { isPrivate } = await detectIncognito()
 
     const filesToSeed: File[] =
@@ -124,7 +133,9 @@ export class FileTransfer {
     // FIXME: Show a notification that file is being encrypted
     const encryptedFiles = await Promise.all(
       filesToSeed.map(async file => {
-        const encryptedStream = await getKeychain().encryptStream(file.stream())
+        const encryptedStream = await getKeychain(password).encryptStream(
+          file.stream()
+        )
 
         // WebTorrent only accepts Node-style ReadableStreams
         const nodeStream: NamedReadableWebToNodeStream =
