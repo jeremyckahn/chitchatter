@@ -4,6 +4,7 @@ import UploadFile from '@mui/icons-material/UploadFile'
 import Cancel from '@mui/icons-material/Cancel'
 import Fab from '@mui/material/Fab'
 import Tooltip from '@mui/material/Tooltip'
+import CircularProgress from '@mui/material/CircularProgress'
 
 import { RoomContext } from 'contexts/RoomContext'
 import { PeerRoom } from 'services/PeerRoom/PeerRoom'
@@ -60,6 +61,8 @@ export function RoomFileUploadControls({
 
   const disableFileUpload = !isFileSharingEnabled || isMessageSending
 
+  const buttonIcon = isSharingFile ? <Cancel /> : <UploadFile />
+
   return (
     <Box
       sx={{
@@ -91,7 +94,11 @@ export function RoomFileUploadControls({
           onClick={handleToggleScreenShareButtonClick}
           disabled={disableFileUpload}
         >
-          {isSharingFile ? <Cancel /> : <UploadFile />}
+          {isFileSharingEnabled ? (
+            buttonIcon
+          ) : (
+            <CircularProgress variant="indeterminate" color="inherit" />
+          )}
         </Fab>
       </Tooltip>
     </Box>
