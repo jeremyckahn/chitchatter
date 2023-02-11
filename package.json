@@ -32,6 +32,8 @@
     "react-router-dom": "^6.3.0",
     "react-scripts": "5.0.1",
     "react-syntax-highlighter": "^15.5.0",
+    "readable-stream-node-to-web": "^1.0.1",
+    "readable-web-to-node-stream": "^3.0.2",
     "remark-gfm": "^3.0.1",
     "sass": "^1.54.3",
     "streamsaver": "^2.0.6",
@@ -41,7 +43,8 @@
     "typescript": "^4.7.4",
     "uuid": "^8.3.2",
     "web-vitals": "^2.1.4",
-    "webtorrent": "^1.9.4"
+    "webtorrent": "^1.9.4",
+    "wormhole-crypto": "^0.3.1"
   },
   "scripts": {
     "start": "react-scripts start",

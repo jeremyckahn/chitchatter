@@ -1,5 +1,7 @@
-import WebTorrent, { Torrent } from 'webtorrent'
+import WebTorrent, { Torrent, TorrentFile } from 'webtorrent'
 import streamSaver from 'streamsaver'
+// @ts-ignore
+import { Keychain, plaintextSize } from 'wormhole-crypto'
 // @ts-ignore
 import idbChunkStore from 'idb-chunk-store'
 import { detectIncognito } from 'detectincognitojs'
@@ -7,7 +9,27 @@ import { detectIncognito } from 'detectincognitojs'
 import { trackerUrls } from 'config/trackerUrls'
 import { streamSaverUrl } from 'config/streamSaverUrl'
 
+import { ReadableWebToNodeStream } from 'readable-web-to-node-stream'
+// @ts-ignore
+import nodeToWebStream from 'readable-stream-node-to-web'
+
 streamSaver.mitm = streamSaverUrl
+
+interface NamedReadableWebToNodeStream extends NodeJS.ReadableStream {
+  name?: string
+}
+
+const getKeychain = (password: string) => {
+  const encoder = new TextEncoder()
+  const keyLength = 16
+  const padding = new Array(keyLength).join('0')
+  const key = password.concat(padding).slice(0, keyLength)
+  const salt = window.location.origin.concat(padding).slice(0, keyLength)
+
+  const keychain = new Keychain(encoder.encode(key), encoder.encode(salt))
+
+  return keychain
+}
 
 interface DownloadOpts {
   doSave?: boolean
@@ -19,51 +41,18 @@ export class FileTransfer {
 
   private torrents: Record<Torrent['magnetURI'], Torrent> = {}
 
-  private async saveTorrentFiles(torrent: Torrent) {
+  private async saveTorrentFiles(torrent: Torrent, password: string) {
     for (const file of torrent.files) {
       try {
-        await new Promise<void>((resolve, reject) => {
-          const fileStream = streamSaver.createWriteStream(file.name, {
-            size: file.length,
-          })
+        const readStream = await this.getDecryptedFileReadStream(file, password)
 
-          const writeStream = fileStream.getWriter()
-          const readStream = file.createReadStream()
-          let aborted = false
-
-          const handleData = async (data: ArrayBuffer) => {
-            try {
-              await writeStream.write(data)
-            } catch (e) {
-              writeStream.abort()
-              readStream.off('data', handleData)
-              aborted = true
-              reject()
-            }
-          }
-
-          const handleBeforePageUnloadForFile = () => {
-            // Clean up any broken downloads
-            writeStream.abort()
-          }
-
-          window.addEventListener('beforeunload', handleBeforePageUnloadForFile)
-
-          const handleEnd = async () => {
-            window.removeEventListener(
-              'beforeunload',
-              handleBeforePageUnloadForFile
-            )
-
-            if (aborted) return
-
-            await writeStream.close()
-            resolve()
-          }
-
-          readStream.on('data', handleData).on('end', handleEnd)
+        const writeStream = streamSaver.createWriteStream(file.name, {
+          size: plaintextSize(file.length),
         })
+
+        await readStream.pipeTo(writeStream)
       } catch (e) {
+        console.error(e)
         throw new Error('Download aborted')
       }
     }
@@ -73,7 +62,20 @@ export class FileTransfer {
     window.addEventListener('beforeunload', this.handleBeforePageUnload)
   }
 
-  async download(magnetURI: string, { onProgress, doSave }: DownloadOpts = {}) {
+  async getDecryptedFileReadStream(file: TorrentFile, password: string) {
+    const keychain = getKeychain(password)
+    const readStream: ReadableStream = await keychain.decryptStream(
+      nodeToWebStream(file.createReadStream())
+    )
+
+    return readStream
+  }
+
+  async download(
+    magnetURI: string,
+    password: string,
+    { onProgress, doSave }: DownloadOpts = {}
+  ) {
     let torrent = this.torrents[magnetURI]
 
     if (!torrent) {
@@ -107,7 +109,7 @@ export class FileTransfer {
 
     if (doSave) {
       try {
-        await this.saveTorrentFiles(torrent)
+        await this.saveTorrentFiles(torrent, password)
       } catch (e) {
         torrent.off('download', handleDownload)
 
@@ -119,12 +121,35 @@ export class FileTransfer {
     return torrent.files
   }
 
-  async offer(files: Parameters<typeof this.webTorrentClient.seed>[0]) {
+  async offer(files: File[] | FileList, password: string) {
     const { isPrivate } = await detectIncognito()
+
+    const filesToSeed: File[] =
+      files instanceof FileList ? Array.from(files) : files
+
+    const encryptedFiles = await Promise.all(
+      filesToSeed.map(async file => {
+        const encryptedStream = await getKeychain(password).encryptStream(
+          file.stream()
+        )
+
+        // WebTorrent only accepts Node-style ReadableStreams
+        const nodeStream: NamedReadableWebToNodeStream =
+          new ReadableWebToNodeStream(
+            encryptedStream
+            // ReadableWebToNodeStream is the same as NodeJS.ReadableStream.
+            // The library's typing is wrong.
+          ) as any as NodeJS.ReadableStream
+
+        nodeStream.name = file.name
+
+        return nodeStream
+      })
+    )
 
     const torrent = await new Promise<Torrent>(res => {
       this.webTorrentClient.seed(
-        files,
+        encryptedFiles,
         {
           announce: trackerUrls,
           // If the user is using their browser's private mode, IndexedDB will
