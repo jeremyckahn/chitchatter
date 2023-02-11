@@ -1,4 +1,4 @@
-import WebTorrent, { Torrent } from 'webtorrent'
+import WebTorrent, { Torrent, TorrentFile } from 'webtorrent'
 import streamSaver from 'streamsaver'
 // @ts-ignore
 import { Keychain, plaintextSize } from 'wormhole-crypto'
@@ -42,16 +42,13 @@ export class FileTransfer {
   private async saveTorrentFiles(torrent: Torrent) {
     for (const file of torrent.files) {
       try {
-        const keychain = getKeychain()
-        const readStream: ReadableStream = await keychain.decryptStream(
-          nodeToWebStream(file.createReadStream())
-        )
+        const readStream = await this.getDecryptedFileReadStream(file)
 
-        const fileStream = streamSaver.createWriteStream(file.name, {
+        const writeStream = streamSaver.createWriteStream(file.name, {
           size: plaintextSize(file.length),
         })
 
-        await readStream.pipeTo(fileStream)
+        await readStream.pipeTo(writeStream)
       } catch (e) {
         console.error(e)
         throw new Error('Download aborted')
@@ -61,6 +58,15 @@ export class FileTransfer {
 
   constructor() {
     window.addEventListener('beforeunload', this.handleBeforePageUnload)
+  }
+
+  async getDecryptedFileReadStream(file: TorrentFile) {
+    const keychain = getKeychain()
+    const readStream: ReadableStream = await keychain.decryptStream(
+      nodeToWebStream(file.createReadStream())
+    )
+
+    return readStream
   }
 
   async download(magnetURI: string, { onProgress, doSave }: DownloadOpts = {}) {

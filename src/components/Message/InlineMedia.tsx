@@ -1,4 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
+import { TorrentFile } from 'webtorrent'
+import { ReadableWebToNodeStream } from 'readable-web-to-node-stream'
 import CircularProgress from '@mui/material/CircularProgress'
 
 import { fileTransfer } from 'services/FileTransfer'
@@ -19,15 +21,32 @@ export const InlineFile = ({ file }: InlineFileProps) => {
   const [didRenderingMediaFail, setDidRenderingMediaFail] = useState(false)
 
   useEffect(() => {
-    const { current: container } = containerRef
+    ;(async () => {
+      const { current: container } = containerRef
 
-    if (!container) return
+      if (!container) return
 
-    try {
-      file.appendTo(container)
-    } catch (e) {
-      setDidRenderingMediaFail(true)
-    }
+      try {
+        const readStream: NodeJS.ReadableStream = new ReadableWebToNodeStream(
+          await fileTransfer.getDecryptedFileReadStream(file)
+          // ReadableWebToNodeStream is the same as NodeJS.ReadableStream. The
+          // library's typing is wrong.
+        ) as any
+
+        const decryptedFile: TorrentFile = {
+          ...file,
+          createReadStream: () => {
+            return readStream
+          },
+        }
+
+        Object.setPrototypeOf(decryptedFile, Object.getPrototypeOf(file))
+        decryptedFile.appendTo(container)
+      } catch (e) {
+        console.error(e)
+        setDidRenderingMediaFail(true)
+      }
+    })()
   }, [file, containerRef])
 
   return (
