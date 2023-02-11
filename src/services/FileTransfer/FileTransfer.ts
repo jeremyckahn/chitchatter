@@ -15,7 +15,7 @@ import nodeToWebStream from 'readable-stream-node-to-web'
 
 streamSaver.mitm = streamSaverUrl
 
-interface NamedReadableWebToNodeStream extends ReadableWebToNodeStream {
+interface NamedReadableWebToNodeStream extends NodeJS.ReadableStream {
   name?: string
 }
 
@@ -135,16 +135,20 @@ export class FileTransfer {
 
         // WebTorrent only accepts Node-style ReadableStreams
         const nodeStream: NamedReadableWebToNodeStream =
-          new ReadableWebToNodeStream(encryptedStream)
+          new ReadableWebToNodeStream(
+            encryptedStream
+            // ReadableWebToNodeStream is the same as NodeJS.ReadableStream.
+            // The library's typing is wrong.
+          ) as any as NodeJS.ReadableStream
 
         nodeStream.name = file.name
+
         return nodeStream
       })
     )
 
     const torrent = await new Promise<Torrent>(res => {
       this.webTorrentClient.seed(
-        // @ts-ignore
         encryptedFiles,
         {
           announce: trackerUrls,
