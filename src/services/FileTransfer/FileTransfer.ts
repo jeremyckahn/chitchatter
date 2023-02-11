@@ -22,12 +22,9 @@ interface NamedReadableWebToNodeStream extends ReadableWebToNodeStream {
 const getKeychain = (password: string) => {
   const encoder = new TextEncoder()
   const keyLength = 16
-  const key = password
-    .concat(new Array(keyLength).join('0'))
-    .slice(0, keyLength)
-  const salt = window.location.origin
-    .concat(new Array(keyLength).join('0'))
-    .slice(0, keyLength)
+  const padding = new Array(keyLength).join('0')
+  const key = password.concat(padding).slice(0, keyLength)
+  const salt = window.location.origin.concat(padding).slice(0, keyLength)
 
   const keychain = new Keychain(encoder.encode(key), encoder.encode(salt))
 
@@ -130,7 +127,6 @@ export class FileTransfer {
     const filesToSeed: File[] =
       files instanceof FileList ? Array.from(files) : files
 
-    // FIXME: Show a notification that file is being encrypted
     const encryptedFiles = await Promise.all(
       filesToSeed.map(async file => {
         const encryptedStream = await getKeychain(password).encryptStream(

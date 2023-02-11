@@ -32,7 +32,7 @@ export function useRoomFileShare({
   >(null)
   const [isFileSharingEnabled, setIsFileSharingEnabled] = useState(true)
 
-  const { peerList, setPeerList } = shellContext
+  const { peerList, setPeerList, showAlert } = shellContext
   const { peerOfferedFileMetadata, setPeerOfferedFileMetadata } = roomContext
 
   const [sendFileOfferMetadata, receiveFileOfferMetadata] =
@@ -125,7 +125,15 @@ export function useRoomFileShare({
       throw new Error('shellContext.roomId is not a string')
     }
 
+    const alertText =
+      files.length > 1
+        ? 'Encrypting a copy of the files...'
+        : 'Encrypting a copy of the file...'
+    showAlert(alertText, { severity: 'info' })
+
     const magnetURI = await fileTransfer.offer(files, shellContext.roomId)
+
+    showAlert('Encryption complete', { severity: 'success' })
 
     if (inlineMediaFiles.length > 0) {
       onInlineMediaUpload(inlineMediaFiles)
