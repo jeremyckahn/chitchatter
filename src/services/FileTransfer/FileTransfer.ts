@@ -15,6 +15,10 @@ import nodeToWebStream from 'readable-stream-node-to-web'
 
 streamSaver.mitm = streamSaverUrl
 
+interface NamedReadableWebToNodeStream extends ReadableWebToNodeStream {
+  name?: string
+}
+
 const getKeychain = () => {
   // FIXME: Get key from room name
   const encoder = new TextEncoder()
@@ -43,7 +47,6 @@ export class FileTransfer {
           nodeToWebStream(file.createReadStream())
         )
 
-        // FIXME: Get real file name
         const fileStream = streamSaver.createWriteStream(file.name, {
           size: plaintextSize(file.length),
         })
@@ -112,12 +115,16 @@ export class FileTransfer {
     const filesToSeed: File[] =
       files instanceof FileList ? Array.from(files) : files
 
+    // FIXME: Show a notification that file is being encrypted
     const encryptedFiles = await Promise.all(
       filesToSeed.map(async file => {
         const encryptedStream = await getKeychain().encryptStream(file.stream())
 
         // WebTorrent only accepts Node-style ReadableStreams
-        const nodeStream = new ReadableWebToNodeStream(encryptedStream)
+        const nodeStream: NamedReadableWebToNodeStream =
+          new ReadableWebToNodeStream(encryptedStream)
+
+        nodeStream.name = file.name
         return nodeStream
       })
     )
