@@ -137,7 +137,7 @@ export const RoomVideoDisplay = ({
             isSelectedVideo
             numberOfVideos={numberOfVideos}
             onVideoClick={handleVideoClick}
-            userId={userId}
+            userId={selectedPeerStream.peerId}
             selectedPeerStream={selectedPeerStream}
             videoStream={selectedPeerStream.videoStream}
             videoStreamType={selectedPeerStream.videoStreamType}
