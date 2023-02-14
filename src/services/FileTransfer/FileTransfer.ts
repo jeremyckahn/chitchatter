@@ -1,13 +1,18 @@
 import WebTorrent, { Torrent, TorrentFile } from 'webtorrent'
+// @ts-ignore
+import createTorrent from 'create-torrent'
+import parseTorrent from 'parse-torrent'
 import streamSaver from 'streamsaver'
 // @ts-ignore
-import { Keychain, plaintextSize } from 'wormhole-crypto'
+import { Keychain, plaintextSize, encryptedSize } from 'wormhole-crypto'
 // @ts-ignore
 import idbChunkStore from 'idb-chunk-store'
 import { detectIncognito } from 'detectincognitojs'
 
 import { trackerUrls } from 'config/trackerUrls'
 import { streamSaverUrl } from 'config/streamSaverUrl'
+// @ts-ignore
+import blockIterator from 'block-iterator'
 
 import { ReadableWebToNodeStream } from 'readable-web-to-node-stream'
 // @ts-ignore
@@ -127,7 +132,7 @@ export class FileTransfer {
     const filesToSeed: File[] =
       files instanceof FileList ? Array.from(files) : files
 
-    const encryptedFiles = await Promise.all(
+    const encryptedFileStreams = await Promise.all(
       filesToSeed.map(async file => {
         const encryptedStream = await getKeychain(password).encryptStream(
           file.stream()
@@ -147,7 +152,65 @@ export class FileTransfer {
       })
     )
 
-    const torrent = await new Promise<Torrent>(res => {
+    const torrentBuffer = await new Promise<ArrayBuffer>(resolve => {
+      createTorrent(
+        encryptedFileStreams,
+        undefined,
+        (err: any, torrent: ArrayBuffer) => {
+          resolve(torrent)
+        }
+      )
+    })
+
+    const parsedTorrent = await parseTorrent(torrentBuffer)
+
+    const preloadedStore = new idbChunkStore(64 * 1024, {
+      name: `${parsedTorrent.name} - ${parsedTorrent.infoHash.slice(0, 8)}`,
+      length: parsedTorrent.length,
+    })
+
+    let i = 0
+    for (const file of filesToSeed) {
+      const encryptedStream = await getKeychain(password).encryptStream(
+        file.stream()
+      )
+
+      const blockStream = blockIterator(encryptedStream, 64 * 1024, {
+        zeroPadding: false,
+      })
+
+      for await (const chunk of blockStream) {
+        // eslint-disable-next-line no-loop-func
+        await new Promise<void>((resolve, reject) => {
+          preloadedStore.put(i, chunk, (err?: Error) => {
+            if (err) return reject(err)
+
+            resolve()
+          })
+        })
+
+        i++
+      }
+    }
+
+    const encryptedFiles = await Promise.all(
+      filesToSeed.map(async file => {
+        const stream = await getKeychain(password).encryptStream(file.stream())
+        const encryptedFile = Object.setPrototypeOf(
+          {
+            ...file,
+            name: file.name,
+            size: encryptedSize(file.size),
+            stream: () => stream,
+          },
+          File.prototype
+        )
+
+        return encryptedFile
+      })
+    )
+
+    const offer = await new Promise<Torrent>(res => {
       this.webTorrentClient.seed(
         encryptedFiles,
         {
@@ -157,6 +220,7 @@ export class FileTransfer {
           // case, fall back to the default in-memory data store.
           store: isPrivate ? undefined : idbChunkStore,
           destroyStoreOnDestroy: true,
+          preloadedStore,
         },
         torrent => {
           res(torrent)
@@ -164,8 +228,8 @@ export class FileTransfer {
       )
     })
 
-    const { magnetURI } = torrent
-    this.torrents[magnetURI] = torrent
+    const { magnetURI } = offer
+    this.torrents[magnetURI] = offer
 
     return magnetURI
   }

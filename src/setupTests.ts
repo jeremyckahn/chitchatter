@@ -8,6 +8,16 @@ afterEach(() => {
   jest.restoreAllMocks()
 })
 
+jest.mock('create-torrent', () => ({
+  __esModule: true,
+  default: () => {},
+}))
+
+jest.mock('parse-torrent', () => ({
+  __esModule: true,
+  default: async () => {},
+}))
+
 jest.mock('webtorrent', () => ({
   __esModule: true,
   default: class WebTorrent {},
