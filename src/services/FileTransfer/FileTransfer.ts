@@ -152,19 +152,24 @@ export class FileTransfer {
       })
     )
 
+    const pieceLength = 64 * 1024
+
     const torrentBuffer = await new Promise<ArrayBuffer>(resolve => {
       createTorrent(
         encryptedFileStreams,
-        undefined,
-        (err: any, torrent: ArrayBuffer) => {
+        {
+          pieceLength,
+        },
+        (err: Error | null, torrent: ArrayBuffer) => {
+          if (err) throw err
+
           resolve(torrent)
         }
       )
     })
 
     const parsedTorrent = await parseTorrent(torrentBuffer)
-
-    const preloadedStore = new idbChunkStore(64 * 1024, {
+    const preloadedStore = new idbChunkStore(pieceLength, {
       name: `${parsedTorrent.name} - ${parsedTorrent.infoHash.slice(0, 8)}`,
       length: parsedTorrent.length,
     })
@@ -175,7 +180,7 @@ export class FileTransfer {
         file.stream()
       )
 
-      const blockStream = blockIterator(encryptedStream, 64 * 1024, {
+      const blockStream = blockIterator(encryptedStream, pieceLength, {
         zeroPadding: false,
       })
 
@@ -195,13 +200,16 @@ export class FileTransfer {
 
     const encryptedFiles = await Promise.all(
       filesToSeed.map(async file => {
-        const stream = await getKeychain(password).encryptStream(file.stream())
+        const encryptedStream = await getKeychain(password).encryptStream(
+          file.stream()
+        )
+
         const encryptedFile = Object.setPrototypeOf(
           {
             ...file,
             name: file.name,
             size: encryptedSize(file.size),
-            stream: () => stream,
+            stream: () => encryptedStream,
           },
           File.prototype
         )
