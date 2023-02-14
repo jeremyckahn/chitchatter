@@ -132,7 +132,7 @@ export class FileTransfer {
     const filesToSeed: File[] =
       files instanceof FileList ? Array.from(files) : files
 
-    const pieceLength = 64 * 1024
+    const pieceLength = 16 * 1024
 
     const fileToEncryptedStoreMap: Map<File, () => ReadableStream<Buffer>> =
       new Map()
