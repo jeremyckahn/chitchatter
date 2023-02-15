@@ -337,7 +337,6 @@ export class FileTransfer {
           // case, fall back to the default in-memory data store.
           store: isPrivate ? undefined : idbChunkStore,
           destroyStoreOnDestroy: true,
-          preloadedStore,
         },
         torrent => {
           res(torrent)
