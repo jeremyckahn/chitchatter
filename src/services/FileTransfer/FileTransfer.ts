@@ -63,39 +63,8 @@ export class FileTransfer {
   async getDecryptedFileReadStream(file: TorrentFile, password: string) {
     const keychain = getKeychain(password)
 
-    // @ts-ignore
-    const chunkStore: idbChunkStore = file._torrent.store
-
-    const webStream = new nodeToWebStream(file.createReadStream())
-
-    // Populates the store with data
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    for await (const _chunk of webStream) {
-    }
-
-    let i = 0
-    const readableStream = new ReadableStream<Buffer>({
-      async pull(controller) {
-        const buffer = await new Promise<Buffer | undefined>(resolve => {
-          chunkStore.get(i, undefined, (_err: Error | null, buffer: Buffer) => {
-            resolve(buffer)
-          })
-        })
-
-        i++
-
-        const done = !buffer
-
-        if (done) {
-          controller.close()
-        } else {
-          controller.enqueue(buffer)
-        }
-      },
-    })
-
     const decryptedStream: ReadableStream = await keychain.decryptStream(
-      readableStream
+      new nodeToWebStream(file.createReadStream())
     )
 
     return decryptedStream
