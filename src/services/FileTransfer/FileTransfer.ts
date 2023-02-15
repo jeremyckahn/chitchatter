@@ -1,23 +1,21 @@
 import WebTorrent, { Torrent, TorrentFile } from 'webtorrent'
+// @ts-ignore
 import streamSaver from 'streamsaver'
 // @ts-ignore
-import { Keychain, plaintextSize } from 'wormhole-crypto'
+import { Keychain, plaintextSize, encryptedSize } from 'wormhole-crypto'
 // @ts-ignore
 import idbChunkStore from 'idb-chunk-store'
 import { detectIncognito } from 'detectincognitojs'
 
 import { trackerUrls } from 'config/trackerUrls'
 import { streamSaverUrl } from 'config/streamSaverUrl'
+// @ts-ignore
+import blockIterator from 'block-iterator'
 
-import { ReadableWebToNodeStream } from 'readable-web-to-node-stream'
 // @ts-ignore
 import nodeToWebStream from 'readable-stream-node-to-web'
 
 streamSaver.mitm = streamSaverUrl
-
-interface NamedReadableWebToNodeStream extends NodeJS.ReadableStream {
-  name?: string
-}
 
 const getKeychain = (password: string) => {
   const encoder = new TextEncoder()
@@ -64,11 +62,12 @@ export class FileTransfer {
 
   async getDecryptedFileReadStream(file: TorrentFile, password: string) {
     const keychain = getKeychain(password)
-    const readStream: ReadableStream = await keychain.decryptStream(
-      nodeToWebStream(file.createReadStream())
+
+    const decryptedStream: ReadableStream = await keychain.decryptStream(
+      new nodeToWebStream(file.createReadStream())
     )
 
-    return readStream
+    return decryptedStream
   }
 
   async download(
@@ -127,27 +126,101 @@ export class FileTransfer {
     const filesToSeed: File[] =
       files instanceof FileList ? Array.from(files) : files
 
+    const pieceLength = 16 * 1024
+
+    const fileToEncryptedStoreMap: Map<File, () => ReadableStream<Buffer>> =
+      new Map()
+
+    const tempStores: idbChunkStore[] = []
+
+    for (const file of filesToSeed) {
+      const tempStore = new idbChunkStore(pieceLength, {
+        name: `${file.name} - temp`,
+        length: encryptedSize(file.size),
+      })
+
+      tempStores.push(tempStore)
+
+      const encryptedStream = await getKeychain(password).encryptStream(
+        file.stream()
+      )
+
+      const blockStream = blockIterator(encryptedStream, pieceLength, {
+        zeroPadding: false,
+      })
+
+      let numberOfChunks = 0
+      let i = 0
+      for await (const chunk of blockStream) {
+        // eslint-disable-next-line no-loop-func
+        await new Promise<void>((resolve, reject) => {
+          tempStore.put(i, chunk, (err?: Error) => {
+            if (err) return reject(err)
+
+            resolve()
+          })
+        })
+
+        i++
+        numberOfChunks = i
+      }
+
+      const streamFactory = () => {
+        let i = 0
+
+        const readableStream = new ReadableStream<Buffer>({
+          async pull(controller) {
+            const buffer = await new Promise<Buffer>(resolve => {
+              tempStore.get(
+                i,
+                undefined,
+                (_err: Error | null, buffer: Buffer) => {
+                  resolve(buffer)
+                }
+              )
+            })
+
+            i++
+
+            const done = i > numberOfChunks
+
+            if (done) {
+              controller.close()
+            } else {
+              controller.enqueue(buffer)
+            }
+          },
+        })
+
+        return readableStream
+      }
+
+      fileToEncryptedStoreMap.set(file, streamFactory)
+    }
+
     const encryptedFiles = await Promise.all(
       filesToSeed.map(async file => {
-        const encryptedStream = await getKeychain(password).encryptStream(
-          file.stream()
+        const streamFactory = fileToEncryptedStoreMap.get(file)
+
+        if (!streamFactory) {
+          throw new Error(`streamFactory is undefined`)
+        }
+
+        const encryptedFile = Object.setPrototypeOf(
+          {
+            ...file,
+            name: file.name,
+            size: encryptedSize(file.size),
+            stream: () => streamFactory(),
+          },
+          File.prototype
         )
 
-        // WebTorrent only accepts Node-style ReadableStreams
-        const nodeStream: NamedReadableWebToNodeStream =
-          new ReadableWebToNodeStream(
-            encryptedStream
-            // ReadableWebToNodeStream is the same as NodeJS.ReadableStream.
-            // The library's typing is wrong.
-          ) as any as NodeJS.ReadableStream
-
-        nodeStream.name = file.name
-
-        return nodeStream
+        return encryptedFile
       })
     )
 
-    const torrent = await new Promise<Torrent>(res => {
+    const offer = await new Promise<Torrent>(res => {
       this.webTorrentClient.seed(
         encryptedFiles,
         {
@@ -164,8 +237,16 @@ export class FileTransfer {
       )
     })
 
-    const { magnetURI } = torrent
-    this.torrents[magnetURI] = torrent
+    for (const store of tempStores) {
+      await new Promise<void>(resolve => {
+        store.destroy(() => {
+          resolve()
+        })
+      })
+    }
+
+    const { magnetURI } = offer
+    this.torrents[magnetURI] = offer
 
     return magnetURI
   }
