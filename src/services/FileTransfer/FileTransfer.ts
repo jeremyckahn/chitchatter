@@ -69,11 +69,43 @@ export class FileTransfer {
 
   async getDecryptedFileReadStream(file: TorrentFile, password: string) {
     const keychain = getKeychain(password)
-    const readStream: ReadableStream = await keychain.decryptStream(
-      nodeToWebStream(file.createReadStream())
+
+    // @ts-ignore
+    const chunkStore: idbChunkStore = file._torrent.store
+
+    const webStream = new nodeToWebStream(file.createReadStream())
+
+    // Populates the store with data
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    for await (const _chunk of webStream) {
+    }
+
+    let i = 0
+    const readableStream = new ReadableStream<Buffer>({
+      async pull(controller) {
+        const buffer = await new Promise<Buffer | undefined>(resolve => {
+          chunkStore.get(i, undefined, (_err: Error | null, buffer: Buffer) => {
+            resolve(buffer)
+          })
+        })
+
+        i++
+
+        const done = !buffer
+
+        if (done) {
+          controller.close()
+        } else {
+          controller.enqueue(buffer)
+        }
+      },
+    })
+
+    const decryptedStream: ReadableStream = await keychain.decryptStream(
+      readableStream
     )
 
-    return readStream
+    return decryptedStream
   }
 
   async download(
@@ -281,14 +313,12 @@ export class FileTransfer {
           throw new Error(`streamFactory is undefined`)
         }
 
-        const encryptedStream = streamFactory()
-
         const encryptedFile = Object.setPrototypeOf(
           {
             ...file,
             name: file.name,
             size: encryptedSize(file.size),
-            stream: () => encryptedStream,
+            stream: () => streamFactory(),
           },
           File.prototype
         )
