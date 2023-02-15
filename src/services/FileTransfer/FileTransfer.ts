@@ -1,7 +1,5 @@
 import WebTorrent, { Torrent, TorrentFile } from 'webtorrent'
 // @ts-ignore
-import createTorrent from 'create-torrent'
-import parseTorrent from 'parse-torrent'
 import streamSaver from 'streamsaver'
 // @ts-ignore
 import { Keychain, plaintextSize, encryptedSize } from 'wormhole-crypto'
@@ -14,15 +12,10 @@ import { streamSaverUrl } from 'config/streamSaverUrl'
 // @ts-ignore
 import blockIterator from 'block-iterator'
 
-import { ReadableWebToNodeStream } from 'readable-web-to-node-stream'
 // @ts-ignore
 import nodeToWebStream from 'readable-stream-node-to-web'
 
 streamSaver.mitm = streamSaverUrl
-
-interface NamedReadableWebToNodeStream extends NodeJS.ReadableStream {
-  name?: string
-}
 
 const getKeychain = (password: string) => {
   const encoder = new TextEncoder()
@@ -234,75 +227,6 @@ export class FileTransfer {
       }
 
       fileToEncryptedStoreMap.set(file, streamFactory)
-    }
-
-    const encryptedFileStreams = await Promise.all(
-      filesToSeed.map(async file => {
-        const streamFactory = fileToEncryptedStoreMap.get(file)
-
-        if (!streamFactory) {
-          throw new Error(`streamFactory is undefined`)
-        }
-
-        const encryptedStream = streamFactory()
-
-        // WebTorrent only accepts Node-style ReadableStreams
-        const nodeStream: NamedReadableWebToNodeStream =
-          new ReadableWebToNodeStream(
-            encryptedStream
-            // ReadableWebToNodeStream is the same as NodeJS.ReadableStream.
-            // The library's typing is wrong.
-          ) as any as NodeJS.ReadableStream
-
-        nodeStream.name = file.name
-
-        return nodeStream
-      })
-    )
-
-    const torrentBuffer = await new Promise<ArrayBuffer>(resolve => {
-      createTorrent(
-        encryptedFileStreams,
-        {
-          pieceLength,
-        },
-        (err: Error | null, torrent: ArrayBuffer) => {
-          if (err) throw err
-
-          resolve(torrent)
-        }
-      )
-    })
-
-    const parsedTorrent = await parseTorrent(torrentBuffer)
-    const preloadedStore = new idbChunkStore(pieceLength, {
-      name: `${parsedTorrent.name} - ${parsedTorrent.infoHash.slice(0, 8)}`,
-      length: parsedTorrent.length,
-    })
-
-    let i = 0
-    for (const file of filesToSeed) {
-      const streamFactory = fileToEncryptedStoreMap.get(file)
-
-      if (!streamFactory) {
-        throw new Error(`streamFactory is undefined`)
-      }
-
-      const encryptedStream = streamFactory()
-
-      // @ts-ignore
-      for await (const chunk of encryptedStream) {
-        // eslint-disable-next-line no-loop-func
-        await new Promise<void>((resolve, reject) => {
-          preloadedStore.put(i, chunk, (err?: Error) => {
-            if (err) return reject(err)
-
-            resolve()
-          })
-        })
-
-        i++
-      }
     }
 
     const encryptedFiles = await Promise.all(
