@@ -130,15 +130,33 @@ export class FileTransfer {
           file.stream()
         )
 
-        // Prevent ReadableStreams from being reused (which would throw an error)
-        const tees = encryptedStream.tee()
+        // WebTorrent internally opens the ReadableStream for file data twice.
+        // Normally this would not be an issue for File instances provided to
+        // WebTorrent for seeding. `encryptedFile` is implemented as a facade
+        // for a File instance, with the key difference being that stream() is
+        // overridden to return an encrypted instance of the file's stream
+        // data. If this stream is reopened, an error would be thrown and the
+        // operation would fail. To avoid this, `encryptedFile` streams are
+        // tee'd and pooled beforehand so that reopening of the encrypted
+        // stream data directly is avoided.
+        //
+        // See:
+        //   - https://developer.mozilla.org/en-US/docs/Web/API/ReadableStream/tee
+        const streamPool = encryptedStream.tee()
 
+        // Providing the file data as a File instance rather than a
+        // ReadableStream directly (which WebTorrent would accept) prevents
+        // WebTorrent from loading the entire contents of the file into memory.
+        //
+        // See:
+        //   - https://github.com/webtorrent/webtorrent/blob/e26b64c0d0b4bdd8222e19d90bfcf7a688203e3c/index.js#L376-L384
+        //   - https://github.com/feross/simple-concat/blob/44134bf16667b6006a254135d5c8c76ea96823d4/index.js#L3-L8
         const encryptedFile = Object.setPrototypeOf(
           {
             lastModified: file.lastModified,
             name: file.name,
             size: encryptedSize(file.size),
-            stream: () => tees.pop(),
+            stream: () => streamPool.pop(),
             type: file.type,
           },
           File.prototype
