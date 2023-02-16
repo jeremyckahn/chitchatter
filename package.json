@@ -99,7 +99,7 @@
     "http": "npm:http-browserify@^1.7.0",
     "https": "npm:https-browserify@^1.0.0",
     "husky": "^8.0.1",
-    "mprocs": "^0.6.3",
+    "mprocs": "^0.6.4",
     "path": "npm:path-browserify@^1.0.1",
     "postcss": "^8.4.16",
     "prettier": "^2.7.1",
