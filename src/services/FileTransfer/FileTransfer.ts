@@ -135,10 +135,11 @@ export class FileTransfer {
 
         const encryptedFile = Object.setPrototypeOf(
           {
-            ...file,
+            lastModified: file.lastModified,
             name: file.name,
             size: encryptedSize(file.size),
             stream: () => tees.pop(),
+            type: file.type,
           },
           File.prototype
         )
