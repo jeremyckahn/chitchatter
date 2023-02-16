@@ -9,8 +9,6 @@ import { detectIncognito } from 'detectincognitojs'
 
 import { trackerUrls } from 'config/trackerUrls'
 import { streamSaverUrl } from 'config/streamSaverUrl'
-// @ts-ignore
-import blockIterator from 'block-iterator'
 
 // @ts-ignore
 import nodeToWebStream from 'readable-stream-node-to-web'
@@ -126,92 +124,21 @@ export class FileTransfer {
     const filesToSeed: File[] =
       files instanceof FileList ? Array.from(files) : files
 
-    const pieceLength = 16 * 1024
-
-    const fileToEncryptedStoreMap: Map<File, () => ReadableStream<Buffer>> =
-      new Map()
-
-    const tempStores: idbChunkStore[] = []
-
-    for (const file of filesToSeed) {
-      const tempStore = new idbChunkStore(pieceLength, {
-        name: `${file.name} - temp`,
-        length: encryptedSize(file.size),
-      })
-
-      tempStores.push(tempStore)
-
-      const encryptedStream = await getKeychain(password).encryptStream(
-        file.stream()
-      )
-
-      const blockStream = blockIterator(encryptedStream, pieceLength, {
-        zeroPadding: false,
-      })
-
-      let numberOfChunks = 0
-      let i = 0
-      for await (const chunk of blockStream) {
-        // eslint-disable-next-line no-loop-func
-        await new Promise<void>((resolve, reject) => {
-          tempStore.put(i, chunk, (err?: Error) => {
-            if (err) return reject(err)
-
-            resolve()
-          })
-        })
-
-        i++
-        numberOfChunks = i
-      }
-
-      const streamFactory = () => {
-        let i = 0
-
-        const readableStream = new ReadableStream<Buffer>({
-          async pull(controller) {
-            const buffer = await new Promise<Buffer>(resolve => {
-              tempStore.get(
-                i,
-                undefined,
-                (_err: Error | null, buffer: Buffer) => {
-                  resolve(buffer)
-                }
-              )
-            })
-
-            i++
-
-            const done = i > numberOfChunks
-
-            if (done) {
-              controller.close()
-            } else {
-              controller.enqueue(buffer)
-            }
-          },
-        })
-
-        return readableStream
-      }
-
-      fileToEncryptedStoreMap.set(file, streamFactory)
-    }
-
     const encryptedFiles = await Promise.all(
       filesToSeed.map(async file => {
-        const streamFactory = fileToEncryptedStoreMap.get(file)
+        const encryptedStream = await getKeychain(password).encryptStream(
+          file.stream()
+        )
 
-        if (!streamFactory) {
-          throw new Error(`streamFactory is undefined`)
-        }
+        // Prevent ReadableStreams from being reused (which would throw an error)
+        const tees = encryptedStream.tee()
 
         const encryptedFile = Object.setPrototypeOf(
           {
             ...file,
             name: file.name,
             size: encryptedSize(file.size),
-            stream: () => streamFactory(),
+            stream: () => tees.pop(),
           },
           File.prototype
         )
@@ -236,14 +163,6 @@ export class FileTransfer {
         }
       )
     })
-
-    for (const store of tempStores) {
-      await new Promise<void>(resolve => {
-        store.destroy(() => {
-          resolve()
-        })
-      })
-    }
 
     const { magnetURI } = offer
     this.torrents[magnetURI] = offer
