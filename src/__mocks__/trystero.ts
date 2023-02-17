@@ -1,7 +1,7 @@
-import { joinRoom as trysteroJoinRoom, RoomConfig, Room } from 'trystero'
+import { joinRoom as trysteroJoinRoom, Room, BaseRoomConfig } from 'trystero'
 
 export const joinRoom: typeof trysteroJoinRoom = (
-  _config: RoomConfig,
+  _config: BaseRoomConfig,
   _roomId: string
 ) => {
   const room: Room = {
