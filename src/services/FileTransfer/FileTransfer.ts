@@ -1,5 +1,4 @@
 import WebTorrent, { Torrent, TorrentFile } from 'webtorrent'
-// @ts-ignore
 import streamSaver from 'streamsaver'
 // @ts-ignore
 import { Keychain, plaintextSize, encryptedSize } from 'wormhole-crypto'
