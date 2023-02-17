@@ -1,6 +1,5 @@
 import WebTorrent, { Torrent, TorrentFile } from 'webtorrent'
 import streamSaver from 'streamsaver'
-// @ts-ignore
 import { Keychain, plaintextSize, encryptedSize } from 'wormhole-crypto'
 // @ts-ignore
 import idbChunkStore from 'idb-chunk-store'
