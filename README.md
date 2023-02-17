@@ -4,21 +4,19 @@
 
 <sub>Logo provided by [@ramyashreeshetty](https://github.com/ramyashreeshetty)</sub>
 
-Chitchatter is a free (as in both price and freedom) communication tool. It is designed to be the simplest way to connect with others privately and securely. It is:
+Chitchatter is a free (as in both price and freedom) communication tool. Designed to be the simplest way to connect with others privately and securely, it is:
 
 - Fully open source (licensed under [GPL v2](./LICENSE))
 - Peer-to-peer
   - Whenever possible, otherwise [Open Relay](https://www.metered.ca/tools/openrelay/) is used to ensure reliable peer connection
-- Encrypted (via [WebRTC](https://webrtc-security.github.io/))
-- Serverless
-  - [Public WebTorrent servers are only used for initial peer handshake](https://github.com/dmotz/trystero#how-it-works)
+- End-to-end encrypted (via [WebRTC](https://webrtc-security.github.io/))
 - Ephemeral
-  - Message content is never persisted to disk
+  - Message content is never persisted to disk on either the client or server
 - Decentralized
-  - There is no API server. All that's required for Chitchatter to function is availability of GitHub for static assets and public WebTorrent and STUN/TURN relay servers for establishing peer communication.
+  - There is no API server. All that's required for Chitchatter to function is availability of GitHub for static assets, and public WebTorrent and STUN/TURN relay servers for establishing peer-to-peer communication.
 - [Self-hostable](#self-hosting)
 
-Chitchatter uses the [Create React App](https://github.com/facebook/create-react-app) tool chain. The secure networking and streaming magic would not be possible without [Trystero](https://github.com/dmotz/trystero).
+Chitchatter uses the [Create React App](https://github.com/facebook/create-react-app) toolchain. The secure networking and streaming magic would not be possible without [Trystero](https://github.com/dmotz/trystero). File transfer functionality is powered by [WebTorrent](https://github.com/webtorrent/webtorrent).
 
 ## How to use it
 
@@ -27,40 +25,41 @@ Open https://chitchatter.im/ and join a room to start chatting with anyone else 
 ## Features
 
 - Multiple peers per room (limited only by the number of peer connections your browser supports).
-- Public and private rooms
-- Video and audio chatting
-- Screen sharing
-- File sharing
-  - Powered by [WebTorrent](https://webtorrent.io/) and [StreamSaver.js](https://github.com/jimmywarting/StreamSaver.js) to support unlimited file size transfers
+- Public and private rooms.
+- Video and audio chatting.
+- Screen sharing.
+- File sharing:
+  - Powered by [WebTorrent](https://webtorrent.io/) and [StreamSaver.js](https://github.com/jimmywarting/StreamSaver.js) to support unlimited file size transfers.
+  - Files are encrypted prior to sending and decrypted by the receiver (the key is the roon name).
 - Markdown support via [`react-markdown`](https://github.com/remarkjs/react-markdown).
   - Includes support for syntax highlighting of code.
-- Conversation backfilling from peers when a new participant joins
-- Multiline message support (hold Shift and press Enter).
-- Dark and light themes
+- Conversation backfilling from peers when a new participant joins.
+- Multiline message support (hold `shift` and press `enter`).
+- Dark and light themes.
 
 ## Anti-features
 
 - Messages are never persisted to disk. When you leave a peer room, messages are cleared from memory and cannot be retrieved.
 - Chitchatter is an entirely client-side communication app. It uses public WebTorrent servers to establish peer connections and STUN/TURN relay servers when direct peer-to-peer connections cannot be established, but there is no Chitchatter API server.
-- No analytics, tracking, or telemetry.
-- This is a community-driven and unfunded project that makes no money. The users come first and there are no corporate or financial interests.
+- No analytics, tracking, or telemetry of any kind.
+- This is a community-driven and unfunded project that makes no money. The users come first and there are no corporate influence or financial interest involved.
 
 ## Why another chat app?
 
-There is no shortage of user-friendly chat apps available, but most of them rely on a central service to facilitate communication. It is difficult to trust these central services, as commercial interests and [government pressure](https://www.npr.org/2022/08/12/1117092169/nebraska-cops-used-facebook-messages-to-investigate-an-alleged-illegal-abortion) can compel service operators to work against the best interest of the users. Even when when user data is handled in good faith by service operators, the possibility remains that [encrypted data held at rest may be decrypted](https://www.cbsnews.com/news/fbi-may-have-found-way-to-unlock-san-bernardino-shooters-iphone/) against the user's will.
+There is no shortage of user-friendly chat apps available, but they rely on a central service to facilitate communication. It is difficult to trust these central services, as commercial interests and [government pressure](https://www.npr.org/2022/08/12/1117092169/nebraska-cops-used-facebook-messages-to-investigate-an-alleged-illegal-abortion) can compel service operators to work against the best interest of the users. Even when when user data is handled in good faith by service operators, the possibility remains that [encrypted data held at rest may be decrypted](https://www.cbsnews.com/news/fbi-may-have-found-way-to-unlock-san-bernardino-shooters-iphone/) against the user's will.
 
-Chitchatter designs around these risks with [web meshes](https://dev.to/jeremyckahn/taking-the-power-back-with-web-meshes-omg). There is no central service operator that stores or potentially mishandles communication data. Some services are required to establish an initial connection between peers, but the app uses direct peer-to-peer communication as much as possible. Any services that are used by the app have no association with the Chitchatter project and are publicly available for all to use.
+Chitchatter designs around these risks with a [web meshe architecture](https://dev.to/jeremyckahn/taking-the-power-back-with-web-meshes-omg). There is no central service operator that stores or potentially mishandles communication data. Some services are required to establish an initial connection between peers, but otherwise the app uses direct peer-to-peer communication for everything. Any services that are used by Chitchatter have no association with the project and are publicly available for all to use.
 
 ## Use cases
 
 Chitchatter offers a private and secure solution for:
 
 - Organizing groups of people, such as unions or political movements
+- Conveniently moving text or data from one device to another
 - Video chatting with friends and family across operating systems (such as Android and iOS)
-- Sharing files without an intermediary service
 - IT troublshooting via screen sharing
 - Livestreaming
-- Sharing sensitive information like passwords
+- Sharing sensitive information such as passwords
 - Much more!
 
 ### Veracity
@@ -143,11 +142,11 @@ Assuming you are hosting Chitchatter on [GitHub Pages](https://pages.github.com/
 
 ##### On GitHub
 
-When hosted on GitHub Pages and the configuration above has been done, the Production environment is updated when the remote `main` branch is updated.
+When hosted on GitHub Pages and the configuration above has been done, the Production environment is updated when the remote `main` branch is updated (once GitHub Actions are enabled).
 
 ##### On non-GitHub hosts
 
-Build the app with `npm run build`, and then serve the `build` directory. Any static file serving solution should work provided it is using a [secure context](https://developer.mozilla.org/en-US/docs/Web/Security/Secure_Contexts).
+Build the app with `PUBLIC_URL="https://your-domain-here.com" npm run build`, and then serve the `build` directory. Any static file serving solution should work provided it is using a [secure context](https://developer.mozilla.org/en-US/docs/Web/Security/Secure_Contexts).
 
 #### Runtime configuration
 
@@ -157,7 +156,7 @@ Explore the files in `src/config` to modify pairing and relay server configurati
 
 #### Peers won't connect
 
-This could happen for a variety of reasons. The most likely of which is that one or more peers cannot connect directly and must use the configured STUN/TURN relay as a fallback. The standard relay (https://www.metered.ca/tools/openrelay/) does not guarantee uptime, so it may simply be unavailable for some time. There's not much to do other than wait until it becomes available again.
+This could happen for a variety of reasons. The most likely of which is that one or more peers cannot connect directly and must use the configured STUN/TURN relay as a fallback. The standard relay (https://www.metered.ca/tools/openrelay/) is free and does not guarantee any level of service, so it may simply be unavailable for some time (or just not work at all for some users). There's not much to do other than wait until it becomes available again, or possibly try from another device or location.
 
 ##### Firefox-specific
 
@@ -171,8 +170,6 @@ Per [#36](https://github.com/jeremyckahn/chitchatter/issues/36), check your `abo
 </a>
 </p>
 
+## ⚠️ [Disclaimer](https://chitchatter.im/disclaimer)
 
-
-## ⚠️ Disclaimer
-
-By using Chitchatter, you agree to accept **full responsibility** for your actions related to its use. Additionally, you agree **not** to hold any contributors to the Chitchatter project responsible for any result of your use of it. The developers of Chitchatter do not endorse illegal activity and provide the software strictly for the purposes of lawful use.
+By using Chitchatter, you agree to accept **full responsibility** for your actions related to its use. Additionally, you agree **not** to hold any contributors to the Chitchatter project responsible for any result of your use of it. The developers of Chitchatter do not endorse illegal activity.
