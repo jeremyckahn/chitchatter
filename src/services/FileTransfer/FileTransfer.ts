@@ -124,8 +124,13 @@ export class FileTransfer {
 
     const encryptedFiles = await Promise.all(
       filesToSeed.map(async file => {
+        // Force a type conversion here to prevent stream from being typed as a
+        // NodeJS.ReadableStream, which is the default overloaded return type
+        // for file.stream().
+        const stream = file.stream() as any as ReadableStream
+
         const encryptedStream = await getKeychain(password).encryptStream(
-          file.stream()
+          stream
         )
 
         // WebTorrent internally opens the ReadableStream for file data twice.
