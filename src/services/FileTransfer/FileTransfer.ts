@@ -3,12 +3,10 @@ import streamSaver from 'streamsaver'
 import { Keychain, plaintextSize, encryptedSize } from 'wormhole-crypto'
 import idbChunkStore from 'idb-chunk-store'
 import { detectIncognito } from 'detectincognitojs'
+import nodeToWebStream from 'readable-stream-node-to-web'
 
 import { trackerUrls } from 'config/trackerUrls'
 import { streamSaverUrl } from 'config/streamSaverUrl'
-
-// @ts-ignore
-import nodeToWebStream from 'readable-stream-node-to-web'
 
 streamSaver.mitm = streamSaverUrl
 
@@ -59,7 +57,7 @@ export class FileTransfer {
     const keychain = getKeychain(password)
 
     const decryptedStream: ReadableStream = await keychain.decryptStream(
-      new nodeToWebStream(file.createReadStream())
+      nodeToWebStream(file.createReadStream())
     )
 
     return decryptedStream
