@@ -1,6 +1,5 @@
 import { useContext, useEffect, useRef, useState } from 'react'
 import { TorrentFile } from 'webtorrent'
-import { ReadableWebToNodeStream } from 'readable-web-to-node-stream'
 import CircularProgress from '@mui/material/CircularProgress'
 import { Typography } from '@mui/material'
 
@@ -14,7 +13,7 @@ interface InlineMediaProps {
 }
 
 interface InlineFileProps {
-  file: TorrentFiles[0]
+  file: TorrentFile
 }
 
 export const InlineFile = ({ file }: InlineFileProps) => {
@@ -29,28 +28,7 @@ export const InlineFile = ({ file }: InlineFileProps) => {
       if (!container) return
 
       try {
-        if (typeof shellContext.roomId !== 'string') {
-          throw new Error('shellContext.roomId is not a string')
-        }
-
-        const readStream: NodeJS.ReadableStream = new ReadableWebToNodeStream(
-          await fileTransfer.getDecryptedFileReadStream(
-            file,
-            shellContext.roomId
-          )
-          // ReadableWebToNodeStream is the same as NodeJS.ReadableStream. The
-          // library's typing is wrong.
-        ) as any
-
-        const decryptedFile: TorrentFile = {
-          ...file,
-          createReadStream: () => {
-            return readStream
-          },
-        }
-
-        Object.setPrototypeOf(decryptedFile, Object.getPrototypeOf(file))
-        decryptedFile.appendTo(container)
+        file.appendTo(container)
       } catch (e) {
         console.error(e)
         setDidRenderingMediaFail(true)
