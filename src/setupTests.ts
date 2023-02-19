@@ -8,12 +8,10 @@ afterEach(() => {
   jest.restoreAllMocks()
 })
 
-jest.mock('webtorrent', () => ({
+jest.mock('secure-file-transfer', () => ({
   __esModule: true,
-  default: class WebTorrent {},
-}))
-
-jest.mock('wormhole-crypto', () => ({
-  __esModule: true,
-  Keychain: class Keychain {},
+  FileTransfer: class FileTransfer {
+    rescindAll() {}
+  },
+  setStreamSaverMitm: () => {},
 }))
