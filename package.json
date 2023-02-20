@@ -35,7 +35,7 @@
     "readable-web-to-node-stream": "^3.0.2",
     "remark-gfm": "^3.0.1",
     "sass": "^1.54.3",
-    "secure-file-transfer": "^0.0.3",
+    "secure-file-transfer": "^0.0.4",
     "streamsaver": "^2.0.6",
     "trystero": "github:jeremyckahn/trystero#bugfix/29__clean-up-peers",
     "typeface-public-sans": "^1.1.13",
