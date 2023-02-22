@@ -16,7 +16,7 @@ Chitchatter is a free (as in both price and freedom) communication tool. Designe
   - There is no API server. All that's required for Chitchatter to function is availability of GitHub for static assets, and public WebTorrent and STUN/TURN relay servers for establishing peer-to-peer communication.
 - [Self-hostable](#self-hosting)
 
-Chitchatter uses the [Create React App](https://github.com/facebook/create-react-app) toolchain. The secure networking and streaming magic would not be possible without [Trystero](https://github.com/dmotz/trystero). File transfer functionality is powered by [WebTorrent](https://github.com/webtorrent/webtorrent).
+Chitchatter uses the [Create React App](https://github.com/facebook/create-react-app) toolchain. The secure networking and streaming magic would not be possible without [Trystero](https://github.com/dmotz/trystero). File transfer functionality is powered by [`secure-file-transfer`](https://github.com/jeremyckahn/secure-file-transfer).
 
 ## How to use it
 
@@ -29,7 +29,7 @@ Open https://chitchatter.im/ and join a room to start chatting with anyone else 
 - Video and audio chatting.
 - Screen sharing.
 - File sharing:
-  - Powered by [WebTorrent](https://webtorrent.io/) and [StreamSaver.js](https://github.com/jimmywarting/StreamSaver.js) to support unlimited file size transfers.
+  - Unlimited file size transfers.
   - Files are encrypted prior to sending and decrypted by the receiver (the key is the roon name).
 - Markdown support via [`react-markdown`](https://github.com/remarkjs/react-markdown).
   - Includes support for syntax highlighting of code.
@@ -42,7 +42,7 @@ Open https://chitchatter.im/ and join a room to start chatting with anyone else 
 - Messages are never persisted to disk. When you leave a peer room, messages are cleared from memory and cannot be retrieved.
 - Chitchatter is an entirely client-side communication app. It uses public WebTorrent servers to establish peer connections and STUN/TURN relay servers when direct peer-to-peer connections cannot be established, but there is no Chitchatter API server.
 - No analytics, tracking, or telemetry of any kind.
-- This is a community-driven and unfunded project that makes no money. The users come first and there are no corporate influence or financial interest involved.
+- This is a community-driven and unfunded project that makes no money. The users come first and there is no corporate influence or financial interest involved.
 
 ## Why another chat app?
 
