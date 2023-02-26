@@ -3,6 +3,8 @@ import Slider from '@mui/material/Slider'
 import Box from '@mui/material/Box'
 import ListItemIcon from '@mui/material/ListItemIcon'
 import VolumeUp from '@mui/icons-material/VolumeUp'
+import VolumeDown from '@mui/icons-material/VolumeDown'
+import VolumeMute from '@mui/icons-material/VolumeMute'
 
 interface AudioVolumeProps {
   audioEl?: HTMLAudioElement
@@ -28,10 +30,18 @@ export const AudioVolume = ({ audioEl }: AudioVolumeProps) => {
 
   const formatLabelValue = () => `${Math.round(audioVolume * 100)}%`
 
+  let VolumeIcon = VolumeUp
+
+  if (audioVolume === 0) {
+    VolumeIcon = VolumeMute
+  } else if (audioVolume < 0.5) {
+    VolumeIcon = VolumeDown
+  }
+
   return (
     <Box sx={{ display: 'flex', pt: 1, pr: 3, alignItems: 'center' }}>
       <ListItemIcon>
-        <VolumeUp />
+        <VolumeIcon />
       </ListItemIcon>
       <Slider
         aria-label="Volume"
