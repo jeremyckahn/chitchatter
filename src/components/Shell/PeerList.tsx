@@ -10,6 +10,7 @@ import VolumeUp from '@mui/icons-material/VolumeUp'
 import ListItem from '@mui/material/ListItem'
 
 import { PeerListHeader } from 'components/Shell/PeerListHeader'
+import { AudioVolume } from 'components/AudioVolume'
 import { PeerNameDisplay } from 'components/PeerNameDisplay'
 import { AudioState, Peer } from 'models/chat'
 
@@ -23,6 +24,7 @@ export interface PeerListProps extends PropsWithChildren {
   onPeerListClose: () => void
   peerList: Peer[]
   audioState: AudioState
+  peerAudios: Record<string, HTMLAudioElement>
 }
 
 export const PeerList = ({
@@ -31,6 +33,7 @@ export const PeerList = ({
   onPeerListClose,
   peerList,
   audioState,
+  peerAudios,
 }: PeerListProps) => {
   return (
     <MuiDrawer
@@ -72,12 +75,10 @@ export const PeerList = ({
             <PeerDownloadFileButton peer={peer} />
             <ListItemText>
               <PeerNameDisplay>{peer.userId}</PeerNameDisplay>
+              {peer.audioState === AudioState.PLAYING && (
+                <AudioVolume audioEl={peerAudios[peer.peerId]} />
+              )}
             </ListItemText>
-            {peer.audioState === AudioState.PLAYING && (
-              <ListItemIcon>
-                <VolumeUp />
-              </ListItemIcon>
-            )}
           </ListItem>
         ))}
       </List>
