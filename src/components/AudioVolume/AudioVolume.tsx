@@ -26,12 +26,21 @@ export const AudioVolume = ({ audioEl }: AudioVolumeProps) => {
     setAudioVolume(value / 100)
   }
 
+  const formatLabelValue = () => `${Math.round(audioVolume * 100)}%`
+
   return (
     <Box sx={{ display: 'flex', pt: 1, pr: 3, alignItems: 'center' }}>
       <ListItemIcon>
         <VolumeUp />
       </ListItemIcon>
-      <Slider onChange={handleChange} value={audioVolume * 100}></Slider>
+      <Slider
+        aria-label="Volume"
+        getAriaValueText={formatLabelValue}
+        valueLabelFormat={formatLabelValue}
+        valueLabelDisplay="auto"
+        onChange={handleChange}
+        value={audioVolume * 100}
+      ></Slider>
     </Box>
   )
 }
