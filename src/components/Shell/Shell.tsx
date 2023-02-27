@@ -56,6 +56,9 @@ export const Shell = ({ appNeedsUpdate, children, userPeerId }: ShellProps) => {
   const [screenState, setScreenState] = useState<ScreenShareState>(
     ScreenShareState.NOT_SHARING
   )
+  const [peerAudios, setPeerAudios] = useState<
+    Record<string, HTMLAudioElement>
+  >({})
   const showAlert = useCallback<
     (message: string, options?: AlertOptions) => void
   >((message, options) => {
@@ -89,6 +92,8 @@ export const Shell = ({ appNeedsUpdate, children, userPeerId }: ShellProps) => {
       setVideoState,
       screenState,
       setScreenState,
+      peerAudios,
+      setPeerAudios,
     }),
     [
       isPeerListOpen,
@@ -112,6 +117,8 @@ export const Shell = ({ appNeedsUpdate, children, userPeerId }: ShellProps) => {
       setVideoState,
       screenState,
       setScreenState,
+      peerAudios,
+      setPeerAudios,
     ]
   )
 
@@ -322,6 +329,7 @@ export const Shell = ({ appNeedsUpdate, children, userPeerId }: ShellProps) => {
             onPeerListClose={handlePeerListClick}
             peerList={peerList}
             audioState={audioState}
+            peerAudios={peerAudios}
           />
           <QRCodeDialog
             isOpen={isQRCodeDialogOpen}

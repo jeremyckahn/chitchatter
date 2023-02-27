@@ -14,9 +14,6 @@ interface UseRoomAudioConfig {
 export function useRoomAudio({ peerRoom }: UseRoomAudioConfig) {
   const shellContext = useContext(ShellContext)
   const [isSpeakingToRoom, setIsSpeakingToRoom] = useState(false)
-  const [peerAudios, setPeerAudios] = useState<
-    Record<string, HTMLAudioElement>
-  >({})
   const [audioStream, setAudioStream] = useState<MediaStream | null>()
 
   const [audioDevices, setAudioDevices] = useState<MediaDeviceInfo[]>([])
@@ -24,7 +21,8 @@ export function useRoomAudio({ peerRoom }: UseRoomAudioConfig) {
     string | null
   >(null)
 
-  const { peerList, setPeerList, setAudioState } = shellContext
+  const { peerList, setPeerList, setAudioState, peerAudios, setPeerAudios } =
+    shellContext
 
   useEffect(() => {
     ;(async () => {

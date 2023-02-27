@@ -26,6 +26,8 @@ interface ShellContextProps {
   setVideoState: Dispatch<SetStateAction<VideoState>>
   screenState: ScreenShareState
   setScreenState: Dispatch<SetStateAction<ScreenShareState>>
+  peerAudios: Record<string, HTMLAudioElement>
+  setPeerAudios: Dispatch<SetStateAction<Record<string, HTMLAudioElement>>>
 }
 
 export const ShellContext = createContext<ShellContextProps>({
@@ -51,4 +53,6 @@ export const ShellContext = createContext<ShellContextProps>({
   setVideoState: () => {},
   screenState: ScreenShareState.NOT_SHARING,
   setScreenState: () => {},
+  peerAudios: {},
+  setPeerAudios: () => {},
 })
