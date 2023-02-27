@@ -23,7 +23,15 @@ export const AudioVolume = ({ audioEl }: AudioVolumeProps) => {
 
   if (!audioEl) return <></>
 
-  const handleChange = (_event: Event, value: number | number[]) => {
+  const handleIconClick = () => {
+    if (audioVolume === 0) {
+      setAudioVolume(1)
+    } else {
+      setAudioVolume(0)
+    }
+  }
+
+  const handleSliderChange = (_event: Event, value: number | number[]) => {
     value = Array.isArray(value) ? value[0] : value
     setAudioVolume(value / 100)
   }
@@ -41,14 +49,14 @@ export const AudioVolume = ({ audioEl }: AudioVolumeProps) => {
   return (
     <Box sx={{ display: 'flex', pt: 1, pr: 3, alignItems: 'center' }}>
       <ListItemIcon>
-        <VolumeIcon />
+        <VolumeIcon sx={{ cursor: 'pointer' }} onClick={handleIconClick} />
       </ListItemIcon>
       <Slider
         aria-label="Volume"
         getAriaValueText={formatLabelValue}
         valueLabelFormat={formatLabelValue}
         valueLabelDisplay="auto"
-        onChange={handleChange}
+        onChange={handleSliderChange}
         value={audioVolume * 100}
       ></Slider>
     </Box>
