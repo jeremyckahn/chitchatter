@@ -60,7 +60,7 @@ export const PeerList = ({
       </PeerListHeader>
       <Divider />
       <List>
-        <ListItem>
+        <ListItem divider={true}>
           {audioState === AudioState.PLAYING && (
             <ListItemIcon>
               <VolumeUp />
@@ -71,7 +71,7 @@ export const PeerList = ({
           </ListItemText>
         </ListItem>
         {peerList.map((peer: Peer) => (
-          <ListItem key={peer.peerId}>
+          <ListItem key={peer.peerId} divider={true}>
             <PeerDownloadFileButton peer={peer} />
             <ListItemText>
               <PeerNameDisplay>{peer.userId}</PeerNameDisplay>
@@ -82,7 +82,6 @@ export const PeerList = ({
           </ListItem>
         ))}
       </List>
-      <Divider />
     </MuiDrawer>
   )
 }
