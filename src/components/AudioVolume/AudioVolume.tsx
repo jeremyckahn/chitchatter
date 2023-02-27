@@ -7,21 +7,15 @@ import VolumeDown from '@mui/icons-material/VolumeDown'
 import VolumeMute from '@mui/icons-material/VolumeMute'
 
 interface AudioVolumeProps {
-  audioEl?: HTMLAudioElement
+  audioEl: HTMLAudioElement
 }
 
 export const AudioVolume = ({ audioEl }: AudioVolumeProps) => {
-  const [audioVolume, setAudioVolume] = useState(
-    audioEl?.volume ? audioEl.volume : 1
-  )
+  const [audioVolume, setAudioVolume] = useState(audioEl.volume)
 
   useEffect(() => {
-    if (!audioEl) return
-
     audioEl.volume = audioVolume
   }, [audioEl, audioVolume])
-
-  if (!audioEl) return <></>
 
   const handleIconClick = () => {
     if (audioVolume === 0) {

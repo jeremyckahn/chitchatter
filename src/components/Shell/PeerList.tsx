@@ -75,7 +75,7 @@ export const PeerList = ({
             <PeerDownloadFileButton peer={peer} />
             <ListItemText>
               <PeerNameDisplay>{peer.userId}</PeerNameDisplay>
-              {peer.audioState === AudioState.PLAYING && (
+              {peer.peerId in peerAudios && (
                 <AudioVolume audioEl={peerAudios[peer.peerId]} />
               )}
             </ListItemText>
