@@ -56,6 +56,7 @@ export const Shell = ({ appNeedsUpdate, children, userPeerId }: ShellProps) => {
   const [screenState, setScreenState] = useState<ScreenShareState>(
     ScreenShareState.NOT_SHARING
   )
+  const [customUsername, setCustomUsername] = useState('')
   const [peerAudios, setPeerAudios] = useState<
     Record<string, HTMLAudioElement>
   >({})
@@ -94,6 +95,8 @@ export const Shell = ({ appNeedsUpdate, children, userPeerId }: ShellProps) => {
       setScreenState,
       peerAudios,
       setPeerAudios,
+      customUsername,
+      setCustomUsername,
     }),
     [
       isPeerListOpen,
@@ -119,6 +122,8 @@ export const Shell = ({ appNeedsUpdate, children, userPeerId }: ShellProps) => {
       setScreenState,
       peerAudios,
       setPeerAudios,
+      customUsername,
+      setCustomUsername,
     ]
   )
 
