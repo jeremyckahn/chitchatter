@@ -13,7 +13,7 @@ interface PublicRoomProps {
 
 export function PrivateRoom({ userId }: PublicRoomProps) {
   const { roomId = '' } = useParams()
-  const { setTitle } = useContext(ShellContext)
+  const { setTitle, customUsername } = useContext(ShellContext)
 
   const urlParams = new URLSearchParams(window.location.hash.substring(1))
   // Clear secret from address bar
@@ -44,6 +44,11 @@ export function PrivateRoom({ userId }: PublicRoomProps) {
       onPasswordEntered={handlePasswordEntered}
     />
   ) : (
-    <Room userId={userId} roomId={roomId} password={secret} />
+    <Room
+      userId={userId}
+      roomId={roomId}
+      password={secret}
+      customUsername={customUsername}
+    />
   )
 }

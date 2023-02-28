@@ -33,7 +33,13 @@ import { usePeerRoomAction } from './usePeerRoomAction'
 interface UseRoomConfig {
   roomId: string
   userId: string
+  customUsername: string
   getUuid?: typeof uuid
+}
+
+interface UserMetadata {
+  userId: string
+  customUsername: string
 }
 
 export function useRoom(
@@ -181,10 +187,8 @@ export function useRoom(
     if (isShowingMessages) setUnreadMessages(0)
   }, [isShowingMessages, setUnreadMessages])
 
-  const [sendPeerId, receivePeerId] = usePeerRoomAction<string>(
-    peerRoom,
-    PeerActions.PEER_NAME
-  )
+  const [sendPeerMetadata, receivePeerMetadata] =
+    usePeerRoomAction<UserMetadata>(peerRoom, PeerActions.PEER_METADATA)
 
   const [sendMessageTranscript, receiveMessageTranscript] = usePeerRoomAction<
     Array<ReceivedMessage | ReceivedInlineMedia>
@@ -217,7 +221,8 @@ export function useRoom(
     setIsMessageSending(false)
   }
 
-  receivePeerId((userId: string, peerId: string) => {
+  // FIXME: Change this to be an upsert operation
+  receivePeerMetadata(({ userId, customUsername }, peerId: string) => {
     const peerIndex = peerList.findIndex(peer => peer.peerId === peerId)
     if (peerIndex === -1) {
       setPeerList([
@@ -225,6 +230,7 @@ export function useRoom(
         {
           peerId,
           userId,
+          customUsername,
           audioState: AudioState.STOPPED,
           videoState: VideoState.STOPPED,
           screenShareState: ScreenShareState.NOT_SHARING,
@@ -275,7 +281,9 @@ export function useRoom(
     setNumberOfPeers(newNumberOfPeers)
     ;(async () => {
       try {
-        const promises: Promise<any>[] = [sendPeerId(userId, peerId)]
+        const promises: Promise<any>[] = [
+          sendPeerMetadata({ userId, customUsername: '' }, peerId),
+        ]
 
         if (!isPrivate) {
           promises.push(

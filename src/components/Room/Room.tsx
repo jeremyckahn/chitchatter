@@ -31,6 +31,7 @@ export interface RoomProps {
   password?: string
   roomId: string
   userId: string
+  customUsername: string
 }
 
 export function Room({
@@ -39,6 +40,7 @@ export function Room({
   roomId,
   password,
   userId,
+  customUsername,
 }: RoomProps) {
   const {
     isMessageSending,
@@ -58,6 +60,7 @@ export function Room({
     {
       roomId,
       userId,
+      customUsername,
       getUuid,
     }
   )

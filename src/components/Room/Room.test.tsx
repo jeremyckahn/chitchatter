@@ -7,6 +7,7 @@ import { Room } from './'
 
 const mockUserId = 'user-id'
 const mockRoomId = 'room-123'
+const mockCustomUsername = 'custom username'
 
 window.AudioContext = jest.fn().mockImplementation()
 const mockGetUuid = jest.fn()
@@ -48,7 +49,11 @@ describe('Room', () => {
   test('is available', () => {
     render(
       <RouteStub>
-        <Room userId={mockUserId} roomId={mockRoomId} />
+        <Room
+          userId={mockUserId}
+          roomId={mockRoomId}
+          customUsername={mockCustomUsername}
+        />
       </RouteStub>
     )
   })
@@ -56,7 +61,11 @@ describe('Room', () => {
   test('send button is disabled', () => {
     render(
       <RouteStub>
-        <Room userId={mockUserId} roomId={mockRoomId} />
+        <Room
+          userId={mockUserId}
+          roomId={mockRoomId}
+          customUsername={mockCustomUsername}
+        />
       </RouteStub>
     )
 
@@ -67,7 +76,11 @@ describe('Room', () => {
   test('inputting text enabled send button', () => {
     render(
       <RouteStub>
-        <Room userId={mockUserId} roomId={mockRoomId} />
+        <Room
+          userId={mockUserId}
+          roomId={mockRoomId}
+          customUsername={mockCustomUsername}
+        />
       </RouteStub>
     )
 
@@ -80,7 +93,11 @@ describe('Room', () => {
   test('sending a message clears the text input', async () => {
     render(
       <RouteStub>
-        <Room userId={mockUserId} roomId={mockRoomId} />
+        <Room
+          userId={mockUserId}
+          roomId={mockRoomId}
+          customUsername={mockCustomUsername}
+        />
       </RouteStub>
     )
 
@@ -102,6 +119,7 @@ describe('Room', () => {
           getUuid={mockGetUuid.mockImplementation(() => 'abc123')}
           userId={mockUserId}
           roomId={mockRoomId}
+          customUsername={mockCustomUsername}
         />
       </RouteStub>
     )

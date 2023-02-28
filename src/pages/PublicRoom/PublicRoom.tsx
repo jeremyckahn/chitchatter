@@ -11,7 +11,7 @@ interface PublicRoomProps {
 
 export function PublicRoom({ userId }: PublicRoomProps) {
   const { roomId = '' } = useParams()
-  const { setTitle } = useContext(ShellContext)
+  const { setTitle, customUsername } = useContext(ShellContext)
 
   useEffect(() => {
     NotificationService.requestPermission()
@@ -21,5 +21,7 @@ export function PublicRoom({ userId }: PublicRoomProps) {
     setTitle(`Room: ${roomId}`)
   }, [roomId, setTitle])
 
-  return <Room userId={userId} roomId={roomId} />
+  return (
+    <Room userId={userId} roomId={roomId} customUsername={customUsername} />
+  )
 }
