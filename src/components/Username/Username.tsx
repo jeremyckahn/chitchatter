@@ -15,7 +15,8 @@ const maxCustomUsernameLength = 30
 export const Username = ({ userId }: UsernameProps) => {
   const userName = getPeerName(userId)
 
-  const { customUsername, setCustomUsername } = useContext(ShellContext)
+  const { customUsername, setCustomUsername, showAlert } =
+    useContext(ShellContext)
   const [inflightCustomUsername, setInflightCustomUsername] =
     useState(customUsername)
 
@@ -23,9 +24,24 @@ export const Username = ({ userId }: UsernameProps) => {
     setInflightCustomUsername(evt.target.value)
   }
 
+  const updateCustomUsername = () => {
+    const trimmedUsername = inflightCustomUsername.trim()
+    setCustomUsername(trimmedUsername)
+
+    if (trimmedUsername.length) {
+      showAlert(`Username changed to "${trimmedUsername}"`)
+    } else {
+      showAlert(`Username reset`)
+    }
+  }
+
   const handleSubmit = (evt: SyntheticEvent<HTMLFormElement>) => {
     evt.preventDefault()
-    setCustomUsername(inflightCustomUsername)
+    updateCustomUsername()
+  }
+
+  const handleBlur = () => {
+    updateCustomUsername()
   }
 
   return (
@@ -33,6 +49,7 @@ export const Username = ({ userId }: UsernameProps) => {
       <FormControl sx={{ width: '100%' }}>
         <TextField
           onChange={handleChange}
+          onBlur={handleBlur}
           variant="outlined"
           label={`${userName}`}
           sx={{ width: '100%' }}
