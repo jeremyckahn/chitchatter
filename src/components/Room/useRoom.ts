@@ -63,6 +63,7 @@ export function useRoom(
     setRoomId,
     setPassword,
     setIsPeerListOpen,
+    customUsername,
   } = useContext(ShellContext)
 
   const settingsContext = useContext(SettingsContext)
@@ -221,9 +222,9 @@ export function useRoom(
     setIsMessageSending(false)
   }
 
-  // FIXME: Change this to be an upsert operation
   receivePeerMetadata(({ userId, customUsername }, peerId: string) => {
     const peerIndex = peerList.findIndex(peer => peer.peerId === peerId)
+
     if (peerIndex === -1) {
       setPeerList([
         ...peerList,
@@ -238,9 +239,18 @@ export function useRoom(
         },
       ])
     } else {
+      const oldUsername =
+        peerList[peerIndex].customUsername || getPeerName(peerId)
+      const newUsername = customUsername || getPeerName(peerId)
+
       const newPeerList = [...peerList]
-      newPeerList[peerIndex].userId = userId
+      const newPeer = { ...newPeerList[peerIndex], userId, customUsername }
+      newPeerList[peerIndex] = newPeer
       setPeerList(newPeerList)
+
+      if (oldUsername !== newUsername) {
+        showAlert(`${oldUsername} is now ${newUsername}`)
+      }
     }
   })
 
@@ -282,7 +292,7 @@ export function useRoom(
     ;(async () => {
       try {
         const promises: Promise<any>[] = [
-          sendPeerMetadata({ userId, customUsername: '' }, peerId),
+          sendPeerMetadata({ userId, customUsername }, peerId),
         ]
 
         if (!isPrivate) {
@@ -368,6 +378,10 @@ export function useRoom(
 
     setMessageLog([...messageLog, { ...inlineMedia, timeReceived: Date.now() }])
   })
+
+  useEffect(() => {
+    sendPeerMetadata({ customUsername, userId })
+  }, [customUsername, userId, sendPeerMetadata])
 
   return {
     isPrivate,

@@ -29,9 +29,11 @@ export const Username = ({ userId }: UsernameProps) => {
     setCustomUsername(trimmedUsername)
 
     if (trimmedUsername.length) {
-      showAlert(`Username changed to "${trimmedUsername}"`)
+      showAlert(`Username changed to "${trimmedUsername}"`, {
+        severity: 'success',
+      })
     } else {
-      showAlert(`Username reset`)
+      showAlert(`Username reset`, { severity: 'success' })
     }
   }
 
