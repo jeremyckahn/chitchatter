@@ -27,15 +27,7 @@ export const PeerNameDisplay = ({
   const customUsername = isPeerSelf ? selfCustomUsername : peer?.customUsername
 
   if (userId === undefined) {
-    console.error('peer lookup failed: userId is undefined')
-
-    // FIXME: This is necessary to make tests pass. An error should be thrown
-    // instead.
-    return (
-      <Typography component="span" {...rest}>
-        {getPeerName(userIdToResolve)}
-      </Typography>
-    )
+    throw new TypeError('peer lookup failed: userId is undefined')
   }
 
   return (

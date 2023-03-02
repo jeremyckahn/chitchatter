@@ -2,7 +2,7 @@ import { createContext } from 'react'
 
 import { UserSettings } from 'models/settings'
 
-interface SettingsContextProps {
+export interface SettingsContextProps {
   updateUserSettings: (settings: Partial<UserSettings>) => Promise<void>
   getUserSettings: () => UserSettings
 }
