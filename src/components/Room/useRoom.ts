@@ -240,8 +240,8 @@ export function useRoom(
       ])
     } else {
       const oldUsername =
-        peerList[peerIndex].customUsername || getPeerName(peerId)
-      const newUsername = customUsername || getPeerName(peerId)
+        peerList[peerIndex].customUsername || getPeerName(userId)
+      const newUsername = customUsername || getPeerName(userId)
 
       const newPeerList = [...peerList]
       const newPeer = { ...newPeerList[peerIndex], userId, customUsername }
