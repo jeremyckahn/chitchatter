@@ -27,8 +27,6 @@ export const usePeerNameDisplay = (rootUserIdToResolve: string) => {
       ? selfCustomUsername
       : getPeer(userIdToResolve)?.customUsername
 
-  const customUsername = getCustomUsername(rootUserIdToResolve)
-
   const getFriendlyName = (userIdToResolve: string) => {
     const customUsername = getCustomUsername(userIdToResolve)
     const friendlyName = customUsername || getPeerName(userIdToResolve)
@@ -38,6 +36,7 @@ export const usePeerNameDisplay = (rootUserIdToResolve: string) => {
 
   const getDisplayUsername = (userIdToResolve: string) => {
     const friendlyName = getFriendlyName(userIdToResolve)
+    const customUsername = getCustomUsername(userIdToResolve)
 
     let displayUsername: string
 
@@ -52,7 +51,7 @@ export const usePeerNameDisplay = (rootUserIdToResolve: string) => {
 
   return {
     userId,
-    customUsername,
+    getCustomUsername,
     isPeerSelf,
     getFriendlyName,
     getDisplayUsername,

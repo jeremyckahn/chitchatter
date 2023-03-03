@@ -11,10 +11,11 @@ export const PeerNameDisplay = ({
   children: userIdToResolve,
   ...rest
 }: PeerNameDisplayProps) => {
-  const { userId, customUsername, getFriendlyName } =
+  const { userId, getCustomUsername, getFriendlyName } =
     usePeerNameDisplay(userIdToResolve)
 
   const friendlyName = getFriendlyName(userIdToResolve)
+  const customUsername = getCustomUsername(userIdToResolve)
 
   if (customUsername === friendlyName) {
     return (
