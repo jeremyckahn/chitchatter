@@ -2,13 +2,12 @@ import { useEffect, useRef } from 'react'
 import Paper from '@mui/material/Paper'
 import Tooltip from '@mui/material/Tooltip'
 
-import { getPeerName } from 'components/PeerNameDisplay'
+import { PeerNameDisplay } from 'components/PeerNameDisplay'
 import { VideoStreamType } from 'models/chat'
 
 import { SelectedPeerStream } from './RoomVideoDisplay'
 
 interface PeerVideoProps {
-  isSelectedVideo?: boolean
   isSelfVideo?: boolean
   numberOfVideos: number
   onVideoClick?: (
@@ -30,7 +29,6 @@ const nextPerfectSquare = (base: number) => {
 }
 
 export const PeerVideo = ({
-  isSelectedVideo,
   isSelfVideo,
   numberOfVideos,
   onVideoClick,
@@ -81,7 +79,7 @@ export const PeerVideo = ({
       elevation={10}
     >
       <Tooltip
-        title={getPeerName(userId)}
+        title={<PeerNameDisplay>{userId}</PeerNameDisplay>}
         placement="top"
         componentsProps={{
           tooltip: { sx: { position: 'absolute', top: '25px' } },

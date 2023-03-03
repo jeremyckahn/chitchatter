@@ -20,7 +20,7 @@ import {
   isInlineMedia,
   FileOfferMetadata,
 } from 'models/chat'
-import { getPeerName } from 'components/PeerNameDisplay'
+import { getPeerName, usePeerNameDisplay } from 'components/PeerNameDisplay'
 import { NotificationService } from 'services/Notification'
 import { Audio as AudioService } from 'services/Audio'
 import { PeerRoom, PeerHookType } from 'services/PeerRoom'
@@ -74,6 +74,8 @@ export function useRoom(
   const [newMessageAudio] = useState(
     () => new AudioService(process.env.PUBLIC_URL + '/sounds/new-message.aac')
   )
+
+  const { getDisplayUsername } = usePeerNameDisplay(userId)
 
   const setMessageLog = (messages: Array<Message | InlineMedia>) => {
     if (messages.length > messageTranscriptSizeLimit) {
@@ -273,8 +275,10 @@ export function useRoom(
       }
 
       if (userSettings.showNotificationOnNewMessage) {
+        const displayUsername = getDisplayUsername(message.authorId)
+
         NotificationService.showNotification(
-          `${getPeerName(message.authorId)}: ${message.text}`
+          `${displayUsername}: ${message.text}`
         )
       }
     }
@@ -311,9 +315,10 @@ export function useRoom(
   peerRoom.onPeerLeave(PeerHookType.NEW_PEER, (peerId: string) => {
     const peerIndex = peerList.findIndex(peer => peer.peerId === peerId)
     const peerExist = peerIndex !== -1
+
     showAlert(
       `${
-        peerExist ? getPeerName(peerList[peerIndex].userId) : 'Someone'
+        peerExist ? getDisplayUsername(peerList[peerIndex].userId) : 'Someone'
       } has left the room`,
       {
         severity: 'warning',
@@ -371,7 +376,7 @@ export function useRoom(
 
       if (userSettings.showNotificationOnNewMessage) {
         NotificationService.showNotification(
-          `${getPeerName(inlineMedia.authorId)} shared media`
+          `${getDisplayUsername(inlineMedia.authorId)} shared media`
         )
       }
     }
