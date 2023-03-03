@@ -29,13 +29,15 @@ export const usePeerNameDisplay = (rootUserIdToResolve: string) => {
 
   const customUsername = getCustomUsername(rootUserIdToResolve)
 
-  if (userId === undefined) {
-    throw new TypeError('peer lookup failed: userId is undefined')
+  const getFriendlyName = (userIdToResolve: string) => {
+    const customUsername = getCustomUsername(userIdToResolve)
+    const friendlyName = customUsername || getPeerName(userIdToResolve)
+
+    return friendlyName
   }
 
   const getDisplayUsername = (userIdToResolve: string) => {
-    const customUsername = getCustomUsername(userIdToResolve)
-    const friendlyName = customUsername || getPeerName(userIdToResolve)
+    const friendlyName = getFriendlyName(userIdToResolve)
 
     let displayUsername: string
 
@@ -52,6 +54,7 @@ export const usePeerNameDisplay = (rootUserIdToResolve: string) => {
     userId,
     customUsername,
     isPeerSelf,
+    getFriendlyName,
     getDisplayUsername,
   }
 }

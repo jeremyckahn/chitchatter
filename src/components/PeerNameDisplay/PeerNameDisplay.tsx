@@ -11,15 +11,23 @@ export const PeerNameDisplay = ({
   children: userIdToResolve,
   ...rest
 }: PeerNameDisplayProps) => {
-  const { userId, customUsername, isPeerSelf } =
+  const { userId, customUsername, getFriendlyName } =
     usePeerNameDisplay(userIdToResolve)
 
-  return (
-    <Typography component="span" {...rest}>
-      {customUsername || getPeerName(userId)}
-      {!isPeerSelf(userIdToResolve) && customUsername ? (
+  const friendlyName = getFriendlyName(userIdToResolve)
+
+  if (customUsername === friendlyName) {
+    return (
+      <Typography component="span" {...rest}>
+        {friendlyName}
         <Typography variant="caption"> ({getPeerName(userId)})</Typography>
-      ) : null}
-    </Typography>
-  )
+      </Typography>
+    )
+  } else {
+    return (
+      <Typography component="span" {...rest}>
+        {getPeerName(userId)}
+      </Typography>
+    )
+  }
 }
