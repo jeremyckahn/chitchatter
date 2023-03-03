@@ -319,7 +319,6 @@ export const Shell = ({ appNeedsUpdate, children, userPeerId }: ShellProps) => {
             onHomeLinkClick={handleHomeLinkClick}
             onSettingsLinkClick={handleSettingsLinkClick}
             theme={theme}
-            userPeerId={userPeerId}
           />
           <RouteContent
             isDrawerOpen={isDrawerOpen}
