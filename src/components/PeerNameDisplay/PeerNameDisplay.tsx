@@ -8,14 +8,13 @@ interface PeerNameDisplayProps extends TypographyProps {
 }
 
 export const PeerNameDisplay = ({
-  children: userIdToResolve,
+  children: userId,
   ...rest
 }: PeerNameDisplayProps) => {
-  const { userId, getCustomUsername, getFriendlyName } =
-    usePeerNameDisplay(userIdToResolve)
+  const { getCustomUsername, getFriendlyName } = usePeerNameDisplay()
 
-  const friendlyName = getFriendlyName(userIdToResolve)
-  const customUsername = getCustomUsername(userIdToResolve)
+  const friendlyName = getFriendlyName(userId)
+  const customUsername = getCustomUsername(userId)
 
   if (customUsername === friendlyName) {
     return (

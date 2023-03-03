@@ -9,7 +9,6 @@ import { isError } from 'utils'
 import { fileTransfer } from 'services/FileTransfer/index'
 import { Peer } from 'models/chat'
 import { ShellContext } from 'contexts/ShellContext'
-import { SettingsContext } from 'contexts/SettingsContext'
 
 import './PeerDownloadFileButton.sass'
 import { usePeerNameDisplay } from 'components/PeerNameDisplay/usePeerNameDisplay'
@@ -24,10 +23,7 @@ export const PeerDownloadFileButton = ({
   const [isDownloading, setIsDownloading] = useState(false)
   const [downloadProgress, setDownloadProgress] = useState<number | null>(null)
   const shellContext = useContext(ShellContext)
-  const settingsContext = useContext(SettingsContext)
-  const { getDisplayUsername } = usePeerNameDisplay(
-    settingsContext.getUserSettings().userId
-  )
+  const { getDisplayUsername } = usePeerNameDisplay()
   const { offeredFileId } = peer
 
   const onProgress = (progress: number) => {

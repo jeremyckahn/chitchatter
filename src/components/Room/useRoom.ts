@@ -75,7 +75,7 @@ export function useRoom(
     () => new AudioService(process.env.PUBLIC_URL + '/sounds/new-message.aac')
   )
 
-  const { getDisplayUsername } = usePeerNameDisplay(userId)
+  const { getDisplayUsername } = usePeerNameDisplay()
 
   const setMessageLog = (messages: Array<Message | InlineMedia>) => {
     if (messages.length > messageTranscriptSizeLimit) {

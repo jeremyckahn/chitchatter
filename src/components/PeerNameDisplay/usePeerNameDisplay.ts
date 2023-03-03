@@ -4,53 +4,46 @@ import { ShellContext } from 'contexts/ShellContext'
 
 import { getPeerName } from './getPeerName'
 
-export const usePeerNameDisplay = (rootUserIdToResolve: string) => {
+export const usePeerNameDisplay = () => {
   const { getUserSettings } = useContext(SettingsContext)
   const { peerList, customUsername: selfCustomUsername } =
     useContext(ShellContext)
 
   const { userId: selfUserId } = getUserSettings()
 
-  const isPeerSelf = (userIdToResolve: string) => selfUserId === userIdToResolve
+  const isPeerSelf = (userId: string) => selfUserId === userId
 
-  const getPeer = (userIdToResolve: string) =>
-    peerList.find(peer => peer.userId === userIdToResolve)
+  const getPeer = (userId: string) =>
+    peerList.find(peer => peer.userId === userId)
 
-  const peer = getPeer(rootUserIdToResolve)
-
-  const userId = isPeerSelf(rootUserIdToResolve)
-    ? selfUserId
-    : peer?.userId ?? getPeerName(rootUserIdToResolve)
-
-  const getCustomUsername = (userIdToResolve: string) =>
-    isPeerSelf(userIdToResolve)
+  const getCustomUsername = (userId: string) =>
+    isPeerSelf(userId)
       ? selfCustomUsername
-      : getPeer(userIdToResolve)?.customUsername
+      : getPeer(userId)?.customUsername ?? ''
 
-  const getFriendlyName = (userIdToResolve: string) => {
-    const customUsername = getCustomUsername(userIdToResolve)
-    const friendlyName = customUsername || getPeerName(userIdToResolve)
+  const getFriendlyName = (userId: string) => {
+    const customUsername = getCustomUsername(userId)
+    const friendlyName = customUsername || getPeerName(userId)
 
     return friendlyName
   }
 
-  const getDisplayUsername = (userIdToResolve: string) => {
-    const friendlyName = getFriendlyName(userIdToResolve)
-    const customUsername = getCustomUsername(userIdToResolve)
+  const getDisplayUsername = (userId: string) => {
+    const friendlyName = getFriendlyName(userId)
+    const customUsername = getCustomUsername(userId)
 
     let displayUsername: string
 
     if (customUsername === friendlyName) {
-      displayUsername = `${friendlyName} (${getPeerName(userIdToResolve)})`
+      displayUsername = `${friendlyName} (${getPeerName(userId)})`
     } else {
-      displayUsername = getPeerName(userIdToResolve)
+      displayUsername = getPeerName(userId)
     }
 
     return displayUsername
   }
 
   return {
-    userId,
     getCustomUsername,
     isPeerSelf,
     getFriendlyName,
