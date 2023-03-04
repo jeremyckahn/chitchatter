@@ -33,7 +33,7 @@ export interface ShellProps extends PropsWithChildren {
 }
 
 export const Shell = ({ appNeedsUpdate, children, userPeerId }: ShellProps) => {
-  const settingsContext = useContext(SettingsContext)
+  const { getUserSettings, updateUserSettings } = useContext(SettingsContext)
   const [isAlertShowing, setIsAlertShowing] = useState(false)
   const [isDrawerOpen, setIsDrawerOpen] = useState(false)
   const [isQRCodeDialogOpen, setIsQRCodeDialogOpen] = useState(false)
@@ -55,6 +55,9 @@ export const Shell = ({ appNeedsUpdate, children, userPeerId }: ShellProps) => {
   const [videoState, setVideoState] = useState<VideoState>(VideoState.STOPPED)
   const [screenState, setScreenState] = useState<ScreenShareState>(
     ScreenShareState.NOT_SHARING
+  )
+  const [customUsername, setCustomUsername] = useState(
+    getUserSettings().customUsername
   )
   const [peerAudios, setPeerAudios] = useState<
     Record<string, HTMLAudioElement>
@@ -94,6 +97,8 @@ export const Shell = ({ appNeedsUpdate, children, userPeerId }: ShellProps) => {
       setScreenState,
       peerAudios,
       setPeerAudios,
+      customUsername,
+      setCustomUsername,
     }),
     [
       isPeerListOpen,
@@ -119,10 +124,12 @@ export const Shell = ({ appNeedsUpdate, children, userPeerId }: ShellProps) => {
       setScreenState,
       peerAudios,
       setPeerAudios,
+      customUsername,
+      setCustomUsername,
     ]
   )
 
-  const colorMode = settingsContext.getUserSettings().colorMode
+  const { colorMode } = getUserSettings()
 
   const theme = useMemo(
     () =>
@@ -144,6 +151,12 @@ export const Shell = ({ appNeedsUpdate, children, userPeerId }: ShellProps) => {
 
     setIsAlertShowing(false)
   }
+
+  useEffect(() => {
+    if (customUsername === getUserSettings().customUsername) return
+
+    updateUserSettings({ customUsername })
+  }, [customUsername, getUserSettings, updateUserSettings])
 
   useEffect(() => {
     document.title = title
@@ -314,7 +327,6 @@ export const Shell = ({ appNeedsUpdate, children, userPeerId }: ShellProps) => {
             onHomeLinkClick={handleHomeLinkClick}
             onSettingsLinkClick={handleSettingsLinkClick}
             theme={theme}
-            userPeerId={userPeerId}
           />
           <RouteContent
             isDrawerOpen={isDrawerOpen}

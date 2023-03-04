@@ -54,6 +54,7 @@ test('persists user settings if none were already persisted', async () => {
   expect(mockSetItem).toHaveBeenCalledWith(PersistedStorageKeys.USER_SETTINGS, {
     colorMode: 'dark',
     userId: 'abc123',
+    customUsername: '',
     playSoundOnNewMessage: true,
     showNotificationOnNewMessage: true,
   })

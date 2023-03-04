@@ -39,6 +39,7 @@ function Bootstrap({
   const [hasLoadedSettings, setHasLoadedSettings] = useState(false)
   const [userSettings, setUserSettings] = useState<UserSettings>({
     userId: getUuid(),
+    customUsername: '',
     colorMode: 'dark',
     playSoundOnNewMessage: true,
     showNotificationOnNewMessage: true,
@@ -100,8 +101,8 @@ function Bootstrap({
     <Router>
       <StorageContext.Provider value={storageContextValue}>
         <SettingsContext.Provider value={settingsContextValue}>
-          <Shell appNeedsUpdate={appNeedsUpdate} userPeerId={userId}>
-            {hasLoadedSettings ? (
+          {hasLoadedSettings ? (
+            <Shell appNeedsUpdate={appNeedsUpdate} userPeerId={userId}>
               <Routes>
                 {[routes.ROOT, routes.INDEX_HTML].map(path => (
                   <Route
@@ -129,10 +130,10 @@ function Bootstrap({
                   element={<Navigate to={routes.ROOT} replace />}
                 />
               </Routes>
-            ) : (
-              <></>
-            )}
-          </Shell>
+            </Shell>
+          ) : (
+            <></>
+          )}
         </SettingsContext.Provider>
       </StorageContext.Provider>
     </Router>

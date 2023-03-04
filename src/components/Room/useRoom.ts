@@ -20,7 +20,7 @@ import {
   isInlineMedia,
   FileOfferMetadata,
 } from 'models/chat'
-import { getPeerName } from 'components/PeerNameDisplay'
+import { getPeerName, usePeerNameDisplay } from 'components/PeerNameDisplay'
 import { NotificationService } from 'services/Notification'
 import { Audio as AudioService } from 'services/Audio'
 import { PeerRoom, PeerHookType } from 'services/PeerRoom'
@@ -34,6 +34,11 @@ interface UseRoomConfig {
   roomId: string
   userId: string
   getUuid?: typeof uuid
+}
+
+interface UserMetadata {
+  userId: string
+  customUsername: string
 }
 
 export function useRoom(
@@ -57,6 +62,7 @@ export function useRoom(
     setRoomId,
     setPassword,
     setIsPeerListOpen,
+    customUsername,
   } = useContext(ShellContext)
 
   const settingsContext = useContext(SettingsContext)
@@ -67,6 +73,8 @@ export function useRoom(
   const [newMessageAudio] = useState(
     () => new AudioService(process.env.PUBLIC_URL + '/sounds/new-message.aac')
   )
+
+  const { getDisplayUsername } = usePeerNameDisplay()
 
   const setMessageLog = (messages: Array<Message | InlineMedia>) => {
     if (messages.length > messageTranscriptSizeLimit) {
@@ -181,10 +189,8 @@ export function useRoom(
     if (isShowingMessages) setUnreadMessages(0)
   }, [isShowingMessages, setUnreadMessages])
 
-  const [sendPeerId, receivePeerId] = usePeerRoomAction<string>(
-    peerRoom,
-    PeerActions.PEER_NAME
-  )
+  const [sendPeerMetadata, receivePeerMetadata] =
+    usePeerRoomAction<UserMetadata>(peerRoom, PeerActions.PEER_METADATA)
 
   const [sendMessageTranscript, receiveMessageTranscript] = usePeerRoomAction<
     Array<ReceivedMessage | ReceivedInlineMedia>
@@ -217,14 +223,16 @@ export function useRoom(
     setIsMessageSending(false)
   }
 
-  receivePeerId((userId: string, peerId: string) => {
+  receivePeerMetadata(({ userId, customUsername }, peerId: string) => {
     const peerIndex = peerList.findIndex(peer => peer.peerId === peerId)
+
     if (peerIndex === -1) {
       setPeerList([
         ...peerList,
         {
           peerId,
           userId,
+          customUsername,
           audioState: AudioState.STOPPED,
           videoState: VideoState.STOPPED,
           screenShareState: ScreenShareState.NOT_SHARING,
@@ -232,9 +240,18 @@ export function useRoom(
         },
       ])
     } else {
+      const oldUsername =
+        peerList[peerIndex].customUsername || getPeerName(userId)
+      const newUsername = customUsername || getPeerName(userId)
+
       const newPeerList = [...peerList]
-      newPeerList[peerIndex].userId = userId
+      const newPeer = { ...newPeerList[peerIndex], userId, customUsername }
+      newPeerList[peerIndex] = newPeer
       setPeerList(newPeerList)
+
+      if (oldUsername !== newUsername) {
+        showAlert(`${oldUsername} is now ${newUsername}`)
+      }
     }
   })
 
@@ -257,8 +274,10 @@ export function useRoom(
       }
 
       if (userSettings.showNotificationOnNewMessage) {
+        const displayUsername = getDisplayUsername(message.authorId)
+
         NotificationService.showNotification(
-          `${getPeerName(message.authorId)}: ${message.text}`
+          `${displayUsername}: ${message.text}`
         )
       }
     }
@@ -275,7 +294,9 @@ export function useRoom(
     setNumberOfPeers(newNumberOfPeers)
     ;(async () => {
       try {
-        const promises: Promise<any>[] = [sendPeerId(userId, peerId)]
+        const promises: Promise<any>[] = [
+          sendPeerMetadata({ userId, customUsername }, peerId),
+        ]
 
         if (!isPrivate) {
           promises.push(
@@ -293,9 +314,10 @@ export function useRoom(
   peerRoom.onPeerLeave(PeerHookType.NEW_PEER, (peerId: string) => {
     const peerIndex = peerList.findIndex(peer => peer.peerId === peerId)
     const peerExist = peerIndex !== -1
+
     showAlert(
       `${
-        peerExist ? getPeerName(peerList[peerIndex].userId) : 'Someone'
+        peerExist ? getDisplayUsername(peerList[peerIndex].userId) : 'Someone'
       } has left the room`,
       {
         severity: 'warning',
@@ -353,13 +375,17 @@ export function useRoom(
 
       if (userSettings.showNotificationOnNewMessage) {
         NotificationService.showNotification(
-          `${getPeerName(inlineMedia.authorId)} shared media`
+          `${getDisplayUsername(inlineMedia.authorId)} shared media`
         )
       }
     }
 
     setMessageLog([...messageLog, { ...inlineMedia, timeReceived: Date.now() }])
   })
+
+  useEffect(() => {
+    sendPeerMetadata({ customUsername, userId })
+  }, [customUsername, userId, sendPeerMetadata])
 
   return {
     isPrivate,

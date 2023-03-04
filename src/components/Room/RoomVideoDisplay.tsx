@@ -134,7 +134,6 @@ export const RoomVideoDisplay = ({
       {selectedPeerStream && (
         <Box sx={{ height: '80%', width: '100%' }}>
           <PeerVideo
-            isSelectedVideo
             numberOfVideos={numberOfVideos}
             onVideoClick={handleVideoClick}
             userId={selectedPeerStream.peerId}

@@ -1,13 +1,27 @@
 import { waitFor, render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
+import { SettingsContext } from 'contexts/SettingsContext'
 import { MemoryRouter as Router } from 'react-router-dom'
+import { userSettingsContextStubFactory } from 'test-utils/stubs/settingsContext'
 
 import { Shell, ShellProps } from './Shell'
 
-const ShellStub = (overrides: Partial<ShellProps> = {}) => {
+const mockUserPeerId = 'abc123'
+
+const userSettingsStub = userSettingsContextStubFactory({
+  userId: mockUserPeerId,
+})
+
+const ShellStub = (shellProps: Partial<ShellProps> = {}) => {
   return (
     <Router>
-      <Shell appNeedsUpdate={false} userPeerId="abc123" {...overrides} />
+      <SettingsContext.Provider value={userSettingsStub}>
+        <Shell
+          appNeedsUpdate={false}
+          userPeerId={mockUserPeerId}
+          {...shellProps}
+        />
+      </SettingsContext.Provider>
     </Router>
   )
 }

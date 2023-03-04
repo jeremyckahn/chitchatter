@@ -58,7 +58,7 @@ export function Home({ userId }: HomeProps) {
         </Link>
         <form onSubmit={handleFormSubmit} className="max-w-xl mx-auto">
           <Typography sx={{ mb: 2 }}>
-            Your user name:{' '}
+            Your username:{' '}
             <PeerNameDisplay paragraph={false} sx={{ fontWeight: 'bold' }}>
               {userId}
             </PeerNameDisplay>

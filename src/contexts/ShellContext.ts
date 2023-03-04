@@ -28,6 +28,8 @@ interface ShellContextProps {
   setScreenState: Dispatch<SetStateAction<ScreenShareState>>
   peerAudios: Record<string, HTMLAudioElement>
   setPeerAudios: Dispatch<SetStateAction<Record<string, HTMLAudioElement>>>
+  customUsername: string
+  setCustomUsername: Dispatch<SetStateAction<string>>
 }
 
 export const ShellContext = createContext<ShellContextProps>({
@@ -55,4 +57,6 @@ export const ShellContext = createContext<ShellContextProps>({
   setScreenState: () => {},
   peerAudios: {},
   setPeerAudios: () => {},
+  customUsername: '',
+  setCustomUsername: () => {},
 })

@@ -3,7 +3,6 @@ import { Link } from 'react-router-dom'
 import { Theme } from '@mui/material/styles'
 import MuiDrawer from '@mui/material/Drawer'
 import List from '@mui/material/List'
-import Typography from '@mui/material/Typography'
 import Divider from '@mui/material/Divider'
 import IconButton from '@mui/material/IconButton'
 import ChevronLeftIcon from '@mui/icons-material/ChevronLeft'
@@ -21,7 +20,6 @@ import ReportIcon from '@mui/icons-material/Report'
 
 import { routes } from 'config/routes'
 import { SettingsContext } from 'contexts/SettingsContext'
-import { PeerNameDisplay } from 'components/PeerNameDisplay'
 
 import { DrawerHeader } from './DrawerHeader'
 
@@ -35,7 +33,6 @@ export interface DrawerProps extends PropsWithChildren {
   onHomeLinkClick: () => void
   onSettingsLinkClick: () => void
   theme: Theme
-  userPeerId: string
 }
 
 export const Drawer = ({
@@ -46,7 +43,6 @@ export const Drawer = ({
   onHomeLinkClick,
   onSettingsLinkClick,
   theme,
-  userPeerId,
 }: DrawerProps) => {
   const settingsContext = useContext(SettingsContext)
   const colorMode = settingsContext.getUserSettings().colorMode
@@ -79,22 +75,6 @@ export const Drawer = ({
           )}
         </IconButton>
       </DrawerHeader>
-      <Divider />
-      <ListItem disablePadding>
-        <ListItemText
-          sx={{
-            padding: '1em 1.5em',
-          }}
-          primary={
-            <Typography>
-              Your user name:{' '}
-              <PeerNameDisplay sx={{ fontWeight: 'bold' }}>
-                {userPeerId}
-              </PeerNameDisplay>
-            </Typography>
-          }
-        />
-      </ListItem>
       <Divider />
       <List role="navigation">
         <Link to={routes.ROOT} onClick={onHomeLinkClick}>

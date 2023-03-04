@@ -3,10 +3,18 @@ import { waitFor, render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter as Router, Route, Routes } from 'react-router-dom'
 
+import { userSettingsContextStubFactory } from 'test-utils/stubs/settingsContext'
+
+import { SettingsContext } from 'contexts/SettingsContext'
+
 import { Room } from './'
 
 const mockUserId = 'user-id'
 const mockRoomId = 'room-123'
+
+const userSettingsStub = userSettingsContextStubFactory({
+  userId: mockUserId,
+})
 
 window.AudioContext = jest.fn().mockImplementation()
 const mockGetUuid = jest.fn()
@@ -35,9 +43,11 @@ jest.mock('trystero', () => ({
 const RouteStub = ({ children }: PropsWithChildren) => {
   return (
     <Router initialEntries={['/public/abc123']}>
-      <Routes>
-        <Route path="/public/:roomId" element={children}></Route>
-      </Routes>
+      <SettingsContext.Provider value={userSettingsStub}>
+        <Routes>
+          <Route path="/public/:roomId" element={children}></Route>
+        </Routes>
+      </SettingsContext.Provider>
     </Router>
   )
 }

@@ -11,7 +11,7 @@ import { Peer } from 'models/chat'
 import { ShellContext } from 'contexts/ShellContext'
 
 import './PeerDownloadFileButton.sass'
-import { getPeerName } from 'components/PeerNameDisplay/getPeerName'
+import { usePeerNameDisplay } from 'components/PeerNameDisplay/usePeerNameDisplay'
 
 interface PeerDownloadFileButtonProps {
   peer: Peer
@@ -23,6 +23,7 @@ export const PeerDownloadFileButton = ({
   const [isDownloading, setIsDownloading] = useState(false)
   const [downloadProgress, setDownloadProgress] = useState<number | null>(null)
   const shellContext = useContext(ShellContext)
+  const { getDisplayUsername } = usePeerNameDisplay()
   const { offeredFileId } = peer
 
   const onProgress = (progress: number) => {
@@ -67,7 +68,9 @@ export const PeerDownloadFileButton = ({
         />
       ) : (
         <Tooltip
-          title={`Download files being offered by ${getPeerName(peer.userId)}`}
+          title={`Download files being offered by ${getDisplayUsername(
+            peer.userId
+          )}`}
         >
           <Fab color="primary" size="small" onClick={handleDownloadFileClick}>
             <Download />

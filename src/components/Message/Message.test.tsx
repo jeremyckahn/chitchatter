@@ -1,9 +1,11 @@
 import { render, screen } from '@testing-library/react'
+import { SettingsContext } from 'contexts/SettingsContext'
 import { funAnimalName } from 'fun-animal-names'
 
 import { ReceivedMessage, UnsentMessage } from 'models/chat'
+import { userSettingsContextStubFactory } from 'test-utils/stubs/settingsContext'
 
-import { Message } from './Message'
+import { Message, MessageProps } from './Message'
 
 const mockUserId = 'user-123'
 
@@ -22,10 +24,20 @@ const mockReceivedMessage: ReceivedMessage = {
   timeReceived: 2,
 }
 
+const userSettingsStub = userSettingsContextStubFactory({
+  userId: mockUserId,
+})
+
+const MockMessage = (props: MessageProps) => (
+  <SettingsContext.Provider value={userSettingsStub}>
+    <Message {...props} />
+  </SettingsContext.Provider>
+)
+
 describe('Message', () => {
   test('renders unsent message text', () => {
     render(
-      <Message
+      <MockMessage
         message={mockUnsentMessage}
         userId={mockUserId}
         showAuthor={false}
@@ -37,7 +49,7 @@ describe('Message', () => {
 
   test('renders received message text', () => {
     render(
-      <Message
+      <MockMessage
         message={mockReceivedMessage}
         userId={mockUserId}
         showAuthor={false}
@@ -49,7 +61,7 @@ describe('Message', () => {
 
   test('renders message author', () => {
     render(
-      <Message
+      <MockMessage
         message={mockReceivedMessage}
         userId={mockUserId}
         showAuthor={true}

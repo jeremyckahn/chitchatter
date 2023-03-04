@@ -12,6 +12,7 @@ import ListItem from '@mui/material/ListItem'
 import { PeerListHeader } from 'components/Shell/PeerListHeader'
 import { AudioVolume } from 'components/AudioVolume'
 import { PeerNameDisplay } from 'components/PeerNameDisplay'
+import { Username } from 'components/Username/Username'
 import { AudioState, Peer } from 'models/chat'
 
 import { PeerDownloadFileButton } from './PeerDownloadFileButton'
@@ -67,7 +68,7 @@ export const PeerList = ({
             </ListItemIcon>
           )}
           <ListItemText>
-            <PeerNameDisplay>{userId}</PeerNameDisplay> (you)
+            <Username userId={userId} />
           </ListItemText>
         </ListItem>
         {peerList.map((peer: Peer) => (
