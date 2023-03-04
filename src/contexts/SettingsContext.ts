@@ -11,6 +11,7 @@ export const SettingsContext = createContext<SettingsContextProps>({
   updateUserSettings: () => Promise.resolve(),
   getUserSettings: () => ({
     userId: '',
+    customUsername: '',
     colorMode: 'dark',
     playSoundOnNewMessage: true,
     showNotificationOnNewMessage: true,

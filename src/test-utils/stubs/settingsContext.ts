@@ -8,6 +8,7 @@ export const userSettingsContextStubFactory = (
     updateUserSettings: () => Promise.resolve(),
     getUserSettings: () => ({
       userId: '',
+      customUsername: '',
       colorMode: 'dark',
       playSoundOnNewMessage: true,
       showNotificationOnNewMessage: true,
