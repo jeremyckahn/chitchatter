@@ -11,7 +11,6 @@ import { Room } from './'
 
 const mockUserId = 'user-id'
 const mockRoomId = 'room-123'
-const mockCustomUsername = 'custom username'
 
 const userSettingsStub = userSettingsContextStubFactory({
   userId: mockUserId,
@@ -59,11 +58,7 @@ describe('Room', () => {
   test('is available', () => {
     render(
       <RouteStub>
-        <Room
-          userId={mockUserId}
-          roomId={mockRoomId}
-          customUsername={mockCustomUsername}
-        />
+        <Room userId={mockUserId} roomId={mockRoomId} />
       </RouteStub>
     )
   })
@@ -71,11 +66,7 @@ describe('Room', () => {
   test('send button is disabled', () => {
     render(
       <RouteStub>
-        <Room
-          userId={mockUserId}
-          roomId={mockRoomId}
-          customUsername={mockCustomUsername}
-        />
+        <Room userId={mockUserId} roomId={mockRoomId} />
       </RouteStub>
     )
 
@@ -86,11 +77,7 @@ describe('Room', () => {
   test('inputting text enabled send button', () => {
     render(
       <RouteStub>
-        <Room
-          userId={mockUserId}
-          roomId={mockRoomId}
-          customUsername={mockCustomUsername}
-        />
+        <Room userId={mockUserId} roomId={mockRoomId} />
       </RouteStub>
     )
 
@@ -103,11 +90,7 @@ describe('Room', () => {
   test('sending a message clears the text input', async () => {
     render(
       <RouteStub>
-        <Room
-          userId={mockUserId}
-          roomId={mockRoomId}
-          customUsername={mockCustomUsername}
-        />
+        <Room userId={mockUserId} roomId={mockRoomId} />
       </RouteStub>
     )
 
@@ -129,7 +112,6 @@ describe('Room', () => {
           getUuid={mockGetUuid.mockImplementation(() => 'abc123')}
           userId={mockUserId}
           roomId={mockRoomId}
-          customUsername={mockCustomUsername}
         />
       </RouteStub>
     )

@@ -33,7 +33,6 @@ import { usePeerRoomAction } from './usePeerRoomAction'
 interface UseRoomConfig {
   roomId: string
   userId: string
-  customUsername: string
   getUuid?: typeof uuid
 }
 
