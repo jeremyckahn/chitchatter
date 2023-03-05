@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import { Theme } from '@mui/material/styles'
 import MuiDrawer from '@mui/material/Drawer'
 import List from '@mui/material/List'
+import MuiLink from '@mui/material/Link'
 import Typography from '@mui/material/Typography'
 import Divider from '@mui/material/Divider'
 import IconButton from '@mui/material/IconButton'
@@ -138,13 +139,18 @@ export const Drawer = ({
           <Typography variant="subtitle2">
             Build signature:{' '}
             <Typography
-              sx={theme => ({
+              sx={{
                 fontFamily: 'monospace',
                 display: 'inline',
-                color: theme.palette.text.secondary,
-              })}
+              }}
             >
-              {commit.shortHash}
+              <MuiLink
+                target="_blank"
+                rel="noopener"
+                href={`${process.env.REACT_APP_GITHUB_REPO}/commit/${commit.hash}`}
+              >
+                {commit.shortHash}
+              </MuiLink>
             </Typography>
           </Typography>
         </ListItem>
