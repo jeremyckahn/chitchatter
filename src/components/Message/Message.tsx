@@ -1,4 +1,5 @@
 import { HTMLAttributes } from 'react'
+import YouTube from 'react-youtube'
 import Box from '@mui/material/Box'
 import Tooltip from '@mui/material/Tooltip'
 import Typography, { TypographyProps } from '@mui/material/Typography'
@@ -81,6 +82,20 @@ const componentMap = {
 
 const spaceNeededForSideDateTooltip = 850
 
+const getYouTubeVideoId = (videoUrl: string) => {
+  const trimmedMessage = videoUrl.trim()
+
+  const matchArray =
+    trimmedMessage.match(/https:\/\/www.youtube.com\/watch\?v=(\S{8,})$/) ||
+    trimmedMessage.match(/https:\/\/youtu.be\/(\S{8,})$/)
+
+  return (matchArray ?? []).pop()
+}
+
+const isYouTubeLink = (message: IMessage) => {
+  return typeof getYouTubeVideoId(message.text) === 'string'
+}
+
 export const Message = ({ message, showAuthor, userId }: MessageProps) => {
   let backgroundColor: string
 
@@ -131,6 +146,8 @@ export const Message = ({ message, showAuthor, userId }: MessageProps) => {
         >
           {isInlineMedia(message) ? (
             <InlineMedia magnetURI={message.magnetURI} />
+          ) : isYouTubeLink(message) ? (
+            <YouTube id={getYouTubeVideoId(message.text)} />
           ) : (
             <Markdown
               components={componentMap}
