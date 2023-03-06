@@ -147,7 +147,7 @@ export const Message = ({ message, showAuthor, userId }: MessageProps) => {
           {isInlineMedia(message) ? (
             <InlineMedia magnetURI={message.magnetURI} />
           ) : isYouTubeLink(message) ? (
-            <YouTube id={getYouTubeVideoId(message.text)} />
+            <YouTube videoId={getYouTubeVideoId(message.text)} />
           ) : (
             <Markdown
               components={componentMap}
