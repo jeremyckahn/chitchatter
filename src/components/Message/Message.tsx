@@ -89,7 +89,7 @@ const getYouTubeVideoId = (videoUrl: string) => {
     trimmedMessage.match(/https:\/\/www.youtube.com\/watch\?v=(\S{8,})$/) ||
     trimmedMessage.match(/https:\/\/youtu.be\/(\S{8,})$/)
 
-  return (matchArray ?? []).pop()
+  return matchArray?.pop()
 }
 
 const isYouTubeLink = (message: IMessage) => {
