@@ -64,27 +64,25 @@ export function Home({ userId }: HomeProps) {
             </PeerNameDisplay>
           </Typography>
           <FormControl fullWidth>
-            <Tooltip title="Default room names are randomly generated client-side">
-              <TextField
-                label="Room name"
-                variant="outlined"
-                value={roomName}
-                onChange={handleRoomNameChange}
-                InputProps={{
-                  endAdornment: (
-                    <IconButton
-                      aria-label="Regenerate room id"
-                      onClick={() => setRoomName(uuid())}
-                      size="small"
-                    >
-                      <Cached />
-                    </IconButton>
-                  ),
-                  sx: { fontSize: { xs: '0.9rem', sm: '1rem' } },
-                }}
-                size="medium"
-              />
-            </Tooltip>
+            <TextField
+              label="Room name (generated client-side)"
+              variant="outlined"
+              value={roomName}
+              onChange={handleRoomNameChange}
+              InputProps={{
+                endAdornment: (
+                  <IconButton
+                    aria-label="Regenerate room id"
+                    onClick={() => setRoomName(uuid())}
+                    size="small"
+                  >
+                    <Cached />
+                  </IconButton>
+                ),
+                sx: { fontSize: { xs: '0.9rem', sm: '1rem' } },
+              }}
+              size="medium"
+            />
           </FormControl>
           <Box
             sx={{
