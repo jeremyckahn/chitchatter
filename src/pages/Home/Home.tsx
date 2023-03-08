@@ -10,7 +10,6 @@ import IconButton from '@mui/material/IconButton'
 import MuiLink from '@mui/material/Link'
 import GitHubIcon from '@mui/icons-material/GitHub'
 import Cached from '@mui/icons-material/Cached'
-import Tooltip from '@mui/material/Tooltip'
 import { v4 as uuid } from 'uuid'
 
 import { routes } from 'config/routes'
@@ -117,29 +116,37 @@ export function Home({ userId }: HomeProps) {
       <Divider sx={{ my: 2 }} />
       <Box className="max-w-3xl text-center mx-auto px-4">
         <Typography variant="body1">
-          This is a communication tool that is free, open source, and designed
-          for simplicity and security. All communication between you and your
-          online peers is encrypted. There is no trace of your conversation once
-          you leave.
+          This is a free communication tool that is designed for simplicity,
+          privacy, and security. All interaction between you and your online
+          peers is encrypted. There is no record of your conversation once you
+          all leave.
         </Typography>
       </Box>
-      <Tooltip title="View project source code and documentation">
+      <Box
+        sx={{
+          mx: 'auto',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+        }}
+      >
         <MuiLink
           href="https://github.com/jeremyckahn/chitchatter"
           target="_blank"
-          sx={{ display: 'block', textAlign: 'center', color: '#fff' }}
+          sx={theme => ({
+            color: theme.palette.text.primary,
+          })}
         >
           <IconButton
             size="large"
             edge="start"
             color="inherit"
             aria-label="Open menu"
-            sx={{ mx: 'auto' }}
           >
             <GitHubIcon sx={{ fontSize: '2em' }} />
           </IconButton>
         </MuiLink>
-      </Tooltip>
+      </Box>
       <Typography variant="body1" sx={{ textAlign: 'center' }}>
         Licensed under{' '}
         <MuiLink
