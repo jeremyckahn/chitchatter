@@ -30,8 +30,12 @@ export const ChatTranscript = ({
     const lastChild = children[children.length - 1]
     const lastChildHeight = lastChild.clientHeight
     const previousScrollTopMax = scrollTopMax - lastChildHeight
+
+    // Accounts for rounding errors in layout calculations
+    const marginBuffer = 1
+
     const wasPreviouslyScrolledToBottom =
-      Math.ceil(scrollTop) >= Math.ceil(previousScrollTopMax)
+      Math.ceil(scrollTop) >= Math.ceil(previousScrollTopMax) - marginBuffer
     const wasMessageLogPreviouslyEmpty = previousMessageLogLength === 0
     const shouldScrollToLatestMessage =
       wasPreviouslyScrolledToBottom || wasMessageLogPreviouslyEmpty
