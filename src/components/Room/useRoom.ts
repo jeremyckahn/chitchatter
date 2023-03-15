@@ -52,8 +52,6 @@ export function useRoom(
   )
 
   const {
-    numberOfPeers,
-    setNumberOfPeers,
     peerList,
     setPeerList,
     tabHasFocus,
@@ -279,9 +277,6 @@ export function useRoom(
     showAlert(`Someone has joined the room`, {
       severity: 'success',
     })
-
-    const newNumberOfPeers = numberOfPeers + 1
-    setNumberOfPeers(newNumberOfPeers)
     ;(async () => {
       try {
         const promises: Promise<any>[] = [
@@ -313,10 +308,6 @@ export function useRoom(
         severity: 'warning',
       }
     )
-
-    const newNumberOfPeers = numberOfPeers - 1
-    setNumberOfPeers(newNumberOfPeers)
-    setNumberOfPeers(newNumberOfPeers)
 
     if (peerExist) {
       const peerListClone = [...peerList]
