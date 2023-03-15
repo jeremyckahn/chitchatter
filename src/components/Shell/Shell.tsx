@@ -61,7 +61,6 @@ export const Shell = ({ appNeedsUpdate, children, userPeerId }: ShellProps) => {
   const [isFullscreen, setIsFullscreen] = useState(false)
   const [title, setTitle] = useState('')
   const [alertText, setAlertText] = useState('')
-  const [numberOfPeers, setNumberOfPeers] = useState(1)
   const [roomId, setRoomId] = useState<string | undefined>(undefined)
   const [password, setPassword] = useState<string | undefined>(undefined)
   const [isPeerListOpen, setIsPeerListOpen] = useState(defaultSidebarsOpen)
@@ -88,9 +87,7 @@ export const Shell = ({ appNeedsUpdate, children, userPeerId }: ShellProps) => {
 
   const shellContextValue = useMemo(
     () => ({
-      numberOfPeers,
       tabHasFocus,
-      setNumberOfPeers,
       showRoomControls,
       setShowRoomControls,
       setTitle,
@@ -122,10 +119,8 @@ export const Shell = ({ appNeedsUpdate, children, userPeerId }: ShellProps) => {
       setRoomId,
       password,
       setPassword,
-      numberOfPeers,
       peerList,
       tabHasFocus,
-      setNumberOfPeers,
       showRoomControls,
       setShowRoomControls,
       setTitle,
