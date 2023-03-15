@@ -55,7 +55,6 @@ export const Shell = ({ appNeedsUpdate, children, userPeerId }: ShellProps) => {
   const [isDrawerOpen, setIsDrawerOpen] = useState(defaultSidebarsOpen)
   const [isQRCodeDialogOpen, setIsQRCodeDialogOpen] = useState(false)
   const [isRoomShareDialogOpen, setIsRoomShareDialogOpen] = useState(false)
-  const [doShowPeers, setDoShowPeers] = useState(false)
   const [alertSeverity, setAlertSeverity] = useState<AlertColor>('info')
   const [showAppBar, setShowAppBar] = useState(true)
   const [showRoomControls, setShowRoomControls] = useState(true)
@@ -66,7 +65,7 @@ export const Shell = ({ appNeedsUpdate, children, userPeerId }: ShellProps) => {
   const [roomId, setRoomId] = useState<string | undefined>(undefined)
   const [password, setPassword] = useState<string | undefined>(undefined)
   const [isPeerListOpen, setIsPeerListOpen] = useState(defaultSidebarsOpen)
-  const [peerList, setPeerList] = useState<Peer[]>([]) // except you
+  const [peerList, setPeerList] = useState<Peer[]>([]) // except self
   const [tabHasFocus, setTabHasFocus] = useState(true)
   const [audioState, setAudioState] = useState<AudioState>(AudioState.STOPPED)
   const [videoState, setVideoState] = useState<VideoState>(VideoState.STOPPED)
@@ -91,7 +90,6 @@ export const Shell = ({ appNeedsUpdate, children, userPeerId }: ShellProps) => {
     () => ({
       numberOfPeers,
       tabHasFocus,
-      setDoShowPeers,
       setNumberOfPeers,
       showRoomControls,
       setShowRoomControls,
@@ -127,7 +125,6 @@ export const Shell = ({ appNeedsUpdate, children, userPeerId }: ShellProps) => {
       numberOfPeers,
       peerList,
       tabHasFocus,
-      setDoShowPeers,
       setNumberOfPeers,
       showRoomControls,
       setShowRoomControls,
@@ -242,6 +239,10 @@ export const Shell = ({ appNeedsUpdate, children, userPeerId }: ShellProps) => {
     setIsDrawerOpen(true)
   }
 
+  const handleDrawerClose = () => {
+    setIsDrawerOpen(false)
+  }
+
   const handlePeerListClick = () => {
     setIsPeerListOpen(!isPeerListOpen)
   }
@@ -261,26 +262,6 @@ export const Shell = ({ appNeedsUpdate, children, userPeerId }: ShellProps) => {
     } else {
       copyToClipboard(window.location.href, 'Current URL copied to clipboard')
     }
-  }
-
-  const handleDrawerClose = () => {
-    setIsDrawerOpen(false)
-  }
-
-  const handleHomeLinkClick = () => {
-    setIsDrawerOpen(false)
-  }
-
-  const handleAboutLinkClick = () => {
-    setIsDrawerOpen(false)
-  }
-
-  const handleDisclaimerLinkClick = () => {
-    setIsDrawerOpen(false)
-  }
-
-  const handleSettingsLinkClick = () => {
-    setIsDrawerOpen(false)
   }
 
   const handleQRCodeDialogClose = () => {
@@ -310,12 +291,10 @@ export const Shell = ({ appNeedsUpdate, children, userPeerId }: ShellProps) => {
             onAlertClose={handleAlertClose}
           />
           <ShellAppBar
-            doShowPeers={doShowPeers}
             onDrawerOpen={handleDrawerOpen}
             onLinkButtonClick={handleLinkButtonClick}
             isDrawerOpen={isDrawerOpen}
             isPeerListOpen={isPeerListOpen}
-            numberOfPeers={numberOfPeers}
             title={title}
             onPeerListClick={handlePeerListClick}
             onRoomControlsClick={() => setShowRoomControls(!showRoomControls)}
@@ -326,11 +305,7 @@ export const Shell = ({ appNeedsUpdate, children, userPeerId }: ShellProps) => {
           />
           <Drawer
             isDrawerOpen={isDrawerOpen}
-            onAboutLinkClick={handleAboutLinkClick}
-            onDisclaimerClick={handleDisclaimerLinkClick}
             onDrawerClose={handleDrawerClose}
-            onHomeLinkClick={handleHomeLinkClick}
-            onSettingsLinkClick={handleSettingsLinkClick}
             theme={theme}
           />
           <RouteContent

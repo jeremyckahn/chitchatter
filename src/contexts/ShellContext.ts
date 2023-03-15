@@ -6,7 +6,6 @@ import { AudioState, ScreenShareState, VideoState, Peer } from 'models/chat'
 interface ShellContextProps {
   numberOfPeers: number
   tabHasFocus: boolean
-  setDoShowPeers: Dispatch<SetStateAction<boolean>>
   setNumberOfPeers: Dispatch<SetStateAction<number>>
   showRoomControls: boolean
   setShowRoomControls: Dispatch<SetStateAction<boolean>>
@@ -35,7 +34,6 @@ interface ShellContextProps {
 export const ShellContext = createContext<ShellContextProps>({
   numberOfPeers: 1,
   tabHasFocus: true,
-  setDoShowPeers: () => {},
   setNumberOfPeers: () => {},
   showRoomControls: false,
   setShowRoomControls: () => {},

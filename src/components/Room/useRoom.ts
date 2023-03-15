@@ -54,14 +54,12 @@ export function useRoom(
   const {
     numberOfPeers,
     setNumberOfPeers,
-    setDoShowPeers,
     peerList,
     setPeerList,
     tabHasFocus,
     showAlert,
     setRoomId,
     setPassword,
-    setIsPeerListOpen,
     customUsername,
   } = useContext(ShellContext)
 
@@ -157,9 +155,9 @@ export function useRoom(
   useEffect(() => {
     return () => {
       peerRoom.leaveRoom()
-      setIsPeerListOpen(false)
+      setPeerList([])
     }
-  }, [peerRoom, setIsPeerListOpen])
+  }, [peerRoom, setPeerList])
 
   useEffect(() => {
     setPassword(password)
@@ -176,14 +174,6 @@ export function useRoom(
       setRoomId(undefined)
     }
   }, [roomId, setRoomId])
-
-  useEffect(() => {
-    setDoShowPeers(true)
-
-    return () => {
-      setDoShowPeers(false)
-    }
-  }, [setDoShowPeers])
 
   useEffect(() => {
     if (isShowingMessages) setUnreadMessages(0)
