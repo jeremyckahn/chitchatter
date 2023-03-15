@@ -32,23 +32,11 @@ export const drawerWidth = 240
 
 export interface DrawerProps extends PropsWithChildren {
   isDrawerOpen: boolean
-  onAboutLinkClick: () => void
-  onDisclaimerClick: () => void
   onDrawerClose: () => void
-  onHomeLinkClick: () => void
-  onSettingsLinkClick: () => void
   theme: Theme
 }
 
-export const Drawer = ({
-  isDrawerOpen,
-  onAboutLinkClick,
-  onDisclaimerClick,
-  onDrawerClose,
-  onHomeLinkClick,
-  onSettingsLinkClick,
-  theme,
-}: DrawerProps) => {
+export const Drawer = ({ isDrawerOpen, onDrawerClose, theme }: DrawerProps) => {
   const settingsContext = useContext(SettingsContext)
   const colorMode = settingsContext.getUserSettings().colorMode
 
@@ -82,7 +70,7 @@ export const Drawer = ({
       </DrawerHeader>
       <Divider />
       <List role="navigation">
-        <Link to={routes.ROOT} onClick={onHomeLinkClick}>
+        <Link to={routes.ROOT}>
           <ListItem disablePadding>
             <ListItemButton>
               <ListItemIcon>
@@ -92,7 +80,7 @@ export const Drawer = ({
             </ListItemButton>
           </ListItem>
         </Link>
-        <Link to={routes.SETTINGS} onClick={onSettingsLinkClick}>
+        <Link to={routes.SETTINGS}>
           <ListItem disablePadding>
             <ListItemButton>
               <ListItemIcon>
@@ -102,7 +90,7 @@ export const Drawer = ({
             </ListItemButton>
           </ListItem>
         </Link>
-        <Link to={routes.ABOUT} onClick={onAboutLinkClick}>
+        <Link to={routes.ABOUT}>
           <ListItem disablePadding>
             <ListItemButton>
               <ListItemIcon>
@@ -112,7 +100,7 @@ export const Drawer = ({
             </ListItemButton>
           </ListItem>
         </Link>
-        <Link to={routes.DISCLAIMER} onClick={onDisclaimerClick}>
+        <Link to={routes.DISCLAIMER}>
           <ListItem disablePadding>
             <ListItemButton>
               <ListItemIcon>

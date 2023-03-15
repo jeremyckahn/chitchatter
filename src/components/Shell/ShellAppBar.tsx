@@ -18,6 +18,10 @@ import Menu from '@mui/icons-material/Menu'
 import QrCode2 from '@mui/icons-material/QrCode2'
 import RoomPreferences from '@mui/icons-material/RoomPreferences'
 
+import { useContext } from 'react'
+
+import { ShellContext } from 'contexts/ShellContext'
+
 import { drawerWidth } from './Drawer'
 import { peerListWidth } from './PeerList'
 
@@ -55,12 +59,10 @@ export const AppBar = styled(MuiAppBar, {
 }))
 
 interface ShellAppBarProps {
-  doShowPeers: boolean
   onDrawerOpen: () => void
   onLinkButtonClick: () => Promise<void>
   isDrawerOpen: boolean
   isPeerListOpen: boolean
-  numberOfPeers: number
   title: string
   onPeerListClick: () => void
   onRoomControlsClick: () => void
@@ -71,13 +73,11 @@ interface ShellAppBarProps {
 }
 
 export const ShellAppBar = ({
-  doShowPeers,
   onDrawerOpen,
   onLinkButtonClick,
   isDrawerOpen,
   isPeerListOpen,
   setIsQRCodeDialogOpen,
-  numberOfPeers,
   title,
   onPeerListClick,
   onRoomControlsClick,
@@ -85,6 +85,7 @@ export const ShellAppBar = ({
   isFullscreen,
   setIsFullscreen,
 }: ShellAppBarProps) => {
+  const { peerList } = useContext(ShellContext)
   const handleQRCodeClick = () => setIsQRCodeDialogOpen(true)
   const onClickFullscreen = () => setIsFullscreen(!isFullscreen)
   return (
@@ -131,54 +132,50 @@ export const ShellAppBar = ({
                 <Link />
               </IconButton>
             </Tooltip>
-            {doShowPeers ? (
-              <>
-                <Tooltip title="Show QR Code">
-                  <IconButton
-                    size="large"
-                    color="inherit"
-                    aria-label="Show QR Code"
-                    onClick={handleQRCodeClick}
-                  >
-                    <QrCode2 />
-                  </IconButton>
-                </Tooltip>
-                <Tooltip title="Show Room Controls">
-                  <IconButton
-                    size="large"
-                    color="inherit"
-                    aria-label="show room controls"
-                    onClick={onRoomControlsClick}
-                  >
-                    <RoomPreferences />
-                  </IconButton>
-                </Tooltip>
-                <Tooltip
-                  title={isFullscreen ? 'Exit fullscreen' : 'Enter fullscreen'}
-                >
-                  <IconButton
-                    size="large"
-                    edge="end"
-                    color="inherit"
-                    aria-label="fullscreen"
-                    onClick={onClickFullscreen}
-                  >
-                    {isFullscreen ? <FullscreenExit /> : <Fullscreen />}
-                  </IconButton>
-                </Tooltip>
-                <Tooltip title="Click to show peer list">
-                  <IconButton
-                    size="large"
-                    edge="end"
-                    color="inherit"
-                    aria-label="Peer list"
-                    onClick={onPeerListClick}
-                  >
-                    <StepIcon icon={numberOfPeers} />
-                  </IconButton>
-                </Tooltip>
-              </>
-            ) : null}
+            <Tooltip title="Show QR Code">
+              <IconButton
+                size="large"
+                color="inherit"
+                aria-label="Show QR Code"
+                onClick={handleQRCodeClick}
+              >
+                <QrCode2 />
+              </IconButton>
+            </Tooltip>
+            <Tooltip title="Show Room Controls">
+              <IconButton
+                size="large"
+                color="inherit"
+                aria-label="show room controls"
+                onClick={onRoomControlsClick}
+              >
+                <RoomPreferences />
+              </IconButton>
+            </Tooltip>
+            <Tooltip
+              title={isFullscreen ? 'Exit fullscreen' : 'Enter fullscreen'}
+            >
+              <IconButton
+                size="large"
+                edge="end"
+                color="inherit"
+                aria-label="fullscreen"
+                onClick={onClickFullscreen}
+              >
+                {isFullscreen ? <FullscreenExit /> : <Fullscreen />}
+              </IconButton>
+            </Tooltip>
+            <Tooltip title="Click to show peer list">
+              <IconButton
+                size="large"
+                edge="end"
+                color="inherit"
+                aria-label="Peer list"
+                onClick={onPeerListClick}
+              >
+                <StepIcon icon={peerList.length + 1} />
+              </IconButton>
+            </Tooltip>
           </Toolbar>
         </AppBar>
       </Slide>
