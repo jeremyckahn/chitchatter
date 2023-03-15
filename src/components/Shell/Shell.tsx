@@ -11,6 +11,7 @@ import CssBaseline from '@mui/material/CssBaseline'
 import { ThemeProvider, createTheme } from '@mui/material/styles'
 import Box from '@mui/material/Box'
 import { AlertColor } from '@mui/material/Alert'
+import { useWindowSize } from '@react-hook/window-size'
 
 import { ShellContext } from 'contexts/ShellContext'
 import { SettingsContext } from 'contexts/SettingsContext'
@@ -34,8 +35,24 @@ export interface ShellProps extends PropsWithChildren {
 
 export const Shell = ({ appNeedsUpdate, children, userPeerId }: ShellProps) => {
   const { getUserSettings, updateUserSettings } = useContext(SettingsContext)
+
+  const { colorMode } = getUserSettings()
+
+  const theme = useMemo(
+    () =>
+      createTheme({
+        palette: {
+          mode: colorMode,
+        },
+      }),
+    [colorMode]
+  )
+
+  const [windowWidth] = useWindowSize()
+  const defaultSidebarsOpen = windowWidth >= theme.breakpoints.values.lg
+
   const [isAlertShowing, setIsAlertShowing] = useState(false)
-  const [isDrawerOpen, setIsDrawerOpen] = useState(false)
+  const [isDrawerOpen, setIsDrawerOpen] = useState(defaultSidebarsOpen)
   const [isQRCodeDialogOpen, setIsQRCodeDialogOpen] = useState(false)
   const [isRoomShareDialogOpen, setIsRoomShareDialogOpen] = useState(false)
   const [doShowPeers, setDoShowPeers] = useState(false)
@@ -48,7 +65,7 @@ export const Shell = ({ appNeedsUpdate, children, userPeerId }: ShellProps) => {
   const [numberOfPeers, setNumberOfPeers] = useState(1)
   const [roomId, setRoomId] = useState<string | undefined>(undefined)
   const [password, setPassword] = useState<string | undefined>(undefined)
-  const [isPeerListOpen, setIsPeerListOpen] = useState(false)
+  const [isPeerListOpen, setIsPeerListOpen] = useState(defaultSidebarsOpen)
   const [peerList, setPeerList] = useState<Peer[]>([]) // except you
   const [tabHasFocus, setTabHasFocus] = useState(true)
   const [audioState, setAudioState] = useState<AudioState>(AudioState.STOPPED)
@@ -127,18 +144,6 @@ export const Shell = ({ appNeedsUpdate, children, userPeerId }: ShellProps) => {
       customUsername,
       setCustomUsername,
     ]
-  )
-
-  const { colorMode } = getUserSettings()
-
-  const theme = useMemo(
-    () =>
-      createTheme({
-        palette: {
-          mode: colorMode,
-        },
-      }),
-    [colorMode]
   )
 
   const handleAlertClose = (
@@ -220,7 +225,7 @@ export const Shell = ({ appNeedsUpdate, children, userPeerId }: ShellProps) => {
     const handleBlur = () => {
       setTabHasFocus(false)
     }
-    const handleFullscreen = (event: Event) => {
+    const handleFullscreen = () => {
       setIsFullscreen(!!document.fullscreenElement)
     }
     window.addEventListener('focus', handleFocus)
