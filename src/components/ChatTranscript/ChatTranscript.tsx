@@ -56,7 +56,10 @@ export const ChatTranscript = ({
       sx={theme => ({
         display: 'flex',
         flexDirection: 'column',
+        mx: 'auto',
         paddingY: theme.spacing(1),
+        width: '100%',
+        maxWidth: theme.breakpoints.values.md,
       })}
     >
       {messageLog.map((message, idx) => {
