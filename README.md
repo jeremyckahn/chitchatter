@@ -8,12 +8,12 @@ Chitchatter is a free (as in both price and freedom) communication tool. Designe
 
 - Fully open source (licensed under [GPL v2](./LICENSE))
 - Peer-to-peer
-  - Whenever possible, otherwise [Open Relay](https://www.metered.ca/tools/openrelay/) is used to ensure reliable peer connection
 - End-to-end encrypted (via [WebRTC](https://webrtc-security.github.io/))
 - Ephemeral
   - Message content is never persisted to disk on either the client or server
 - Decentralized
-  - There is no API server. All that's required for Chitchatter to function is availability of GitHub for static assets, and public WebTorrent and STUN/TURN relay servers for establishing peer-to-peer communication.
+- Serverless
+  - At least, there is no API server. All that's required for Chitchatter to function is availability of GitHub for static assets, public WebTorrent servers for establishing peer-to-peer communication, and potentially TURN relay servers for when direct connections cannot be made.
 - [Self-hostable](#self-hosting)
 
 Chitchatter uses the [Create React App](https://github.com/facebook/create-react-app) toolchain. The secure networking and streaming magic would not be possible without [Trystero](https://github.com/dmotz/trystero). File transfer functionality is powered by [`secure-file-transfer`](https://github.com/jeremyckahn/secure-file-transfer).
@@ -40,7 +40,7 @@ Open https://chitchatter.im/ and join a room to start chatting with anyone else 
 ## Anti-features
 
 - Messages are never persisted to disk. When you leave a peer room, messages are cleared from memory and cannot be retrieved.
-- Chitchatter is an entirely client-side communication app. It uses public WebTorrent servers to establish peer connections and STUN/TURN relay servers when direct peer-to-peer connections cannot be established, but there is no Chitchatter API server.
+- Chitchatter is an entirely client-side communication app. It uses public WebTorrent servers to establish peer connections and STUN/TURN relay servers (if configured) when direct peer-to-peer connections cannot be established, but there is no Chitchatter API server.
 - No analytics, tracking, or telemetry of any kind.
 - This is a community-driven and unfunded project that makes no money. The users come first and there is no corporate influence or financial interest involved.
 
@@ -156,7 +156,7 @@ Explore the files in `src/config` to modify pairing and relay server configurati
 
 #### Peers won't connect
 
-This could happen for a variety of reasons. The most likely of which is that one or more peers cannot connect directly and must use the configured STUN/TURN relay as a fallback. The standard relay (https://www.metered.ca/tools/openrelay/) is free and does not guarantee any level of service, so it may simply be unavailable for some time (or just not work at all for some users). There's not much to do other than wait until it becomes available again, or possibly try from another device or location.
+This could happen for a variety of network-related reasons. The most likely of which is that one or more peers cannot connect directly and must use the configured TURN server relay as a fallback. By default Chitchatter does not configure a TURN server because they cost money, but you can self-host Chitchatter and use your own (see [`src/config/rtcConfig.ts`](https://github.com/jeremyckahn/chitchatter/blob/develop/src/config/rtcConfig.ts)).
 
 ##### Firefox-specific
 
