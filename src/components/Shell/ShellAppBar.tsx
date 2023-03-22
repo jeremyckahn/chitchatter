@@ -172,6 +172,9 @@ export const ShellAppBar = ({
                 color="inherit"
                 aria-label="Peer list"
                 onClick={onPeerListClick}
+                sx={{
+                  ml: 1,
+                }}
               >
                 <StepIcon icon={peerList.length + 1} />
               </IconButton>
