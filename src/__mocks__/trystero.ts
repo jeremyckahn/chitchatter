@@ -8,7 +8,7 @@ export const joinRoom: typeof trysteroJoinRoom = (
     makeAction: () => [() => Promise.resolve([]), () => {}, () => {}],
     ping: () => Promise.resolve(0),
     leave: () => {},
-    getPeers: () => [],
+    getPeers: () => ({}),
     addStream: () => [Promise.resolve()],
     removeStream: () => {},
     addTrack: () => [Promise.resolve()],

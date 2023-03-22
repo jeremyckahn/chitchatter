@@ -110,8 +110,9 @@ export class PeerRoom {
     this.peerStreamHandlers = new Map()
   }
 
-  getPeers: Room['getPeers'] = () => {
-    return this.room.getPeers()
+  getPeers = () => {
+    const peers = this.room.getPeers()
+    return Object.keys(peers)
   }
 
   makeAction = <T>(namespace: string) => {
