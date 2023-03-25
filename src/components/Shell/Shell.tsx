@@ -19,6 +19,8 @@ import { AlertOptions } from 'models/shell'
 import { AudioState, ScreenShareState, VideoState, Peer } from 'models/chat'
 import { ErrorBoundary } from 'components/ErrorBoundary'
 
+import { PeerConnectionType } from 'services/PeerRoom/PeerRoom'
+
 import { Drawer } from './Drawer'
 import { UpgradeDialog } from './UpgradeDialog'
 import { ShellAppBar } from './ShellAppBar'
@@ -65,6 +67,9 @@ export const Shell = ({ appNeedsUpdate, children, userPeerId }: ShellProps) => {
   const [password, setPassword] = useState<string | undefined>(undefined)
   const [isPeerListOpen, setIsPeerListOpen] = useState(defaultSidebarsOpen)
   const [peerList, setPeerList] = useState<Peer[]>([]) // except self
+  const [peerConnectionTypes, setPeerConnectionTypes] = useState<
+    Record<string, PeerConnectionType>
+  >({})
   const [tabHasFocus, setTabHasFocus] = useState(true)
   const [audioState, setAudioState] = useState<AudioState>(AudioState.STOPPED)
   const [videoState, setVideoState] = useState<VideoState>(VideoState.STOPPED)
@@ -101,6 +106,8 @@ export const Shell = ({ appNeedsUpdate, children, userPeerId }: ShellProps) => {
       setIsPeerListOpen,
       peerList,
       setPeerList,
+      peerConnectionTypes,
+      setPeerConnectionTypes,
       audioState,
       setAudioState,
       videoState,
@@ -120,6 +127,7 @@ export const Shell = ({ appNeedsUpdate, children, userPeerId }: ShellProps) => {
       password,
       setPassword,
       peerList,
+      peerConnectionTypes,
       tabHasFocus,
       showRoomControls,
       setShowRoomControls,
@@ -315,6 +323,7 @@ export const Shell = ({ appNeedsUpdate, children, userPeerId }: ShellProps) => {
             isPeerListOpen={isPeerListOpen}
             onPeerListClose={handlePeerListClick}
             peerList={peerList}
+            peerConnectionTypes={peerConnectionTypes}
             audioState={audioState}
             peerAudios={peerAudios}
           />
