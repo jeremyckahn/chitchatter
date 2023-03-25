@@ -17,6 +17,11 @@ export enum PeerStreamType {
   SCREEN = 'SCREEN',
 }
 
+export enum PeerConnectionType {
+  DIRECT = 'DIRECT',
+  RELAY = 'RELAY',
+}
+
 const streamQueueAddDelay = 1000
 
 export class PeerRoom {
@@ -112,7 +117,42 @@ export class PeerRoom {
 
   getPeers = () => {
     const peers = this.room.getPeers()
+
     return Object.keys(peers)
+  }
+
+  getPeerConnectionTypes = async () => {
+    const peers = this.room.getPeers()
+
+    const peerConnections: Record<string, PeerConnectionType> = {}
+
+    await Promise.all(
+      Object.entries(peers).map(async ([peerId, rtcPeerConnection]) => {
+        const stats = await rtcPeerConnection.getStats()
+        let selectedLocalCandidate
+
+        // https://stackoverflow.com/a/61571171/470685
+        for (const { type, state, localCandidateId } of stats.values())
+          if (
+            type === 'candidate-pair' &&
+            state === 'succeeded' &&
+            localCandidateId
+          ) {
+            selectedLocalCandidate = localCandidateId
+            break
+          }
+
+        const isRelay =
+          !!selectedLocalCandidate &&
+          stats.get(selectedLocalCandidate)?.candidateType === 'relay'
+
+        peerConnections[peerId] = isRelay
+          ? PeerConnectionType.RELAY
+          : PeerConnectionType.DIRECT
+      })
+    )
+
+    return peerConnections
   }
 
   makeAction = <T>(namespace: string) => {

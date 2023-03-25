@@ -10,12 +10,11 @@ import VolumeUp from '@mui/icons-material/VolumeUp'
 import ListItem from '@mui/material/ListItem'
 
 import { PeerListHeader } from 'components/Shell/PeerListHeader'
-import { AudioVolume } from 'components/AudioVolume'
-import { PeerNameDisplay } from 'components/PeerNameDisplay'
 import { Username } from 'components/Username/Username'
 import { AudioState, Peer } from 'models/chat'
+import { PeerConnectionType } from 'services/PeerRoom/PeerRoom'
 
-import { PeerDownloadFileButton } from './PeerDownloadFileButton'
+import { PeerListItem } from './PeerListItem'
 
 export const peerListWidth = 300
 
@@ -24,6 +23,7 @@ export interface PeerListProps extends PropsWithChildren {
   isPeerListOpen: boolean
   onPeerListClose: () => void
   peerList: Peer[]
+  peerConnectionTypes: Record<string, PeerConnectionType>
   audioState: AudioState
   peerAudios: Record<string, HTMLAudioElement>
 }
@@ -33,6 +33,7 @@ export const PeerList = ({
   isPeerListOpen,
   onPeerListClose,
   peerList,
+  peerConnectionTypes,
   audioState,
   peerAudios,
 }: PeerListProps) => {
@@ -72,15 +73,12 @@ export const PeerList = ({
           </ListItemText>
         </ListItem>
         {peerList.map((peer: Peer) => (
-          <ListItem key={peer.peerId} divider={true}>
-            <PeerDownloadFileButton peer={peer} />
-            <ListItemText>
-              <PeerNameDisplay>{peer.userId}</PeerNameDisplay>
-              {peer.peerId in peerAudios && (
-                <AudioVolume audioEl={peerAudios[peer.peerId]} />
-              )}
-            </ListItemText>
-          </ListItem>
+          <PeerListItem
+            key={peer.peerId}
+            peer={peer}
+            peerConnectionTypes={peerConnectionTypes}
+            peerAudios={peerAudios}
+          />
         ))}
       </List>
     </MuiDrawer>

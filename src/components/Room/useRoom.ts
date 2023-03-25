@@ -54,6 +54,7 @@ export function useRoom(
   const {
     peerList,
     setPeerList,
+    setPeerConnectionTypes,
     tabHasFocus,
     showAlert,
     setRoomId,
@@ -367,6 +368,12 @@ export function useRoom(
   useEffect(() => {
     sendPeerMetadata({ customUsername, userId })
   }, [customUsername, userId, sendPeerMetadata])
+
+  useEffect(() => {
+    ;(async () => {
+      setPeerConnectionTypes(await peerRoom.getPeerConnectionTypes())
+    })()
+  }, [peerList, peerRoom, setPeerConnectionTypes])
 
   return {
     isPrivate,

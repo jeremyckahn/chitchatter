@@ -2,6 +2,7 @@ import { createContext, Dispatch, SetStateAction } from 'react'
 
 import { AlertOptions } from 'models/shell'
 import { AudioState, ScreenShareState, VideoState, Peer } from 'models/chat'
+import { PeerConnectionType } from 'services/PeerRoom/PeerRoom'
 
 interface ShellContextProps {
   tabHasFocus: boolean
@@ -17,6 +18,10 @@ interface ShellContextProps {
   setIsPeerListOpen: Dispatch<SetStateAction<boolean>>
   peerList: Peer[]
   setPeerList: Dispatch<SetStateAction<Peer[]>>
+  peerConnectionTypes: Record<string, PeerConnectionType>
+  setPeerConnectionTypes: Dispatch<
+    SetStateAction<Record<string, PeerConnectionType>>
+  >
   audioState: AudioState
   setAudioState: Dispatch<SetStateAction<AudioState>>
   videoState: VideoState
@@ -43,6 +48,8 @@ export const ShellContext = createContext<ShellContextProps>({
   setIsPeerListOpen: () => {},
   peerList: [],
   setPeerList: () => {},
+  peerConnectionTypes: {},
+  setPeerConnectionTypes: () => {},
   audioState: AudioState.STOPPED,
   setAudioState: () => {},
   videoState: VideoState.STOPPED,
