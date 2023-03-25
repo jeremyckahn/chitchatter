@@ -126,30 +126,31 @@ export class PeerRoom {
 
     const peerConnections: Record<string, PeerConnectionType> = {}
 
-    // TODO: Parallelize this with a Promised map
-    for (const [peerId, rtcPeerConnection] of Object.entries(peers)) {
-      const stats = await rtcPeerConnection.getStats()
-      let selectedLocalCandidate
+    await Promise.all(
+      Object.entries(peers).map(async ([peerId, rtcPeerConnection]) => {
+        const stats = await rtcPeerConnection.getStats()
+        let selectedLocalCandidate
 
-      // https://stackoverflow.com/a/61571171/470685
-      for (const { type, state, localCandidateId } of stats.values())
-        if (
-          type === 'candidate-pair' &&
-          state === 'succeeded' &&
-          localCandidateId
-        ) {
-          selectedLocalCandidate = localCandidateId
-          break
-        }
+        // https://stackoverflow.com/a/61571171/470685
+        for (const { type, state, localCandidateId } of stats.values())
+          if (
+            type === 'candidate-pair' &&
+            state === 'succeeded' &&
+            localCandidateId
+          ) {
+            selectedLocalCandidate = localCandidateId
+            break
+          }
 
-      const isRelay =
-        !!selectedLocalCandidate &&
-        stats.get(selectedLocalCandidate)?.candidateType === 'relay'
+        const isRelay =
+          !!selectedLocalCandidate &&
+          stats.get(selectedLocalCandidate)?.candidateType === 'relay'
 
-      peerConnections[peerId] = isRelay
-        ? PeerConnectionType.RELAY
-        : PeerConnectionType.DIRECT
-    }
+        peerConnections[peerId] = isRelay
+          ? PeerConnectionType.RELAY
+          : PeerConnectionType.DIRECT
+      })
+    )
 
     return peerConnections
   }
