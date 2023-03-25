@@ -20,7 +20,10 @@ export const PeerNameDisplay = ({
     return (
       <Typography component="span" {...rest}>
         {friendlyName}
-        <Typography variant="caption"> ({getPeerName(userId)})</Typography>
+        <Typography variant="caption" {...rest}>
+          {' '}
+          ({getPeerName(userId)})
+        </Typography>
       </Typography>
     )
   } else {
