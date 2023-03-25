@@ -74,6 +74,7 @@ export const PeerList = ({
         </ListItem>
         {peerList.map((peer: Peer) => (
           <PeerListItem
+            key={peer.peerId}
             peer={peer}
             peerConnectionTypes={peerConnectionTypes}
             peerAudios={peerAudios}
