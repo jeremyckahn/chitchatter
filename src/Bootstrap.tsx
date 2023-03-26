@@ -21,6 +21,7 @@ import { PrivateRoom } from 'pages/PrivateRoom'
 import { UserSettings } from 'models/settings'
 import { PersistedStorageKeys } from 'models/storage'
 import { Shell } from 'components/Shell'
+import 'services/ConnectionTest/ConnectionTest'
 
 export interface BootstrapProps {
   persistedStorage?: typeof localforage
