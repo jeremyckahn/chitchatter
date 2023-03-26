@@ -21,7 +21,7 @@ export class ConnectionTest {
     })
 
     rtcPeerConnection.onicecandidate = event => {
-      if (event.candidate) {
+      if (event.candidate?.candidate.length) {
         const parsedCandidate = parseCandidate(event.candidate.candidate)
 
         switch (parsedCandidate.type) {
