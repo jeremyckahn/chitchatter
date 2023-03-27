@@ -1,26 +1,26 @@
 import { rtcConfig } from 'config/rtcConfig'
 import { parseCandidate } from 'sdp'
 
-export class ConnectionTest {
+export enum ConnectionTestEvents {
+  CONNECTION_TEST_RESULTS_UPDATED = 'connectionTestResultsUpdated',
+}
+
+export class ConnectionTest extends EventTarget {
   hasHost = false
   hasRelay = false
   hasPeerReflexive = false
   hasServerReflexive = false
 
-  constructor() {
-    if (typeof RTCPeerConnection !== 'undefined') {
-      this.runRtcPeerConnectionTest()
-    }
-  }
-
   async runRtcPeerConnectionTest() {
+    if (typeof RTCPeerConnection === 'undefined') return
+
     const { iceServers } = rtcConfig
 
     const rtcPeerConnection = new RTCPeerConnection({
       iceServers,
     })
 
-    rtcPeerConnection.onicecandidate = event => {
+    rtcPeerConnection.addEventListener('icecandidate', event => {
       if (event.candidate?.candidate.length) {
         const parsedCandidate = parseCandidate(event.candidate.candidate)
 
@@ -41,8 +41,12 @@ export class ConnectionTest {
             this.hasServerReflexive = true
             break
         }
+
+        this.dispatchEvent(
+          new Event(ConnectionTestEvents.CONNECTION_TEST_RESULTS_UPDATED)
+        )
       }
-    }
+    })
 
     // Kick off the connection test
     try {
