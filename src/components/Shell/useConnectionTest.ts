@@ -15,6 +15,7 @@ export const useConnectionTest = () => {
 
   useEffect(() => {
     ;(async () => {
+      // FIXME: Update results periodically
       connectionTest.addEventListener(
         ConnectionTestEvents.CONNECTION_TEST_RESULTS_UPDATED,
         () => {

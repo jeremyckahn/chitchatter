@@ -331,6 +331,7 @@ export const Shell = ({ appNeedsUpdate, children, userPeerId }: ShellProps) => {
             peerConnectionTypes={peerConnectionTypes}
             audioState={audioState}
             peerAudios={peerAudios}
+            connectionTestResults={connectionTestResults}
           />
           <QRCodeDialog
             isOpen={isQRCodeDialogOpen}
