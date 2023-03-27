@@ -63,9 +63,15 @@ export const PeerList = ({
         <IconButton onClick={onPeerListClose} aria-label="Close peer list">
           <ChevronRightIcon />
         </IconButton>
+        <ListItem>
+          <ConnectionTestResults
+            connectionTestResults={connectionTestResults}
+          />
+        </ListItem>
       </PeerListHeader>
       <Divider />
       <List>
+        <Divider />
         <ListItem divider={true}>
           {audioState === AudioState.PLAYING && (
             <ListItemIcon>
@@ -84,12 +90,6 @@ export const PeerList = ({
             peerAudios={peerAudios}
           />
         ))}
-        <Divider />
-        <ListItem>
-          <ConnectionTestResults
-            connectionTestResults={connectionTestResults}
-          />
-        </ListItem>
       </List>
     </MuiDrawer>
   )
