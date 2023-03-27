@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
+import { sleep } from 'utils'
 import {
-  connectionTest,
+  ConnectionTest,
   ConnectionTestEvents,
 } from 'services/ConnectionTest/ConnectionTest'
 
@@ -14,18 +15,31 @@ export const useConnectionTest = () => {
     useState<ConnectionTestResults>({ hasHost: false, hasRelay: false })
 
   useEffect(() => {
-    ;(async () => {
-      // FIXME: Update results periodically
-      connectionTest.addEventListener(
+    const checkConnection = async () => {
+      const newConnectionTest = new ConnectionTest()
+
+      newConnectionTest.addEventListener(
         ConnectionTestEvents.CONNECTION_TEST_RESULTS_UPDATED,
         () => {
-          const { hasHost, hasRelay } = connectionTest
+          const { hasHost, hasRelay } = newConnectionTest
 
           setConnectionTestResults({ hasHost, hasRelay })
         }
       )
 
-      connectionTest.runRtcPeerConnectionTest()
+      try {
+        await newConnectionTest.runRtcPeerConnectionTest()
+      } catch (e) {
+        setConnectionTestResults({ hasHost: false, hasRelay: false })
+        console.error(e)
+      }
+    }
+
+    ;(async () => {
+      while (true) {
+        await checkConnection()
+        await sleep(20 * 1000)
+      }
     })()
   }, [])
 
