@@ -1,13 +1,13 @@
 import { Typography } from '@mui/material'
 
-import { ConnectionTestResults } from './useConnectionTest'
+import { ConnectionTestResults as IConnectionTestResults } from './useConnectionTest'
 
-interface ConnectionTestResultsDisplayProps {
-  connectionTestResults: ConnectionTestResults
+interface ConnectionTestResultsProps {
+  connectionTestResults: IConnectionTestResults
 }
-export const ConnectionTestResultsDisplay = ({
+export const ConnectionTestResults = ({
   connectionTestResults: { hasHost, hasRelay },
-}: ConnectionTestResultsDisplayProps) => {
+}: ConnectionTestResultsProps) => {
   if (hasHost && hasRelay) {
     return (
       <Typography

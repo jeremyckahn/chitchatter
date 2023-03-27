@@ -15,8 +15,8 @@ import { AudioState, Peer } from 'models/chat'
 import { PeerConnectionType } from 'services/PeerRoom/PeerRoom'
 
 import { PeerListItem } from './PeerListItem'
-import { ConnectionTestResults } from './useConnectionTest'
-import { ConnectionTestResultsDisplay } from './ConnectionTestResultsDisplay'
+import { ConnectionTestResults as IConnectionTestResults } from './useConnectionTest'
+import { ConnectionTestResults } from './ConnectionTestResults'
 
 export const peerListWidth = 300
 
@@ -28,7 +28,7 @@ export interface PeerListProps extends PropsWithChildren {
   peerConnectionTypes: Record<string, PeerConnectionType>
   audioState: AudioState
   peerAudios: Record<string, HTMLAudioElement>
-  connectionTestResults: ConnectionTestResults
+  connectionTestResults: IConnectionTestResults
 }
 
 export const PeerList = ({
@@ -86,7 +86,7 @@ export const PeerList = ({
         ))}
         <Divider />
         <ListItem>
-          <ConnectionTestResultsDisplay
+          <ConnectionTestResults
             connectionTestResults={connectionTestResults}
           />
         </ListItem>
