@@ -11,6 +11,8 @@ export interface ConnectionTestResults {
   hasRelay: boolean
 }
 
+const pollInterval = 20 * 1000
+
 export const useConnectionTest = () => {
   const [hasHost, setHasHost] = useState(false)
   const [hasRelay, setHasRelay] = useState(false)
@@ -51,6 +53,17 @@ export const useConnectionTest = () => {
         handleHasRelayChanged
       )
 
+      setTimeout(() => {
+        connectionTest.removeEventListener(
+          ConnectionTestEvents.HAS_HOST_CHANGED,
+          handleHasHostChanged
+        )
+        connectionTest.removeEventListener(
+          ConnectionTestEvents.HAS_RELAY_CHANGED,
+          handleHasRelayChanged
+        )
+      }, pollInterval)
+
       try {
         await connectionTest.runRtcPeerConnectionTest()
       } catch (e) {
@@ -63,7 +76,7 @@ export const useConnectionTest = () => {
     ;(async () => {
       while (true) {
         await checkConnection()
-        await sleep(20 * 1000)
+        await sleep(pollInterval)
       }
     })()
   }, [])
