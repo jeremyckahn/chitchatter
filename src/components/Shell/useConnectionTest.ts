@@ -22,14 +22,12 @@ export const useConnectionTest = () => {
       const connectionTest = new ConnectionTest()
 
       const handleHasHostChanged = ((event: ConnectionTestEvent) => {
-        if (event.detail.hasHost) {
-          setHasHost(true)
+        setHasHost(event.detail.hasHost)
 
-          connectionTest.removeEventListener(
-            ConnectionTestEvents.HAS_HOST_CHANGED,
-            handleHasHostChanged
-          )
-        }
+        connectionTest.removeEventListener(
+          ConnectionTestEvents.HAS_HOST_CHANGED,
+          handleHasHostChanged
+        )
       }) as EventListener
 
       connectionTest.addEventListener(
@@ -38,14 +36,12 @@ export const useConnectionTest = () => {
       )
 
       const handleHasRelayChanged = ((event: ConnectionTestEvent) => {
-        if (event.detail.hasRelay) {
-          setHasRelay(true)
+        setHasRelay(event.detail.hasRelay)
 
-          connectionTest.removeEventListener(
-            ConnectionTestEvents.HAS_RELAY_CHANGED,
-            handleHasRelayChanged
-          )
-        }
+        connectionTest.removeEventListener(
+          ConnectionTestEvents.HAS_RELAY_CHANGED,
+          handleHasRelayChanged
+        )
       }) as EventListener
 
       connectionTest.addEventListener(
