@@ -19,17 +19,37 @@ export const useConnectionTest = () => {
     const checkConnection = async () => {
       const connectionTest = new ConnectionTest()
 
-      connectionTest.addEventListener(ConnectionTestEvents.HAS_HOST_CHANGED, ((
-        event: ConnectionTestEvent
-      ) => {
-        setHasHost(event.detail.hasHost)
-      }) as EventListener)
+      const handleHasHostChanged = ((event: ConnectionTestEvent) => {
+        if (event.detail.hasHost) {
+          setHasHost(true)
 
-      connectionTest.addEventListener(ConnectionTestEvents.HAS_RELAY_CHANGED, ((
-        event: ConnectionTestEvent
-      ) => {
-        setHasRelay(event.detail.hasRelay)
-      }) as EventListener)
+          connectionTest.removeEventListener(
+            ConnectionTestEvents.HAS_HOST_CHANGED,
+            handleHasHostChanged
+          )
+        }
+      }) as EventListener
+
+      connectionTest.addEventListener(
+        ConnectionTestEvents.HAS_HOST_CHANGED,
+        handleHasHostChanged
+      )
+
+      const handleHasRelayChanged = ((event: ConnectionTestEvent) => {
+        if (event.detail.hasRelay) {
+          setHasRelay(true)
+
+          connectionTest.removeEventListener(
+            ConnectionTestEvents.HAS_RELAY_CHANGED,
+            handleHasRelayChanged
+          )
+        }
+      }) as EventListener
+
+      connectionTest.addEventListener(
+        ConnectionTestEvents.HAS_RELAY_CHANGED,
+        handleHasRelayChanged
+      )
 
       try {
         await connectionTest.runRtcPeerConnectionTest()
