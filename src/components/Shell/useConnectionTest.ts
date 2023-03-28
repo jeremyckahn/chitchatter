@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { sleep } from 'utils'
 import {
   ConnectionTest,
+  ConnectionTestEvent,
   ConnectionTestEvents,
 } from 'services/ConnectionTest/ConnectionTest'
 
@@ -11,26 +12,30 @@ export interface ConnectionTestResults {
 }
 
 export const useConnectionTest = () => {
-  const [connectionTestResults, setConnectionTestResults] =
-    useState<ConnectionTestResults>({ hasHost: false, hasRelay: false })
+  const [hasHost, setHasHost] = useState(false)
+  const [hasRelay, setHasRelay] = useState(false)
 
   useEffect(() => {
     const checkConnection = async () => {
-      const newConnectionTest = new ConnectionTest()
+      const connectionTest = new ConnectionTest()
 
-      newConnectionTest.addEventListener(
-        ConnectionTestEvents.CONNECTION_TEST_RESULTS_UPDATED,
-        () => {
-          const { hasHost, hasRelay } = newConnectionTest
+      connectionTest.addEventListener(ConnectionTestEvents.HAS_HOST_CHANGED, ((
+        event: ConnectionTestEvent
+      ) => {
+        setHasHost(event.detail.hasHost)
+      }) as EventListener)
 
-          setConnectionTestResults({ hasHost, hasRelay })
-        }
-      )
+      connectionTest.addEventListener(ConnectionTestEvents.HAS_RELAY_CHANGED, ((
+        event: ConnectionTestEvent
+      ) => {
+        setHasRelay(event.detail.hasRelay)
+      }) as EventListener)
 
       try {
-        await newConnectionTest.runRtcPeerConnectionTest()
+        await connectionTest.runRtcPeerConnectionTest()
       } catch (e) {
-        setConnectionTestResults({ hasHost: false, hasRelay: false })
+        setHasHost(false)
+        setHasRelay(false)
         console.error(e)
       }
     }
@@ -44,6 +49,6 @@ export const useConnectionTest = () => {
   }, [])
 
   return {
-    connectionTestResults,
+    connectionTestResults: { hasHost, hasRelay },
   }
 }
