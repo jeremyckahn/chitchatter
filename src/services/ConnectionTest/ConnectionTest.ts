@@ -56,22 +56,14 @@ export class ConnectionTest extends EventTarget {
         switch (parsedCandidate.type) {
           case 'host':
             clearTimeout(hasHostCheckTimeout)
-            this.hasHost = true
+            this.hasHost = window.navigator.onLine
             eventType = ConnectionTestEvents.HAS_HOST_CHANGED
             break
 
           case 'relay':
             clearTimeout(hasRelayCheckTimeout)
-            this.hasRelay = true
+            this.hasRelay = window.navigator.onLine
             eventType = ConnectionTestEvents.HAS_RELAY_CHANGED
-            break
-
-          case 'prflx':
-            this.hasPeerReflexive = true
-            break
-
-          case 'srflx':
-            this.hasServerReflexive = true
             break
         }
 
