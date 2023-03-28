@@ -9,6 +9,8 @@ export enum ConnectionTestEvents {
 
 export type ConnectionTestEvent = CustomEvent<ConnectionTest>
 
+const checkExperationTime = 10 * 1000
+
 export class ConnectionTest extends EventTarget {
   hasHost = false
   hasRelay = false
@@ -26,6 +28,26 @@ export class ConnectionTest extends EventTarget {
       iceServers,
     })
 
+    const hasHostCheckTimeout = setTimeout(() => {
+      this.hasHost = false
+
+      this.dispatchEvent(
+        new CustomEvent(ConnectionTestEvents.HAS_HOST_CHANGED, {
+          detail: this,
+        })
+      )
+    }, checkExperationTime)
+
+    const hasRelayCheckTimeout = setTimeout(() => {
+      this.hasRelay = false
+
+      this.dispatchEvent(
+        new CustomEvent(ConnectionTestEvents.HAS_RELAY_CHANGED, {
+          detail: this,
+        })
+      )
+    }, checkExperationTime)
+
     this.rtcPeerConnection.addEventListener('icecandidate', event => {
       if (event.candidate?.candidate.length) {
         const parsedCandidate = parseCandidate(event.candidate.candidate)
@@ -33,11 +55,13 @@ export class ConnectionTest extends EventTarget {
 
         switch (parsedCandidate.type) {
           case 'host':
+            clearTimeout(hasHostCheckTimeout)
             this.hasHost = true
             eventType = ConnectionTestEvents.HAS_HOST_CHANGED
             break
 
           case 'relay':
+            clearTimeout(hasRelayCheckTimeout)
             this.hasRelay = true
             eventType = ConnectionTestEvents.HAS_RELAY_CHANGED
             break
