@@ -15,16 +15,18 @@ export class ConnectionTest extends EventTarget {
   hasPeerReflexive = false
   hasServerReflexive = false
 
+  rtcPeerConnection?: RTCPeerConnection
+
   async runRtcPeerConnectionTest() {
     if (typeof RTCPeerConnection === 'undefined') return
 
     const { iceServers } = rtcConfig
 
-    const rtcPeerConnection = new RTCPeerConnection({
+    this.rtcPeerConnection = new RTCPeerConnection({
       iceServers,
     })
 
-    rtcPeerConnection.addEventListener('icecandidate', event => {
+    this.rtcPeerConnection.addEventListener('icecandidate', event => {
       if (event.candidate?.candidate.length) {
         const parsedCandidate = parseCandidate(event.candidate.candidate)
         let eventType: ConnectionTestEvents | undefined
@@ -65,12 +67,16 @@ export class ConnectionTest extends EventTarget {
 
     // Kick off the connection test
     try {
-      const rtcSessionDescription = await rtcPeerConnection.createOffer({
+      const rtcSessionDescription = await this.rtcPeerConnection.createOffer({
         offerToReceiveAudio: true,
       })
 
-      rtcPeerConnection.setLocalDescription(rtcSessionDescription)
+      this.rtcPeerConnection.setLocalDescription(rtcSessionDescription)
     } catch (e) {}
+  }
+
+  destroy() {
+    this.rtcPeerConnection?.close()
   }
 }
 

@@ -71,12 +71,15 @@ export const useConnectionTest = () => {
         setHasRelay(false)
         console.error(e)
       }
+
+      return connectionTest
     }
 
     ;(async () => {
       while (true) {
-        await checkConnection()
+        const connectionTest = await checkConnection()
         await sleep(pollInterval)
+        connectionTest.destroy()
       }
     })()
   }, [])
