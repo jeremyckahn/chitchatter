@@ -29,6 +29,7 @@ import { RouteContent } from './RouteContent'
 import { PeerList } from './PeerList'
 import { QRCodeDialog } from './QRCodeDialog'
 import { RoomShareDialog } from './RoomShareDialog'
+import { useConnectionTest } from './useConnectionTest'
 
 export interface ShellProps extends PropsWithChildren {
   userPeerId: string
@@ -90,6 +91,8 @@ export const Shell = ({ appNeedsUpdate, children, userPeerId }: ShellProps) => {
     setIsAlertShowing(true)
   }, [])
 
+  const { connectionTestResults } = useConnectionTest()
+
   const shellContextValue = useMemo(
     () => ({
       tabHasFocus,
@@ -118,6 +121,7 @@ export const Shell = ({ appNeedsUpdate, children, userPeerId }: ShellProps) => {
       setPeerAudios,
       customUsername,
       setCustomUsername,
+      connectionTestResults,
     }),
     [
       isPeerListOpen,
@@ -143,6 +147,7 @@ export const Shell = ({ appNeedsUpdate, children, userPeerId }: ShellProps) => {
       setPeerAudios,
       customUsername,
       setCustomUsername,
+      connectionTestResults,
     ]
   )
 
@@ -326,6 +331,7 @@ export const Shell = ({ appNeedsUpdate, children, userPeerId }: ShellProps) => {
             peerConnectionTypes={peerConnectionTypes}
             audioState={audioState}
             peerAudios={peerAudios}
+            connectionTestResults={connectionTestResults}
           />
           <QRCodeDialog
             isOpen={isQRCodeDialogOpen}

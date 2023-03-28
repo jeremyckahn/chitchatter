@@ -3,6 +3,7 @@ import { createContext, Dispatch, SetStateAction } from 'react'
 import { AlertOptions } from 'models/shell'
 import { AudioState, ScreenShareState, VideoState, Peer } from 'models/chat'
 import { PeerConnectionType } from 'services/PeerRoom/PeerRoom'
+import { ConnectionTestResults } from 'components/Shell/useConnectionTest'
 
 interface ShellContextProps {
   tabHasFocus: boolean
@@ -32,6 +33,7 @@ interface ShellContextProps {
   setPeerAudios: Dispatch<SetStateAction<Record<string, HTMLAudioElement>>>
   customUsername: string
   setCustomUsername: Dispatch<SetStateAction<string>>
+  connectionTestResults: ConnectionTestResults
 }
 
 export const ShellContext = createContext<ShellContextProps>({
@@ -60,4 +62,5 @@ export const ShellContext = createContext<ShellContextProps>({
   setPeerAudios: () => {},
   customUsername: '',
   setCustomUsername: () => {},
+  connectionTestResults: { hasHost: false, hasRelay: false },
 })

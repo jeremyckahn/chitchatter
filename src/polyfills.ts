@@ -1,3 +1,4 @@
+import 'webrtc-adapter'
 import { Buffer } from 'buffer'
 
 // @ts-ignore

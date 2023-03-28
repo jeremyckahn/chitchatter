@@ -15,6 +15,8 @@ import { AudioState, Peer } from 'models/chat'
 import { PeerConnectionType } from 'services/PeerRoom/PeerRoom'
 
 import { PeerListItem } from './PeerListItem'
+import { ConnectionTestResults as IConnectionTestResults } from './useConnectionTest'
+import { ConnectionTestResults } from './ConnectionTestResults'
 
 export const peerListWidth = 300
 
@@ -26,6 +28,7 @@ export interface PeerListProps extends PropsWithChildren {
   peerConnectionTypes: Record<string, PeerConnectionType>
   audioState: AudioState
   peerAudios: Record<string, HTMLAudioElement>
+  connectionTestResults: IConnectionTestResults
 }
 
 export const PeerList = ({
@@ -36,6 +39,7 @@ export const PeerList = ({
   peerConnectionTypes,
   audioState,
   peerAudios,
+  connectionTestResults,
 }: PeerListProps) => {
   return (
     <MuiDrawer
@@ -59,9 +63,15 @@ export const PeerList = ({
         <IconButton onClick={onPeerListClose} aria-label="Close peer list">
           <ChevronRightIcon />
         </IconButton>
+        <ListItem>
+          <ConnectionTestResults
+            connectionTestResults={connectionTestResults}
+          />
+        </ListItem>
       </PeerListHeader>
       <Divider />
       <List>
+        <Divider />
         <ListItem divider={true}>
           {audioState === AudioState.PLAYING && (
             <ListItemIcon>
