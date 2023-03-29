@@ -158,7 +158,11 @@ Explore the files in `src/config` to modify pairing and relay server configurati
 
 This could happen for a variety of reasons. The most likely of which is that one or more peers cannot connect directly and must use the configured STUN/TURN relay as a fallback. The standard relay (https://www.metered.ca/tools/openrelay/) is free and does not guarantee any level of service, so it may simply be unavailable for some time (or just not work at all for some users). There's not much to do other than wait until it becomes available again, or possibly try from another device or location.
 
-##### Firefox-specific
+##### iOS Safari-specific issues
+
+Chitchatter works on iOS Safari, but browser-level bugs often prevent peers from rejoining the room when the browser is closed and later reopened (for instance, when switching applications). The suggested workaround for this issue is to refresh the page to rejoin the room.
+
+##### Firefox-specific issues
 
 Per [#36](https://github.com/jeremyckahn/chitchatter/issues/36), check your `about:config` settings and ensure that `media.peerconnection.enabled` is **enabled**.
 
