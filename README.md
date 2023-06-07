@@ -131,6 +131,10 @@ The build is minified and the filenames include the hashes.
 
 Chitchatter is designed to be forked and self-hosted. If you would like to change pairing or relay server configuration, or you simply prefer to control your own builds and versions, just [fork this repo](https://github.com/jeremyckahn/chitchatter/fork) and follow the steps below.
 
+#### Caveats
+
+Chitchatter peer connections are bound to the instance's domain. So, a user of Chitchatter at https://chitchatter.im/ would not be able to connect to a user of a Chitchatter instance on another domain (such as a personal GitHub Pages-hosted fork).
+
 #### Necessary steps after forking
 
 Assuming you are hosting Chitchatter on [GitHub Pages](https://pages.github.com/):
@@ -158,11 +162,15 @@ Explore the files in `src/config` to modify pairing and relay server configurati
 
 This could happen for a variety of reasons. The most likely of which is that one or more peers cannot connect directly and must use the configured STUN/TURN relay as a fallback. The standard relay (https://www.metered.ca/tools/openrelay/) is free and does not guarantee any level of service, so it may simply be unavailable for some time (or just not work at all for some users). There's not much to do other than wait until it becomes available again, or possibly try from another device or location.
 
-##### iOS Safari-specific issues
+##### Issues specific to browsers with ad blocking extensions
+
+Some ad blockers (such as uBlock Origin) prevent connections to certain WebTorrent servers. This prevents Chitchatter peers from connecting. To work around this, you can either disable your ad blocker or [self-host your own Chitchatter instance](#self-hosting).
+
+##### Issues specific to iOS Safari
 
 Chitchatter works on iOS Safari, but browser-level bugs often prevent peers from rejoining the room when the browser is closed and later reopened (for instance, when switching applications). The suggested workaround for this issue is to refresh the page to rejoin the room.
 
-##### Firefox-specific issues
+##### Issues specific to Firefox
 
 Per [#36](https://github.com/jeremyckahn/chitchatter/issues/36), check your `about:config` settings and ensure that `media.peerconnection.enabled` is **enabled**.
 
