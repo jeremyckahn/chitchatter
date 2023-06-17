@@ -1,4 +1,4 @@
-import { Typography } from '@mui/material'
+import { Tooltip, Typography } from '@mui/material'
 import Circle from '@mui/icons-material/FiberManualRecord'
 
 import { ConnectionTestResults as IConnectionTestResults } from './useConnectionTest'
@@ -11,39 +11,45 @@ export const ConnectionTestResults = ({
 }: ConnectionTestResultsProps) => {
   if (hasHost && hasRelay) {
     return (
-      <Typography variant="subtitle2">
-        <Typography
-          component="span"
-          sx={theme => ({ color: theme.palette.success.main })}
-        >
-          <Circle sx={{ fontSize: 'small' }} />
-        </Typography>{' '}
-        Full network connection
-      </Typography>
+      <Tooltip title="Connections can be established with all peers that also have a full network connection.">
+        <Typography variant="subtitle2">
+          <Typography
+            component="span"
+            sx={theme => ({ color: theme.palette.success.main })}
+          >
+            <Circle sx={{ fontSize: 'small' }} />
+          </Typography>{' '}
+          Full network connection
+        </Typography>
+      </Tooltip>
     )
   } else if (hasHost) {
     return (
-      <Typography variant="subtitle2">
-        <Typography
-          component="span"
-          sx={theme => ({ color: theme.palette.warning.main })}
-        >
-          <Circle sx={{ fontSize: 'small' }} />
-        </Typography>{' '}
-        Partial network connection
-      </Typography>
+      <Tooltip title="Relay server is unavailable. Connections can only be established when a relay server is not needed for either peer.">
+        <Typography variant="subtitle2">
+          <Typography
+            component="span"
+            sx={theme => ({ color: theme.palette.warning.main })}
+          >
+            <Circle sx={{ fontSize: 'small' }} />
+          </Typography>{' '}
+          Partial network connection
+        </Typography>
+      </Tooltip>
     )
   } else {
     return (
-      <Typography variant="subtitle2">
-        <Typography
-          component="span"
-          sx={theme => ({ color: theme.palette.error.main })}
-        >
-          <Circle sx={{ fontSize: 'small' }} />
-        </Typography>{' '}
-        No network connection
-      </Typography>
+      <Tooltip title="Pairing server is unavailable. Peer connections cannot be established.">
+        <Typography variant="subtitle2">
+          <Typography
+            component="span"
+            sx={theme => ({ color: theme.palette.error.main })}
+          >
+            <Circle sx={{ fontSize: 'small' }} />
+          </Typography>{' '}
+          No network connection
+        </Typography>
+      </Tooltip>
     )
   }
 }
