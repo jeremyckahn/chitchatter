@@ -54,6 +54,7 @@ export function Room({
       trackerUrls,
       rtcConfig,
       password,
+      trackerRedundancy: 3,
     },
     {
       roomId,
