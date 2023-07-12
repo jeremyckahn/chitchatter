@@ -21,7 +21,7 @@ export class ConnectionTest extends EventTarget {
 
   rtcPeerConnection?: RTCPeerConnection
 
-  async startRtcPeerConnectionTest() {
+  async initRtcPeerConnectionTest() {
     if (typeof RTCPeerConnection === 'undefined') return
 
     const { iceServers } = rtcConfig
@@ -97,7 +97,7 @@ export class ConnectionTest extends EventTarget {
     this.rtcPeerConnection?.close()
   }
 
-  runTrackerConnectionTest() {
+  testTrackerConnection() {
     const trackers = getTrackers()
 
     const readyStates = Object.values(trackers).map(
@@ -109,6 +109,8 @@ export class ConnectionTest extends EventTarget {
     )
 
     this.hasTracker = areAnyTrackersConnected
+
+    return this.hasTracker
   }
 }
 

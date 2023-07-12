@@ -1,5 +1,9 @@
-import { Tooltip, Typography } from '@mui/material'
+import CircularProgress from '@mui/material/CircularProgress'
+import Tooltip from '@mui/material/Tooltip'
+import Typography from '@mui/material/Typography'
 import Circle from '@mui/icons-material/FiberManualRecord'
+
+import { Box } from '@mui/system'
 
 import { ConnectionTestResults as IConnectionTestResults } from './useConnectionTest'
 
@@ -7,8 +11,22 @@ interface ConnectionTestResultsProps {
   connectionTestResults: IConnectionTestResults
 }
 export const ConnectionTestResults = ({
-  connectionTestResults: { hasHost, hasRelay },
+  connectionTestResults: { hasHost, hasRelay, hasTracker },
 }: ConnectionTestResultsProps) => {
+  if (!hasTracker) {
+    // FIXME: Prevent this from being shown on non-Room pages
+    return (
+      <Typography variant="subtitle2">
+        <Box
+          sx={{ display: 'flex', flexDirection: 'row', alignItems: 'center' }}
+        >
+          <CircularProgress size={16} sx={{ mr: 1.5 }} />
+          <span>Searching for servers...</span>
+        </Box>
+      </Typography>
+    )
+  }
+
   if (hasHost && hasRelay) {
     return (
       <Tooltip title="Connections can be established with all peers that also have a full network connection.">

@@ -64,7 +64,7 @@ export const useConnectionTest = () => {
       }, rtcPollInterval)
 
       try {
-        await connectionTest.startRtcPeerConnectionTest()
+        await connectionTest.initRtcPeerConnectionTest()
       } catch (e) {
         setHasHost(false)
         setHasRelay(false)
@@ -84,10 +84,7 @@ export const useConnectionTest = () => {
     ;(async () => {
       while (true) {
         const connectionTest = new ConnectionTest()
-
-        connectionTest.runTrackerConnectionTest()
-        setHasTracker(connectionTest.hasTracker)
-
+        setHasTracker(connectionTest.testTrackerConnection())
         await sleep(trackerPollInterval)
       }
     })()
