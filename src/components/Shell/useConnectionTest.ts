@@ -91,7 +91,6 @@ export const useConnectionTest = () => {
   }, [])
 
   return {
-    // FIXME: Display hasTracker somehow
     connectionTestResults: { hasHost, hasRelay, hasTracker },
   }
 }

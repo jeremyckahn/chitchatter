@@ -8,6 +8,8 @@ import IconButton from '@mui/material/IconButton'
 import ChevronRightIcon from '@mui/icons-material/ChevronRight'
 import VolumeUp from '@mui/icons-material/VolumeUp'
 import ListItem from '@mui/material/ListItem'
+import Box from '@mui/material/Box'
+import CircularProgress from '@mui/material/CircularProgress'
 
 import { PeerListHeader } from 'components/Shell/PeerListHeader'
 import { Username } from 'components/Username/Username'
@@ -109,6 +111,23 @@ export const PeerList = ({
             peerAudios={peerAudios}
           />
         ))}
+        {peerList.length === 0 &&
+        connectionTestResults.hasTracker &&
+        connectionTestResults.hasHost ? (
+          <>
+            <Box
+              sx={{
+                display: 'flex',
+                flexDirection: 'row',
+                alignItems: 'center',
+                m: 2,
+              }}
+            >
+              <CircularProgress size={16} sx={{ mr: 1.5 }} />
+              <span>Searching for peers...</span>
+            </Box>
+          </>
+        ) : null}
       </List>
     </MuiDrawer>
   )
