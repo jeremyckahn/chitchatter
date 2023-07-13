@@ -9,16 +9,19 @@ import {
 export interface ConnectionTestResults {
   hasHost: boolean
   hasRelay: boolean
+  hasTracker: boolean
 }
 
-const pollInterval = 20 * 1000
+const rtcPollInterval = 20 * 1000
+const trackerPollInterval = 5 * 1000
 
 export const useConnectionTest = () => {
   const [hasHost, setHasHost] = useState(false)
   const [hasRelay, setHasRelay] = useState(false)
+  const [hasTracker, setHasTracker] = useState(false)
 
   useEffect(() => {
-    const checkConnection = async () => {
+    const checkRtcConnection = async () => {
       const connectionTest = new ConnectionTest()
 
       const handleHasHostChanged = ((event: ConnectionTestEvent) => {
@@ -58,10 +61,10 @@ export const useConnectionTest = () => {
           ConnectionTestEvents.HAS_RELAY_CHANGED,
           handleHasRelayChanged
         )
-      }, pollInterval)
+      }, rtcPollInterval)
 
       try {
-        await connectionTest.runRtcPeerConnectionTest()
+        await connectionTest.initRtcPeerConnectionTest()
       } catch (e) {
         setHasHost(false)
         setHasRelay(false)
@@ -73,14 +76,21 @@ export const useConnectionTest = () => {
 
     ;(async () => {
       while (true) {
-        const connectionTest = await checkConnection()
-        await sleep(pollInterval)
-        connectionTest.destroy()
+        const connectionTest = await checkRtcConnection()
+        await sleep(rtcPollInterval)
+        connectionTest.destroyRtcPeerConnectionTest()
+      }
+    })()
+    ;(async () => {
+      while (true) {
+        const connectionTest = new ConnectionTest()
+        setHasTracker(connectionTest.testTrackerConnection())
+        await sleep(trackerPollInterval)
       }
     })()
   }, [])
 
   return {
-    connectionTestResults: { hasHost, hasRelay },
+    connectionTestResults: { hasHost, hasRelay, hasTracker },
   }
 }

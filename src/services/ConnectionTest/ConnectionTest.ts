@@ -1,3 +1,4 @@
+import { getTrackers } from 'trystero/torrent'
 import { rtcConfig } from 'config/rtcConfig'
 import { parseCandidate } from 'sdp'
 
@@ -12,6 +13,7 @@ export type ConnectionTestEvent = CustomEvent<ConnectionTest>
 const checkExperationTime = 10 * 1000
 
 export class ConnectionTest extends EventTarget {
+  hasTracker = false
   hasHost = false
   hasRelay = false
   hasPeerReflexive = false
@@ -19,7 +21,7 @@ export class ConnectionTest extends EventTarget {
 
   rtcPeerConnection?: RTCPeerConnection
 
-  async runRtcPeerConnectionTest() {
+  async initRtcPeerConnectionTest() {
     if (typeof RTCPeerConnection === 'undefined') return
 
     const { iceServers } = rtcConfig
@@ -91,8 +93,24 @@ export class ConnectionTest extends EventTarget {
     } catch (e) {}
   }
 
-  destroy() {
+  destroyRtcPeerConnectionTest() {
     this.rtcPeerConnection?.close()
+  }
+
+  testTrackerConnection() {
+    const trackers = getTrackers()
+
+    const readyStates = Object.values(trackers).map(
+      ({ readyState }) => readyState
+    )
+
+    const areAnyTrackersConnected = readyStates.some(
+      readyState => readyState === WebSocket.OPEN
+    )
+
+    this.hasTracker = areAnyTrackersConnected
+
+    return this.hasTracker
   }
 }
 

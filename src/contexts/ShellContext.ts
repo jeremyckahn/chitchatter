@@ -62,5 +62,5 @@ export const ShellContext = createContext<ShellContextProps>({
   setPeerAudios: () => {},
   customUsername: '',
   setCustomUsername: () => {},
-  connectionTestResults: { hasHost: false, hasRelay: false },
+  connectionTestResults: { hasHost: false, hasRelay: false, hasTracker: false },
 })
