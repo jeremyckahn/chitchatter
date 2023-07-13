@@ -14,7 +14,6 @@ export const ConnectionTestResults = ({
   connectionTestResults: { hasHost, hasRelay, hasTracker },
 }: ConnectionTestResultsProps) => {
   if (!hasTracker) {
-    // FIXME: Prevent this from being shown on non-Room pages
     return (
       <Typography variant="subtitle2">
         <Box

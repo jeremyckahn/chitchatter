@@ -14,6 +14,10 @@ import { Username } from 'components/Username/Username'
 import { AudioState, Peer } from 'models/chat'
 import { PeerConnectionType } from 'services/PeerRoom/PeerRoom'
 
+import { Route, Routes } from 'react-router-dom'
+
+import { routes } from 'config/routes'
+
 import { PeerListItem } from './PeerListItem'
 import { ConnectionTestResults as IConnectionTestResults } from './useConnectionTest'
 import { ConnectionTestResults } from './ConnectionTestResults'
@@ -64,9 +68,19 @@ export const PeerList = ({
           <ChevronRightIcon />
         </IconButton>
         <ListItem>
-          <ConnectionTestResults
-            connectionTestResults={connectionTestResults}
-          />
+          <Routes>
+            {[routes.PUBLIC_ROOM, routes.PRIVATE_ROOM].map(route => (
+              <Route
+                key={route}
+                path={route}
+                element={
+                  <ConnectionTestResults
+                    connectionTestResults={connectionTestResults}
+                  />
+                }
+              />
+            ))}
+          </Routes>
         </ListItem>
       </PeerListHeader>
       <Divider />
