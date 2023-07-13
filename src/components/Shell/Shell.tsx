@@ -325,6 +325,7 @@ export const Shell = ({ appNeedsUpdate, children, userPeerId }: ShellProps) => {
           </RouteContent>
           <PeerList
             userId={userPeerId}
+            roomId={roomId}
             isPeerListOpen={isPeerListOpen}
             onPeerListClose={handlePeerListClick}
             peerList={peerList}

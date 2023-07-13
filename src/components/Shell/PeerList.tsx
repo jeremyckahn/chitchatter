@@ -28,6 +28,7 @@ export const peerListWidth = 300
 
 export interface PeerListProps extends PropsWithChildren {
   userId: string
+  roomId: string | undefined
   isPeerListOpen: boolean
   onPeerListClose: () => void
   peerList: Peer[]
@@ -39,6 +40,7 @@ export interface PeerListProps extends PropsWithChildren {
 
 export const PeerList = ({
   userId,
+  roomId,
   isPeerListOpen,
   onPeerListClose,
   peerList,
@@ -112,6 +114,7 @@ export const PeerList = ({
           />
         ))}
         {peerList.length === 0 &&
+        typeof roomId === 'string' &&
         connectionTestResults.hasTracker &&
         connectionTestResults.hasHost ? (
           <>
