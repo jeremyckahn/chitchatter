@@ -2,7 +2,6 @@ import CircularProgress from '@mui/material/CircularProgress'
 import Tooltip from '@mui/material/Tooltip'
 import Typography from '@mui/material/Typography'
 import Circle from '@mui/icons-material/FiberManualRecord'
-
 import { Box } from '@mui/system'
 
 import { ConnectionTestResults as IConnectionTestResults } from './useConnectionTest'

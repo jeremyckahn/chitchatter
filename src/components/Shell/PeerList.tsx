@@ -1,4 +1,5 @@
 import { PropsWithChildren } from 'react'
+import { Route, Routes } from 'react-router-dom'
 import MuiDrawer from '@mui/material/Drawer'
 import List from '@mui/material/List'
 import ListItemIcon from '@mui/material/ListItemIcon'
@@ -15,9 +16,6 @@ import { PeerListHeader } from 'components/Shell/PeerListHeader'
 import { Username } from 'components/Username/Username'
 import { AudioState, Peer } from 'models/chat'
 import { PeerConnectionType } from 'services/PeerRoom/PeerRoom'
-
-import { Route, Routes } from 'react-router-dom'
-
 import { routes } from 'config/routes'
 
 import { PeerListItem } from './PeerListItem'
