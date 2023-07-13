@@ -69,6 +69,11 @@ export const PeerList = ({
         </IconButton>
         <ListItem>
           <Routes>
+            {/*
+            This stub route is needed to silence spurious warnings in the tests.
+            */}
+            <Route path={routes.ROOT} element={<></>}></Route>
+
             {[routes.PUBLIC_ROOM, routes.PRIVATE_ROOM].map(route => (
               <Route
                 key={route}
