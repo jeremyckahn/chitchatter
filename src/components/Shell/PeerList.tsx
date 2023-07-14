@@ -16,6 +16,7 @@ import { PeerListHeader } from 'components/Shell/PeerListHeader'
 import { Username } from 'components/Username/Username'
 import { AudioState, Peer } from 'models/chat'
 import { PeerConnectionType } from 'services/PeerRoom/PeerRoom'
+import { TrackerConnection } from 'services/ConnectionTest/ConnectionTest'
 import { routes } from 'config/routes'
 
 import { PeerListItem } from './PeerListItem'
@@ -113,7 +114,8 @@ export const PeerList = ({
         ))}
         {peerList.length === 0 &&
         typeof roomId === 'string' &&
-        connectionTestResults.hasTracker &&
+        connectionTestResults.trackerConnection ===
+          TrackerConnection.CONNECTED &&
         connectionTestResults.hasHost ? (
           <>
             <Box
