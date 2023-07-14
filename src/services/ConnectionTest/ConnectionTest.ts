@@ -8,12 +8,18 @@ export enum ConnectionTestEvents {
   HAS_RELAY_CHANGED = 'HAS_RELAY_CHANGED',
 }
 
+export enum TrackerConnection {
+  SEARCHING = 'SEARCHING',
+  CONNECTED = 'CONNECTED',
+  FAILED = 'FAILED',
+}
+
 export type ConnectionTestEvent = CustomEvent<ConnectionTest>
 
 const checkExperationTime = 10 * 1000
 
 export class ConnectionTest extends EventTarget {
-  hasTracker = false
+  trackerConnection = TrackerConnection.SEARCHING
   hasHost = false
   hasRelay = false
   hasPeerReflexive = false
@@ -100,17 +106,34 @@ export class ConnectionTest extends EventTarget {
   testTrackerConnection() {
     const trackers = getTrackers()
 
-    const readyStates = Object.values(trackers).map(
-      ({ readyState }) => readyState
+    const trackerSockets = Object.values(trackers)
+
+    if (trackerSockets.length === 0) {
+      // Trystero has not yet initialized tracker sockets
+      this.trackerConnection = TrackerConnection.SEARCHING
+      return this.trackerConnection
+    }
+
+    const readyStates = trackerSockets.map(({ readyState }) => readyState)
+
+    const haveAllTrackerConnectionsFailed = readyStates.every(
+      readyState => readyState === WebSocket.CLOSED
     )
+
+    if (haveAllTrackerConnectionsFailed) {
+      this.trackerConnection = TrackerConnection.FAILED
+      throw new Error('Could not connect to a WebTorrent tracker')
+    }
 
     const areAnyTrackersConnected = readyStates.some(
       readyState => readyState === WebSocket.OPEN
     )
 
-    this.hasTracker = areAnyTrackersConnected
+    this.trackerConnection = areAnyTrackersConnected
+      ? TrackerConnection.CONNECTED
+      : TrackerConnection.SEARCHING
 
-    return this.hasTracker
+    return this.trackerConnection
   }
 }
 

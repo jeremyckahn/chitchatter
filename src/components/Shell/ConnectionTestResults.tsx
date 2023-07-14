@@ -3,6 +3,9 @@ import Tooltip from '@mui/material/Tooltip'
 import Typography from '@mui/material/Typography'
 import Circle from '@mui/icons-material/FiberManualRecord'
 import { Box } from '@mui/system'
+import ReportIcon from '@mui/icons-material/Report'
+
+import { TrackerConnection } from 'services/ConnectionTest/ConnectionTest'
 
 import { ConnectionTestResults as IConnectionTestResults } from './useConnectionTest'
 
@@ -10,9 +13,22 @@ interface ConnectionTestResultsProps {
   connectionTestResults: IConnectionTestResults
 }
 export const ConnectionTestResults = ({
-  connectionTestResults: { hasHost, hasRelay, hasTracker },
+  connectionTestResults: { hasHost, hasRelay, trackerConnection },
 }: ConnectionTestResultsProps) => {
-  if (!hasTracker) {
+  if (trackerConnection === TrackerConnection.FAILED) {
+    return (
+      <Typography variant="subtitle2">
+        <Box
+          sx={{ display: 'flex', flexDirection: 'row', alignItems: 'center' }}
+        >
+          <ReportIcon color="error" sx={{ mr: 1 }} />
+          <span>Server connection failed</span>
+        </Box>
+      </Typography>
+    )
+  }
+
+  if (trackerConnection !== TrackerConnection.CONNECTED) {
     return (
       <Typography variant="subtitle2">
         <Box

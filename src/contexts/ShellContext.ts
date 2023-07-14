@@ -4,6 +4,7 @@ import { AlertOptions } from 'models/shell'
 import { AudioState, ScreenShareState, VideoState, Peer } from 'models/chat'
 import { PeerConnectionType } from 'services/PeerRoom/PeerRoom'
 import { ConnectionTestResults } from 'components/Shell/useConnectionTest'
+import { TrackerConnection } from 'services/ConnectionTest/ConnectionTest'
 
 interface ShellContextProps {
   tabHasFocus: boolean
@@ -62,5 +63,9 @@ export const ShellContext = createContext<ShellContextProps>({
   setPeerAudios: () => {},
   customUsername: '',
   setCustomUsername: () => {},
-  connectionTestResults: { hasHost: false, hasRelay: false, hasTracker: false },
+  connectionTestResults: {
+    hasHost: false,
+    hasRelay: false,
+    trackerConnection: TrackerConnection.SEARCHING,
+  },
 })
