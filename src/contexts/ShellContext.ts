@@ -20,6 +20,8 @@ interface ShellContextProps {
   setIsPeerListOpen: Dispatch<SetStateAction<boolean>>
   peerList: Peer[]
   setPeerList: Dispatch<SetStateAction<Peer[]>>
+  isServerConnectionFailureDialogOpen: boolean
+  setIsServerConnectionFailureDialogOpen: Dispatch<SetStateAction<boolean>>
   peerConnectionTypes: Record<string, PeerConnectionType>
   setPeerConnectionTypes: Dispatch<
     SetStateAction<Record<string, PeerConnectionType>>
@@ -51,6 +53,8 @@ export const ShellContext = createContext<ShellContextProps>({
   setIsPeerListOpen: () => {},
   peerList: [],
   setPeerList: () => {},
+  isServerConnectionFailureDialogOpen: false,
+  setIsServerConnectionFailureDialogOpen: () => {},
   peerConnectionTypes: {},
   setPeerConnectionTypes: () => {},
   audioState: AudioState.STOPPED,

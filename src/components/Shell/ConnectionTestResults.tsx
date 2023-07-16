@@ -1,3 +1,4 @@
+import { useContext } from 'react'
 import CircularProgress from '@mui/material/CircularProgress'
 import Tooltip from '@mui/material/Tooltip'
 import Typography from '@mui/material/Typography'
@@ -6,6 +7,7 @@ import { Box } from '@mui/system'
 import ReportIcon from '@mui/icons-material/Report'
 
 import { TrackerConnection } from 'services/ConnectionTest/ConnectionTest'
+import { ShellContext } from 'contexts/ShellContext'
 
 import { ConnectionTestResults as IConnectionTestResults } from './useConnectionTest'
 
@@ -15,9 +17,19 @@ interface ConnectionTestResultsProps {
 export const ConnectionTestResults = ({
   connectionTestResults: { hasHost, hasRelay, trackerConnection },
 }: ConnectionTestResultsProps) => {
+  const { setIsServerConnectionFailureDialogOpen } = useContext(ShellContext)
+
+  const handleTrackerConnectionFailureDialogOpen = () => {
+    setIsServerConnectionFailureDialogOpen(true)
+  }
+
   if (trackerConnection === TrackerConnection.FAILED) {
     return (
-      <Typography variant="subtitle2">
+      <Typography
+        variant="subtitle2"
+        sx={{ cursor: 'pointer' }}
+        onClick={handleTrackerConnectionFailureDialogOpen}
+      >
         <Box
           sx={{ display: 'flex', flexDirection: 'row', alignItems: 'center' }}
         >
