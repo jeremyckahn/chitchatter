@@ -19,7 +19,7 @@ export const ConnectionTestResults = ({
 }: ConnectionTestResultsProps) => {
   const { setIsServerConnectionFailureDialogOpen } = useContext(ShellContext)
 
-  const handleTrackerConnectionFailureDialogOpen = () => {
+  const handleServerConnectionFailedMessageClick = () => {
     setIsServerConnectionFailureDialogOpen(true)
   }
 
@@ -28,7 +28,7 @@ export const ConnectionTestResults = ({
       <Typography
         variant="subtitle2"
         sx={{ cursor: 'pointer' }}
-        onClick={handleTrackerConnectionFailureDialogOpen}
+        onClick={handleServerConnectionFailedMessageClick}
       >
         <Box
           sx={{ display: 'flex', flexDirection: 'row', alignItems: 'center' }}

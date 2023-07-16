@@ -1,3 +1,4 @@
+import { useContext } from 'react'
 import useTheme from '@mui/material/styles/useTheme'
 import Typography from '@mui/material/Typography'
 import Box from '@mui/material/Box'
@@ -8,8 +9,8 @@ import DialogContent from '@mui/material/DialogContent'
 import DialogContentText from '@mui/material/DialogContentText'
 import DialogTitle from '@mui/material/DialogTitle'
 import ReportIcon from '@mui/icons-material/Report'
+
 import { ShellContext } from 'contexts/ShellContext'
-import { useContext } from 'react'
 
 export const ServerConnectionFailureDialog = () => {
   const theme = useTheme()
