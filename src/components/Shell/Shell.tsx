@@ -30,6 +30,7 @@ import { PeerList } from './PeerList'
 import { QRCodeDialog } from './QRCodeDialog'
 import { RoomShareDialog } from './RoomShareDialog'
 import { useConnectionTest } from './useConnectionTest'
+import { ServerConnectionFailureDialog } from './ServerConnectionFailureDialog'
 
 export interface ShellProps extends PropsWithChildren {
   userPeerId: string
@@ -68,6 +69,10 @@ export const Shell = ({ appNeedsUpdate, children, userPeerId }: ShellProps) => {
   const [password, setPassword] = useState<string | undefined>(undefined)
   const [isPeerListOpen, setIsPeerListOpen] = useState(defaultSidebarsOpen)
   const [peerList, setPeerList] = useState<Peer[]>([]) // except self
+  const [
+    isServerConnectionFailureDialogOpen,
+    setIsServerConnectionFailureDialogOpen,
+  ] = useState(false)
   const [peerConnectionTypes, setPeerConnectionTypes] = useState<
     Record<string, PeerConnectionType>
   >({})
@@ -109,6 +114,8 @@ export const Shell = ({ appNeedsUpdate, children, userPeerId }: ShellProps) => {
       setIsPeerListOpen,
       peerList,
       setPeerList,
+      isServerConnectionFailureDialogOpen,
+      setIsServerConnectionFailureDialogOpen,
       peerConnectionTypes,
       setPeerConnectionTypes,
       audioState,
@@ -131,6 +138,8 @@ export const Shell = ({ appNeedsUpdate, children, userPeerId }: ShellProps) => {
       password,
       setPassword,
       peerList,
+      isServerConnectionFailureDialogOpen,
+      setIsServerConnectionFailureDialogOpen,
       peerConnectionTypes,
       tabHasFocus,
       showRoomControls,
@@ -346,6 +355,7 @@ export const Shell = ({ appNeedsUpdate, children, userPeerId }: ShellProps) => {
             showAlert={showAlert}
             copyToClipboard={copyToClipboard}
           />
+          <ServerConnectionFailureDialog />
         </Box>
       </ThemeProvider>
     </ShellContext.Provider>
