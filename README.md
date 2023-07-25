@@ -8,7 +8,7 @@ Chitchatter is a free (as in both price and freedom) communication tool. Designe
 
 - Fully open source (licensed under [GPL v2](./LICENSE))
 - Peer-to-peer
-  - Whenever possible, otherwise [Open Relay](https://www.metered.ca/tools/openrelay/) is used to ensure reliable peer connection
+  - Whenever possible, otherwise a TURN server is used to ensure reliable peer connection
 - End-to-end encrypted (via [WebRTC](https://webrtc-security.github.io/))
 - Ephemeral
   - Message content is never persisted to disk on either the client or server
@@ -160,7 +160,7 @@ Explore the files in `src/config` to modify pairing and relay server configurati
 
 #### Peers won't connect
 
-This could happen for a variety of reasons. The most likely of which is that one or more peers cannot connect directly and must use the configured STUN/TURN relay as a fallback. The standard relay (https://www.metered.ca/tools/openrelay/) is free and does not guarantee any level of service, so it may simply be unavailable for some time (or just not work at all for some users). There's not much to do other than wait until it becomes available again, or possibly try from another device or location.
+This could happen for a variety of reasons. The most likely of which is that one or more peers cannot connect directly and must use the configured STUN/TURN relay as a fallback. The standard relay is free and does not guarantee any level of service, so it may simply be unavailable for some time (or just not work at all for some users). There's not much to do other than wait until it becomes available again, or possibly try from another device or location.
 
 ##### Issues specific to browsers with ad blocking extensions
 
