@@ -51,7 +51,7 @@ export function RoomFileUploadControls({
   const handleFileSelect: ChangeEventHandler<HTMLInputElement> = e => {
     const { files } = e.target
 
-    if (!files) return
+    if (!files || files.length < 1) return
 
     handleFileShareStart(files)
   }
