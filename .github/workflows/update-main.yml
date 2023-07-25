@@ -1,0 +1,48 @@
+# This worflow merges the develop branch into main. This triggers a Production
+# deployment.
+
+name: Update main branch
+
+on:
+  workflow_dispatch:
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out develop
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+          persist-credentials: true
+          ref: develop
+
+      - name: Setup Git user
+        uses: fregante/setup-git-user@v1
+
+      - name: Setup Node
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18
+          registry-url: 'https://registry.npmjs.org'
+
+      - name: Check out main
+        uses: actions/checkout@v3
+        with:
+          clean: false
+          fetch-depth: 0
+          persist-credentials: false
+          ref: main
+
+      - name: Sync branches
+        run: git merge origin/develop
+
+      - run: npm ci
+
+      # Push merge commit back to main and trigger downstream workflows
+      # https://github.community/t/push-from-action-does-not-trigger-subsequent-action/16854/2
+      - uses: ad-m/github-push-action@master
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          tags: true
+          branch: main
