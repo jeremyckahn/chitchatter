@@ -66,3 +66,7 @@ export interface FileOfferMetadata {
   magnetURI: string
   isAllInlineMedia: boolean
 }
+
+export interface TypingStatus {
+  isTyping: boolean
+}

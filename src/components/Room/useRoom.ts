@@ -2,6 +2,7 @@ import { useContext, useEffect, useMemo, useState } from 'react'
 import { BaseRoomConfig } from 'trystero'
 import { TorrentRoomConfig } from 'trystero/torrent'
 import { v4 as uuid } from 'uuid'
+import { useDebounceCallback } from '@react-hook/debounce'
 
 import { ShellContext } from 'contexts/ShellContext'
 import { SettingsContext } from 'contexts/SettingsContext'
@@ -19,6 +20,7 @@ import {
   isMessageReceived,
   isInlineMedia,
   FileOfferMetadata,
+  TypingStatus,
 } from 'models/chat'
 import { getPeerName, usePeerNameDisplay } from 'components/PeerNameDisplay'
 import { NotificationService } from 'services/Notification'
@@ -191,6 +193,17 @@ export function useRoom(
   const [sendPeerInlineMedia, receivePeerInlineMedia] =
     usePeerRoomAction<UnsentInlineMedia>(peerRoom, PeerActions.MEDIA_MESSAGE)
 
+  const [sendTypingStatusChange, receiveTypingStatusChange] =
+    usePeerRoomAction<TypingStatus>(peerRoom, PeerActions.TYPING_STATUS_CHANGE)
+
+  const debouncedSendTypingStatusChange = useDebounceCallback<[TypingStatus]>(
+    typingStatus => {
+      sendTypingStatusChange(typingStatus)
+    },
+    2000,
+    true
+  )
+
   const sendMessage = async (message: string) => {
     if (isMessageSending) return
 
@@ -348,8 +361,9 @@ export function useRoom(
     setIsMessageSending(false)
   }
 
-  const handleMessageChange = (message: string) => {
-    // FIXME: Implement this
+  const handleMessageChange = () => {
+    debouncedSendTypingStatusChange({ isTyping: true })
+    // FIXME: Expire the typing state
   }
 
   receivePeerInlineMedia(inlineMedia => {
@@ -368,6 +382,11 @@ export function useRoom(
     }
 
     setMessageLog([...messageLog, { ...inlineMedia, timeReceived: Date.now() }])
+  })
+
+  receiveTypingStatusChange((typingStatus, peerId) => {
+    // FIXME: Implement this
+    console.log({ peerId, typingStatus })
   })
 
   useEffect(() => {
