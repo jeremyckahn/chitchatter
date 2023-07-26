@@ -43,6 +43,7 @@ export function Room({
   const {
     isMessageSending,
     handleInlineMediaUpload,
+    handleMessageChange,
     messageLog,
     peerRoom,
     roomContextValue,
@@ -153,6 +154,7 @@ export function Room({
                 <MessageForm
                   onMessageSubmit={handleMessageSubmit}
                   isMessageSending={isMessageSending}
+                  onMessageChange={handleMessageChange}
                 />
               </Box>
             )}

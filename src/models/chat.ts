@@ -49,6 +49,7 @@ export interface Peer {
   videoState: VideoState
   screenShareState: ScreenShareState
   offeredFileId: string | null
+  isTyping: boolean
 }
 
 export const isMessageReceived = (

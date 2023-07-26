@@ -226,6 +226,7 @@ export function useRoom(
           videoState: VideoState.STOPPED,
           screenShareState: ScreenShareState.NOT_SHARING,
           offeredFileId: null,
+          isTyping: false,
         },
       ])
     } else {
@@ -347,6 +348,10 @@ export function useRoom(
     setIsMessageSending(false)
   }
 
+  const handleMessageChange = (message: string) => {
+    // FIXME: Implement this
+  }
+
   receivePeerInlineMedia(inlineMedia => {
     const userSettings = settingsContext.getUserSettings()
 
@@ -378,6 +383,7 @@ export function useRoom(
   return {
     isPrivate,
     handleInlineMediaUpload,
+    handleMessageChange,
     isMessageSending,
     messageLog,
     peerRoom,
