@@ -386,8 +386,16 @@ export function useRoom(
   })
 
   receiveTypingStatusChange((typingStatus, peerId) => {
-    // FIXME: Implement this
-    console.log({ peerId, typingStatus })
+    const { isTyping } = typingStatus
+    const peerIndex = peerList.findIndex(peer => peer.peerId === peerId)
+    const peerExist = peerIndex !== -1
+
+    if (peerExist) {
+      const peerListClone = [...peerList]
+      const peer = peerList[peerIndex]
+      peerListClone[peerIndex] = { ...peer, isTyping }
+      setPeerList(peerListClone)
+    }
   })
 
   useEffect(() => {
