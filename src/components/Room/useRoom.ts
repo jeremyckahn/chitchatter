@@ -62,6 +62,7 @@ export function useRoom(
     setRoomId,
     setPassword,
     customUsername,
+    updatePeer,
   } = useContext(ShellContext)
 
   const settingsContext = useContext(SettingsContext)
@@ -314,18 +315,20 @@ export function useRoom(
 
   peerRoom.onPeerLeave(PeerHookType.NEW_PEER, (peerId: string) => {
     const peerIndex = peerList.findIndex(peer => peer.peerId === peerId)
-    const peerExist = peerIndex !== -1
+    const doesPeerExist = peerIndex !== -1
 
     showAlert(
       `${
-        peerExist ? getDisplayUsername(peerList[peerIndex].userId) : 'Someone'
+        doesPeerExist
+          ? getDisplayUsername(peerList[peerIndex].userId)
+          : 'Someone'
       } has left the room`,
       {
         severity: 'warning',
       }
     )
 
-    if (peerExist) {
+    if (doesPeerExist) {
       const peerListClone = [...peerList]
       peerListClone.splice(peerIndex, 1)
       setPeerList(peerListClone)
@@ -387,15 +390,7 @@ export function useRoom(
 
   receiveTypingStatusChange((typingStatus, peerId) => {
     const { isTyping } = typingStatus
-    const peerIndex = peerList.findIndex(peer => peer.peerId === peerId)
-    const peerExist = peerIndex !== -1
-
-    if (peerExist) {
-      const peerListClone = [...peerList]
-      const peer = peerList[peerIndex]
-      peerListClone[peerIndex] = { ...peer, isTyping }
-      setPeerList(peerListClone)
-    }
+    updatePeer(peerId, { isTyping })
   })
 
   useEffect(() => {
