@@ -153,12 +153,24 @@ export function useRoom(
     ]
   )
 
+  const [sendTypingStatusChange, receiveTypingStatusChange] =
+    usePeerRoomAction<TypingStatus>(peerRoom, PeerActions.TYPING_STATUS_CHANGE)
+
+  const debouncedSendTypingStatusChange = useDebounceCallback<[TypingStatus]>(
+    typingStatus => {
+      sendTypingStatusChange(typingStatus)
+    },
+    2000,
+    true
+  )
+
   useEffect(() => {
     return () => {
+      sendTypingStatusChange({ isTyping: false })
       peerRoom.leaveRoom()
       setPeerList([])
     }
-  }, [peerRoom, setPeerList])
+  }, [peerRoom, setPeerList, sendTypingStatusChange])
 
   useEffect(() => {
     setPassword(password)
@@ -192,17 +204,6 @@ export function useRoom(
 
   const [sendPeerInlineMedia, receivePeerInlineMedia] =
     usePeerRoomAction<UnsentInlineMedia>(peerRoom, PeerActions.MEDIA_MESSAGE)
-
-  const [sendTypingStatusChange, receiveTypingStatusChange] =
-    usePeerRoomAction<TypingStatus>(peerRoom, PeerActions.TYPING_STATUS_CHANGE)
-
-  const debouncedSendTypingStatusChange = useDebounceCallback<[TypingStatus]>(
-    typingStatus => {
-      sendTypingStatusChange(typingStatus)
-    },
-    2000,
-    true
-  )
 
   const sendMessage = async (message: string) => {
     if (isMessageSending) return
@@ -363,7 +364,7 @@ export function useRoom(
 
   const handleMessageChange = () => {
     debouncedSendTypingStatusChange({ isTyping: true })
-    // FIXME: Expire the typing state
+    debouncedSendTypingStatusChange({ isTyping: false })
   }
 
   receivePeerInlineMedia(inlineMedia => {
