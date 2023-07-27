@@ -3,7 +3,7 @@ import Typography, { TypographyProps } from '@mui/material/Typography'
 import { usePeerNameDisplay } from './usePeerNameDisplay'
 import { getPeerName } from './getPeerName'
 
-interface PeerNameDisplayProps extends TypographyProps {
+export interface PeerNameDisplayProps extends TypographyProps {
   children: string
 }
 
