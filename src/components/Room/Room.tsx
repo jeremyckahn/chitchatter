@@ -1,10 +1,7 @@
 import { useContext } from 'react'
-
 import { useWindowSize } from '@react-hook/window-size'
-
 import Collapse from '@mui/material/Collapse'
 import Zoom from '@mui/material/Zoom'
-
 import Box from '@mui/material/Box'
 import Divider from '@mui/material/Divider'
 import { v4 as uuid } from 'uuid'
@@ -15,6 +12,8 @@ import { RoomContext } from 'contexts/RoomContext'
 import { ShellContext } from 'contexts/ShellContext'
 import { MessageForm } from 'components/MessageForm'
 import { ChatTranscript } from 'components/ChatTranscript'
+
+import { SettingsContext } from 'contexts/SettingsContext'
 
 import { useRoom } from './useRoom'
 import { RoomAudioControls } from './RoomAudioControls'
@@ -41,6 +40,8 @@ export function Room({
   password,
   userId,
 }: RoomProps) {
+  const settingsContext = useContext(SettingsContext)
+  const { showActiveTypingStatus } = settingsContext.getUserSettings()
   const {
     isMessageSending,
     handleInlineMediaUpload,
@@ -158,7 +159,7 @@ export function Room({
                     isMessageSending={isMessageSending}
                     onMessageChange={handleMessageChange}
                   />
-                  <TypingStatusBar />
+                  {showActiveTypingStatus ? <TypingStatusBar /> : null}
                 </Box>
               </Box>
             )}

@@ -4,4 +4,5 @@ export interface UserSettings {
   customUsername: string
   playSoundOnNewMessage: boolean
   showNotificationOnNewMessage: boolean
+  showActiveTypingStatus: boolean
 }

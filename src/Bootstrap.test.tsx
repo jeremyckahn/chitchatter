@@ -57,6 +57,7 @@ test('persists user settings if none were already persisted', async () => {
     customUsername: '',
     playSoundOnNewMessage: true,
     showNotificationOnNewMessage: true,
+    showActiveTypingStatus: true,
   })
 })
 

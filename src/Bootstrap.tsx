@@ -43,6 +43,7 @@ function Bootstrap({
     colorMode: 'dark',
     playSoundOnNewMessage: true,
     showNotificationOnNewMessage: true,
+    showActiveTypingStatus: true,
   })
   const { userId } = userSettings
 

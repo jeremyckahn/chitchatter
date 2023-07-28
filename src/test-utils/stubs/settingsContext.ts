@@ -12,6 +12,7 @@ export const userSettingsContextStubFactory = (
       colorMode: 'dark',
       playSoundOnNewMessage: true,
       showNotificationOnNewMessage: true,
+      showActiveTypingStatus: true,
       ...userSettingsOverrides,
     }),
   }

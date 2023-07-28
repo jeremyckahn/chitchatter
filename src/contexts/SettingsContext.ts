@@ -15,5 +15,6 @@ export const SettingsContext = createContext<SettingsContextProps>({
     colorMode: 'dark',
     playSoundOnNewMessage: true,
     showNotificationOnNewMessage: true,
+    showActiveTypingStatus: true,
   }),
 })

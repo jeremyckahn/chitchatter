@@ -66,6 +66,7 @@ export function useRoom(
   } = useContext(ShellContext)
 
   const settingsContext = useContext(SettingsContext)
+  const { showActiveTypingStatus } = settingsContext.getUserSettings()
   const [isMessageSending, setIsMessageSending] = useState(false)
   const [messageLog, _setMessageLog] = useState<Array<Message | InlineMedia>>(
     []
@@ -164,8 +165,10 @@ export function useRoom(
   )
 
   useEffect(() => {
+    if (!showActiveTypingStatus) return
+
     sendTypingStatusChange({ isTyping })
-  }, [isTyping, sendTypingStatusChange])
+  }, [isTyping, sendTypingStatusChange, showActiveTypingStatus])
 
   useEffect(() => {
     return () => {

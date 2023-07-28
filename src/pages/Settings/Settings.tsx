@@ -6,6 +6,7 @@ import Divider from '@mui/material/Divider'
 import Switch from '@mui/material/Switch'
 import FormGroup from '@mui/material/FormGroup'
 import FormControlLabel from '@mui/material/FormControlLabel'
+import Paper from '@mui/material/Paper'
 
 import { NotificationService } from 'services/Notification'
 import { ShellContext } from 'contexts/ShellContext'
@@ -28,8 +29,11 @@ export const Settings = ({ userId }: SettingsProps) => {
     setIsDeleteSettingsConfirmDiaglogOpen,
   ] = useState(false)
   const [, setIsNotificationPermissionDetermined] = useState(false)
-  const { playSoundOnNewMessage, showNotificationOnNewMessage } =
-    getUserSettings()
+  const {
+    playSoundOnNewMessage,
+    showNotificationOnNewMessage,
+    showActiveTypingStatus,
+  } = getUserSettings()
 
   const persistedStorage = getPersistedStorage()
 
@@ -61,6 +65,13 @@ export const Settings = ({ userId }: SettingsProps) => {
     updateUserSettings({ showNotificationOnNewMessage })
   }
 
+  const handleShowActiveTypingStatusChange = (
+    _event: ChangeEvent,
+    showActiveTypingStatus: boolean
+  ) => {
+    updateUserSettings({ showActiveTypingStatus })
+  }
+
   const handleDeleteSettingsClick = () => {
     setIsDeleteSettingsConfirmDiaglogOpen(true)
   }
@@ -88,30 +99,48 @@ export const Settings = ({ userId }: SettingsProps) => {
       >
         Chat
       </Typography>
-      <Typography>When a message is received in the background:</Typography>
-      <FormGroup>
-        <FormControlLabel
-          control={
-            <Switch
-              checked={playSoundOnNewMessage}
-              onChange={handlePlaySoundOnNewMessageChange}
-            />
-          }
-          label="Play a sound"
-        />
-        <FormControlLabel
-          control={
-            <Switch
-              checked={
-                areNotificationsAvailable && showNotificationOnNewMessage
-              }
-              onChange={handleShowNotificationOnNewMessageChange}
-              disabled={!areNotificationsAvailable}
-            />
-          }
-          label="Show a notification"
-        />
-      </FormGroup>
+      <Paper elevation={3} sx={{ p: 2, mb: 2 }}>
+        <Typography>When a message is received in the background:</Typography>
+        <FormGroup>
+          <FormControlLabel
+            control={
+              <Switch
+                checked={playSoundOnNewMessage}
+                onChange={handlePlaySoundOnNewMessageChange}
+              />
+            }
+            label="Play a sound"
+          />
+          <FormControlLabel
+            control={
+              <Switch
+                checked={
+                  areNotificationsAvailable && showNotificationOnNewMessage
+                }
+                onChange={handleShowNotificationOnNewMessageChange}
+                disabled={!areNotificationsAvailable}
+              />
+            }
+            label="Show a notification"
+          />
+        </FormGroup>
+      </Paper>
+      <Paper elevation={3} sx={{ p: 2, mb: 2 }}>
+        <FormGroup>
+          <FormControlLabel
+            control={
+              <Switch
+                checked={showActiveTypingStatus}
+                onChange={handleShowActiveTypingStatusChange}
+              />
+            }
+            label="Show active typing indicators"
+          />
+        </FormGroup>
+        <Typography variant="subtitle2" sx={_theme => ({})}>
+          Disabling this will also hide your active typing status from others.
+        </Typography>
+      </Paper>
       <Divider sx={{ my: 2 }} />
       <Typography
         variant="h2"
