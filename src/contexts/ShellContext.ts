@@ -37,6 +37,7 @@ interface ShellContextProps {
   customUsername: string
   setCustomUsername: Dispatch<SetStateAction<string>>
   connectionTestResults: ConnectionTestResults
+  updatePeer: (peerId: string, updatedProperties: Partial<Peer>) => void
 }
 
 export const ShellContext = createContext<ShellContextProps>({
@@ -72,4 +73,5 @@ export const ShellContext = createContext<ShellContextProps>({
     hasRelay: false,
     trackerConnection: TrackerConnection.SEARCHING,
   },
+  updatePeer: () => {},
 })

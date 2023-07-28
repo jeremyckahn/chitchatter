@@ -49,6 +49,7 @@ export interface Peer {
   videoState: VideoState
   screenShareState: ScreenShareState
   offeredFileId: string | null
+  isTyping: boolean
 }
 
 export const isMessageReceived = (
@@ -64,4 +65,8 @@ export const isInlineMedia = (
 export interface FileOfferMetadata {
   magnetURI: string
   isAllInlineMedia: boolean
+}
+
+export interface TypingStatus {
+  isTyping: boolean
 }

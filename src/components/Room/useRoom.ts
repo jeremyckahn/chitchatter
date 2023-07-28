@@ -2,6 +2,7 @@ import { useContext, useEffect, useMemo, useState } from 'react'
 import { BaseRoomConfig } from 'trystero'
 import { TorrentRoomConfig } from 'trystero/torrent'
 import { v4 as uuid } from 'uuid'
+import { useDebounce } from '@react-hook/debounce'
 
 import { ShellContext } from 'contexts/ShellContext'
 import { SettingsContext } from 'contexts/SettingsContext'
@@ -19,6 +20,7 @@ import {
   isMessageReceived,
   isInlineMedia,
   FileOfferMetadata,
+  TypingStatus,
 } from 'models/chat'
 import { getPeerName, usePeerNameDisplay } from 'components/PeerNameDisplay'
 import { NotificationService } from 'services/Notification'
@@ -60,6 +62,7 @@ export function useRoom(
     setRoomId,
     setPassword,
     customUsername,
+    updatePeer,
   } = useContext(ShellContext)
 
   const settingsContext = useContext(SettingsContext)
@@ -151,12 +154,26 @@ export function useRoom(
     ]
   )
 
+  const [sendTypingStatusChange, receiveTypingStatusChange] =
+    usePeerRoomAction<TypingStatus>(peerRoom, PeerActions.TYPING_STATUS_CHANGE)
+
+  const [isTyping, setIsTypingDebounced, setIsTyping] = useDebounce(
+    false,
+    2000,
+    true
+  )
+
+  useEffect(() => {
+    sendTypingStatusChange({ isTyping })
+  }, [isTyping, sendTypingStatusChange])
+
   useEffect(() => {
     return () => {
+      sendTypingStatusChange({ isTyping: false })
       peerRoom.leaveRoom()
       setPeerList([])
     }
-  }, [peerRoom, setPeerList])
+  }, [peerRoom, setPeerList, sendTypingStatusChange])
 
   useEffect(() => {
     setPassword(password)
@@ -201,6 +218,7 @@ export function useRoom(
       id: getUuid(),
     }
 
+    setIsTyping(false)
     setIsMessageSending(true)
     setMessageLog([...messageLog, unsentMessage])
     await sendPeerMessage(unsentMessage)
@@ -226,6 +244,7 @@ export function useRoom(
           videoState: VideoState.STOPPED,
           screenShareState: ScreenShareState.NOT_SHARING,
           offeredFileId: null,
+          isTyping: false,
         },
       ])
     } else {
@@ -250,7 +269,7 @@ export function useRoom(
     setMessageLog(transcript)
   })
 
-  receivePeerMessage(message => {
+  receivePeerMessage((message, peerId) => {
     const userSettings = settingsContext.getUserSettings()
 
     if (!isShowingMessages) {
@@ -272,6 +291,7 @@ export function useRoom(
     }
 
     setMessageLog([...messageLog, { ...message, timeReceived: Date.now() }])
+    updatePeer(peerId, { isTyping: false })
   })
 
   peerRoom.onPeerJoin(PeerHookType.NEW_PEER, (peerId: string) => {
@@ -299,18 +319,20 @@ export function useRoom(
 
   peerRoom.onPeerLeave(PeerHookType.NEW_PEER, (peerId: string) => {
     const peerIndex = peerList.findIndex(peer => peer.peerId === peerId)
-    const peerExist = peerIndex !== -1
+    const doesPeerExist = peerIndex !== -1
 
     showAlert(
       `${
-        peerExist ? getDisplayUsername(peerList[peerIndex].userId) : 'Someone'
+        doesPeerExist
+          ? getDisplayUsername(peerList[peerIndex].userId)
+          : 'Someone'
       } has left the room`,
       {
         severity: 'warning',
       }
     )
 
-    if (peerExist) {
+    if (doesPeerExist) {
       const peerListClone = [...peerList]
       peerListClone.splice(peerIndex, 1)
       setPeerList(peerListClone)
@@ -347,6 +369,18 @@ export function useRoom(
     setIsMessageSending(false)
   }
 
+  const handleMessageChange = () => {
+    if (isTyping) {
+      setIsTypingDebounced(true)
+    } else {
+      setIsTyping(true)
+    }
+
+    // This queues up the expiration of the typing state. It is effectively
+    // cancelled once this message change handler is called again.
+    setIsTypingDebounced(false)
+  }
+
   receivePeerInlineMedia(inlineMedia => {
     const userSettings = settingsContext.getUserSettings()
 
@@ -365,6 +399,11 @@ export function useRoom(
     setMessageLog([...messageLog, { ...inlineMedia, timeReceived: Date.now() }])
   })
 
+  receiveTypingStatusChange((typingStatus, peerId) => {
+    const { isTyping } = typingStatus
+    updatePeer(peerId, { isTyping })
+  })
+
   useEffect(() => {
     sendPeerMetadata({ customUsername, userId })
   }, [customUsername, userId, sendPeerMetadata])
@@ -378,6 +417,7 @@ export function useRoom(
   return {
     isPrivate,
     handleInlineMediaUpload,
+    handleMessageChange,
     isMessageSending,
     messageLog,
     peerRoom,

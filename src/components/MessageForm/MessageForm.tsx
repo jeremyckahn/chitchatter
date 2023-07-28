@@ -15,11 +15,13 @@ import { messageCharacterSizeLimit } from 'config/messaging'
 
 interface MessageFormProps {
   onMessageSubmit: (message: string) => void
+  onMessageChange: (message: string) => void
   isMessageSending: boolean
 }
 
 export const MessageForm = ({
   onMessageSubmit,
+  onMessageChange,
   isMessageSending,
 }: MessageFormProps) => {
   const textFieldRef = useRef<HTMLInputElement>(null)
@@ -43,6 +45,7 @@ export const MessageForm = ({
   const handleMessageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const { value } = event.target
     setTextMessage(value)
+    onMessageChange(value)
   }
 
   const submitMessage = () => {
@@ -68,7 +71,7 @@ export const MessageForm = ({
   }
 
   return (
-    <form onSubmit={handleMessageSubmit} className="p-4">
+    <form onSubmit={handleMessageSubmit} className="pt-4 px-4">
       <Stack direction="row" spacing={2}>
         <FormControl fullWidth>
           <TextField

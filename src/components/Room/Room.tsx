@@ -24,6 +24,7 @@ import { RoomFileUploadControls } from './RoomFileUploadControls'
 import { RoomVideoDisplay } from './RoomVideoDisplay'
 import { RoomShowMessagesControls } from './RoomShowMessagesControls'
 import { RoomHideRoomControls } from './RoomHideRoomControls'
+import { TypingStatusBar } from './TypingStatusBar'
 
 export interface RoomProps {
   appId?: string
@@ -43,6 +44,7 @@ export function Room({
   const {
     isMessageSending,
     handleInlineMediaUpload,
+    handleMessageChange,
     messageLog,
     peerRoom,
     roomContextValue,
@@ -150,10 +152,14 @@ export function Room({
                   className="grow overflow-auto px-4"
                 />
                 <Divider />
-                <MessageForm
-                  onMessageSubmit={handleMessageSubmit}
-                  isMessageSending={isMessageSending}
-                />
+                <Box>
+                  <MessageForm
+                    onMessageSubmit={handleMessageSubmit}
+                    isMessageSending={isMessageSending}
+                    onMessageChange={handleMessageChange}
+                  />
+                  <TypingStatusBar />
+                </Box>
               </Box>
             )}
           </Box>

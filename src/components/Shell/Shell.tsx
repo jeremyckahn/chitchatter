@@ -88,15 +88,29 @@ export const Shell = ({ appNeedsUpdate, children, userPeerId }: ShellProps) => {
   const [peerAudios, setPeerAudios] = useState<
     Record<string, HTMLAudioElement>
   >({})
-  const showAlert = useCallback<
-    (message: string, options?: AlertOptions) => void
-  >((message, options) => {
+
+  const showAlert = useCallback((message: string, options?: AlertOptions) => {
     setAlertText(message)
     setAlertSeverity(options?.severity ?? 'info')
     setIsAlertShowing(true)
   }, [])
 
   const { connectionTestResults } = useConnectionTest()
+
+  const updatePeer = useCallback(
+    (peerId: string, updatedProperties: Partial<Peer>) => {
+      const peerIndex = peerList.findIndex(peer => peer.peerId === peerId)
+      const doesPeerExist = peerIndex !== -1
+
+      if (!doesPeerExist) return
+
+      const peerListClone = [...peerList]
+      const peer = peerList[peerIndex]
+      peerListClone[peerIndex] = { ...peer, ...updatedProperties }
+      setPeerList(peerListClone)
+    },
+    [peerList]
+  )
 
   const shellContextValue = useMemo(
     () => ({
@@ -129,6 +143,7 @@ export const Shell = ({ appNeedsUpdate, children, userPeerId }: ShellProps) => {
       customUsername,
       setCustomUsername,
       connectionTestResults,
+      updatePeer,
     }),
     [
       isPeerListOpen,
@@ -157,6 +172,7 @@ export const Shell = ({ appNeedsUpdate, children, userPeerId }: ShellProps) => {
       customUsername,
       setCustomUsername,
       connectionTestResults,
+      updatePeer,
     ]
   )
 
