@@ -2,7 +2,7 @@ import { useContext, useEffect, useMemo, useState } from 'react'
 import { BaseRoomConfig } from 'trystero'
 import { TorrentRoomConfig } from 'trystero/torrent'
 import { v4 as uuid } from 'uuid'
-import { useDebounceCallback } from '@react-hook/debounce'
+import { useDebounce } from '@react-hook/debounce'
 
 import { ShellContext } from 'contexts/ShellContext'
 import { SettingsContext } from 'contexts/SettingsContext'
@@ -157,13 +157,15 @@ export function useRoom(
   const [sendTypingStatusChange, receiveTypingStatusChange] =
     usePeerRoomAction<TypingStatus>(peerRoom, PeerActions.TYPING_STATUS_CHANGE)
 
-  const debouncedSendTypingStatusChange = useDebounceCallback<[TypingStatus]>(
-    typingStatus => {
-      sendTypingStatusChange(typingStatus)
-    },
+  const [isTyping, setIsTypingDebounced, setIsTyping] = useDebounce(
+    false,
     2000,
     true
   )
+
+  useEffect(() => {
+    sendTypingStatusChange({ isTyping })
+  }, [isTyping, sendTypingStatusChange])
 
   useEffect(() => {
     return () => {
@@ -216,6 +218,7 @@ export function useRoom(
       id: getUuid(),
     }
 
+    setIsTyping(false)
     setIsMessageSending(true)
     setMessageLog([...messageLog, unsentMessage])
     await sendPeerMessage(unsentMessage)
@@ -266,7 +269,7 @@ export function useRoom(
     setMessageLog(transcript)
   })
 
-  receivePeerMessage(message => {
+  receivePeerMessage((message, peerId) => {
     const userSettings = settingsContext.getUserSettings()
 
     if (!isShowingMessages) {
@@ -288,6 +291,7 @@ export function useRoom(
     }
 
     setMessageLog([...messageLog, { ...message, timeReceived: Date.now() }])
+    updatePeer(peerId, { isTyping: false })
   })
 
   peerRoom.onPeerJoin(PeerHookType.NEW_PEER, (peerId: string) => {
@@ -366,8 +370,15 @@ export function useRoom(
   }
 
   const handleMessageChange = () => {
-    debouncedSendTypingStatusChange({ isTyping: true })
-    debouncedSendTypingStatusChange({ isTyping: false })
+    if (isTyping) {
+      setIsTypingDebounced(true)
+    } else {
+      setIsTyping(true)
+    }
+
+    // This queues up the expiration of the typing state. It is effectively
+    // cancelled once this message change handler is called again.
+    setIsTypingDebounced(false)
   }
 
   receivePeerInlineMedia(inlineMedia => {
