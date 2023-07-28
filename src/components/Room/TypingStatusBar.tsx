@@ -52,20 +52,19 @@ export const TypingStatusBar = () => {
       <Typography
         variant="caption"
         sx={theme => ({
+          color: theme.palette.text.secondary,
           display: 'block',
+          fontWeight: theme.typography.fontWeightBold,
+          height: '1.75rem',
+          maxHeight: '1.75rem',
+          overflow: 'hidden',
           px: 2,
           py: 0.5,
-          color: theme.palette.text.secondary,
-          fontWeight: theme.typography.fontWeightBold,
           textOverflow: 'ellipsis',
+          whiteSpace: 'nowrap',
         })}
       >
         {statusMessage}
-        {/*
-        This span acts a spacer that causes the bar to take up a consistent
-        amount of space.
-        */}
-        <span style={{ userSelect: 'none' }}>&nbsp;</span>
       </Typography>
     </Box>
   )
