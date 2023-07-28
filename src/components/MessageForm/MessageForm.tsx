@@ -71,7 +71,7 @@ export const MessageForm = ({
   }
 
   return (
-    <form onSubmit={handleMessageSubmit} className="p-4">
+    <form onSubmit={handleMessageSubmit} className="pt-4 px-4">
       <Stack direction="row" spacing={2}>
         <FormControl fullWidth>
           <TextField

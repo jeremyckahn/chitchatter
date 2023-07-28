@@ -153,13 +153,12 @@ export function Room({
                 />
                 <Divider />
                 <Box>
-                  <TypingStatusBar />
-                  <Divider />
                   <MessageForm
                     onMessageSubmit={handleMessageSubmit}
                     isMessageSending={isMessageSending}
                     onMessageChange={handleMessageChange}
                   />
+                  <TypingStatusBar />
                 </Box>
               </Box>
             )}
