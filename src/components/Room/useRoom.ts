@@ -250,6 +250,8 @@ export function useRoom(
           isTyping: false,
         },
       ])
+
+      sendTypingStatusChange({ isTyping }, peerId)
     } else {
       const oldUsername =
         peerList[peerIndex].customUsername || getPeerName(userId)
