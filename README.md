@@ -96,6 +96,16 @@ To examine the static assets that are served to end users, you can audit the [`g
 
 See the full ticket backlog [here](https://github.com/users/jeremyckahn/projects/1).
 
+## 💻️ Note from the developer about project status
+
+I consider Chitchatter feature-complete inasmuch it does all the things I personally need it to do. I don't have specific plans to add significant functionality in the future, but I may do so if it seems fun to me at the time. **I am committed to fixing any significant bugs** that are reported, so please [open an issue](https://github.com/jeremyckahn/chitchatter/issues/new) if you discover one! Aside from that, Chitchatter is effectively in maintenance mode for the foreseeable future.
+
+If you would like a feature to be implemented and are willing to pay a development cost to ensure it gets done, please file a GitHub issue describing the feature and indicate that you are willing to compensate for the work. If you are not willing to pay, please open a GitHub issue regardless. I may implement it if it seems fun to do so, but other members of the community may also step up to implement it via Pull Requests.
+
+I will always make time support Pull Requests from others. If you're willing to put in the work to improve Chitchatter, I am willing to help shepherd that work along and get it shipped.
+
+If you don't agree with the direction of the project, you are welcome to fork Chitchatter and take it in another one.
+
 ## Environments
 
 - Production environment: https://chitchatter.im/
