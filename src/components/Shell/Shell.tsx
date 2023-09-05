@@ -31,6 +31,10 @@ import { QRCodeDialog } from './QRCodeDialog'
 import { RoomShareDialog } from './RoomShareDialog'
 import { useConnectionTest } from './useConnectionTest'
 import { ServerConnectionFailureDialog } from './ServerConnectionFailureDialog'
+import {
+  EnvironmentUnsupportedDialog,
+  isEnvironmentSupported,
+} from './EnvironmentUnsupportedDialog'
 
 export interface ShellProps extends PropsWithChildren {
   userPeerId: string
@@ -309,70 +313,78 @@ export const Shell = ({ appNeedsUpdate, children, userPeerId }: ShellProps) => {
     <ShellContext.Provider value={shellContextValue}>
       <ThemeProvider theme={theme}>
         <CssBaseline />
-        <UpgradeDialog appNeedsUpdate={appNeedsUpdate} />
-        <Box
-          className="Chitchatter"
-          sx={{
-            height: '100vh',
-            display: 'flex',
-          }}
-        >
-          <NotificationArea
-            alertSeverity={alertSeverity}
-            alertText={alertText}
-            isAlertShowing={isAlertShowing}
-            onAlertClose={handleAlertClose}
-          />
-          <ShellAppBar
-            onDrawerOpen={handleDrawerOpen}
-            onLinkButtonClick={handleLinkButtonClick}
-            isDrawerOpen={isDrawerOpen}
-            isPeerListOpen={isPeerListOpen}
-            title={title}
-            onPeerListClick={handlePeerListClick}
-            onRoomControlsClick={() => setShowRoomControls(!showRoomControls)}
-            setIsQRCodeDialogOpen={setIsQRCodeDialogOpen}
-            showAppBar={showAppBar}
-            isFullscreen={isFullscreen}
-            setIsFullscreen={setIsFullscreen}
-          />
-          <Drawer
-            isDrawerOpen={isDrawerOpen}
-            onDrawerClose={handleDrawerClose}
-            theme={theme}
-          />
-          <RouteContent
-            isDrawerOpen={isDrawerOpen}
-            isPeerListOpen={isPeerListOpen}
-            showAppBar={showAppBar}
-          >
-            <ErrorBoundary>{children}</ErrorBoundary>
-          </RouteContent>
-          <PeerList
-            userId={userPeerId}
-            roomId={roomId}
-            isPeerListOpen={isPeerListOpen}
-            onPeerListClose={handlePeerListClick}
-            peerList={peerList}
-            peerConnectionTypes={peerConnectionTypes}
-            audioState={audioState}
-            peerAudios={peerAudios}
-            connectionTestResults={connectionTestResults}
-          />
-          <QRCodeDialog
-            isOpen={isQRCodeDialogOpen}
-            handleClose={handleQRCodeDialogClose}
-          />
-          <RoomShareDialog
-            isOpen={isRoomShareDialogOpen}
-            handleClose={handleRoomShareDialogClose}
-            roomId={roomId ?? ''}
-            password={password ?? ''}
-            showAlert={showAlert}
-            copyToClipboard={copyToClipboard}
-          />
-          <ServerConnectionFailureDialog />
-        </Box>
+        {isEnvironmentSupported ? (
+          <>
+            <UpgradeDialog appNeedsUpdate={appNeedsUpdate} />
+            <Box
+              className="Chitchatter"
+              sx={{
+                height: '100vh',
+                display: 'flex',
+              }}
+            >
+              <NotificationArea
+                alertSeverity={alertSeverity}
+                alertText={alertText}
+                isAlertShowing={isAlertShowing}
+                onAlertClose={handleAlertClose}
+              />
+              <ShellAppBar
+                onDrawerOpen={handleDrawerOpen}
+                onLinkButtonClick={handleLinkButtonClick}
+                isDrawerOpen={isDrawerOpen}
+                isPeerListOpen={isPeerListOpen}
+                title={title}
+                onPeerListClick={handlePeerListClick}
+                onRoomControlsClick={() =>
+                  setShowRoomControls(!showRoomControls)
+                }
+                setIsQRCodeDialogOpen={setIsQRCodeDialogOpen}
+                showAppBar={showAppBar}
+                isFullscreen={isFullscreen}
+                setIsFullscreen={setIsFullscreen}
+              />
+              <Drawer
+                isDrawerOpen={isDrawerOpen}
+                onDrawerClose={handleDrawerClose}
+                theme={theme}
+              />
+              <RouteContent
+                isDrawerOpen={isDrawerOpen}
+                isPeerListOpen={isPeerListOpen}
+                showAppBar={showAppBar}
+              >
+                <ErrorBoundary>{children}</ErrorBoundary>
+              </RouteContent>
+              <PeerList
+                userId={userPeerId}
+                roomId={roomId}
+                isPeerListOpen={isPeerListOpen}
+                onPeerListClose={handlePeerListClick}
+                peerList={peerList}
+                peerConnectionTypes={peerConnectionTypes}
+                audioState={audioState}
+                peerAudios={peerAudios}
+                connectionTestResults={connectionTestResults}
+              />
+              <QRCodeDialog
+                isOpen={isQRCodeDialogOpen}
+                handleClose={handleQRCodeDialogClose}
+              />
+              <RoomShareDialog
+                isOpen={isRoomShareDialogOpen}
+                handleClose={handleRoomShareDialogClose}
+                roomId={roomId ?? ''}
+                password={password ?? ''}
+                showAlert={showAlert}
+                copyToClipboard={copyToClipboard}
+              />
+              <ServerConnectionFailureDialog />
+            </Box>
+          </>
+        ) : (
+          <EnvironmentUnsupportedDialog />
+        )}
       </ThemeProvider>
     </ShellContext.Provider>
   )
