@@ -37,42 +37,42 @@ export const EnvironmentUnsupportedDialog = () => {
       </DialogTitle>
       <DialogContent>
         <DialogContentText id="alert-dialog-description">
-          The following issues were detected:
-          <Typography
-            component="ul"
-            sx={{
-              color: theme.palette.text.secondary,
-              m: 1,
-            }}
-          >
-            {!isSecureContext ? (
-              <li>
-                Chitchatter is not being served from a{' '}
-                <Link
-                  href="https://developer.mozilla.org/en-US/docs/Web/Security/Secure_Contexts"
-                  rel="noreferrer"
-                  target="_blank"
-                >
-                  secure context
-                </Link>
-                .
-              </li>
-            ) : null}
-            {!doesSupportWebRtc ? (
-              <li>
-                Your browser does not support WebRTC. Consider using{' '}
-                <Link
-                  href="https://developer.mozilla.org/en-US/docs/Web/API/RTCPeerConnection#browser_compatibility"
-                  rel="noreferrer"
-                  target="_blank"
-                >
-                  a browser that does
-                </Link>
-                .
-              </li>
-            ) : null}
-          </Typography>
+          Chitchatter is unable to start up. The following issues were detected:
         </DialogContentText>
+        <Typography
+          component="ul"
+          sx={{
+            color: theme.palette.text.secondary,
+            m: 1,
+          }}
+        >
+          {!isSecureContext ? (
+            <li>
+              The app is not being served from a{' '}
+              <Link
+                href="https://developer.mozilla.org/en-US/docs/Web/Security/Secure_Contexts"
+                rel="noreferrer"
+                target="_blank"
+              >
+                secure context
+              </Link>
+              .
+            </li>
+          ) : null}
+          {!doesSupportWebRtc ? (
+            <li>
+              Your browser does not support WebRTC. Consider using{' '}
+              <Link
+                href="https://developer.mozilla.org/en-US/docs/Web/API/RTCPeerConnection#browser_compatibility"
+                rel="noreferrer"
+                target="_blank"
+              >
+                a browser that does
+              </Link>
+              .
+            </li>
+          ) : null}
+        </Typography>
       </DialogContent>
     </Dialog>
   )
