@@ -7,12 +7,12 @@ import ListItem from '@mui/material/ListItem'
 import ListItemText from '@mui/material/ListItemText'
 import Menu from '@mui/material/Menu'
 import MenuItem from '@mui/material/MenuItem'
-import Fab from '@mui/material/Fab'
 import Tooltip from '@mui/material/Tooltip'
 
 import { PeerRoom } from 'services/PeerRoom/PeerRoom'
 
 import { useRoomVideo } from './useRoomVideo'
+import { MediaButton } from './MediaButton'
 
 export interface RoomVideoControlsProps {
   peerRoom: PeerRoom
@@ -64,13 +64,13 @@ export function RoomVideoControls({ peerRoom }: RoomVideoControlsProps) {
       }}
     >
       <Tooltip title={isCameraEnabled ? 'Turn off camera' : 'Turn on camera'}>
-        <Fab
-          color={isCameraEnabled ? 'success' : 'default'}
+        <MediaButton
+          isActive={isCameraEnabled}
           aria-label="toggle camera"
           onClick={handleEnableCameraClick}
         >
           {isCameraEnabled ? <Videocam /> : <VideocamOff />}
-        </Fab>
+        </MediaButton>
       </Tooltip>
       {videoDevices.length > 0 && (
         <Box sx={{ mt: 1 }}>

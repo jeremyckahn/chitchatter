@@ -1,12 +1,12 @@
 import Box from '@mui/material/Box'
 import ScreenShare from '@mui/icons-material/ScreenShare'
 import StopScreenShare from '@mui/icons-material/StopScreenShare'
-import Fab from '@mui/material/Fab'
 import Tooltip from '@mui/material/Tooltip'
 
 import { PeerRoom } from 'services/PeerRoom/PeerRoom'
 
 import { useRoomScreenShare } from './useRoomScreenShare'
+import { MediaButton } from './MediaButton'
 
 export interface RoomFileUploadControlsProps {
   peerRoom: PeerRoom
@@ -47,13 +47,13 @@ export function RoomScreenShareControls({
           isSharingScreen ? 'Stop sharing screen' : 'Share screen with room'
         }
       >
-        <Fab
-          color={isSharingScreen ? 'success' : 'default'}
+        <MediaButton
+          isActive={isSharingScreen}
           aria-label="share screen"
           onClick={handleToggleScreenShareButtonClick}
         >
           {isSharingScreen ? <ScreenShare /> : <StopScreenShare />}
-        </Fab>
+        </MediaButton>
       </Tooltip>
     </Box>
   )
