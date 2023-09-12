@@ -1,8 +1,7 @@
 import { ChangeEventHandler, useContext, useRef } from 'react'
 import Box from '@mui/material/Box'
-import UploadFile from '@mui/icons-material/UploadFile'
-import Cancel from '@mui/icons-material/Cancel'
-import Fab from '@mui/material/Fab'
+import Folder from '@mui/icons-material/Folder'
+import FolderOff from '@mui/icons-material/FolderOff'
 import Tooltip from '@mui/material/Tooltip'
 import CircularProgress from '@mui/material/CircularProgress'
 
@@ -10,6 +9,7 @@ import { RoomContext } from 'contexts/RoomContext'
 import { PeerRoom } from 'services/PeerRoom/PeerRoom'
 
 import { useRoomFileShare } from './useRoomFileShare'
+import { MediaButton } from './MediaButton'
 
 export interface RoomFileUploadControlsProps {
   onInlineMediaUpload: (files: File[]) => void
@@ -61,7 +61,7 @@ export function RoomFileUploadControls({
 
   const disableFileUpload = !isFileSharingEnabled || isMessageSending
 
-  const buttonIcon = isSharingFile ? <Cancel /> : <UploadFile />
+  const buttonIcon = isSharingFile ? <Folder /> : <FolderOff />
 
   return (
     <Box
@@ -88,8 +88,8 @@ export function RoomFileUploadControls({
             : 'Share files with the room'
         }
       >
-        <Fab
-          color={isSharingFile ? 'error' : 'success'}
+        <MediaButton
+          isActive={isSharingFile}
           aria-label="share screen"
           onClick={handleToggleScreenShareButtonClick}
           disabled={disableFileUpload}
@@ -99,7 +99,7 @@ export function RoomFileUploadControls({
           ) : (
             <CircularProgress variant="indeterminate" color="inherit" />
           )}
-        </Fab>
+        </MediaButton>
       </Tooltip>
     </Box>
   )

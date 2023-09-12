@@ -1,11 +1,12 @@
 import { useContext } from 'react'
 
-import Fab from '@mui/material/Fab'
 import Tooltip from '@mui/material/Tooltip'
 import { Comment, CommentsDisabled } from '@mui/icons-material'
 import { Badge, Box } from '@mui/material'
 
 import { RoomContext } from 'contexts/RoomContext'
+
+import { MediaButton } from './MediaButton'
 
 export function RoomShowMessagesControls() {
   const { isShowingMessages, setIsShowingMessages, unreadMessages } =
@@ -22,15 +23,15 @@ export function RoomShowMessagesControls() {
       }}
     >
       <Tooltip title={isShowingMessages ? 'Hide messages' : 'Show messages'}>
-        <Fab
-          color={isShowingMessages ? 'error' : 'success'}
+        <MediaButton
+          isActive={isShowingMessages}
           aria-label="show messages"
           onClick={() => setIsShowingMessages(!isShowingMessages)}
         >
           <Badge color="error" badgeContent={unreadMessages}>
-            {isShowingMessages ? <CommentsDisabled /> : <Comment />}
+            {isShowingMessages ? <Comment /> : <CommentsDisabled />}
           </Badge>
-        </Fab>
+        </MediaButton>
       </Tooltip>
     </Box>
   )
