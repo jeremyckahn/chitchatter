@@ -48,11 +48,11 @@ export function RoomScreenShareControls({
         }
       >
         <Fab
-          color={isSharingScreen ? 'error' : 'success'}
+          color={isSharingScreen ? 'success' : 'default'}
           aria-label="share screen"
           onClick={handleToggleScreenShareButtonClick}
         >
-          {isSharingScreen ? <StopScreenShare /> : <ScreenShare />}
+          {isSharingScreen ? <ScreenShare /> : <StopScreenShare />}
         </Fab>
       </Tooltip>
     </Box>

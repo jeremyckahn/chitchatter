@@ -23,12 +23,12 @@ export function RoomShowMessagesControls() {
     >
       <Tooltip title={isShowingMessages ? 'Hide messages' : 'Show messages'}>
         <Fab
-          color={isShowingMessages ? 'error' : 'success'}
+          color={isShowingMessages ? 'success' : 'default'}
           aria-label="show messages"
           onClick={() => setIsShowingMessages(!isShowingMessages)}
         >
           <Badge color="error" badgeContent={unreadMessages}>
-            {isShowingMessages ? <CommentsDisabled /> : <Comment />}
+            {isShowingMessages ? <Comment /> : <CommentsDisabled />}
           </Badge>
         </Fab>
       </Tooltip>
