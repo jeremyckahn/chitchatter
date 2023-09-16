@@ -72,7 +72,7 @@ export function RoomVideoControls({ peerRoom }: RoomVideoControlsProps) {
           {isCameraEnabled ? <Videocam /> : <VideocamOff />}
         </MediaButton>
       </Tooltip>
-      {videoDevices.length > 0 && (
+      {videoDevices.length > 0 && isCameraEnabled && (
         <Box sx={{ mt: 1 }}>
           <List
             component="nav"

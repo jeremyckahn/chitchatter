@@ -78,7 +78,7 @@ export function RoomAudioControls({ peerRoom }: RoomAudioControlsProps) {
           {isSpeakingToRoom ? <RecordVoiceOver /> : <VoiceOverOff />}
         </MediaButton>
       </Tooltip>
-      {audioDevices.length > 0 && (
+      {audioDevices.length > 0 && isSpeakingToRoom && (
         <Box sx={{ mt: 1 }}>
           <List
             component="nav"
