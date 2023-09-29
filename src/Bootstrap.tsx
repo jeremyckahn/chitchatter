@@ -27,6 +27,10 @@ export interface BootstrapProps {
   getUuid?: typeof uuid
 }
 
+const homepageUrl = new URL(
+  process.env.REACT_APP_HOMEPAGE ?? 'https://chitchatter.im/'
+)
+
 function Bootstrap({
   persistedStorage: persistedStorageProp = localforage.createInstance({
     name: 'chitchatter',
@@ -99,7 +103,7 @@ function Bootstrap({
   }
 
   return (
-    <Router>
+    <Router basename={homepageUrl.pathname}>
       <StorageContext.Provider value={storageContextValue}>
         <SettingsContext.Provider value={settingsContextValue}>
           {hasLoadedSettings ? (
