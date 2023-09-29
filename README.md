@@ -168,6 +168,8 @@ Explore the files in `src/config` to modify pairing and relay server configurati
 
 ### Troubleshooting
 
+If you run into any issues with a custom Chitchatter installation, first ensure that you are using [the latest version of the code](https://github.com/jeremyckahn/chitchatter/tree/main).
+
 #### Peers won't connect
 
 This could happen for a variety of reasons. The most likely of which is that one or more peers cannot connect directly and must use the configured STUN/TURN relay as a fallback. The standard relay is free and does not guarantee any level of service, so it may simply be unavailable for some time (or just not work at all for some users). There's not much to do other than wait until it becomes available again, or possibly try from another device or location.
