@@ -168,7 +168,9 @@ Explore the files in `src/config` to modify pairing and relay server configurati
 
 ### Troubleshooting
 
-If you run into any issues with a custom Chitchatter installation, first ensure that you are using [the latest version of the code](https://github.com/jeremyckahn/chitchatter/tree/main).
+If you run into any issues with a custom Chitchatter installation, first ensure that you are using [the latest version of the code](https://github.com/jeremyckahn/chitchatter/tree/main). If you are hosting your installation with GitHub Pages, sync your `main` branch and _not_ your `gh-pages` branch. Updating your `main` branch will trigger a proper rebuild of your `gh-pages` branch.
+
+- https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/working-with-forks/syncing-a-fork
 
 #### Peers won't connect
 
