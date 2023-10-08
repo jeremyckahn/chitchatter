@@ -224,19 +224,18 @@ export function Home({ userId }: HomeProps) {
                 style,
                 ...props
               }: CodeProps) {
-                const match = /language-(\w+)/.exec(className || '')
-                return !inline && match ? (
+                return (
                   <SyntaxHighlighter
                     children={String(children).replace(/\n$/, '')}
                     language="html"
                     style={materialDark}
                     PreTag="div"
+                    lineProps={{
+                      style: { wordBreak: 'break-all', whiteSpace: 'pre-wrap' },
+                    }}
+                    wrapLines={true}
                     {...props}
                   />
-                ) : (
-                  <code className={className} {...props}>
-                    {children}
-                  </code>
                 )
               },
             }}
