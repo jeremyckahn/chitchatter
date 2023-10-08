@@ -340,7 +340,7 @@ export const Shell = ({ appNeedsUpdate, children, userPeerId }: ShellProps) => {
               <ShellAppBar
                 onDrawerOpen={handleDrawerOpen}
                 onLinkButtonClick={handleLinkButtonClick}
-                isDrawerOpen={isDrawerOpen}
+                isDrawerOpen={isEmbedded ? false : isDrawerOpen}
                 isPeerListOpen={isPeerListOpen}
                 title={title}
                 onPeerListClick={handlePeerListClick}
