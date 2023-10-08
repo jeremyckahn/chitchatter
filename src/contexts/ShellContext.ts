@@ -7,6 +7,7 @@ import { ConnectionTestResults } from 'components/Shell/useConnectionTest'
 import { TrackerConnection } from 'services/ConnectionTest/ConnectionTest'
 
 interface ShellContextProps {
+  isEmbedded: boolean
   tabHasFocus: boolean
   showRoomControls: boolean
   setShowRoomControls: Dispatch<SetStateAction<boolean>>
@@ -41,6 +42,7 @@ interface ShellContextProps {
 }
 
 export const ShellContext = createContext<ShellContextProps>({
+  isEmbedded: false,
   tabHasFocus: true,
   showRoomControls: false,
   setShowRoomControls: () => {},

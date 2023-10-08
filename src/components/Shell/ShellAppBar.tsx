@@ -85,9 +85,10 @@ export const ShellAppBar = ({
   isFullscreen,
   setIsFullscreen,
 }: ShellAppBarProps) => {
-  const { peerList } = useContext(ShellContext)
+  const { peerList, isEmbedded } = useContext(ShellContext)
   const handleQRCodeClick = () => setIsQRCodeDialogOpen(true)
   const onClickFullscreen = () => setIsFullscreen(!isFullscreen)
+
   return (
     <>
       <Slide appear={false} in={showAppBar} mountOnEnter unmountOnExit>
@@ -104,44 +105,50 @@ export const ShellAppBar = ({
               justifyContent: 'space-between',
             }}
           >
-            <IconButton
-              size="large"
-              edge="start"
-              color="inherit"
-              aria-label="Open menu"
-              sx={{ mr: 2, ...(isDrawerOpen && { display: 'none' }) }}
-              onClick={onDrawerOpen}
-            >
-              <Menu />
-            </IconButton>
+            {isEmbedded ? null : (
+              <IconButton
+                size="large"
+                edge="start"
+                color="inherit"
+                aria-label="Open menu"
+                sx={{ mr: 2, ...(isDrawerOpen && { display: 'none' }) }}
+                onClick={onDrawerOpen}
+              >
+                <Menu />
+              </IconButton>
+            )}
             <Typography
               variant="h6"
               noWrap
               component="div"
               sx={{ marginRight: 'auto' }}
             >
-              {title}
+              {isEmbedded ? '' : title}
             </Typography>
-            <Tooltip title="Copy current URL">
-              <IconButton
-                size="large"
-                color="inherit"
-                aria-label="Copy current URL"
-                onClick={onLinkButtonClick}
-              >
-                <Link />
-              </IconButton>
-            </Tooltip>
-            <Tooltip title="Show QR Code">
-              <IconButton
-                size="large"
-                color="inherit"
-                aria-label="Show QR Code"
-                onClick={handleQRCodeClick}
-              >
-                <QrCode2 />
-              </IconButton>
-            </Tooltip>
+            {isEmbedded ? null : (
+              <>
+                <Tooltip title="Copy current URL">
+                  <IconButton
+                    size="large"
+                    color="inherit"
+                    aria-label="Copy current URL"
+                    onClick={onLinkButtonClick}
+                  >
+                    <Link />
+                  </IconButton>
+                </Tooltip>
+                <Tooltip title="Show QR Code">
+                  <IconButton
+                    size="large"
+                    color="inherit"
+                    aria-label="Show QR Code"
+                    onClick={handleQRCodeClick}
+                  >
+                    <QrCode2 />
+                  </IconButton>
+                </Tooltip>
+              </>
+            )}
             <Tooltip title="Show Room Controls">
               <IconButton
                 size="large"
@@ -152,19 +159,21 @@ export const ShellAppBar = ({
                 <RoomPreferences />
               </IconButton>
             </Tooltip>
-            <Tooltip
-              title={isFullscreen ? 'Exit fullscreen' : 'Enter fullscreen'}
-            >
-              <IconButton
-                size="large"
-                edge="end"
-                color="inherit"
-                aria-label="fullscreen"
-                onClick={onClickFullscreen}
+            {isEmbedded ? null : (
+              <Tooltip
+                title={isFullscreen ? 'Exit fullscreen' : 'Enter fullscreen'}
               >
-                {isFullscreen ? <FullscreenExit /> : <Fullscreen />}
-              </IconButton>
-            </Tooltip>
+                <IconButton
+                  size="large"
+                  edge="end"
+                  color="inherit"
+                  aria-label="fullscreen"
+                  onClick={onClickFullscreen}
+                >
+                  {isFullscreen ? <FullscreenExit /> : <Fullscreen />}
+                </IconButton>
+              </Tooltip>
+            )}
             <Tooltip title="Click to show peer list">
               <IconButton
                 size="large"
