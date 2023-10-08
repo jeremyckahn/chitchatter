@@ -14,6 +14,7 @@ Chitchatter is a free (as in both price and freedom) communication tool. Designe
   - Message content is never persisted to disk on either the client or server
 - Decentralized
   - There is no API server. All that's required for Chitchatter to function is availability of GitHub for static assets, and public WebTorrent and STUN/TURN relay servers for establishing peer-to-peer communication.
+- Embeddable
 - [Self-hostable](#self-hosting)
 
 Chitchatter uses the [Create React App](https://github.com/facebook/create-react-app) toolchain. The secure networking and streaming magic would not be possible without [Trystero](https://github.com/dmotz/trystero). File transfer functionality is powered by [`secure-file-transfer`](https://github.com/jeremyckahn/secure-file-transfer).
@@ -31,6 +32,7 @@ Open https://chitchatter.im/ and join a room to start chatting with anyone else 
 - File sharing:
   - Unlimited file size transfers.
   - Files are encrypted prior to sending and decrypted by the receiver (the key is the room name).
+- Embedding into other web apps via `iframe`.
 - Markdown support via [`react-markdown`](https://github.com/remarkjs/react-markdown).
   - Includes support for syntax highlighting of code.
 - Conversation backfilling from peers when a new participant joins.

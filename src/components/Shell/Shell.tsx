@@ -15,7 +15,7 @@ import { useWindowSize } from '@react-hook/window-size'
 
 import { ShellContext } from 'contexts/ShellContext'
 import { SettingsContext } from 'contexts/SettingsContext'
-import { AlertOptions } from 'models/shell'
+import { AlertOptions, QueryParamKeys } from 'models/shell'
 import { AudioState, ScreenShareState, VideoState, Peer } from 'models/chat'
 import { ErrorBoundary } from 'components/ErrorBoundary'
 
@@ -41,8 +41,11 @@ export interface ShellProps extends PropsWithChildren {
   appNeedsUpdate: boolean
 }
 
+const queryParams = new URLSearchParams(window.location.search)
+
 export const Shell = ({ appNeedsUpdate, children, userPeerId }: ShellProps) => {
   const { getUserSettings, updateUserSettings } = useContext(SettingsContext)
+  const isEmbedded = queryParams.get(QueryParamKeys.IS_EMBEDDED) !== null
 
   const { colorMode } = getUserSettings()
 
@@ -65,7 +68,7 @@ export const Shell = ({ appNeedsUpdate, children, userPeerId }: ShellProps) => {
   const [isRoomShareDialogOpen, setIsRoomShareDialogOpen] = useState(false)
   const [alertSeverity, setAlertSeverity] = useState<AlertColor>('info')
   const [showAppBar, setShowAppBar] = useState(true)
-  const [showRoomControls, setShowRoomControls] = useState(true)
+  const [showRoomControls, setShowRoomControls] = useState(!isEmbedded)
   const [isFullscreen, setIsFullscreen] = useState(false)
   const [title, setTitle] = useState('')
   const [alertText, setAlertText] = useState('')
@@ -118,6 +121,7 @@ export const Shell = ({ appNeedsUpdate, children, userPeerId }: ShellProps) => {
 
   const shellContextValue = useMemo(
     () => ({
+      isEmbedded,
       tabHasFocus,
       showRoomControls,
       setShowRoomControls,
@@ -150,6 +154,7 @@ export const Shell = ({ appNeedsUpdate, children, userPeerId }: ShellProps) => {
       updatePeer,
     }),
     [
+      isEmbedded,
       isPeerListOpen,
       setIsQRCodeDialogOpen,
       roomId,
@@ -244,9 +249,12 @@ export const Shell = ({ appNeedsUpdate, children, userPeerId }: ShellProps) => {
     } else {
       exitFullscreen()
       setShowAppBar(true)
-      setShowRoomControls(true)
+
+      if (!isEmbedded) {
+        setShowRoomControls(true)
+      }
     }
-  }, [isFullscreen, setShowRoomControls, setShowAppBar])
+  }, [isFullscreen, setShowRoomControls, setShowAppBar, isEmbedded])
 
   useEffect(() => {
     if (isFullscreen) setShowAppBar(showRoomControls)
@@ -344,13 +352,15 @@ export const Shell = ({ appNeedsUpdate, children, userPeerId }: ShellProps) => {
                 isFullscreen={isFullscreen}
                 setIsFullscreen={setIsFullscreen}
               />
-              <Drawer
-                isDrawerOpen={isDrawerOpen}
-                onDrawerClose={handleDrawerClose}
-                theme={theme}
-              />
+              {isEmbedded ? null : (
+                <Drawer
+                  isDrawerOpen={isDrawerOpen}
+                  onDrawerClose={handleDrawerClose}
+                  theme={theme}
+                />
+              )}
               <RouteContent
-                isDrawerOpen={isDrawerOpen}
+                isDrawerOpen={isEmbedded ? true : isDrawerOpen}
                 isPeerListOpen={isPeerListOpen}
                 showAppBar={showAppBar}
               >
