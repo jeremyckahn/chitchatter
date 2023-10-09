@@ -13,6 +13,13 @@ interface EmbedCodeDialogProps {
   embedUrl: URL
 }
 
+const iframeFeatureAllowList = [
+  'camera',
+  'microphone',
+  'display-capture',
+  'fullscreen',
+]
+
 export const EmbedCodeDialog = ({
   showEmbedCode,
   handleEmbedCodeWindowClose,
@@ -33,7 +40,9 @@ export const EmbedCodeDialog = ({
         }}
         wrapLines={true}
       >
-        {`<iframe src="${embedUrl}" allow="camera;microphone;display-capture" width="800" height="800" />`}
+        {`<iframe src="${embedUrl}" allow="${iframeFeatureAllowList.join(
+          ';'
+        )}" width="800" height="800" />`}
       </SyntaxHighlighter>
       <DialogContentText
         sx={{
