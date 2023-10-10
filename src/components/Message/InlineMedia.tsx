@@ -1,7 +1,7 @@
 import { useContext, useEffect, useRef, useState } from 'react'
 import { TorrentFile } from 'webtorrent'
 import CircularProgress from '@mui/material/CircularProgress'
-import { Typography } from '@mui/material'
+import Typography from '@mui/material/Typography'
 
 import { fileTransfer } from 'services/FileTransfer'
 import { ShellContext } from 'contexts/ShellContext'

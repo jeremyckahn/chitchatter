@@ -1,8 +1,9 @@
 import { useContext } from 'react'
 
 import Tooltip from '@mui/material/Tooltip'
+import Badge from '@mui/material/Badge'
+import Box from '@mui/material/Box'
 import { Comment, CommentsDisabled } from '@mui/icons-material'
-import { Badge, Box } from '@mui/material'
 
 import { RoomContext } from 'contexts/RoomContext'
 

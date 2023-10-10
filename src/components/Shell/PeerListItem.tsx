@@ -3,7 +3,7 @@ import ListItemText from '@mui/material/ListItemText'
 import SyncAltIcon from '@mui/icons-material/SyncAlt'
 import NetworkPingIcon from '@mui/icons-material/NetworkPing'
 import ListItem from '@mui/material/ListItem'
-import { Tooltip } from '@mui/material'
+import Tooltip from '@mui/material/Tooltip'
 
 import { AudioVolume } from 'components/AudioVolume'
 import { PeerNameDisplay } from 'components/PeerNameDisplay'

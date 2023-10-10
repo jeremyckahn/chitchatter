@@ -1,6 +1,6 @@
-import Box from '@mui/material/Box'
-import { Typography } from '@mui/material'
 import { useContext } from 'react'
+import Box from '@mui/material/Box'
+import Typography from '@mui/material/Typography'
 import { ShellContext } from 'contexts/ShellContext'
 import {
   PeerNameDisplay,

@@ -1,9 +1,9 @@
 import { useContext } from 'react'
 
+import Box from '@mui/material/Box'
 import Fab from '@mui/material/Fab'
 import Tooltip from '@mui/material/Tooltip'
 import { ExpandLess } from '@mui/icons-material'
-import { Box } from '@mui/material'
 
 import { ShellContext } from 'contexts/ShellContext'
 
