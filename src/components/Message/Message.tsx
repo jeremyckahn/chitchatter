@@ -4,7 +4,6 @@ import Box from '@mui/material/Box'
 import Tooltip from '@mui/material/Tooltip'
 import Typography, { TypographyProps } from '@mui/material/Typography'
 import Link, { LinkProps } from '@mui/material/Link'
-import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter'
 import { materialDark } from 'react-syntax-highlighter/dist/esm/styles/prism'
 
 // These imports need to be ts-ignored to prevent spurious errors that look
@@ -28,6 +27,8 @@ import {
   isInlineMedia,
 } from 'models/chat'
 import { PeerNameDisplay } from 'components/PeerNameDisplay'
+
+import { SyntaxHighlighter } from '../../components/SyntaxHighlighter'
 
 import { InlineMedia } from './InlineMedia'
 import './Message.sass'
