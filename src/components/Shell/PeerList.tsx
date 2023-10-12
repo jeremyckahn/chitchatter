@@ -48,7 +48,6 @@ export const PeerList = ({
       />
       <Divider />
       <List>
-        <Divider />
         <ListItem divider={true}>
           {audioState === AudioState.PLAYING && (
             <ListItemIcon>
