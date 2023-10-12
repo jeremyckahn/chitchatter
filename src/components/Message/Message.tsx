@@ -1,4 +1,5 @@
 import { HTMLAttributes } from 'react'
+import { PrismAsyncLight as SyntaxHighlighter } from 'react-syntax-highlighter'
 import YouTube from 'react-youtube'
 import Box from '@mui/material/Box'
 import Tooltip from '@mui/material/Tooltip'
@@ -27,10 +28,10 @@ import {
   isInlineMedia,
 } from 'models/chat'
 import { PeerNameDisplay } from 'components/PeerNameDisplay'
-
-import { SyntaxHighlighter } from '../../components/SyntaxHighlighter'
+import { CopyableBlock } from 'components/CopyableBlock/CopyableBlock'
 
 import { InlineMedia } from './InlineMedia'
+
 import './Message.sass'
 
 export interface MessageProps {
@@ -65,14 +66,17 @@ const componentMap = {
   // https://github.com/remarkjs/react-markdown#use-custom-components-syntax-highlight
   code({ node, inline, className, children, style, ...props }: CodeProps) {
     const match = /language-(\w+)/.exec(className || '')
+
     return !inline && match ? (
-      <SyntaxHighlighter
-        children={String(children).replace(/\n$/, '')}
-        language={match[1]}
-        style={materialDark}
-        PreTag="div"
-        {...props}
-      />
+      <CopyableBlock>
+        <SyntaxHighlighter
+          children={String(children).replace(/\n$/, '')}
+          language={match[1]}
+          style={materialDark}
+          PreTag="div"
+          {...props}
+        />
+      </CopyableBlock>
     ) : (
       <code className={className} {...props}>
         {children}
