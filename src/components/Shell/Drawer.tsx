@@ -1,6 +1,7 @@
 import { PropsWithChildren, useContext } from 'react'
 import { Link } from 'react-router-dom'
 import { Theme } from '@mui/material/styles'
+import Box from '@mui/material/Box'
 import MuiDrawer from '@mui/material/Drawer'
 import List from '@mui/material/List'
 import MuiLink from '@mui/material/Link'
@@ -23,8 +24,6 @@ import GitInfo from 'react-git-info/macro'
 
 import { routes } from 'config/routes'
 import { SettingsContext } from 'contexts/SettingsContext'
-
-import { DrawerHeader } from './DrawerHeader'
 
 const { commit } = GitInfo()
 
@@ -59,7 +58,16 @@ export const Drawer = ({ isDrawerOpen, onDrawerClose, theme }: DrawerProps) => {
       anchor="left"
       open={isDrawerOpen}
     >
-      <DrawerHeader>
+      <Box
+        sx={theme => ({
+          display: 'flex',
+          alignItems: 'center',
+          padding: theme.spacing(0, 1),
+          // necessary for drawer content to be pushed below app bar
+          ...theme.mixins.toolbar,
+          justifyContent: 'flex-end',
+        })}
+      >
         <IconButton onClick={onDrawerClose} aria-label="Close menu">
           {theme.direction === 'ltr' ? (
             <ChevronLeftIcon />
@@ -67,7 +75,7 @@ export const Drawer = ({ isDrawerOpen, onDrawerClose, theme }: DrawerProps) => {
             <ChevronRightIcon />
           )}
         </IconButton>
-      </DrawerHeader>
+      </Box>
       <Divider />
       <List role="navigation">
         <Link to={routes.ROOT}>

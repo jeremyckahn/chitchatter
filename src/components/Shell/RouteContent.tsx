@@ -3,11 +3,10 @@ import Box from '@mui/material/Box'
 import Collapse from '@mui/material/Collapse'
 import { styled } from '@mui/material/styles'
 
-import { DrawerHeader } from './DrawerHeader'
 import { drawerWidth } from './Drawer'
 import { peerListWidth } from './PeerList'
 
-const Main = styled('main', {
+const StyledMain = styled('main', {
   shouldForwardProp: prop =>
     prop !== 'isDrawerOpen' && prop !== 'isPeerListOpen',
 })<{
@@ -49,7 +48,7 @@ export const RouteContent = ({
   showAppBar,
 }: RouteContentProps) => {
   return (
-    <Main
+    <StyledMain
       isDrawerOpen={isDrawerOpen}
       isPeerListOpen={isPeerListOpen}
       sx={{
@@ -58,10 +57,17 @@ export const RouteContent = ({
         width: '100%',
       }}
     >
+      {/*
+      This Collapse acts as a spacer to allow the controls to hide behind the AppBar.
+      */}
       <Collapse in={showAppBar} sx={{ flex: 'none' }}>
-        <DrawerHeader />
+        <Box
+          sx={theme => ({
+            ...theme.mixins.toolbar,
+          })}
+        />
       </Collapse>
       <Box sx={{ overflow: 'auto', flexGrow: 1 }}>{children}</Box>
-    </Main>
+    </StyledMain>
   )
 }
