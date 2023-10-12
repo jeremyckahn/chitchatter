@@ -1,4 +1,5 @@
 import Box, { BoxProps } from '@mui/material/Box'
+import Tooltip from '@mui/material/Tooltip'
 import Fab from '@mui/material/Fab'
 import ContentCopy from '@mui/icons-material/ContentCopy'
 import { useContext, useRef } from 'react'
@@ -31,20 +32,22 @@ export const CopyableBlock = ({ children }: CopyableBlockProps) => {
       }}
     >
       {children}
-      <Fab
-        color="default"
-        size="small"
-        onClick={handleCopyClick}
-        sx={theme => ({
-          position: 'absolute',
-          top: '1em',
-          right: '1em',
-          opacity: 0,
-          transition: theme.transitions.create(['opacity', 'transform']),
-        })}
-      >
-        <ContentCopy />
-      </Fab>
+      <Tooltip title="Copy to clipboard">
+        <Fab
+          color="default"
+          size="small"
+          onClick={handleCopyClick}
+          sx={theme => ({
+            position: 'absolute',
+            top: '1em',
+            right: '1em',
+            opacity: 0,
+            transition: theme.transitions.create(['opacity', 'transform']),
+          })}
+        >
+          <ContentCopy />
+        </Fab>
+      </Tooltip>
     </Box>
   )
 }
