@@ -1,14 +1,28 @@
 import Box, { BoxProps } from '@mui/material/Box'
 import Fab from '@mui/material/Fab'
 import ContentCopy from '@mui/icons-material/ContentCopy'
+import { useContext, useRef } from 'react'
+import { ShellContext } from 'contexts/ShellContext'
 
 interface CopyableBlockProps extends BoxProps {}
 
 export const CopyableBlock = ({ children }: CopyableBlockProps) => {
-  const handleCopyClick = () => {}
+  const { showAlert } = useContext(ShellContext)
+  const boxRef = useRef<HTMLDivElement>(null)
+
+  const handleCopyClick = async () => {
+    const div = boxRef?.current
+
+    if (!div) return
+
+    await navigator.clipboard.writeText(div.innerText)
+
+    showAlert('Text copied to clipboard', { severity: 'success' })
+  }
 
   return (
     <Box
+      ref={boxRef}
       sx={{
         position: 'relative',
         '&:hover button': {
