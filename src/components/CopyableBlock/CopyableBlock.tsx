@@ -27,7 +27,7 @@ export const CopyableBlock = ({ children }: CopyableBlockProps) => {
       sx={{
         position: 'relative',
         '&:hover button': {
-          opacity: 1,
+          opacity: 0.75,
         },
       }}
     >
