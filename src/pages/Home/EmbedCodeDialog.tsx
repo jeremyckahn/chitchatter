@@ -1,3 +1,4 @@
+import { PrismAsyncLight as SyntaxHighlighter } from 'react-syntax-highlighter'
 import Button from '@mui/material/Button'
 import Dialog from '@mui/material/Dialog'
 import { materialDark } from 'react-syntax-highlighter/dist/esm/styles/prism'
@@ -6,8 +7,6 @@ import DialogContent from '@mui/material/DialogContent'
 import DialogContentText from '@mui/material/DialogContentText'
 import DialogTitle from '@mui/material/DialogTitle'
 import { CopyableBlock } from 'components/CopyableBlock/CopyableBlock'
-
-import { SyntaxHighlighter } from '../../components/SyntaxHighlighter'
 
 interface EmbedCodeDialogProps {
   showEmbedCode: boolean

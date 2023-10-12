@@ -1,4 +1,5 @@
 import { HTMLAttributes } from 'react'
+import { PrismAsyncLight as SyntaxHighlighter } from 'react-syntax-highlighter'
 import YouTube from 'react-youtube'
 import Box from '@mui/material/Box'
 import Tooltip from '@mui/material/Tooltip'
@@ -28,8 +29,6 @@ import {
 } from 'models/chat'
 import { PeerNameDisplay } from 'components/PeerNameDisplay'
 import { CopyableBlock } from 'components/CopyableBlock/CopyableBlock'
-
-import { SyntaxHighlighter } from '../../components/SyntaxHighlighter'
 
 import { InlineMedia } from './InlineMedia'
 
