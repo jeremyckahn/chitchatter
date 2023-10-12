@@ -5,6 +5,7 @@ import DialogActions from '@mui/material/DialogActions'
 import DialogContent from '@mui/material/DialogContent'
 import DialogContentText from '@mui/material/DialogContentText'
 import DialogTitle from '@mui/material/DialogTitle'
+import { CopyableBlock } from 'components/CopyableBlock/CopyableBlock'
 
 import { SyntaxHighlighter } from '../../components/SyntaxHighlighter'
 
@@ -29,22 +30,24 @@ export const EmbedCodeDialog = ({
   <Dialog open={showEmbedCode} onClose={handleEmbedCodeWindowClose}>
     <DialogTitle>Room embed code</DialogTitle>
     <DialogContent>
-      <SyntaxHighlighter
-        language="html"
-        style={materialDark}
-        PreTag="div"
-        lineProps={{
-          style: {
-            wordBreak: 'break-all',
-            whiteSpace: 'pre-wrap',
-          },
-        }}
-        wrapLines={true}
-      >
-        {`<iframe src="${embedUrl}" allow="${iframeFeatureAllowList.join(
-          ';'
-        )}" width="800" height="800" />`}
-      </SyntaxHighlighter>
+      <CopyableBlock>
+        <SyntaxHighlighter
+          language="html"
+          style={materialDark}
+          PreTag="div"
+          lineProps={{
+            style: {
+              wordBreak: 'break-all',
+              whiteSpace: 'pre-wrap',
+            },
+          }}
+          wrapLines={true}
+        >
+          {`<iframe src="${embedUrl}" allow="${iframeFeatureAllowList.join(
+            ';'
+          )}" width="800" height="800" />`}
+        </SyntaxHighlighter>
+      </CopyableBlock>
       <DialogContentText
         sx={{
           mb: 2,
