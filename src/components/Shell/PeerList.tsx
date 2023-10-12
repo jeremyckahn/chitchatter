@@ -1,26 +1,21 @@
 import { PropsWithChildren } from 'react'
-import { Route, Routes } from 'react-router-dom'
 import List from '@mui/material/List'
 import ListItemIcon from '@mui/material/ListItemIcon'
 import ListItemText from '@mui/material/ListItemText'
 import Divider from '@mui/material/Divider'
-import IconButton from '@mui/material/IconButton'
-import ChevronRightIcon from '@mui/icons-material/ChevronRight'
 import VolumeUp from '@mui/icons-material/VolumeUp'
 import ListItem from '@mui/material/ListItem'
 import Box from '@mui/material/Box'
 import CircularProgress from '@mui/material/CircularProgress'
 
-import { PeerListHeader } from 'components/Shell/PeerListHeader'
 import { Username } from 'components/Username/Username'
 import { AudioState, Peer } from 'models/chat'
 import { PeerConnectionType } from 'services/PeerRoom/PeerRoom'
 import { TrackerConnection } from 'services/ConnectionTest/ConnectionTest'
-import { routes } from 'config/routes'
 
+import { PeerListHeader } from './PeerListHeader'
 import { PeerListItem } from './PeerListItem'
 import { ConnectionTestResults as IConnectionTestResults } from './useConnectionTest'
-import { ConnectionTestResults } from './ConnectionTestResults'
 
 export const peerListWidth = 300
 
@@ -47,31 +42,10 @@ export const PeerList = ({
 }: PeerListProps) => {
   return (
     <>
-      <PeerListHeader>
-        <IconButton onClick={onPeerListClose} aria-label="Close peer list">
-          <ChevronRightIcon />
-        </IconButton>
-        <ListItem>
-          <Routes>
-            {/*
-            This stub route is needed to silence spurious warnings in the tests.
-            */}
-            <Route path={routes.ROOT} element={<></>}></Route>
-
-            {[routes.PUBLIC_ROOM, routes.PRIVATE_ROOM].map(route => (
-              <Route
-                key={route}
-                path={route}
-                element={
-                  <ConnectionTestResults
-                    connectionTestResults={connectionTestResults}
-                  />
-                }
-              />
-            ))}
-          </Routes>
-        </ListItem>
-      </PeerListHeader>
+      <PeerListHeader
+        onPeerListClose={onPeerListClose}
+        connectionTestResults={connectionTestResults}
+      />
       <Divider />
       <List>
         <Divider />
