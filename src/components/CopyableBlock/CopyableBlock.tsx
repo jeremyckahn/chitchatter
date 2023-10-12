@@ -18,7 +18,7 @@ export const CopyableBlock = ({ children }: CopyableBlockProps) => {
 
     await navigator.clipboard.writeText(div.innerText)
 
-    showAlert('Text copied to clipboard', { severity: 'success' })
+    showAlert('Copied to clipboard', { severity: 'success' })
   }
 
   return (
