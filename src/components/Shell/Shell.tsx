@@ -10,8 +10,10 @@ import {
 import CssBaseline from '@mui/material/CssBaseline'
 import { ThemeProvider, createTheme } from '@mui/material/styles'
 import Box from '@mui/material/Box'
+import Typography from '@mui/material/Typography'
 import { AlertColor } from '@mui/material/Alert'
 import MuiDrawer from '@mui/material/Drawer'
+import Link from '@mui/material/Link'
 import { useWindowSize } from '@react-hook/window-size'
 
 import { ShellContext } from 'contexts/ShellContext'
@@ -394,6 +396,23 @@ export const Shell = ({ appNeedsUpdate, children, userPeerId }: ShellProps) => {
                   peerAudios={peerAudios}
                   connectionTestResults={connectionTestResults}
                 />
+                {isEmbedded ? (
+                  <Typography
+                    variant="caption"
+                    sx={theme => ({
+                      padding: '1em',
+                      textAlign: 'center',
+                    })}
+                  >
+                    This conversation is powered by{' '}
+                    <Link
+                      href="https://github.com/jeremyckahn/chitchatter"
+                      target="_blank"
+                    >
+                      Chitchatter
+                    </Link>
+                  </Typography>
+                ) : null}
               </MuiDrawer>
               <QRCodeDialog
                 isOpen={isQRCodeDialogOpen}
