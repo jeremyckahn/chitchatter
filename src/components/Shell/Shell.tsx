@@ -11,6 +11,7 @@ import CssBaseline from '@mui/material/CssBaseline'
 import { ThemeProvider, createTheme } from '@mui/material/styles'
 import Box from '@mui/material/Box'
 import { AlertColor } from '@mui/material/Alert'
+import MuiDrawer from '@mui/material/Drawer'
 import { useWindowSize } from '@react-hook/window-size'
 
 import { ShellContext } from 'contexts/ShellContext'
@@ -26,7 +27,7 @@ import { UpgradeDialog } from './UpgradeDialog'
 import { ShellAppBar } from './ShellAppBar'
 import { NotificationArea } from './NotificationArea'
 import { RouteContent } from './RouteContent'
-import { PeerList } from './PeerList'
+import { PeerList, peerListWidth } from './PeerList'
 import { QRCodeDialog } from './QRCodeDialog'
 import { RoomShareDialog } from './RoomShareDialog'
 import { useConnectionTest } from './useConnectionTest'
@@ -366,17 +367,34 @@ export const Shell = ({ appNeedsUpdate, children, userPeerId }: ShellProps) => {
               >
                 <ErrorBoundary>{children}</ErrorBoundary>
               </RouteContent>
-              <PeerList
-                userId={userPeerId}
-                roomId={roomId}
-                isPeerListOpen={isPeerListOpen}
-                onPeerListClose={handlePeerListClick}
-                peerList={peerList}
-                peerConnectionTypes={peerConnectionTypes}
-                audioState={audioState}
-                peerAudios={peerAudios}
-                connectionTestResults={connectionTestResults}
-              />
+              <MuiDrawer
+                sx={{
+                  flexShrink: 0,
+                  pointerEvents: 'none',
+                  width: peerListWidth,
+                  '& .MuiDrawer-paper': {
+                    width: peerListWidth,
+                    boxSizing: 'border-box',
+                  },
+                  ...(isPeerListOpen && {
+                    pointerEvents: 'auto',
+                  }),
+                }}
+                variant="persistent"
+                anchor="right"
+                open={isPeerListOpen}
+              >
+                <PeerList
+                  userId={userPeerId}
+                  roomId={roomId}
+                  onPeerListClose={handlePeerListClick}
+                  peerList={peerList}
+                  peerConnectionTypes={peerConnectionTypes}
+                  audioState={audioState}
+                  peerAudios={peerAudios}
+                  connectionTestResults={connectionTestResults}
+                />
+              </MuiDrawer>
               <QRCodeDialog
                 isOpen={isQRCodeDialogOpen}
                 handleClose={handleQRCodeDialogClose}

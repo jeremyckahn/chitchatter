@@ -1,6 +1,5 @@
 import { PropsWithChildren } from 'react'
 import { Route, Routes } from 'react-router-dom'
-import MuiDrawer from '@mui/material/Drawer'
 import List from '@mui/material/List'
 import ListItemIcon from '@mui/material/ListItemIcon'
 import ListItemText from '@mui/material/ListItemText'
@@ -28,7 +27,6 @@ export const peerListWidth = 300
 export interface PeerListProps extends PropsWithChildren {
   userId: string
   roomId: string | undefined
-  isPeerListOpen: boolean
   onPeerListClose: () => void
   peerList: Peer[]
   peerConnectionTypes: Record<string, PeerConnectionType>
@@ -40,7 +38,6 @@ export interface PeerListProps extends PropsWithChildren {
 export const PeerList = ({
   userId,
   roomId,
-  isPeerListOpen,
   onPeerListClose,
   peerList,
   peerConnectionTypes,
@@ -49,23 +46,7 @@ export const PeerList = ({
   connectionTestResults,
 }: PeerListProps) => {
   return (
-    <MuiDrawer
-      sx={{
-        flexShrink: 0,
-        pointerEvents: 'none',
-        width: peerListWidth,
-        '& .MuiDrawer-paper': {
-          width: peerListWidth,
-          boxSizing: 'border-box',
-        },
-        ...(isPeerListOpen && {
-          pointerEvents: 'auto',
-        }),
-      }}
-      variant="persistent"
-      anchor="right"
-      open={isPeerListOpen}
-    >
+    <>
       <PeerListHeader>
         <IconButton onClick={onPeerListClose} aria-label="Close peer list">
           <ChevronRightIcon />
@@ -132,6 +113,6 @@ export const PeerList = ({
           </>
         ) : null}
       </List>
-    </MuiDrawer>
+    </>
   )
 }
