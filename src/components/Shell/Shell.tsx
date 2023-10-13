@@ -399,10 +399,10 @@ export const Shell = ({ appNeedsUpdate, children, userPeerId }: ShellProps) => {
                 {isEmbedded ? (
                   <Typography
                     variant="caption"
-                    sx={theme => ({
-                      padding: '1em',
+                    sx={{
+                      padding: '1em 1em 1.75em 1em',
                       textAlign: 'center',
-                    })}
+                    }}
                   >
                     This conversation is powered by{' '}
                     <Link
