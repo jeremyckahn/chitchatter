@@ -26,6 +26,7 @@
     "idb-chunk-store": "^1.0.1",
     "localforage": "^1.10.0",
     "mui-markdown": "^0.5.5",
+    "querystring": "^0.2.1",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-git-info": "^2.0.1",
@@ -86,6 +87,7 @@
     ]
   },
   "devDependencies": {
+    "@babel/plugin-proposal-private-property-in-object": "^7.21.11",
     "@parcel/watcher-linux-x64-glibc": "^2.3.0",
     "@types/react-syntax-highlighter": "^15.5.5",
     "@types/streamsaver": "^2.0.1",

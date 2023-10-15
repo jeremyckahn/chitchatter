@@ -1,4 +1,4 @@
-import { waitFor, render, screen } from '@testing-library/react'
+import { waitFor, render, screen, act } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { SettingsContext } from 'contexts/SettingsContext'
 import { MemoryRouter as Router } from 'react-router-dom'
@@ -28,21 +28,34 @@ const ShellStub = (shellProps: Partial<ShellProps> = {}) => {
 
 describe('Shell', () => {
   describe('menu drawer', () => {
-    test('can be opened', () => {
+    test('can be opened', async () => {
       render(<ShellStub />)
       const menuButton = screen.getByLabelText('Open menu')
-      userEvent.click(menuButton)
-      const navigation = screen.getByRole('navigation')
-      expect(navigation).toBeVisible()
+
+      act(() => {
+        userEvent.click(menuButton)
+      })
+      const navigation = screen.getByLabelText('Navigation menu')
+
+      await waitFor(() => {
+        expect(navigation).toBeVisible()
+      })
     })
 
     test('can be closed', async () => {
       render(<ShellStub />)
       const menuButton = screen.getByLabelText('Open menu')
-      userEvent.click(menuButton)
+
+      act(() => {
+        userEvent.click(menuButton)
+      })
+
       const closeMenu = screen.getByLabelText('Close menu')
-      userEvent.click(closeMenu)
-      const navigation = screen.getByRole('navigation')
+
+      act(() => {
+        userEvent.click(closeMenu)
+      })
+      const navigation = screen.getByLabelText('Navigation menu')
 
       await waitFor(() => {
         expect(navigation).not.toBeVisible()
