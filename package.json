@@ -86,6 +86,7 @@
     ]
   },
   "devDependencies": {
+    "@parcel/watcher-linux-x64-glibc": "^2.3.0",
     "@types/react-syntax-highlighter": "^15.5.5",
     "@types/streamsaver": "^2.0.1",
     "@types/uuid": "^8.3.4",
