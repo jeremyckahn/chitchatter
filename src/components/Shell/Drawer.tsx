@@ -77,7 +77,7 @@ export const Drawer = ({ isDrawerOpen, onDrawerClose, theme }: DrawerProps) => {
         </IconButton>
       </Box>
       <Divider />
-      <List role="navigation" aria-label="Navigation menu">
+      <List role="navigation">
         <Link to={routes.ROOT}>
           <ListItem disablePadding>
             <ListItemButton>
