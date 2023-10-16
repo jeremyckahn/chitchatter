@@ -12,16 +12,22 @@ const allowedAttributes = [
 
 enum ChatEmbedAttributes {
   ROOT_DOMAIN = 'root-domain',
+  ROOM_NAME = 'room-name',
 }
 
 class ChatEmbed extends HTMLElement {
   connectedCallback() {
     const shadow = this.attachShadow({ mode: 'open' })
     const iframe = document.createElement('iframe')
+
     const rootDomain =
       this.getAttribute(ChatEmbedAttributes.ROOT_DOMAIN) ?? defaultRootDomain
+    const roomName = encodeURIComponent(
+      this.getAttribute(ChatEmbedAttributes.ROOM_NAME) ?? window.location.href
+    )
+    const iframeSrc = `${rootDomain}public/${roomName}/?embed=1`
 
-    iframe.setAttribute('src', rootDomain)
+    iframe.setAttribute('src', iframeSrc)
     iframe.style.border = 'none'
 
     for (let attributeName of allowedAttributes) {
