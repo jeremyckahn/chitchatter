@@ -1,3 +1,5 @@
+import { iframeFeatureAllowList } from '../src/config/iframeFeatureAllowList'
+
 export const defaultRootDomain = 'https://chitchatter.im/'
 
 // NOTE: This is a subset of standard iframe attributes:
@@ -37,6 +39,8 @@ class ChatEmbed extends HTMLElement {
         iframe.setAttribute(attributeName, attributeValue)
       }
     }
+
+    iframe.setAttribute('allow', iframeFeatureAllowList.join(';'))
 
     shadow.appendChild(iframe)
   }

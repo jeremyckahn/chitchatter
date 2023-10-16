@@ -8,18 +8,13 @@ import DialogContentText from '@mui/material/DialogContentText'
 import DialogTitle from '@mui/material/DialogTitle'
 import { CopyableBlock } from 'components/CopyableBlock/CopyableBlock'
 
+import { iframeFeatureAllowList } from 'config/iframeFeatureAllowList'
+
 interface EmbedCodeDialogProps {
   showEmbedCode: boolean
   handleEmbedCodeWindowClose: () => void
   embedUrl: URL
 }
-
-const iframeFeatureAllowList = [
-  'camera',
-  'microphone',
-  'display-capture',
-  'fullscreen',
-]
 
 export const EmbedCodeDialog = ({
   showEmbedCode,
