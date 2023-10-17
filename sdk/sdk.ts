@@ -1,6 +1,6 @@
 import { iframeFeatureAllowList } from '../src/config/iframeFeatureAllowList'
 
-export const defaultRootDomain = 'https://chitchatter.im/'
+export const defaultRoot = `${window.location.origin}${window.location.pathname}`
 
 // NOTE: This is a subset of standard iframe attributes:
 // https://developer.mozilla.org/en-US/docs/Web/HTML/Element/iframe#attributes
@@ -13,7 +13,7 @@ const allowedAttributes = [
 ]
 
 enum ChatEmbedAttributes {
-  ROOT_DOMAIN = 'domain',
+  ROOT_URL = 'root-url',
   ROOM_NAME = 'room',
 }
 
@@ -22,12 +22,12 @@ class ChatEmbed extends HTMLElement {
     const shadow = this.attachShadow({ mode: 'open' })
     const iframe = document.createElement('iframe')
 
-    const rootDomain =
-      this.getAttribute(ChatEmbedAttributes.ROOT_DOMAIN) ?? defaultRootDomain
+    const rootUrl =
+      this.getAttribute(ChatEmbedAttributes.ROOT_URL) ?? defaultRoot
     const roomName = encodeURIComponent(
       this.getAttribute(ChatEmbedAttributes.ROOM_NAME) ?? window.location.href
     )
-    const iframeSrc = `${rootDomain}public/${roomName}/?embed=1`
+    const iframeSrc = `${rootUrl}public/${roomName}/?embed=1`
 
     iframe.setAttribute('src', iframeSrc)
     iframe.style.border = 'none'
