@@ -1,6 +1,6 @@
 import { iframeFeatureAllowList } from '../src/config/iframeFeatureAllowList'
 
-export const defaultRoot = `${window.location.origin}${window.location.pathname}`
+export const defaultRoot = 'https://chitchatter.im/'
 
 // NOTE: This is a subset of standard iframe attributes:
 // https://developer.mozilla.org/en-US/docs/Web/HTML/Element/iframe#attributes

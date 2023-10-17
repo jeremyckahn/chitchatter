@@ -85,7 +85,7 @@ export const EmbedCodeDialog = ({
             }}
             wrapLines={true}
           >
-            {`<script src="${window.location.origin}${window.location.pathname}sdk.js"></script>
+            {`<script src="${process.env.REACT_APP_HOMEPAGE}sdk.js"></script>
 
 <chat-room src="${roomName}" width="800" height="800" />`}
           </SyntaxHighlighter>
