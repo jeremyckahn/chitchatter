@@ -20,6 +20,7 @@ import { PublicRoom } from 'pages/PublicRoom'
 import { PrivateRoom } from 'pages/PrivateRoom'
 import { UserSettings } from 'models/settings'
 import { PersistedStorageKeys } from 'models/storage'
+import { QueryParamKeys } from 'models/shell'
 import { Shell } from 'components/Shell'
 
 export interface BootstrapProps {
@@ -30,6 +31,26 @@ export interface BootstrapProps {
 const homepageUrl = new URL(
   process.env.REACT_APP_HOMEPAGE ?? 'https://chitchatter.im/'
 )
+
+const waitForConfig = () => {
+  return new Promise<UserSettings>((resolve, reject) => {
+    const configWaitTimeout = 3000
+
+    setTimeout(reject, configWaitTimeout)
+
+    window.addEventListener('message', (event: MessageEvent) => {
+      // FIXME: Make this work
+      //if (event.origin !== window.location.origin) return
+
+      if (event.data?.name === 'config') {
+        console.log('got config')
+        // FIXME: Use a specific origin here
+        window.postMessage({ name: 'receivedConfig' }, '*')
+        resolve(event.data.payload)
+      }
+    })
+  })
+}
 
 function Bootstrap({
   persistedStorage: persistedStorageProp = localforage.createInstance({
@@ -69,7 +90,25 @@ function Bootstrap({
         )
 
       if (persistedUserSettings) {
-        setUserSettings({ ...userSettings, ...persistedUserSettings })
+        const queryParams = new URLSearchParams(window.location.search)
+
+        let overrideConfig = {}
+
+        try {
+          if (queryParams.has(QueryParamKeys.WAIT_FOR_CONFIG)) {
+            overrideConfig = await waitForConfig()
+          }
+        } catch (e) {
+          console.error(
+            'Chitchatter configuration from parent frame could not be loaded'
+          )
+        }
+
+        setUserSettings({
+          ...userSettings,
+          ...persistedUserSettings,
+          ...overrideConfig,
+        })
       } else {
         await persistedStorageProp.setItem(
           PersistedStorageKeys.USER_SETTINGS,

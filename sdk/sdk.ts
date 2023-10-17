@@ -1,3 +1,4 @@
+import { QueryParamKeys } from '../src/models/shell'
 import { iframeFeatureAllowList } from '../src/config/iframeFeatureAllowList'
 
 export const defaultRoot = 'https://chitchatter.im/'
@@ -27,7 +28,7 @@ class ChatEmbed extends HTMLElement {
     const roomName = encodeURIComponent(
       this.getAttribute(ChatEmbedAttributes.ROOM_NAME) ?? window.location.href
     )
-    const iframeSrc = `${rootUrl}public/${roomName}/?embed=1`
+    const iframeSrc = `${rootUrl}public/${roomName}/?${QueryParamKeys.IS_EMBEDDED}&${QueryParamKeys.WAIT_FOR_CONFIG}`
 
     iframe.setAttribute('src', iframeSrc)
     iframe.style.border = 'none'
