@@ -61,9 +61,6 @@ export function Home({ userId }: HomeProps) {
 
   const isRoomNameValid = roomName.length > 0
 
-  const embedUrl = new URL(`${window.location.origin}/public/${roomName}`)
-  embedUrl.search = new URLSearchParams({ embed: '1' }).toString()
-
   return (
     <Box className="Home">
       <main className="mt-6 px-4 max-w-3xl text-center mx-auto">
@@ -194,7 +191,7 @@ export function Home({ userId }: HomeProps) {
       <EmbedCodeDialog
         showEmbedCode={showEmbedCode}
         handleEmbedCodeWindowClose={handleEmbedCodeWindowClose}
-        embedUrl={embedUrl}
+        roomName={roomName}
       />
     </Box>
   )
