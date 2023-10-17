@@ -19,6 +19,7 @@ enum ChatEmbedAttributes {
 }
 
 const pollInterval = 250
+const pollTimeout = 3000
 
 class ChatEmbed extends HTMLElement {
   connectedCallback() {
@@ -74,6 +75,10 @@ class ChatEmbed extends HTMLElement {
         rootUrlOrigin
       )
     }, pollInterval)
+
+    setTimeout(() => {
+      clearInterval(timer)
+    }, pollTimeout)
   }
 }
 
