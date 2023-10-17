@@ -13,8 +13,8 @@ const allowedAttributes = [
 ]
 
 enum ChatEmbedAttributes {
-  ROOT_DOMAIN = 'root-domain',
-  ROOM_NAME = 'room-name',
+  ROOT_DOMAIN = 'domain',
+  ROOM_NAME = 'room',
 }
 
 class ChatEmbed extends HTMLElement {
