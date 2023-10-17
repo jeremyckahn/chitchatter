@@ -38,14 +38,14 @@ const waitForConfig = () => {
 
     setTimeout(reject, configWaitTimeout)
 
-    window.addEventListener('message', (event: MessageEvent) => {
-      // FIXME: Make this work
-      //if (event.origin !== window.location.origin) return
+    const { origin: parentFrameOrigin } = new URL(document.referrer)
 
+    window.addEventListener('message', (event: MessageEvent) => {
+      if (event.origin !== parentFrameOrigin) return
+
+      // FIXME: Use types for posted data
       if (event.data?.name === 'config') {
-        console.log('got config')
-        // FIXME: Use a specific origin here
-        window.postMessage({ name: 'receivedConfig' }, '*')
+        window.parent.postMessage({ name: 'configReceived' }, parentFrameOrigin)
         resolve(event.data.payload)
       }
     })

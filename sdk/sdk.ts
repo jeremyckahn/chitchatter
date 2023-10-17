@@ -18,6 +18,8 @@ enum ChatEmbedAttributes {
   ROOM_NAME = 'room',
 }
 
+const pollInterval = 250
+
 class ChatEmbed extends HTMLElement {
   connectedCallback() {
     const shadow = this.attachShadow({ mode: 'open' })
@@ -44,6 +46,34 @@ class ChatEmbed extends HTMLElement {
     iframe.setAttribute('allow', iframeFeatureAllowList.join(';'))
 
     shadow.appendChild(iframe)
+    this.sendConfigToChat(iframe, rootUrl)
+  }
+
+  private async sendConfigToChat(chat: HTMLIFrameElement, rootUrl: string) {
+    let timer: NodeJS.Timer
+    const { origin: rootUrlOrigin } = new URL(rootUrl)
+
+    // FIXME: Use types for posted data
+    const handleMessageReceived = (event: MessageEvent) => {
+      if (rootUrlOrigin !== event.origin) return
+
+      if (event.data?.name === 'configReceived') {
+        clearInterval(timer)
+        window.removeEventListener('message', handleMessageReceived)
+      }
+    }
+
+    window.addEventListener('message', handleMessageReceived)
+
+    timer = setInterval(() => {
+      chat.contentWindow?.postMessage(
+        {
+          name: 'config',
+          payload: {},
+        },
+        rootUrlOrigin
+      )
+    }, pollInterval)
   }
 }
 
