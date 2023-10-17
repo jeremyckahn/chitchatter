@@ -46,4 +46,4 @@ class ChatEmbed extends HTMLElement {
   }
 }
 
-window.customElements.define('chat-embed', ChatEmbed)
+window.customElements.define('chat-room', ChatEmbed)
