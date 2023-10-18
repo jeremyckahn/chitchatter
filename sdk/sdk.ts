@@ -31,9 +31,20 @@ class ChatEmbed extends HTMLElement {
     const roomName = encodeURIComponent(
       this.getAttribute(ChatEmbedAttributes.ROOM_NAME) ?? window.location.href
     )
-    const iframeSrc = `${rootUrl}public/${roomName}/?${QueryParamKeys.IS_EMBEDDED}&${QueryParamKeys.WAIT_FOR_CONFIG}`
 
-    iframe.setAttribute('src', iframeSrc)
+    const iframeSrc = new URL(rootUrl)
+    iframeSrc.pathname = `public/${roomName}`
+
+    const urlParams = new URLSearchParams({
+      [QueryParamKeys.IS_EMBEDDED]: '',
+      [QueryParamKeys.WAIT_FOR_CONFIG]: '',
+      [QueryParamKeys.PARENT_DOMAIN]: encodeURIComponent(
+        window.location.origin
+      ),
+    })
+    iframeSrc.search = urlParams.toString()
+
+    iframe.setAttribute('src', iframeSrc.href)
     iframe.style.border = 'none'
 
     for (let attributeName of allowedAttributes) {

@@ -33,12 +33,16 @@ const homepageUrl = new URL(
 )
 
 const waitForConfig = () => {
+  const queryParams = new URLSearchParams(window.location.search)
+
   return new Promise<UserSettings>((resolve, reject) => {
     const configWaitTimeout = 3000
 
     setTimeout(reject, configWaitTimeout)
 
-    const { origin: parentFrameOrigin } = new URL(document.referrer)
+    const { origin: parentFrameOrigin } = new URL(
+      decodeURIComponent(queryParams.get(QueryParamKeys.PARENT_DOMAIN) ?? '')
+    )
 
     window.addEventListener('message', (event: MessageEvent) => {
       if (event.origin !== parentFrameOrigin) return
