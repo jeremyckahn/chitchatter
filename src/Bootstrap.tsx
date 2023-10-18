@@ -33,7 +33,7 @@ const homepageUrl = new URL(
   process.env.REACT_APP_HOMEPAGE ?? 'https://chitchatter.im/'
 )
 
-const waitForConfig = () => {
+const getConfigFromParent = () => {
   const queryParams = new URLSearchParams(window.location.search)
 
   return new Promise<Partial<UserSettings>>((resolve, reject) => {
@@ -104,7 +104,7 @@ function Bootstrap({
 
         try {
           if (queryParams.has(QueryParamKeys.WAIT_FOR_CONFIG)) {
-            overrideConfig = await waitForConfig()
+            overrideConfig = await getConfigFromParent()
           }
         } catch (e) {
           console.error(

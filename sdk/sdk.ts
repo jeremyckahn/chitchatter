@@ -1,5 +1,6 @@
 import { isPostMessageEvent, PostMessageEventName } from '../src/models/sdk'
 import { QueryParamKeys } from '../src/models/shell'
+import { UserSettings } from '../src/models/settings'
 import { iframeFeatureAllowList } from '../src/config/iframeFeatureAllowList'
 
 export const defaultRoot = 'https://chitchatter.im/'
@@ -17,6 +18,7 @@ const allowedAttributes = [
 enum ChatEmbedAttributes {
   ROOT_URL = 'root-url',
   ROOM_NAME = 'room',
+  USER_ID = 'user-id',
 }
 
 const pollInterval = 250
@@ -59,7 +61,24 @@ class ChatEmbed extends HTMLElement {
     iframe.setAttribute('allow', iframeFeatureAllowList.join(';'))
 
     shadow.appendChild(iframe)
+
+    const chatConfig: Partial<UserSettings> = {}
+
+    if (this.hasAttribute(ChatEmbedAttributes.USER_ID)) {
+      chatConfig.userId = this.getAttribute(ChatEmbedAttributes.USER_ID) ?? ''
+    }
+
     this.sendConfigToChat(iframe, rootUrl)
+  }
+
+  get chatConfig() {
+    const chatConfig: Partial<UserSettings> = {}
+
+    if (this.hasAttribute(ChatEmbedAttributes.USER_ID)) {
+      chatConfig.userId = this.getAttribute(ChatEmbedAttributes.USER_ID) ?? ''
+    }
+
+    return chatConfig
   }
 
   private async sendConfigToChat(chat: HTMLIFrameElement, rootUrl: string) {
@@ -81,7 +100,7 @@ class ChatEmbed extends HTMLElement {
       chat.contentWindow?.postMessage(
         {
           name: PostMessageEventName.CONFIG,
-          payload: {},
+          payload: this.chatConfig,
         },
         rootUrlOrigin
       )
