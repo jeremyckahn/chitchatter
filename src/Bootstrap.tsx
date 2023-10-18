@@ -22,6 +22,7 @@ import { UserSettings } from 'models/settings'
 import { PersistedStorageKeys } from 'models/storage'
 import { QueryParamKeys } from 'models/shell'
 import { Shell } from 'components/Shell'
+import { isPostMessageEvent, PostMessageEventName } from 'models/sdk'
 
 export interface BootstrapProps {
   persistedStorage?: typeof localforage
@@ -35,7 +36,7 @@ const homepageUrl = new URL(
 const waitForConfig = () => {
   const queryParams = new URLSearchParams(window.location.search)
 
-  return new Promise<UserSettings>((resolve, reject) => {
+  return new Promise<Partial<UserSettings>>((resolve, reject) => {
     const configWaitTimeout = 3000
 
     setTimeout(reject, configWaitTimeout)
@@ -46,12 +47,15 @@ const waitForConfig = () => {
 
     window.addEventListener('message', (event: MessageEvent) => {
       if (event.origin !== parentFrameOrigin) return
+      if (!isPostMessageEvent(event)) return
+      if (event.data.name !== PostMessageEventName.CONFIG) return
 
-      // FIXME: Use types for posted data
-      if (event.data?.name === 'config') {
-        window.parent.postMessage({ name: 'configReceived' }, parentFrameOrigin)
-        resolve(event.data.payload)
-      }
+      window.parent.postMessage(
+        { name: PostMessageEventName.CONFIG_RECEIVED },
+        parentFrameOrigin
+      )
+
+      resolve(event.data.payload)
     })
   })
 }

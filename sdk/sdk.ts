@@ -1,3 +1,4 @@
+import { isPostMessageEvent, PostMessageEventName } from '../src/models/sdk'
 import { QueryParamKeys } from '../src/models/shell'
 import { iframeFeatureAllowList } from '../src/config/iframeFeatureAllowList'
 
@@ -65,14 +66,13 @@ class ChatEmbed extends HTMLElement {
     let timer: NodeJS.Timer
     const { origin: rootUrlOrigin } = new URL(rootUrl)
 
-    // FIXME: Use types for posted data
     const handleMessageReceived = (event: MessageEvent) => {
       if (rootUrlOrigin !== event.origin) return
+      if (!isPostMessageEvent(event)) return
+      if (event.data.name !== PostMessageEventName.CONFIG_RECEIVED) return
 
-      if (event.data?.name === 'configReceived') {
-        clearInterval(timer)
-        window.removeEventListener('message', handleMessageReceived)
-      }
+      clearInterval(timer)
+      window.removeEventListener('message', handleMessageReceived)
     }
 
     window.addEventListener('message', handleMessageReceived)
@@ -80,7 +80,7 @@ class ChatEmbed extends HTMLElement {
     timer = setInterval(() => {
       chat.contentWindow?.postMessage(
         {
-          name: 'config',
+          name: PostMessageEventName.CONFIG,
           payload: {},
         },
         rootUrlOrigin
