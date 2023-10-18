@@ -25,17 +25,31 @@ const pollInterval = 250
 const pollTimeout = 3000
 
 class ChatEmbed extends HTMLElement {
+  private iframe = document.createElement('iframe')
+
+  get chatConfig() {
+    const chatConfig: Partial<UserSettings> = {}
+
+    if (this.hasAttribute(ChatEmbedAttributes.USER_ID)) {
+      chatConfig.userId = this.getAttribute(ChatEmbedAttributes.USER_ID) ?? ''
+    }
+
+    return chatConfig
+  }
+
+  get rootUrl() {
+    return this.getAttribute(ChatEmbedAttributes.ROOT_URL) ?? defaultRoot
+  }
+
   connectedCallback() {
     const shadow = this.attachShadow({ mode: 'open' })
-    const iframe = document.createElement('iframe')
+    const { iframe } = this
 
-    const rootUrl =
-      this.getAttribute(ChatEmbedAttributes.ROOT_URL) ?? defaultRoot
     const roomName = encodeURIComponent(
       this.getAttribute(ChatEmbedAttributes.ROOM_NAME) ?? window.location.href
     )
 
-    const iframeSrc = new URL(rootUrl)
+    const iframeSrc = new URL(this.rootUrl)
     iframeSrc.pathname = `public/${roomName}`
 
     const urlParams = new URLSearchParams({
@@ -68,20 +82,12 @@ class ChatEmbed extends HTMLElement {
       chatConfig.userId = this.getAttribute(ChatEmbedAttributes.USER_ID) ?? ''
     }
 
-    this.sendConfigToChat(iframe, rootUrl)
+    this.sendConfigToChat()
   }
 
-  get chatConfig() {
-    const chatConfig: Partial<UserSettings> = {}
+  private async sendConfigToChat() {
+    const { iframe, rootUrl } = this
 
-    if (this.hasAttribute(ChatEmbedAttributes.USER_ID)) {
-      chatConfig.userId = this.getAttribute(ChatEmbedAttributes.USER_ID) ?? ''
-    }
-
-    return chatConfig
-  }
-
-  private async sendConfigToChat(chat: HTMLIFrameElement, rootUrl: string) {
     let timer: NodeJS.Timer
     const { origin: rootUrlOrigin } = new URL(rootUrl)
 
@@ -97,7 +103,7 @@ class ChatEmbed extends HTMLElement {
     window.addEventListener('message', handleMessageReceived)
 
     timer = setInterval(() => {
-      chat.contentWindow?.postMessage(
+      iframe.contentWindow?.postMessage(
         {
           name: PostMessageEventName.CONFIG,
           payload: this.chatConfig,
