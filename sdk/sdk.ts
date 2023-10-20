@@ -7,7 +7,6 @@ export const defaultRoot = 'https://chitchatter.im/'
 
 // NOTE: This is a subset of standard iframe attributes:
 // https://developer.mozilla.org/en-US/docs/Web/HTML/Element/iframe#attributes
-// FIXME: Change this to be an enum
 const iframeAttributes = [
   'height',
   'referrerpolicy',
@@ -49,6 +48,7 @@ class ChatEmbed extends HTMLElement {
     return this.getAttribute(ChatEmbedAttributes.ROOT_URL) ?? defaultRoot
   }
 
+  // FIXME: Support more config options
   private sendConfigToChat = () => {
     const { iframe, rootUrl } = this
     const { origin: rootUrlOrigin } = new URL(rootUrl)
@@ -104,8 +104,13 @@ class ChatEmbed extends HTMLElement {
     const iframeSrc = new URL(this.rootUrl)
     iframeSrc.pathname = `public/${roomName}`
     iframeSrc.search = urlParams.toString()
+    const { href: src } = iframeSrc
 
-    iframe.setAttribute('src', iframeSrc.href)
+    // NOTE: Only update src if the value has changed to avoid reloading the
+    // iframe unnecessarily.
+    if (src !== iframe.getAttribute('src')) {
+      iframe.setAttribute('src', src)
+    }
 
     for (let attributeName of iframeAttributes) {
       const attributeValue = this.getAttribute(attributeName)
@@ -122,7 +127,6 @@ class ChatEmbed extends HTMLElement {
 
     iframe.style.border = 'none'
     iframe.setAttribute('allow', iframeFeatureAllowList.join(';'))
-    this.updateIframeAttributes()
     shadow.appendChild(iframe)
 
     const chatConfig: Partial<UserSettings> = {}
@@ -134,13 +138,14 @@ class ChatEmbed extends HTMLElement {
     this.sendConfigToChatAndWaitForConfirmation()
   }
 
-  attributeChangedCallback(name: string, oldValue: string, newValue: string) {
-    // FIXME: Handle room name change
-    const isIframeAttribute = iframeAttributes.includes(name)
+  attributeChangedCallback(name: string) {
+    this.updateIframeAttributes()
 
-    if (isIframeAttribute) {
-      this.updateIframeAttributes()
-    } else {
+    const isChatEmbedAttribute = Object.values(ChatEmbedAttributes)
+      .map(String) // NOTE: Needed to avoid type warnings.
+      .includes(name)
+
+    if (isChatEmbedAttribute) {
       this.sendConfigToChat()
     }
   }
