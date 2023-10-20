@@ -89,6 +89,24 @@ class ChatEmbed extends HTMLElement {
   private updateIframeAttributes() {
     const { iframe } = this
 
+    const roomName = encodeURIComponent(
+      this.getAttribute(ChatEmbedAttributes.ROOM_NAME) ?? window.location.href
+    )
+
+    const urlParams = new URLSearchParams({
+      [QueryParamKeys.IS_EMBEDDED]: '',
+      [QueryParamKeys.WAIT_FOR_CONFIG]: '',
+      [QueryParamKeys.PARENT_DOMAIN]: encodeURIComponent(
+        window.location.origin
+      ),
+    })
+
+    const iframeSrc = new URL(this.rootUrl)
+    iframeSrc.pathname = `public/${roomName}`
+    iframeSrc.search = urlParams.toString()
+
+    iframe.setAttribute('src', iframeSrc.href)
+
     for (let attributeName of iframeAttributes) {
       const attributeValue = this.getAttribute(attributeName)
 
@@ -102,28 +120,9 @@ class ChatEmbed extends HTMLElement {
     const shadow = this.attachShadow({ mode: 'open' })
     const { iframe } = this
 
-    const roomName = encodeURIComponent(
-      this.getAttribute(ChatEmbedAttributes.ROOM_NAME) ?? window.location.href
-    )
-
-    const iframeSrc = new URL(this.rootUrl)
-    iframeSrc.pathname = `public/${roomName}`
-
-    const urlParams = new URLSearchParams({
-      [QueryParamKeys.IS_EMBEDDED]: '',
-      [QueryParamKeys.WAIT_FOR_CONFIG]: '',
-      [QueryParamKeys.PARENT_DOMAIN]: encodeURIComponent(
-        window.location.origin
-      ),
-    })
-    iframeSrc.search = urlParams.toString()
-
-    iframe.setAttribute('src', iframeSrc.href)
     iframe.style.border = 'none'
-
-    this.updateIframeAttributes()
     iframe.setAttribute('allow', iframeFeatureAllowList.join(';'))
-
+    this.updateIframeAttributes()
     shadow.appendChild(iframe)
 
     const chatConfig: Partial<UserSettings> = {}
