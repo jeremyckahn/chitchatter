@@ -1,6 +1,6 @@
 import { isPostMessageEvent, PostMessageEventName } from '../src/models/sdk'
 import { QueryParamKeys } from '../src/models/shell'
-import { UserSettings } from '../src/models/settings'
+import { isColorMode, UserSettings } from '../src/models/settings'
 import { iframeFeatureAllowList } from '../src/config/iframeFeatureAllowList'
 
 export const defaultRoot = 'https://chitchatter.im/'
@@ -16,9 +16,12 @@ const iframeAttributes = [
 ]
 
 enum ChatEmbedAttributes {
-  ROOT_URL = 'root-url',
+  COLOR_MODE = 'color-mode',
+  PLAY_MESSAGE_SOUND = 'play-message-sound',
   ROOM_NAME = 'room',
+  ROOT_URL = 'root-url',
   USER_ID = 'user-id',
+  USER_NAME = 'user-name',
 }
 
 const pollInterval = 250
@@ -34,11 +37,27 @@ class ChatEmbed extends HTMLElement {
     return [...chatAttributes, ...iframeAttributes]
   }
 
+  // FIXME: Support tracker and webRTC config options
   get chatConfig() {
     const chatConfig: Partial<UserSettings> = {}
 
     if (this.hasAttribute(ChatEmbedAttributes.USER_ID)) {
       chatConfig.userId = this.getAttribute(ChatEmbedAttributes.USER_ID) ?? ''
+    }
+
+    if (this.hasAttribute(ChatEmbedAttributes.USER_NAME)) {
+      chatConfig.customUsername =
+        this.getAttribute(ChatEmbedAttributes.USER_NAME) ?? ''
+    }
+
+    chatConfig.playSoundOnNewMessage = Boolean(
+      this.hasAttribute(ChatEmbedAttributes.PLAY_MESSAGE_SOUND)
+    )
+
+    const colorMode = this.getAttribute(ChatEmbedAttributes.COLOR_MODE) ?? ''
+
+    if (isColorMode(colorMode)) {
+      chatConfig.colorMode = colorMode
     }
 
     return chatConfig
@@ -48,7 +67,6 @@ class ChatEmbed extends HTMLElement {
     return this.getAttribute(ChatEmbedAttributes.ROOT_URL) ?? defaultRoot
   }
 
-  // FIXME: Support more config options
   private sendConfigToChat = () => {
     const { iframe, rootUrl } = this
     const { origin: rootUrlOrigin } = new URL(rootUrl)

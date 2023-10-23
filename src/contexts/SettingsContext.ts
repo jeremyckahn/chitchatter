@@ -1,6 +1,6 @@
 import { createContext } from 'react'
 
-import { UserSettings } from 'models/settings'
+import { ColorMode, UserSettings } from 'models/settings'
 
 export interface SettingsContextProps {
   updateUserSettings: (settings: Partial<UserSettings>) => Promise<void>
@@ -12,7 +12,7 @@ export const SettingsContext = createContext<SettingsContextProps>({
   getUserSettings: () => ({
     userId: '',
     customUsername: '',
-    colorMode: 'dark',
+    colorMode: ColorMode.DARK,
     playSoundOnNewMessage: true,
     showNotificationOnNewMessage: true,
     showActiveTypingStatus: true,

@@ -18,7 +18,7 @@ import { Disclaimer } from 'pages/Disclaimer'
 import { Settings } from 'pages/Settings'
 import { PublicRoom } from 'pages/PublicRoom'
 import { PrivateRoom } from 'pages/PrivateRoom'
-import { UserSettings } from 'models/settings'
+import { ColorMode, UserSettings } from 'models/settings'
 import { PersistedStorageKeys } from 'models/storage'
 import { QueryParamKeys } from 'models/shell'
 import { Shell } from 'components/Shell'
@@ -73,7 +73,7 @@ function Bootstrap({
   const [userSettings, setUserSettings] = useState<UserSettings>({
     userId: getUuid(),
     customUsername: '',
-    colorMode: 'dark',
+    colorMode: ColorMode.DARK,
     playSoundOnNewMessage: true,
     showNotificationOnNewMessage: true,
     showActiveTypingStatus: true,

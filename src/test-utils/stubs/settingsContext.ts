@@ -1,5 +1,5 @@
 import { SettingsContextProps } from 'contexts/SettingsContext'
-import { UserSettings } from 'models/settings'
+import { ColorMode, UserSettings } from 'models/settings'
 
 export const userSettingsContextStubFactory = (
   userSettingsOverrides: Partial<UserSettings> = {}
@@ -9,7 +9,7 @@ export const userSettingsContextStubFactory = (
     getUserSettings: () => ({
       userId: '',
       customUsername: '',
-      colorMode: 'dark',
+      colorMode: ColorMode.DARK,
       playSoundOnNewMessage: true,
       showNotificationOnNewMessage: true,
       showActiveTypingStatus: true,
