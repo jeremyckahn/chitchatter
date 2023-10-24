@@ -1,10 +1,14 @@
 import { createContext } from 'react'
 
-import { ColorMode, UserSettings } from 'models/settings'
+import { ColorMode, NetworkSettings, UserSettings } from 'models/settings'
+import { rtcConfig } from 'config/rtcConfig'
+import { trackerUrls } from 'config/trackerUrls'
 
 export interface SettingsContextProps {
   updateUserSettings: (settings: Partial<UserSettings>) => Promise<void>
   getUserSettings: () => UserSettings
+  updateNetworkSettings: (settings: Partial<NetworkSettings>) => void
+  getNetworkSettings: () => NetworkSettings
 }
 
 export const SettingsContext = createContext<SettingsContextProps>({
@@ -16,5 +20,10 @@ export const SettingsContext = createContext<SettingsContextProps>({
     playSoundOnNewMessage: true,
     showNotificationOnNewMessage: true,
     showActiveTypingStatus: true,
+  }),
+  updateNetworkSettings: () => Promise.resolve(),
+  getNetworkSettings: () => ({
+    rtcConfig,
+    trackerUrls,
   }),
 })

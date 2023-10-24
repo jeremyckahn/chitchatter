@@ -1,3 +1,5 @@
+import { rtcConfig } from 'config/rtcConfig'
+import { trackerUrls } from 'config/trackerUrls'
 import { SettingsContextProps } from 'contexts/SettingsContext'
 import { ColorMode, UserSettings } from 'models/settings'
 
@@ -14,6 +16,11 @@ export const userSettingsContextStubFactory = (
       showNotificationOnNewMessage: true,
       showActiveTypingStatus: true,
       ...userSettingsOverrides,
+    }),
+    updateNetworkSettings: () => Promise.resolve(),
+    getNetworkSettings: () => ({
+      rtcConfig,
+      trackerUrls,
     }),
   }
 
