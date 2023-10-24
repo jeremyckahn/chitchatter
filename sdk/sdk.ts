@@ -37,7 +37,6 @@ class ChatEmbed extends HTMLElement {
     return [...chatAttributes, ...iframeAttributes]
   }
 
-  // FIXME: Support tracker and webRTC config options
   get chatConfig() {
     const chatConfig: Partial<UserSettings> = {}
 

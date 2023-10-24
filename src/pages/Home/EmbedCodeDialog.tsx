@@ -62,15 +62,21 @@ export const EmbedCodeDialog = ({
             mb: 2,
           }}
         >
-          Alternatively, you can use the Chitchatter SDK to embed a chat room as
-          a{' '}
+          Alternatively, you can use the{' '}
+          <Link
+            href="https://github.com/jeremyckahn/chitchatter#SDK"
+            target="_blank"
+          >
+            Chitchatter SDK
+          </Link>{' '}
+          to embed a chat room as a{' '}
           <Link
             href="https://developer.mozilla.org/en-US/docs/Web/API/Web_components"
             target="_blank"
           >
             Web Component
-          </Link>
-          :
+          </Link>{' '}
+          with additional configuration options:
         </DialogContentText>
         <CopyableBlock>
           <SyntaxHighlighter
@@ -87,7 +93,7 @@ export const EmbedCodeDialog = ({
           >
             {`<script src="${process.env.REACT_APP_HOMEPAGE}sdk.js"></script>
 
-<chat-room src="${roomName}" width="800" height="800" />`}
+<chat-room room="${roomName}" width="800" height="800" />`}
           </SyntaxHighlighter>
         </CopyableBlock>
       </DialogContent>
