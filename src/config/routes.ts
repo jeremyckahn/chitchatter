@@ -7,3 +7,7 @@ export enum routes {
   ROOT = '/',
   SETTINGS = '/settings',
 }
+
+export const homepageUrl = new URL(
+  process.env.REACT_APP_HOMEPAGE ?? 'https://chitchatter.im/'
+)

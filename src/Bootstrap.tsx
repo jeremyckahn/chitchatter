@@ -11,7 +11,7 @@ import localforage from 'localforage'
 import * as serviceWorkerRegistration from 'serviceWorkerRegistration'
 import { StorageContext } from 'contexts/StorageContext'
 import { SettingsContext } from 'contexts/SettingsContext'
-import { routes } from 'config/routes'
+import { homepageUrl, routes } from 'config/routes'
 import { Home } from 'pages/Home'
 import { About } from 'pages/About'
 import { Disclaimer } from 'pages/Disclaimer'
@@ -28,10 +28,6 @@ export interface BootstrapProps {
   persistedStorage?: typeof localforage
   getUuid?: typeof uuid
 }
-
-const homepageUrl = new URL(
-  process.env.REACT_APP_HOMEPAGE ?? 'https://chitchatter.im/'
-)
 
 const getConfigFromParent = () => {
   const queryParams = new URLSearchParams(window.location.search)

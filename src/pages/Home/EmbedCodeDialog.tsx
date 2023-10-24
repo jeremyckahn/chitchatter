@@ -11,6 +11,7 @@ import Link from '@mui/material/Link'
 import { CopyableBlock } from 'components/CopyableBlock/CopyableBlock'
 
 import { iframeFeatureAllowList } from 'config/iframeFeatureAllowList'
+import { homepageUrl } from 'config/routes'
 
 interface EmbedCodeDialogProps {
   showEmbedCode: boolean
@@ -25,6 +26,15 @@ export const EmbedCodeDialog = ({
 }: EmbedCodeDialogProps) => {
   const iframeSrc = new URL(`${window.location.origin}/public/${roomName}`)
   iframeSrc.search = new URLSearchParams({ embed: '1' }).toString()
+
+  const needsRootUrlAttribute = window.location.origin !== homepageUrl.origin
+
+  // NOTE: The script src is inaccurate in the local development environment.
+  const sdkEmbedCode = `<script src="${window.location.origin}/sdk.js"></script>
+
+<chat-room room="${roomName}" ${
+    needsRootUrlAttribute ? `root-url="${window.location.origin}/" ` : ''
+  }width="800" height="800" />`
 
   return (
     <Dialog open={showEmbedCode} onClose={handleEmbedCodeWindowClose}>
@@ -91,9 +101,7 @@ export const EmbedCodeDialog = ({
             }}
             wrapLines={true}
           >
-            {`<script src="${process.env.REACT_APP_HOMEPAGE}sdk.js"></script>
-
-<chat-room room="${roomName}" width="800" height="800" />`}
+            {sdkEmbedCode}
           </SyntaxHighlighter>
         </CopyableBlock>
       </DialogContent>
