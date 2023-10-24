@@ -29,12 +29,29 @@ export const EmbedCodeDialog = ({
 
   const needsRootUrlAttribute = window.location.origin !== homepageUrl.origin
 
+  const chatRoomAttributes: {
+    room: string
+    ['root-url']?: string
+    width: string
+    height: string
+  } = {
+    room: roomName,
+    width: '800',
+    height: '800',
+  }
+
+  if (needsRootUrlAttribute) {
+    chatRoomAttributes['root-url'] = `${window.location.origin}/`
+  }
+
+  const attributesString = Object.entries(chatRoomAttributes)
+    .map(([key, value]) => `${key}=${value}`)
+    .join(' ')
+
   // NOTE: The script src is inaccurate in the local development environment.
   const sdkEmbedCode = `<script src="${window.location.origin}/sdk.js"></script>
 
-<chat-room room="${roomName}" ${
-    needsRootUrlAttribute ? `root-url="${window.location.origin}/" ` : ''
-  }width="800" height="800" />`
+<chat-room ${attributesString} />`
 
   return (
     <Dialog open={showEmbedCode} onClose={handleEmbedCodeWindowClose}>
