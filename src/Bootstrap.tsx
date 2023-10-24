@@ -18,7 +18,7 @@ import { Disclaimer } from 'pages/Disclaimer'
 import { Settings } from 'pages/Settings'
 import { PublicRoom } from 'pages/PublicRoom'
 import { PrivateRoom } from 'pages/PrivateRoom'
-import { ColorMode, UserSettings } from 'models/settings'
+import { ColorMode, pickUserSettings, UserSettings } from 'models/settings'
 import { PersistedStorageKeys } from 'models/storage'
 import { QueryParamKeys } from 'models/shell'
 import { Shell } from 'components/Shell'
@@ -33,31 +33,35 @@ const homepageUrl = new URL(
   process.env.REACT_APP_HOMEPAGE ?? 'https://chitchatter.im/'
 )
 
-const getConfigFromParent = () => {
+const getConfigFromParentFrame = () => {
   const queryParams = new URLSearchParams(window.location.search)
 
-  return new Promise<Partial<UserSettings>>((resolve, reject) => {
-    const configWaitTimeout = 3000
+  return new Promise<{ userSettings: Partial<UserSettings> }>(
+    (resolve, reject) => {
+      const configWaitTimeout = 3000
 
-    setTimeout(reject, configWaitTimeout)
+      setTimeout(reject, configWaitTimeout)
 
-    const { origin: parentFrameOrigin } = new URL(
-      decodeURIComponent(queryParams.get(QueryParamKeys.PARENT_DOMAIN) ?? '')
-    )
-
-    window.addEventListener('message', (event: MessageEvent) => {
-      if (event.origin !== parentFrameOrigin) return
-      if (!isPostMessageEvent(event)) return
-      if (event.data.name !== PostMessageEventName.CONFIG) return
-
-      window.parent.postMessage(
-        { name: PostMessageEventName.CONFIG_RECEIVED },
-        parentFrameOrigin
+      const { origin: parentFrameOrigin } = new URL(
+        decodeURIComponent(queryParams.get(QueryParamKeys.PARENT_DOMAIN) ?? '')
       )
 
-      resolve(event.data.payload)
-    })
-  })
+      window.addEventListener('message', (event: MessageEvent) => {
+        if (event.origin !== parentFrameOrigin) return
+        if (!isPostMessageEvent(event)) return
+        if (event.data.name !== PostMessageEventName.CONFIG) return
+
+        window.parent.postMessage(
+          { name: PostMessageEventName.CONFIG_RECEIVED },
+          parentFrameOrigin
+        )
+
+        const userSettings = pickUserSettings(event.data.payload)
+
+        resolve({ userSettings })
+      })
+    }
+  )
 }
 
 function Bootstrap({
@@ -100,11 +104,12 @@ function Bootstrap({
       if (persistedUserSettings) {
         const queryParams = new URLSearchParams(window.location.search)
 
-        let overrideConfig = {}
+        let userSettingsFromParentFrame: Partial<UserSettings> = {}
 
         try {
           if (queryParams.has(QueryParamKeys.WAIT_FOR_CONFIG)) {
-            overrideConfig = await getConfigFromParent()
+            const { userSettings } = await getConfigFromParentFrame()
+            userSettingsFromParentFrame = userSettings
           }
         } catch (e) {
           console.error(
@@ -115,7 +120,7 @@ function Bootstrap({
         setUserSettings({
           ...userSettings,
           ...persistedUserSettings,
-          ...overrideConfig,
+          ...userSettingsFromParentFrame,
         })
       } else {
         await persistedStorageProp.setItem(
