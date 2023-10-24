@@ -48,37 +48,3 @@ export const pickUserSettings = (
 
   return userSettings
 }
-
-enum NetworkSettingsKey {
-  TRACKER_URLS = 'trackerUrls',
-  RTC_CONFIG = 'rtcConfig',
-}
-
-export interface NetworkSettings {
-  [NetworkSettingsKey.TRACKER_URLS]: string[] | undefined
-  [NetworkSettingsKey.RTC_CONFIG]: RTCConfiguration
-}
-
-const networkSettingsKeyStrings = Object.values(NetworkSettingsKey).map(String)
-
-export const isNetworkSettingKey = (
-  key: string
-): key is keyof NetworkSettings => {
-  return networkSettingsKeyStrings.includes(key)
-}
-
-export const pickNetworkSettings = (
-  record: Record<string, any>
-): Partial<NetworkSettings> => {
-  const networkSettings: Partial<NetworkSettings> = {}
-
-  for (const [key, value] of Object.entries(record)) {
-    if (!isNetworkSettingKey(key)) continue
-
-    // TODO: Future improvement: Validate the type of the value (right now it
-    // is any).
-    networkSettings[key] = value
-  }
-
-  return networkSettings
-}

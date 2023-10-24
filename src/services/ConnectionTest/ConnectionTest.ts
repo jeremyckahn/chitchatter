@@ -27,7 +27,6 @@ export class ConnectionTest extends EventTarget {
 
   rtcPeerConnection?: RTCPeerConnection
 
-  // FIXME: Receive rtcConfig from function param
   async initRtcPeerConnectionTest() {
     if (typeof RTCPeerConnection === 'undefined') return
 

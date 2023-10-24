@@ -18,19 +18,11 @@ import { Disclaimer } from 'pages/Disclaimer'
 import { Settings } from 'pages/Settings'
 import { PublicRoom } from 'pages/PublicRoom'
 import { PrivateRoom } from 'pages/PrivateRoom'
-import {
-  ColorMode,
-  NetworkSettings,
-  pickNetworkSettings,
-  pickUserSettings,
-  UserSettings,
-} from 'models/settings'
+import { ColorMode, pickUserSettings, UserSettings } from 'models/settings'
 import { PersistedStorageKeys } from 'models/storage'
 import { QueryParamKeys } from 'models/shell'
 import { Shell } from 'components/Shell'
 import { isPostMessageEvent, PostMessageEventName } from 'models/sdk'
-import { rtcConfig } from 'config/rtcConfig'
-import { trackerUrls } from 'config/trackerUrls'
 
 export interface BootstrapProps {
   persistedStorage?: typeof localforage
@@ -44,35 +36,32 @@ const homepageUrl = new URL(
 const getConfigFromParentFrame = () => {
   const queryParams = new URLSearchParams(window.location.search)
 
-  return new Promise<{
-    userSettings: Partial<UserSettings>
-    networkSettings: Partial<NetworkSettings>
-  }>((resolve, reject) => {
-    const configWaitTimeout = 3000
+  return new Promise<{ userSettings: Partial<UserSettings> }>(
+    (resolve, reject) => {
+      const configWaitTimeout = 3000
 
-    setTimeout(reject, configWaitTimeout)
+      setTimeout(reject, configWaitTimeout)
 
-    const { origin: parentFrameOrigin } = new URL(
-      decodeURIComponent(queryParams.get(QueryParamKeys.PARENT_DOMAIN) ?? '')
-    )
-
-    window.addEventListener('message', (event: MessageEvent) => {
-      if (event.origin !== parentFrameOrigin) return
-      if (!isPostMessageEvent(event)) return
-      if (event.data.name !== PostMessageEventName.CONFIG) return
-
-      window.parent.postMessage(
-        { name: PostMessageEventName.CONFIG_RECEIVED },
-        parentFrameOrigin
+      const { origin: parentFrameOrigin } = new URL(
+        decodeURIComponent(queryParams.get(QueryParamKeys.PARENT_DOMAIN) ?? '')
       )
 
-      const { payload } = event.data
-      const userSettings = pickUserSettings(payload)
-      const networkSettings = pickNetworkSettings(payload)
+      window.addEventListener('message', (event: MessageEvent) => {
+        if (event.origin !== parentFrameOrigin) return
+        if (!isPostMessageEvent(event)) return
+        if (event.data.name !== PostMessageEventName.CONFIG) return
 
-      resolve({ userSettings, networkSettings })
-    })
-  })
+        window.parent.postMessage(
+          { name: PostMessageEventName.CONFIG_RECEIVED },
+          parentFrameOrigin
+        )
+
+        const userSettings = pickUserSettings(event.data.payload)
+
+        resolve({ userSettings })
+      })
+    }
+  )
 }
 
 function Bootstrap({
@@ -92,10 +81,6 @@ function Bootstrap({
     playSoundOnNewMessage: true,
     showNotificationOnNewMessage: true,
     showActiveTypingStatus: true,
-  })
-  const [networkSettings, setNetworkSettings] = useState<NetworkSettings>({
-    trackerUrls,
-    rtcConfig,
   })
   const { userId } = userSettings
 
@@ -163,10 +148,6 @@ function Bootstrap({
       setUserSettings(newSettings)
     },
     getUserSettings: () => ({ ...userSettings }),
-    updateNetworkSettings: (newNetworkSettings: Partial<NetworkSettings>) => {
-      setNetworkSettings({ ...networkSettings, ...newNetworkSettings })
-    },
-    getNetworkSettings: () => networkSettings,
   }
 
   const storageContextValue = {
