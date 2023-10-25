@@ -93,6 +93,9 @@ class ChatEmbed extends HTMLElement {
   }
 
   private async sendConfigUntilReceived() {
+    // NOTE: End any preexisting config operations
+    this.stopSendingConfig()
+
     window.addEventListener('message', this.handleMessage)
 
     this.sendConfigTimer = setInterval(this.sendConfigToChat, pollInterval)
@@ -154,13 +157,9 @@ class ChatEmbed extends HTMLElement {
     iframe.setAttribute('allow', iframeFeatureAllowList.join(';'))
     shadow.appendChild(iframe)
 
-    const chatConfig: Partial<UserSettings> = {}
-
-    if (this.hasAttribute(ChatEmbedAttributes.USER_ID)) {
-      chatConfig.userId = this.getAttribute(ChatEmbedAttributes.USER_ID) ?? ''
-    }
-
-    this.sendConfigUntilReceived()
+    iframe.addEventListener('load', () => {
+      this.sendConfigUntilReceived()
+    })
   }
 
   disconnectedCallback() {
