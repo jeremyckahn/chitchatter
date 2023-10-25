@@ -98,6 +98,8 @@ class ChatEmbed extends HTMLElement {
     this.sendConfigTimer = setInterval(this.sendConfigToChat, pollInterval)
 
     setTimeout(() => {
+      if (this.sendConfigTimer === undefined) return
+
       console.error(`[chitchatter-sdk] configuration was not sent successfully`)
       this.stopSendingConfig()
     }, pollTimeout)
@@ -105,6 +107,7 @@ class ChatEmbed extends HTMLElement {
 
   private stopSendingConfig = () => {
     clearInterval(this.sendConfigTimer)
+    this.sendConfigTimer = undefined
     window.removeEventListener('message', this.handleMessage)
   }
 

@@ -22,7 +22,11 @@ import { ColorMode, UserSettings } from 'models/settings'
 import { PersistedStorageKeys } from 'models/storage'
 import { QueryParamKeys } from 'models/shell'
 import { Shell } from 'components/Shell'
-import { isPostMessageEvent, PostMessageEventName } from 'models/sdk'
+import {
+  isPostMessageEvent,
+  PostMessageEvent,
+  PostMessageEventName,
+} from 'models/sdk'
 
 export interface BootstrapProps {
   persistedStorage?: typeof localforage
@@ -46,10 +50,12 @@ const getConfigFromParent = () => {
       if (!isPostMessageEvent(event)) return
       if (event.data.name !== PostMessageEventName.CONFIG) return
 
-      window.parent.postMessage(
-        { name: PostMessageEventName.CONFIG_RECEIVED },
-        parentFrameOrigin
-      )
+      const postMessageEvent: PostMessageEvent['data'] = {
+        name: PostMessageEventName.CONFIG_RECEIVED,
+        payload: {},
+      }
+
+      window.parent.postMessage(postMessageEvent, parentFrameOrigin)
 
       resolve(event.data.payload)
     })
