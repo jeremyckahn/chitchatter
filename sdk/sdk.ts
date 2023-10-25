@@ -28,6 +28,8 @@ const pollInterval = 250
 const pollTimeout = 10_000
 
 class ChatEmbed extends HTMLElement {
+  private sendConfigTimer: NodeJS.Timer | undefined
+
   private iframe = document.createElement('iframe')
 
   static get observedAttributes() {
@@ -79,28 +81,31 @@ class ChatEmbed extends HTMLElement {
     )
   }
 
-  private async sendConfigToChatAndWaitForConfirmation() {
+  private handleMessage = (event: MessageEvent) => {
     const { rootUrl } = this
 
-    let timer: NodeJS.Timer
     const { origin: rootUrlOrigin } = new URL(rootUrl)
+    if (rootUrlOrigin !== event.origin) return
+    if (!isPostMessageEvent(event)) return
+    if (event.data.name !== PostMessageEventName.CONFIG_RECEIVED) return
 
-    const handleMessageReceived = (event: MessageEvent) => {
-      if (rootUrlOrigin !== event.origin) return
-      if (!isPostMessageEvent(event)) return
-      if (event.data.name !== PostMessageEventName.CONFIG_RECEIVED) return
+    this.stopSendingConfig()
+  }
 
-      clearInterval(timer)
-      window.removeEventListener('message', handleMessageReceived)
-    }
+  private async sendConfigUntilReceived() {
+    window.addEventListener('message', this.handleMessage)
 
-    window.addEventListener('message', handleMessageReceived)
-
-    timer = setInterval(this.sendConfigToChat, pollInterval)
+    this.sendConfigTimer = setInterval(this.sendConfigToChat, pollInterval)
 
     setTimeout(() => {
-      clearInterval(timer)
+      console.error(`[chitchatter-sdk] configuration was not sent successfully`)
+      this.stopSendingConfig()
     }, pollTimeout)
+  }
+
+  private stopSendingConfig = () => {
+    clearInterval(this.sendConfigTimer)
+    window.removeEventListener('message', this.handleMessage)
   }
 
   private updateIframeAttributes() {
@@ -152,7 +157,11 @@ class ChatEmbed extends HTMLElement {
       chatConfig.userId = this.getAttribute(ChatEmbedAttributes.USER_ID) ?? ''
     }
 
-    this.sendConfigToChatAndWaitForConfirmation()
+    this.sendConfigUntilReceived()
+  }
+
+  disconnectedCallback() {
+    this.stopSendingConfig()
   }
 
   attributeChangedCallback(name: string) {
