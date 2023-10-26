@@ -23,7 +23,7 @@ import { PersistedStorageKeys } from 'models/storage'
 import { QueryParamKeys } from 'models/shell'
 import { Shell } from 'components/Shell'
 import {
-  isPostMessageEvent,
+  isConfigMessageEvent,
   PostMessageEvent,
   PostMessageEventName,
 } from 'models/sdk'
@@ -53,9 +53,7 @@ const getConfigFromSdk = () => {
     expireTimer = setTimeout(expireListener, configWaitTimeout)
 
     const handleMessage = (event: MessageEvent) => {
-      if (event.origin !== parentFrameOrigin) return
-      if (!isPostMessageEvent(event)) return
-      if (event.data.name !== PostMessageEventName.CONFIG) return
+      if (!isConfigMessageEvent(event)) return
 
       resolve(event.data.payload)
       expireListener()
@@ -165,15 +163,9 @@ function Bootstrap({
 
     if (!queryParams.has(QueryParamKeys.IS_EMBEDDED)) return
 
-    const { origin: parentFrameOrigin } = new URL(
-      decodeURIComponent(queryParams.get(QueryParamKeys.PARENT_DOMAIN) ?? '')
-    )
-
     const handleConfigMessage = (event: MessageEvent) => {
       if (!hasLoadedSettings) return
-      if (event.origin !== parentFrameOrigin) return
-      if (!isPostMessageEvent(event)) return
-      if (event.data.name !== PostMessageEventName.CONFIG) return
+      if (!isConfigMessageEvent(event)) return
 
       const overrideConfig: Partial<UserSettings> = event.data.payload
 
