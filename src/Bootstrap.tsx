@@ -170,6 +170,7 @@ function Bootstrap({
     )
 
     const handleConfigMessage = (event: MessageEvent) => {
+      if (!hasLoadedSettings) return
       if (event.origin !== parentFrameOrigin) return
       if (!isPostMessageEvent(event)) return
       if (event.data.name !== PostMessageEventName.CONFIG) return
@@ -187,7 +188,7 @@ function Bootstrap({
     return () => {
       window.removeEventListener('message', handleConfigMessage)
     }
-  })
+  }, [hasLoadedSettings, userSettings])
 
   const settingsContextValue = {
     updateUserSettings: async (changedSettings: Partial<UserSettings>) => {
