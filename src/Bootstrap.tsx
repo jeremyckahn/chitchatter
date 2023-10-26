@@ -33,32 +33,42 @@ export interface BootstrapProps {
   getUuid?: typeof uuid
 }
 
-const getConfigFromParent = () => {
+const getConfigFromSdk = () => {
   const queryParams = new URLSearchParams(window.location.search)
+  const configWaitTimeout = 3000
+
+  const { origin: parentFrameOrigin } = new URL(
+    decodeURIComponent(queryParams.get(QueryParamKeys.PARENT_DOMAIN) ?? '')
+  )
 
   return new Promise<Partial<UserSettings>>((resolve, reject) => {
-    const configWaitTimeout = 3000
+    let expireTimer: NodeJS.Timer
 
-    setTimeout(reject, configWaitTimeout)
+    const expireListener = () => {
+      window.removeEventListener('message', handleMessage)
+      clearTimeout(expireTimer)
+      reject()
+    }
 
-    const { origin: parentFrameOrigin } = new URL(
-      decodeURIComponent(queryParams.get(QueryParamKeys.PARENT_DOMAIN) ?? '')
-    )
+    expireTimer = setTimeout(expireListener, configWaitTimeout)
 
-    window.addEventListener('message', (event: MessageEvent) => {
+    const handleMessage = (event: MessageEvent) => {
       if (event.origin !== parentFrameOrigin) return
       if (!isPostMessageEvent(event)) return
       if (event.data.name !== PostMessageEventName.CONFIG) return
 
-      const postMessageEvent: PostMessageEvent['data'] = {
-        name: PostMessageEventName.CONFIG_RECEIVED,
-        payload: {},
-      }
-
-      window.parent.postMessage(postMessageEvent, parentFrameOrigin)
-
       resolve(event.data.payload)
-    })
+      expireListener()
+    }
+
+    window.addEventListener('message', handleMessage)
+
+    const postMessageEvent: PostMessageEvent['data'] = {
+      name: PostMessageEventName.CONFIG_REQUESTED,
+      payload: {},
+    }
+
+    window.parent.postMessage(postMessageEvent, parentFrameOrigin)
   })
 }
 
@@ -117,11 +127,11 @@ function Bootstrap({
           PersistedStorageKeys.USER_SETTINGS
         )
 
-      let overrideConfig = {}
+      let configFromSdk = {}
 
       try {
         if (queryParams.has(QueryParamKeys.WAIT_FOR_CONFIG)) {
-          overrideConfig = await getConfigFromParent()
+          configFromSdk = await getConfigFromSdk()
         }
       } catch (e) {
         console.error(
@@ -133,7 +143,7 @@ function Bootstrap({
         setUserSettings({
           ...userSettings,
           ...persistedUserSettings,
-          ...overrideConfig,
+          ...configFromSdk,
         })
       } else {
         await persistUserSettings(userSettings)
@@ -159,18 +169,10 @@ function Bootstrap({
       decodeURIComponent(queryParams.get(QueryParamKeys.PARENT_DOMAIN) ?? '')
     )
 
-    // FIXME: Consolidate this with the event listener above
-    window.addEventListener('message', (event: MessageEvent) => {
+    const handleConfigMessage = (event: MessageEvent) => {
       if (event.origin !== parentFrameOrigin) return
       if (!isPostMessageEvent(event)) return
       if (event.data.name !== PostMessageEventName.CONFIG) return
-
-      const postMessageEvent: PostMessageEvent['data'] = {
-        name: PostMessageEventName.CONFIG_RECEIVED,
-        payload: {},
-      }
-
-      window.parent.postMessage(postMessageEvent, parentFrameOrigin)
 
       const overrideConfig: Partial<UserSettings> = event.data.payload
 
@@ -178,7 +180,13 @@ function Bootstrap({
         ...userSettings,
         ...overrideConfig,
       })
-    })
+    }
+
+    window.addEventListener('message', handleConfigMessage)
+
+    return () => {
+      window.removeEventListener('message', handleConfigMessage)
+    }
   })
 
   const settingsContextValue = {

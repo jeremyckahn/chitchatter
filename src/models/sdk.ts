@@ -1,6 +1,6 @@
 export enum PostMessageEventName {
   CONFIG = 'config',
-  CONFIG_RECEIVED = 'configReceived',
+  CONFIG_REQUESTED = 'configRequested',
 }
 
 export interface PostMessageEvent extends MessageEvent {

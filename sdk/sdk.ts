@@ -24,11 +24,10 @@ enum ChatEmbedAttributes {
   USER_NAME = 'user-name',
 }
 
-const pollInterval = 250
-const pollTimeout = 10_000
+const configRequestTimeout = 10_000
 
 class ChatEmbed extends HTMLElement {
-  private sendConfigTimer: NodeJS.Timer | undefined
+  private configRequestExpirationTimer: NodeJS.Timer | undefined
 
   private iframe = document.createElement('iframe')
 
@@ -81,37 +80,34 @@ class ChatEmbed extends HTMLElement {
     )
   }
 
-  private handleMessage = (event: MessageEvent) => {
+  private handleConfigRequestedMessage = (event: MessageEvent) => {
     const { rootUrl } = this
-
     const { origin: rootUrlOrigin } = new URL(rootUrl)
+
     if (rootUrlOrigin !== event.origin) return
     if (!isPostMessageEvent(event)) return
-    if (event.data.name !== PostMessageEventName.CONFIG_RECEIVED) return
+    if (event.data.name !== PostMessageEventName.CONFIG_REQUESTED) return
 
-    this.stopSendingConfig()
+    this.sendConfigToChat()
+    this.stopListeningForConfigRequest()
   }
 
-  private async sendConfigUntilReceived() {
-    // NOTE: End any preexisting config operations
-    this.stopSendingConfig()
+  private stopListeningForConfigRequest = () => {
+    window.removeEventListener('message', this.handleConfigRequestedMessage)
+    clearInterval(this.configRequestExpirationTimer)
+    this.configRequestExpirationTimer = undefined
+  }
 
-    window.addEventListener('message', this.handleMessage)
+  private async listenForConfigRequest() {
+    // NOTE: Cancel any pending config request listeners
+    this.stopListeningForConfigRequest()
 
-    this.sendConfigTimer = setInterval(this.sendConfigToChat, pollInterval)
+    window.addEventListener('message', this.handleConfigRequestedMessage)
 
-    setTimeout(() => {
-      if (this.sendConfigTimer === undefined) return
-
+    this.configRequestExpirationTimer = setTimeout(() => {
       console.error(`[chitchatter-sdk] configuration was not sent successfully`)
-      this.stopSendingConfig()
-    }, pollTimeout)
-  }
-
-  private stopSendingConfig = () => {
-    clearInterval(this.sendConfigTimer)
-    this.sendConfigTimer = undefined
-    window.removeEventListener('message', this.handleMessage)
+      this.stopListeningForConfigRequest()
+    }, configRequestTimeout)
   }
 
   private updateIframeAttributes() {
@@ -158,12 +154,12 @@ class ChatEmbed extends HTMLElement {
     shadow.appendChild(iframe)
 
     iframe.addEventListener('load', () => {
-      this.sendConfigUntilReceived()
+      this.listenForConfigRequest()
     })
   }
 
   disconnectedCallback() {
-    this.stopSendingConfig()
+    this.stopListeningForConfigRequest()
   }
 
   attributeChangedCallback(name: string) {
