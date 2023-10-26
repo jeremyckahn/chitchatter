@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import {
   BrowserRouter as Router,
   Routes,
@@ -69,6 +69,11 @@ function Bootstrap({
   }),
   getUuid = uuid,
 }: BootstrapProps) {
+  const queryParams = useMemo(
+    () => new URLSearchParams(window.location.search),
+    []
+  )
+
   const [persistedStorage] = useState(persistedStorageProp)
   const [appNeedsUpdate, setAppNeedsUpdate] = useState(false)
   const [hasLoadedSettings, setHasLoadedSettings] = useState(false)
@@ -86,6 +91,19 @@ function Bootstrap({
     setAppNeedsUpdate(true)
   }
 
+  const persistUserSettings = useCallback(
+    (newUserSettings: UserSettings) => {
+      if (queryParams.has(QueryParamKeys.IS_EMBEDDED))
+        return Promise.resolve(userSettings)
+
+      return persistedStorageProp.setItem(
+        PersistedStorageKeys.USER_SETTINGS,
+        newUserSettings
+      )
+    },
+    [persistedStorageProp, queryParams, userSettings]
+  )
+
   useEffect(() => {
     serviceWorkerRegistration.register({ onUpdate: handleServiceWorkerUpdate })
   }, [])
@@ -99,36 +117,69 @@ function Bootstrap({
           PersistedStorageKeys.USER_SETTINGS
         )
 
-      if (persistedUserSettings) {
-        const queryParams = new URLSearchParams(window.location.search)
+      let overrideConfig = {}
 
-        let overrideConfig = {}
-
-        try {
-          if (queryParams.has(QueryParamKeys.WAIT_FOR_CONFIG)) {
-            overrideConfig = await getConfigFromParent()
-          }
-        } catch (e) {
-          console.error(
-            'Chitchatter configuration from parent frame could not be loaded'
-          )
+      try {
+        if (queryParams.has(QueryParamKeys.WAIT_FOR_CONFIG)) {
+          overrideConfig = await getConfigFromParent()
         }
+      } catch (e) {
+        console.error(
+          'Chitchatter configuration from parent frame could not be loaded'
+        )
+      }
 
+      if (persistedUserSettings) {
         setUserSettings({
           ...userSettings,
           ...persistedUserSettings,
           ...overrideConfig,
         })
       } else {
-        await persistedStorageProp.setItem(
-          PersistedStorageKeys.USER_SETTINGS,
-          userSettings
-        )
+        await persistUserSettings(userSettings)
       }
 
       setHasLoadedSettings(true)
     })()
-  }, [hasLoadedSettings, persistedStorageProp, userSettings, userId])
+  }, [
+    hasLoadedSettings,
+    persistedStorageProp,
+    userSettings,
+    userId,
+    queryParams,
+    persistUserSettings,
+  ])
+
+  useEffect(() => {
+    const queryParams = new URLSearchParams(window.location.search)
+
+    if (!queryParams.has(QueryParamKeys.IS_EMBEDDED)) return
+
+    const { origin: parentFrameOrigin } = new URL(
+      decodeURIComponent(queryParams.get(QueryParamKeys.PARENT_DOMAIN) ?? '')
+    )
+
+    // FIXME: Consolidate this with the event listener above
+    window.addEventListener('message', (event: MessageEvent) => {
+      if (event.origin !== parentFrameOrigin) return
+      if (!isPostMessageEvent(event)) return
+      if (event.data.name !== PostMessageEventName.CONFIG) return
+
+      const postMessageEvent: PostMessageEvent['data'] = {
+        name: PostMessageEventName.CONFIG_RECEIVED,
+        payload: {},
+      }
+
+      window.parent.postMessage(postMessageEvent, parentFrameOrigin)
+
+      const overrideConfig: Partial<UserSettings> = event.data.payload
+
+      setUserSettings({
+        ...userSettings,
+        ...overrideConfig,
+      })
+    })
+  })
 
   const settingsContextValue = {
     updateUserSettings: async (changedSettings: Partial<UserSettings>) => {
@@ -137,10 +188,7 @@ function Bootstrap({
         ...changedSettings,
       }
 
-      await persistedStorageProp.setItem(
-        PersistedStorageKeys.USER_SETTINGS,
-        newSettings
-      )
+      await persistUserSettings(newSettings)
 
       setUserSettings(newSettings)
     },
