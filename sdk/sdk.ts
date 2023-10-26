@@ -119,7 +119,7 @@ class ChatEmbed extends HTMLElement {
 
     const urlParams = new URLSearchParams({
       [QueryParamKeys.IS_EMBEDDED]: '',
-      [QueryParamKeys.WAIT_FOR_CONFIG]: '',
+      [QueryParamKeys.GET_SDK_CONFIG]: '',
       [QueryParamKeys.PARENT_DOMAIN]: encodeURIComponent(
         window.location.origin
       ),

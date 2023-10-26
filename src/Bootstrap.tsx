@@ -128,7 +128,7 @@ function Bootstrap({
       let configFromSdk = {}
 
       try {
-        if (queryParams.has(QueryParamKeys.WAIT_FOR_CONFIG)) {
+        if (queryParams.has(QueryParamKeys.GET_SDK_CONFIG)) {
           configFromSdk = await getConfigFromSdk()
         }
       } catch (e) {
