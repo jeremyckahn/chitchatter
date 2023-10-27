@@ -125,26 +125,40 @@ function Bootstrap({
           PersistedStorageKeys.USER_SETTINGS
         )
 
-      let configFromSdk = {}
-
-      try {
+      const computeUserSettings = async (): Promise<UserSettings> => {
         if (queryParams.has(QueryParamKeys.GET_SDK_CONFIG)) {
-          configFromSdk = await getConfigFromSdk()
+          try {
+            const configFromSdk = await getConfigFromSdk()
+
+            return {
+              ...userSettings,
+              ...persistedUserSettings,
+              ...configFromSdk,
+            }
+          } catch (e) {
+            console.error(
+              'Chitchatter configuration from parent frame could not be loaded'
+            )
+          }
+
+          return userSettings
         }
-      } catch (e) {
-        console.error(
-          'Chitchatter configuration from parent frame could not be loaded'
-        )
+
+        if (persistedUserSettings) {
+          return {
+            ...userSettings,
+            ...persistedUserSettings,
+          }
+        }
+
+        return userSettings
       }
 
-      if (persistedUserSettings) {
-        setUserSettings({
-          ...userSettings,
-          ...persistedUserSettings,
-          ...configFromSdk,
-        })
-      } else {
-        await persistUserSettings(userSettings)
+      const computedUserSettings = await computeUserSettings()
+      setUserSettings(computedUserSettings)
+
+      if (persistedUserSettings === null) {
+        await persistUserSettings(computedUserSettings)
       }
 
       setHasLoadedSettings(true)
