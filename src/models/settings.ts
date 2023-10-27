@@ -3,10 +3,10 @@ export enum ColorMode {
   LIGHT = 'light',
 }
 
-const ColorModeValues = Object.values(ColorMode)
+const ColorModeValueStrings = Object.values(ColorMode).map(String)
 
 export const isColorMode = (color: string): color is ColorMode => {
-  return ColorModeValues.map(String).includes(color)
+  return ColorModeValueStrings.includes(color)
 }
 
 export interface UserSettings {

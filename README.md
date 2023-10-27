@@ -141,7 +141,7 @@ The `<chat-room />` component supports the following optional attributes:
 - `user-id`: The static ID of the user. The default value is a random UUID.
 - `root-url`: The URL of the Chitchatter instance to use. The default value is `https://chitchatter.im/`.
 - `color-mode`: `light` or `dark`. The default value is `dark`.
-- `play-message-sound`: Whether or not to play a sound when a user receives a message while the window is not in focus.
+- `play-message-sound`: Whether or not to play a sound when a user receives a message while the window is not in focus. The default value is `false`.
 
 As well as the following [standard `<iframe />` attributes](https://developer.mozilla.org/en-US/docs/Web/HTML/Element/iframe#attributes):
 
