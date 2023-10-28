@@ -14,7 +14,7 @@ jobs:
       - uses: actions/setup-node@v1
         with:
           node-version: 18
-      - run: npm ci --no-optional
+      - run: npm ci
       - run: npm test
 
       - name: 'Build web app artifacts'

@@ -24,6 +24,7 @@ import GitInfo from 'react-git-info/macro'
 
 import { routes } from 'config/routes'
 import { SettingsContext } from 'contexts/SettingsContext'
+import { ColorMode } from 'models/settings'
 
 const { commit } = GitInfo()
 
@@ -40,7 +41,8 @@ export const Drawer = ({ isDrawerOpen, onDrawerClose, theme }: DrawerProps) => {
   const colorMode = settingsContext.getUserSettings().colorMode
 
   const handleColorModeToggleClick = () => {
-    const newMode = colorMode === 'light' ? 'dark' : 'light'
+    const newMode =
+      colorMode === ColorMode.LIGHT ? ColorMode.DARK : ColorMode.LIGHT
     settingsContext.updateUserSettings({ colorMode: newMode })
   }
 
