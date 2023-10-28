@@ -19,6 +19,10 @@ Chitchatter is a free (as in both price and freedom) communication tool. Designe
 
 Chitchatter uses the [Create React App](https://github.com/facebook/create-react-app) toolchain. The secure networking and streaming magic would not be possible without [Trystero](https://github.com/dmotz/trystero). File transfer functionality is powered by [`secure-file-transfer`](https://github.com/jeremyckahn/secure-file-transfer).
 
+## Status
+
+- [![Known Vulnerabilities](https://snyk.io/test/github/jeremyckahn/chitchatter/badge.svg?targetFile=package.json)](https://snyk.io/test/github/jeremyckahn/chitchatter?targetFile=package.json)
+
 ## How to use it
 
 Open https://chitchatter.im/ and join a room to start chatting with anyone else who is in the room. By default, room names are random [UUID](https://en.wikipedia.org/wiki/Universally_unique_identifier)s that are generated client-side. To privately communicate with someone, it is recommended to join one of these randomly-generated rooms and share the URL (via the "🔗" button at the top of the page) to whomever you wish to communicate with via a secure medium of your choosing (such as [Burner Note](https://burnernote.com/) or [Yopass](https://yopass.se/)). Your user name will be presented to you, and it would be good to share that with who you will be chatting with beforehand so they know they're talking to you.
