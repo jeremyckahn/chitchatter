@@ -33,7 +33,6 @@ class ChatEmbed extends HTMLElement {
 
   static get observedAttributes() {
     const chatAttributes = Object.values(ChatEmbedAttributes)
-    const iframeAttributes = ['height', 'width']
 
     return [...chatAttributes, ...iframeAttributes]
   }
