@@ -1,7 +1,8 @@
 import {
-  isPostMessageEvent,
+  ChatEmbedAttributes,
   PostMessageEvent,
   PostMessageEventName,
+  isPostMessageEvent,
 } from '../src/models/sdk'
 import { QueryParamKeys } from '../src/models/shell'
 import { isColorMode, UserSettings } from '../src/models/settings'
@@ -18,15 +19,6 @@ const iframeAttributes = [
   'style',
   'width',
 ]
-
-enum ChatEmbedAttributes {
-  COLOR_MODE = 'color-mode',
-  PLAY_MESSAGE_SOUND = 'play-message-sound',
-  ROOM_NAME = 'room',
-  ROOT_URL = 'root-url',
-  USER_ID = 'user-id',
-  USER_NAME = 'user-name',
-}
 
 const configRequestTimeout = 10_000
 

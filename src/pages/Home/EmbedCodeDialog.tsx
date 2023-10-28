@@ -1,5 +1,6 @@
 import { PrismAsyncLight as SyntaxHighlighter } from 'react-syntax-highlighter'
 import Button from '@mui/material/Button'
+import Typography from '@mui/material/Typography'
 import Divider from '@mui/material/Divider'
 import Dialog from '@mui/material/Dialog'
 import { materialDark } from 'react-syntax-highlighter/dist/esm/styles/prism'
@@ -12,6 +13,7 @@ import { CopyableBlock } from 'components/CopyableBlock/CopyableBlock'
 
 import { iframeFeatureAllowList } from 'config/iframeFeatureAllowList'
 import { homepageUrl } from 'config/routes'
+import { ChatEmbedAttributes } from 'models/sdk'
 
 interface EmbedCodeDialogProps {
   showEmbedCode: boolean
@@ -29,23 +31,17 @@ export const EmbedCodeDialog = ({
 
   const needsRootUrlAttribute = window.location.origin !== homepageUrl.origin
 
-  const chatRoomAttributes: {
-    room: string
-    ['root-url']?: string
-    width: string
-    height: string
-  } = {
-    room: roomName,
+  const chatRoomAttributes = {
     width: '800',
     height: '800',
-  }
-
-  if (needsRootUrlAttribute) {
-    chatRoomAttributes['root-url'] = `${window.location.origin}/`
+    [ChatEmbedAttributes.ROOM_NAME]: roomName,
+    ...(needsRootUrlAttribute && {
+      [ChatEmbedAttributes.ROOT_URL]: `${window.location.origin}/`,
+    }),
   }
 
   const attributesString = Object.entries(chatRoomAttributes)
-    .map(([key, value]) => `${key}=${value}`)
+    .map(([key, value]) => `${key}="${value}"`)
     .join(' ')
 
   // NOTE: The script src is inaccurate in the local development environment.
@@ -55,7 +51,7 @@ export const EmbedCodeDialog = ({
 
   return (
     <Dialog open={showEmbedCode} onClose={handleEmbedCodeWindowClose}>
-      <DialogTitle>Room embed code</DialogTitle>
+      <DialogTitle>Basic Room Embed Code</DialogTitle>
       <DialogContent>
         <DialogContentText
           sx={{
@@ -84,6 +80,16 @@ export const EmbedCodeDialog = ({
           </SyntaxHighlighter>
         </CopyableBlock>
         <Divider sx={{ my: 2 }} />
+        <Typography
+          variant="h3"
+          sx={theme => ({
+            fontSize: theme.typography.h6.fontSize,
+            mb: 2,
+            fontWeight: theme.typography.h6.fontWeight,
+          })}
+        >
+          Advanced Usage
+        </Typography>
         <DialogContentText
           sx={{
             mb: 2,

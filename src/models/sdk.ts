@@ -6,6 +6,15 @@ export enum PostMessageEventName {
   CONFIG_REQUESTED = 'configRequested',
 }
 
+export enum ChatEmbedAttributes {
+  COLOR_MODE = 'color-mode',
+  PLAY_MESSAGE_SOUND = 'play-message-sound',
+  ROOM_NAME = 'room',
+  ROOT_URL = 'root-url',
+  USER_ID = 'user-id',
+  USER_NAME = 'user-name',
+}
+
 export interface PostMessageEvent extends MessageEvent {
   data: {
     name: PostMessageEventName
