@@ -33,9 +33,10 @@ export interface BootstrapProps {
   getUuid?: typeof uuid
 }
 
+const configListenerTimeout = 3000
+
 const getConfigFromSdk = () => {
   const queryParams = new URLSearchParams(window.location.search)
-  const configWaitTimeout = 3000
 
   const { origin: parentFrameOrigin } = new URL(
     decodeURIComponent(queryParams.get(QueryParamKeys.PARENT_DOMAIN) ?? '')
@@ -50,7 +51,7 @@ const getConfigFromSdk = () => {
       reject()
     }
 
-    expireTimer = setTimeout(expireListener, configWaitTimeout)
+    expireTimer = setTimeout(expireListener, configListenerTimeout)
 
     const handleMessage = (event: MessageEvent) => {
       if (!isConfigMessageEvent(event)) return
@@ -101,8 +102,9 @@ function Bootstrap({
 
   const persistUserSettings = useCallback(
     (newUserSettings: UserSettings) => {
-      if (queryParams.has(QueryParamKeys.IS_EMBEDDED))
+      if (queryParams.has(QueryParamKeys.IS_EMBEDDED)) {
         return Promise.resolve(userSettings)
+      }
 
       return persistedStorageProp.setItem(
         PersistedStorageKeys.USER_SETTINGS,
@@ -140,18 +142,12 @@ function Bootstrap({
               'Chitchatter configuration from parent frame could not be loaded'
             )
           }
-
-          return userSettings
         }
 
-        if (persistedUserSettings) {
-          return {
-            ...userSettings,
-            ...persistedUserSettings,
-          }
+        return {
+          ...userSettings,
+          ...persistedUserSettings,
         }
-
-        return userSettings
       }
 
       const computedUserSettings = await computeUserSettings()

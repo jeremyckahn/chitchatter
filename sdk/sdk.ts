@@ -31,7 +31,7 @@ enum ChatEmbedAttributes {
 const configRequestTimeout = 10_000
 
 class ChatEmbed extends HTMLElement {
-  private configRequestExpirationTimer: NodeJS.Timer | undefined
+  private configRequestExpirationTimer: NodeJS.Timer | null = null
 
   private iframe = document.createElement('iframe')
 
@@ -97,12 +97,15 @@ class ChatEmbed extends HTMLElement {
 
   private stopListeningForConfigRequest = () => {
     window.removeEventListener('message', this.handleConfigRequestedMessage)
-    clearInterval(this.configRequestExpirationTimer)
-    this.configRequestExpirationTimer = undefined
+
+    if (this.configRequestExpirationTimer !== null) {
+      clearInterval(this.configRequestExpirationTimer)
+      this.configRequestExpirationTimer = null
+    }
   }
 
   private async listenForConfigRequest() {
-    // NOTE: Cancel any pending config request listeners
+    // NOTE: This cancels any pending config request listeners
     this.stopListeningForConfigRequest()
 
     window.addEventListener('message', this.handleConfigRequestedMessage)
