@@ -51,7 +51,7 @@ export const EmbedCodeDialog = ({
 
   return (
     <Dialog open={showEmbedCode} onClose={handleEmbedCodeWindowClose}>
-      <DialogTitle>Basic Room Embed Code</DialogTitle>
+      <DialogTitle>Embedding Chitchatter</DialogTitle>
       <DialogContent>
         <DialogContentText
           sx={{
@@ -88,14 +88,14 @@ export const EmbedCodeDialog = ({
             mb: 2,
           })}
         >
-          Advanced Usage
+          Advanced Embedding
         </Typography>
         <DialogContentText
           sx={{
             mb: 2,
           }}
         >
-          Alternatively, you can use the{' '}
+          As an alternative to using an <code>iframe</code>, you can use the{' '}
           <Link
             href="https://github.com/jeremyckahn/chitchatter#SDK"
             target="_blank"
