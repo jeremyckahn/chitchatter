@@ -84,8 +84,8 @@ export const EmbedCodeDialog = ({
           variant="h3"
           sx={theme => ({
             fontSize: theme.typography.h6.fontSize,
-            mb: 2,
             fontWeight: theme.typography.h6.fontWeight,
+            mb: 2,
           })}
         >
           Advanced Usage
