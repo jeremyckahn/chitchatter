@@ -1,4 +1,8 @@
-import { isPostMessageEvent, PostMessageEventName } from '../src/models/sdk'
+import {
+  isPostMessageEvent,
+  PostMessageEvent,
+  PostMessageEventName,
+} from '../src/models/sdk'
 import { QueryParamKeys } from '../src/models/shell'
 import { isColorMode, UserSettings } from '../src/models/settings'
 import { iframeFeatureAllowList } from '../src/config/iframeFeatureAllowList'
@@ -45,8 +49,9 @@ class ChatEmbed extends HTMLElement {
     }
 
     if (this.hasAttribute(ChatEmbedAttributes.USER_NAME)) {
-      chatConfig.customUsername =
-        this.getAttribute(ChatEmbedAttributes.USER_NAME) ?? ''
+      chatConfig.customUsername = this.getAttribute(
+        ChatEmbedAttributes.USER_NAME
+      )!
     }
 
     chatConfig.playSoundOnNewMessage = Boolean(
@@ -70,13 +75,12 @@ class ChatEmbed extends HTMLElement {
     const { iframe, rootUrl } = this
     const { origin: rootUrlOrigin } = new URL(rootUrl)
 
-    iframe.contentWindow?.postMessage(
-      {
-        name: PostMessageEventName.CONFIG,
-        payload: this.chatConfig,
-      },
-      rootUrlOrigin
-    )
+    const postMessageEventData: PostMessageEvent['data'] = {
+      name: PostMessageEventName.CONFIG,
+      payload: this.chatConfig,
+    }
+
+    iframe.contentWindow?.postMessage(postMessageEventData, rootUrlOrigin)
   }
 
   private handleConfigRequestedMessage = (event: MessageEvent) => {
