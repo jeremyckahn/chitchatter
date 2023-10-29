@@ -119,7 +119,10 @@
     "util": "^0.12.5"
   },
   "overrides": {
-    "ipfs-core": "npm:dry-uninstall"
+    "ipfs-core": "npm:dry-uninstall",
+    "@svgr/plugin-svgo": {
+      "nth-check": "2.0.1"
+    }
   },
   "jest": {
     "transformIgnorePatterns": [
