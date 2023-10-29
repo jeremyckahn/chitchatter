@@ -43,15 +43,15 @@ const getConfigFromSdk = () => {
   )
 
   return new Promise<Partial<UserSettings>>((resolve, reject) => {
-    let expireTimer: NodeJS.Timer
+    let expireTimout: NodeJS.Timeout
 
     const expireListener = () => {
       window.removeEventListener('message', handleMessage)
-      clearTimeout(expireTimer)
+      clearTimeout(expireTimout)
       reject()
     }
 
-    expireTimer = setTimeout(expireListener, configListenerTimeout)
+    expireTimout = setTimeout(expireListener, configListenerTimeout)
 
     const handleMessage = (event: MessageEvent) => {
       if (!isConfigMessageEvent(event)) return

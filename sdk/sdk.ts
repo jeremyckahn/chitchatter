@@ -23,7 +23,7 @@ const iframeAttributes = [
 const configRequestTimeout = 10_000
 
 class ChatEmbed extends HTMLElement {
-  private configRequestExpirationTimer: NodeJS.Timer | null = null
+  private configRequestExpirationTimout: NodeJS.Timeout | null = null
 
   private iframe = document.createElement('iframe')
 
@@ -90,9 +90,9 @@ class ChatEmbed extends HTMLElement {
   private stopListeningForConfigRequest = () => {
     window.removeEventListener('message', this.handleConfigRequestedMessage)
 
-    if (this.configRequestExpirationTimer !== null) {
-      clearInterval(this.configRequestExpirationTimer)
-      this.configRequestExpirationTimer = null
+    if (this.configRequestExpirationTimout !== null) {
+      clearInterval(this.configRequestExpirationTimout)
+      this.configRequestExpirationTimout = null
     }
   }
 
@@ -102,7 +102,7 @@ class ChatEmbed extends HTMLElement {
 
     window.addEventListener('message', this.handleConfigRequestedMessage)
 
-    this.configRequestExpirationTimer = setTimeout(() => {
+    this.configRequestExpirationTimout = setTimeout(() => {
       console.error(`[chitchatter-sdk] configuration was not sent successfully`)
       this.stopListeningForConfigRequest()
     }, configRequestTimeout)

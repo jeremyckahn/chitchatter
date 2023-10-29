@@ -74,7 +74,7 @@ describe('Room', () => {
     expect(sendButton).toBeDisabled()
   })
 
-  test('inputting text enabled send button', () => {
+  test('inputting text enabled send button', async () => {
     render(
       <RouteStub>
         <Room userId={mockUserId} roomId={mockRoomId} />
@@ -83,7 +83,11 @@ describe('Room', () => {
 
     const sendButton = screen.getByLabelText('Send')
     const textInput = screen.getByPlaceholderText('Your message')
-    userEvent.type(textInput, 'hello')
+
+    await waitFor(() => {
+      userEvent.type(textInput, 'hello')
+    })
+
     expect(sendButton).not.toBeDisabled()
   })
 
@@ -96,7 +100,10 @@ describe('Room', () => {
 
     const sendButton = screen.getByLabelText('Send')
     const textInput = screen.getByPlaceholderText('Your message')
-    userEvent.type(textInput, 'hello')
+
+    await waitFor(() => {
+      userEvent.type(textInput, 'hello')
+    })
 
     await waitFor(() => {
       userEvent.click(sendButton)
@@ -118,7 +125,10 @@ describe('Room', () => {
 
     const sendButton = screen.getByLabelText('Send')
     const textInput = screen.getByPlaceholderText('Your message')
-    userEvent.type(textInput, 'hello')
+
+    await waitFor(() => {
+      userEvent.type(textInput, 'hello')
+    })
 
     await waitFor(() => {
       userEvent.click(sendButton)
