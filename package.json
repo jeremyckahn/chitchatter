@@ -16,7 +16,7 @@
     "@testing-library/user-event": "^13.5.0",
     "@types/jest": "^28.1.6",
     "@types/node": "^18.6.5",
-    "@types/react": "^18.0.17",
+    "@types/react": "^18.2.25",
     "@types/react-dom": "^18.0.6",
     "buffer": "^6.0.3",
     "classnames": "^2.3.1",
