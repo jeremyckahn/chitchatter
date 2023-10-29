@@ -52,7 +52,7 @@ Open https://chitchatter.im/ and join a room to start chatting with anyone else 
 
 ## Why another chat app?
 
-There is no shortage of user-friendly chat apps available, but they rely on a central service to facilitate communication. It is difficult to trust these central services, as commercial interests and [government pressure](https://www.npr.org/2022/08/12/1117092169/nebraska-cops-used-facebook-messages-to-investigate-an-alleged-illegal-abortion) can compel service operators to work against the best interest of the users. Even when when user data is handled in good faith by service operators, the possibility remains that [encrypted data held at rest may be decrypted](https://www.cbsnews.com/news/fbi-may-have-found-way-to-unlock-san-bernardino-shooters-iphone/) against the user's will.
+There is no shortage of user-friendly chat apps available, but they rely on a central service to facilitate communication. It is difficult to trust these central services, as commercial interests and [government pressure](https://www.npr.org/2022/08/12/1117092169/nebraska-cops-used-facebook-messages-to-investigate-an-alleged-illegal-abortion) can compel service operators to work against the best interest of the users. Even when  user data is handled in good faith by service operators, the possibility remains that [encrypted data held at rest may be decrypted](https://www.cbsnews.com/news/fbi-may-have-found-way-to-unlock-san-bernardino-shooters-iphone/) against the user's will.
 
 Chitchatter designs around these risks with a [web meshe architecture](https://dev.to/jeremyckahn/taking-the-power-back-with-web-meshes-omg). There is no central service operator that stores or potentially mishandles communication data. Some services are required to establish an initial connection between peers, but otherwise the app uses direct peer-to-peer communication for everything. Any services that are used by Chitchatter have no association with the project and are publicly available for all to use.
 
@@ -63,7 +63,7 @@ Chitchatter offers a private and secure solution for:
 - Organizing groups of people, such as unions or political movements
 - Conveniently moving text or data from one device to another
 - Video chatting with friends and family across operating systems (such as Android and iOS)
-- IT troublshooting via screen sharing
+- IT troubleshooting via screen sharing
 - Livestreaming
 - Sharing sensitive information such as passwords
 - Much more!
