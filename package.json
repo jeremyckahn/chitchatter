@@ -31,7 +31,7 @@
     "react-git-info": "^2.0.1",
     "react-markdown": "^8.0.3",
     "react-qrcode-logo": "^2.8.0",
-    "react-router-dom": "^6.3.0",
+    "react-router-dom": "^6.16.0",
     "react-scripts": "5.0.1",
     "react-syntax-highlighter": "^15.5.0",
     "react-youtube": "^10.1.0",
