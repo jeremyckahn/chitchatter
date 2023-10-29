@@ -122,6 +122,9 @@
     "ipfs-core": "npm:dry-uninstall",
     "@svgr/plugin-svgo": {
       "nth-check": "2.0.1"
+    },
+    "resolve-url-loader": {
+      "postcss": "8.4.31"
     }
   },
   "jest": {
