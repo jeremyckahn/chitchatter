@@ -1,0 +1,19 @@
+name: Perform Weekly Security Audit with ZAProxy
+# Use ZAP Proxy to perform a full scan of the production site.
+# Scan automatically opens an issue after completion
+# with results of the audit.
+
+on:
+  schedule:
+    # 17:30 UTC (5:30 pm) on Fridays
+    - cron: '30 17 * * 5'
+
+jobs:
+  zap_scan: # https://github.com/zaproxy/action-full-scan
+    runs-on: ubuntu-latest
+    name: Scan Production Site
+    steps:
+      - name: ZAP Scan
+        uses: zaproxy/action-full-scan@v0.7.0
+        with:
+          target: 'https://chitchatter.im/'
