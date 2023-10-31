@@ -16,6 +16,10 @@ jobs:
     runs-on: ubuntu-latest
     name: Scan Production Site
     steps:
+      - name: Set Date (NOW) as Env Var
+        run: |
+          echo "::set-env name=NOW::$(date +'%Y-%m-%d')"
+
       - name: Checkout Main Branch for .zap/rules.tsv
         uses: actions/checkout@v4
         with:
@@ -26,5 +30,5 @@ jobs:
         with:
           target: 'https://chitchatter.im/'
           rules_file_name: '.zap/rules.tsv'
-          issue_title: "Security Report - $(date +'%Y-%m-%d')"
-          artifact_name: "zap_scan_$(date +'%Y-%m-%d')"
+          issue_title: 'Security Report - ${{ env.NOW }}'
+          artifact_name: 'zap_scan_${{ env.NOW }}'
