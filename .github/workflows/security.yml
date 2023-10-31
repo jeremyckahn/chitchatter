@@ -6,7 +6,7 @@ name: Perform Weekly Security Audit with ZAProxy
 on:
   schedule:
     # 17:30 UTC (5:30 pm) on Fridays
-    - cron: '30 17 * * 5'
+    - cron: '0 0 * * 1'
 
 jobs:
   zap_scan: # https://github.com/zaproxy/action-full-scan
