@@ -1,5 +1,5 @@
 name: Perform Weekly Security Audit with ZAProxy
-# Use ZAP Proxy to perform a full scan of the production site.
+# Use ZAP Proxy to perform a full scan of the staging site.
 # Scan automatically opens an issue after completion
 # with results of the audit.
 
@@ -16,4 +16,6 @@ jobs:
       - name: ZAP Scan
         uses: zaproxy/action-full-scan@v0.7.0
         with:
-          target: 'https://chitchatter.im/'
+          # target staging site instead of production site in case running
+          # the scan causes the site to crash.
+          target: 'https://chitchatter-git-develop-jeremyckahn.vercel.app/'
