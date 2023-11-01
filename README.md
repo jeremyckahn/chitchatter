@@ -233,8 +233,7 @@ Per [#36](https://github.com/jeremyckahn/chitchatter/issues/36), check your `abo
 
 ##### Security
 
-Chitchatter undergoes weekly security audits to identify and address potential vulnerabilities. Reports from all audits can be found in the **Issues** section
-by filtering labels for security and reports
+Chitchatter undergoes [weekly security audits](https://github.com/jeremyckahn/chitchatter/blob/develop/.github/workflows/security.yml) to identify and address potential vulnerabilities. Reports from all audits can be found in [the **Issues** section filtered by the `security` label](https://github.com/jeremyckahn/chitchatter/issues?q=is%3Aissue+is%3Aopen+label%3Asecurity).
 
 ### Contributors
 
