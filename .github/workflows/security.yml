@@ -23,8 +23,6 @@ jobs:
 
       - name: Checkout Main Branch for .zap/rules.tsv
         uses: actions/checkout@v4
-        with:
-          - ref: 'develop'
 
       - name: ZAP Full Scan
         # https://github.com/zaproxy/action-full-scan
