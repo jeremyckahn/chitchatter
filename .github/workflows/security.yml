@@ -29,7 +29,7 @@ jobs:
         with:
           target: 'https://chitchatter.im/'
           rules_file_name: '.zap/rules.tsv'
-          cmd_options: '-a' # include the alpha passive scan rules as well
+          cmd_options: '-a -d' # include the alpha passive scan rules as well
           issue_title: 'Security Report - ${{ steps.set-now.outputs.NOW }}'
           artifact_name: 'zap_scan_${{ steps.set-now.outputs.NOW }}'
 
