@@ -12,7 +12,7 @@ on:
   workflow_dispatch:
 
 jobs:
-  zap_scan: # https://github.com/zaproxy/action-full-scan
+  zap_scan:
     runs-on: ubuntu-latest
     name: Scan Production Site
     steps:
@@ -25,7 +25,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: ZAP Scan
-        uses: zaproxy/action-full-scan@v0.7.0
+        uses: zaproxy/action-full-scan@v0.7.0 # https://github.com/zaproxy/action-full-scan
         with:
           target: 'https://chitchatter.im/'
           rules_file_name: '.zap/rules.tsv'
