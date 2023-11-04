@@ -173,6 +173,7 @@ export const RoomVideoDisplay = ({
         )}
         {selfScreenStream && (
           <PeerVideo
+            isSelfScreenStream
             numberOfVideos={numberOfVideos}
             onVideoClick={handleVideoClick}
             userId={userId}
