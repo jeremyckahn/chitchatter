@@ -8,6 +8,7 @@ import { VideoStreamType } from 'models/chat'
 import { SelectedPeerStream } from './RoomVideoDisplay'
 
 interface PeerVideoProps {
+  isSelfScreenStream?: boolean
   isSelfVideo?: boolean
   numberOfVideos: number
   onVideoClick?: (
@@ -29,6 +30,7 @@ const nextPerfectSquare = (base: number) => {
 }
 
 export const PeerVideo = ({
+  isSelfScreenStream,
   isSelfVideo,
   numberOfVideos,
   onVideoClick,
@@ -87,6 +89,7 @@ export const PeerVideo = ({
       >
         <video
           playsInline
+          muted={isSelfScreenStream}
           ref={videoRef}
           onClick={handleVideoClick}
           style={{
