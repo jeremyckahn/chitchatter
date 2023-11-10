@@ -24,7 +24,7 @@ jobs:
       - name: Checkout Repo for .zap/rules.tsv
         uses: actions/checkout@v4
         with:
-          ref: develop
+          ref: main
 
       - name: ZAP Full Scan
         # https://github.com/zaproxy/action-full-scan
