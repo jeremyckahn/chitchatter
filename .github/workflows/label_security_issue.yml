@@ -8,6 +8,8 @@ on:
 jobs:
   label-security-report:
     runs-on: ubuntu-latest
+    permissions:
+      issues: write
 
     steps:
       - name: Check if issue title starts with "Security Report -"
