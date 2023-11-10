@@ -12,7 +12,7 @@ on:
   workflow_dispatch:
 
 jobs:
-  zap_scan: # https://github.com/zaproxy/action-full-scan
+  zap_scan:
     runs-on: ubuntu-latest
     name: Scan Production Site
     steps:
@@ -21,15 +21,25 @@ jobs:
         run: |
           echo "NOW=$(date +'%Y-%m-%d')" >> "$GITHUB_OUTPUT"
 
-      - name: Checkout Main Branch for .zap/rules.tsv
+      - name: Checkout Repo for .zap/rules.tsv
         uses: actions/checkout@v4
         with:
-          ref: 'main'
+          ref: main
 
-      - name: ZAP Scan
+      - name: ZAP Full Scan
+        # https://github.com/zaproxy/action-full-scan
         uses: zaproxy/action-full-scan@v0.7.0
         with:
           target: 'https://chitchatter.im/'
           rules_file_name: '.zap/rules.tsv'
           issue_title: 'Security Report - ${{ steps.set-now.outputs.NOW }}'
           artifact_name: 'zap_scan_${{ steps.set-now.outputs.NOW }}'
+
+      - name: Add Security Label to Security Report - ${{ steps.set-now.outputs.NOW }}
+        # https://github.com/actions-ecosystem/action-add-labels
+        uses: actions-ecosystem/action-add-labels@v1
+        if: ${{ startsWith('Security Report - ${{ steps.set-now.outputs.NOW }}', '/add-labels')}}
+        with:
+          labels: |
+            security
+            reports
