@@ -1,0 +1,27 @@
+name: Label Security Report
+
+on:
+  issues:
+    types:
+      - opened
+
+jobs:
+  label-security-report:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check if issue title starts with "Security Report -"
+        id: check_title
+        run: echo "::set-output name=startsWithSecurityReport::$(echo ${{ github.event.issue.title }} | grep -q '^Security Report -' && echo true || echo false)"
+
+      - name: Add labels
+        if: steps.check_title.outputs.startsWithSecurityReport == 'true'
+        uses: actions/github-script@v6
+        with:
+          script: |
+            github.rest.issues.addLabels({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              labels: ["security", "reports"]
+            })
