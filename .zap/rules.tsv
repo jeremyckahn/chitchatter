@@ -1,0 +1,8 @@
+10020	IGNORE	(Missing Anti-clickjacking Header)
+10021	IGNORE	(X-Content-Type-Options Header Missing)
+10035	IGNORE	(Strict-Transport-Security Header Not Set)
+10038	IGNORE	(Content Security Policy (CSP) Header Not Set)
+10063	IGNORE	(Permissions Policy Header Not Set)
+10096	IGNORE	(Timestamp Disclosure - Unix)
+10098	IGNORE	(Cross-Domain Misconfiguration)
+40040	IGNORE	(CORS Misconfiguration)
