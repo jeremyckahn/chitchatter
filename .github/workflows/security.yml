@@ -11,6 +11,12 @@ on:
   # manually trigger workflow
   workflow_dispatch:
 
+  # Listen for Production deployments
+  workflow_run:
+    workflows: [pages-build-deployment]
+    types:
+      - completed
+
 jobs:
   zap_scan:
     runs-on: ubuntu-latest
