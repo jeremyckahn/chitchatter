@@ -7,8 +7,6 @@ import { PeerActions } from 'models/network'
 import { ScreenShareState, Peer, VideoStreamType } from 'models/chat'
 import { PeerRoom, PeerHookType, PeerStreamType } from 'services/PeerRoom'
 
-import { usePeerRoomAction } from './usePeerRoomAction'
-
 interface UseRoomScreenShareConfig {
   peerRoom: PeerRoom
 }
@@ -28,7 +26,7 @@ export function useRoomScreenShare({ peerRoom }: UseRoomScreenShareConfig) {
   } = roomContext
 
   const [sendScreenShare, receiveScreenShare] =
-    usePeerRoomAction<ScreenShareState>(peerRoom, PeerActions.SCREEN_SHARE)
+    peerRoom.makeAction<ScreenShareState>(PeerActions.SCREEN_SHARE)
 
   receiveScreenShare((screenState, peerId) => {
     const newPeerList = peerList.map(peer => {

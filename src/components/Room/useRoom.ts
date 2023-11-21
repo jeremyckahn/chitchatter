@@ -30,8 +30,6 @@ import { fileTransfer } from 'services/FileTransfer'
 
 import { messageTranscriptSizeLimit } from 'config/messaging'
 
-import { usePeerRoomAction } from './usePeerRoomAction'
-
 interface UseRoomConfig {
   roomId: string
   userId: string
@@ -156,7 +154,7 @@ export function useRoom(
   )
 
   const [sendTypingStatusChange, receiveTypingStatusChange] =
-    usePeerRoomAction<TypingStatus>(peerRoom, PeerActions.TYPING_STATUS_CHANGE)
+    peerRoom.makeAction<TypingStatus>(PeerActions.TYPING_STATUS_CHANGE)
 
   const [isTyping, setIsTypingDebounced, setIsTyping] = useDebounce(
     false,
@@ -199,17 +197,17 @@ export function useRoom(
   }, [isShowingMessages, setUnreadMessages])
 
   const [sendPeerMetadata, receivePeerMetadata] =
-    usePeerRoomAction<UserMetadata>(peerRoom, PeerActions.PEER_METADATA)
+    peerRoom.makeAction<UserMetadata>(PeerActions.PEER_METADATA)
 
-  const [sendMessageTranscript, receiveMessageTranscript] = usePeerRoomAction<
+  const [sendMessageTranscript, receiveMessageTranscript] = peerRoom.makeAction<
     Array<ReceivedMessage | ReceivedInlineMedia>
-  >(peerRoom, PeerActions.MESSAGE_TRANSCRIPT)
+  >(PeerActions.MESSAGE_TRANSCRIPT)
 
   const [sendPeerMessage, receivePeerMessage] =
-    usePeerRoomAction<UnsentMessage>(peerRoom, PeerActions.MESSAGE)
+    peerRoom.makeAction<UnsentMessage>(PeerActions.MESSAGE)
 
   const [sendPeerInlineMedia, receivePeerInlineMedia] =
-    usePeerRoomAction<UnsentInlineMedia>(peerRoom, PeerActions.MEDIA_MESSAGE)
+    peerRoom.makeAction<UnsentInlineMedia>(PeerActions.MEDIA_MESSAGE)
 
   const sendMessage = async (message: string) => {
     if (isMessageSending) return

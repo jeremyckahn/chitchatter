@@ -8,8 +8,6 @@ import { PeerRoom, PeerHookType, PeerStreamType } from 'services/PeerRoom'
 
 import { isRecord } from 'utils'
 
-import { usePeerRoomAction } from './usePeerRoomAction'
-
 interface UseRoomVideoConfig {
   peerRoom: PeerRoom
 }
@@ -70,8 +68,7 @@ export function useRoomVideo({ peerRoom }: UseRoomVideoConfig) {
     })()
   }, [peerRoom, selfVideoStream, setSelfVideoStream])
 
-  const [sendVideoChange, receiveVideoChange] = usePeerRoomAction<VideoState>(
-    peerRoom,
+  const [sendVideoChange, receiveVideoChange] = peerRoom.makeAction<VideoState>(
     PeerActions.VIDEO_CHANGE
   )
 

@@ -5,8 +5,6 @@ import { PeerActions } from 'models/network'
 import { AudioState, Peer } from 'models/chat'
 import { PeerRoom, PeerHookType, PeerStreamType } from 'services/PeerRoom'
 
-import { usePeerRoomAction } from './usePeerRoomAction'
-
 interface UseRoomAudioConfig {
   peerRoom: PeerRoom
 }
@@ -34,8 +32,7 @@ export function useRoomAudio({ peerRoom }: UseRoomAudioConfig) {
     })()
   }, [audioStream])
 
-  const [sendAudioChange, receiveAudioChange] = usePeerRoomAction<AudioState>(
-    peerRoom,
+  const [sendAudioChange, receiveAudioChange] = peerRoom.makeAction<AudioState>(
     PeerActions.AUDIO_CHANGE
   )
 

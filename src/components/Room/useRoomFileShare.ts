@@ -9,8 +9,6 @@ import { PeerRoom, PeerHookType } from 'services/PeerRoom'
 
 import { fileTransfer } from 'services/FileTransfer/index'
 
-import { usePeerRoomAction } from './usePeerRoomAction'
-
 interface UseRoomFileShareConfig {
   onInlineMediaUpload: (files: File[]) => void
   peerRoom: PeerRoom
@@ -36,10 +34,7 @@ export function useRoomFileShare({
   const { peerOfferedFileMetadata, setPeerOfferedFileMetadata } = roomContext
 
   const [sendFileOfferMetadata, receiveFileOfferMetadata] =
-    usePeerRoomAction<FileOfferMetadata | null>(
-      peerRoom,
-      PeerActions.FILE_OFFER
-    )
+    peerRoom.makeAction<FileOfferMetadata | null>(PeerActions.FILE_OFFER)
 
   receiveFileOfferMetadata((fileOfferMetadata, peerId) => {
     if (fileOfferMetadata) {
