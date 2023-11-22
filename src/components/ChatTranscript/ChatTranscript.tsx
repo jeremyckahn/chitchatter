@@ -4,6 +4,7 @@ import Box from '@mui/material/Box'
 
 import { Message as IMessage, InlineMedia } from 'models/chat'
 import { Message } from 'components/Message'
+import useTheme from '@mui/material/styles/useTheme'
 
 export interface ChatTranscriptProps extends HTMLAttributes<HTMLDivElement> {
   messageLog: Array<IMessage | InlineMedia>
@@ -15,6 +16,7 @@ export const ChatTranscript = ({
   messageLog,
   userId,
 }: ChatTranscriptProps) => {
+  const theme = useTheme()
   const boxRef = useRef<HTMLDivElement>(null)
   const [previousMessageLogLength, setPreviousMessageLogLength] = useState(0)
 
@@ -53,18 +55,23 @@ export const ChatTranscript = ({
     setPreviousMessageLogLength(messageLog.length)
   }, [messageLog.length])
 
+  const transcriptMaxWidth = theme.breakpoints.values.md
+  const transcriptPaddingX = `(50% - ${
+    transcriptMaxWidth / 2
+  }px) - ${theme.spacing(1)}`
+  const transcriptMinPadding = theme.spacing(1)
+
   return (
     <Box
       ref={boxRef}
       className={cx('ChatTranscript', className)}
-      sx={theme => ({
+      sx={{
         display: 'flex',
         flexDirection: 'column',
-        mx: 'auto',
-        paddingY: theme.spacing(1),
+        py: transcriptMinPadding,
+        px: `max(${transcriptPaddingX}, ${transcriptMinPadding})`,
         width: '100%',
-        maxWidth: theme.breakpoints.values.md,
-      })}
+      }}
     >
       {messageLog.map((message, idx) => {
         const previousMessage = messageLog[idx - 1]
