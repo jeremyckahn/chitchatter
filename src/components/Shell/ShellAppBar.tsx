@@ -85,7 +85,7 @@ export const ShellAppBar = ({
   isFullscreen,
   setIsFullscreen,
 }: ShellAppBarProps) => {
-  const { peerList, isEmbedded } = useContext(ShellContext)
+  const { peerList, isEmbedded, showRoomControls } = useContext(ShellContext)
   const handleQRCodeClick = () => setIsQRCodeDialogOpen(true)
   const onClickFullscreen = () => setIsFullscreen(!isFullscreen)
 
@@ -149,7 +149,11 @@ export const ShellAppBar = ({
                 </Tooltip>
               </>
             )}
-            <Tooltip title="Show Room Controls">
+            <Tooltip
+              title={
+                showRoomControls ? 'Hide Room Controls' : 'Show Room Controls'
+              }
+            >
               <IconButton
                 size="large"
                 color="inherit"

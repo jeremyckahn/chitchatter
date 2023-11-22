@@ -22,7 +22,6 @@ import { RoomScreenShareControls } from './RoomScreenShareControls'
 import { RoomFileUploadControls } from './RoomFileUploadControls'
 import { RoomVideoDisplay } from './RoomVideoDisplay'
 import { RoomShowMessagesControls } from './RoomShowMessagesControls'
-import { RoomHideRoomControls } from './RoomHideRoomControls'
 import { TypingStatusBar } from './TypingStatusBar'
 
 export interface RoomProps {
@@ -121,7 +120,6 @@ export function Room({
                   <RoomShowMessagesControls />
                 </span>
               </Zoom>
-              <RoomHideRoomControls />
             </Box>
           </Zoom>
           <Box
