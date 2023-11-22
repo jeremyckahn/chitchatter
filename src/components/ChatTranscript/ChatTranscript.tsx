@@ -1,10 +1,11 @@
-import { HTMLAttributes, useRef, useEffect, useState } from 'react'
+import { HTMLAttributes, useRef, useEffect, useState, useContext } from 'react'
 import cx from 'classnames'
 import Box from '@mui/material/Box'
+import useTheme from '@mui/material/styles/useTheme'
 
 import { Message as IMessage, InlineMedia } from 'models/chat'
 import { Message } from 'components/Message'
-import useTheme from '@mui/material/styles/useTheme'
+import { ShellContext } from 'contexts/ShellContext'
 
 export interface ChatTranscriptProps extends HTMLAttributes<HTMLDivElement> {
   messageLog: Array<IMessage | InlineMedia>
@@ -16,6 +17,7 @@ export const ChatTranscript = ({
   messageLog,
   userId,
 }: ChatTranscriptProps) => {
+  const { showRoomControls } = useContext(ShellContext)
   const theme = useTheme()
   const boxRef = useRef<HTMLDivElement>(null)
   const [previousMessageLogLength, setPreviousMessageLogLength] = useState(0)
@@ -69,7 +71,9 @@ export const ChatTranscript = ({
         display: 'flex',
         flexDirection: 'column',
         py: transcriptMinPadding,
+        pt: showRoomControls ? theme.spacing(10) : theme.spacing(2),
         px: `max(${transcriptPaddingX}, ${transcriptMinPadding})`,
+        transition: `padding-top ${theme.transitions.duration.short}ms ${theme.transitions.easing.easeInOut}`,
         width: '100%',
       }}
     >

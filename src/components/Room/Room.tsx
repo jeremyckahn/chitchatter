@@ -1,9 +1,9 @@
 import { useContext } from 'react'
 import { useWindowSize } from '@react-hook/window-size'
-import Collapse from '@mui/material/Collapse'
 import Zoom from '@mui/material/Zoom'
 import Box from '@mui/material/Box'
 import Divider from '@mui/material/Divider'
+import useTheme from '@mui/material/styles/useTheme'
 import { v4 as uuid } from 'uuid'
 
 import { rtcConfig } from 'config/rtcConfig'
@@ -40,6 +40,7 @@ export function Room({
   password,
   userId,
 }: RoomProps) {
+  const theme = useTheme()
   const settingsContext = useContext(SettingsContext)
   const { showActiveTypingStatus } = settingsContext.getUserSettings()
   const {
@@ -96,14 +97,16 @@ export function Room({
             overflow: 'auto',
           }}
         >
-          <Collapse in={showRoomControls}>
+          <Zoom in={showRoomControls}>
             <Box
               sx={{
                 alignItems: 'flex-start',
                 display: 'flex',
                 justifyContent: 'center',
-                padding: 1,
-                overflowX: 'auto',
+                overflow: 'visible',
+                height: 0,
+                position: 'relative',
+                top: theme.spacing(1),
               }}
             >
               <RoomAudioControls peerRoom={peerRoom} />
@@ -120,7 +123,7 @@ export function Room({
               </Zoom>
               <RoomHideRoomControls />
             </Box>
-          </Collapse>
+          </Zoom>
           <Box
             sx={{
               display: 'flex',
@@ -150,7 +153,7 @@ export function Room({
                 <ChatTranscript
                   messageLog={messageLog}
                   userId={userId}
-                  className="grow overflow-auto px-4"
+                  className="grow overflow-auto"
                 />
                 <Divider />
                 <Box>
