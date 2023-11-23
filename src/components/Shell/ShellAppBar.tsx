@@ -104,7 +104,7 @@ export const ShellAppBar = ({
             sx={{
               display: 'flex',
               flexDirection: 'row',
-              justifyContent: 'space-between',
+              justifyContent: 'right',
             }}
           >
             {isEmbedded ? null : (
@@ -119,14 +119,21 @@ export const ShellAppBar = ({
                 <Menu />
               </IconButton>
             )}
-            <Typography
-              variant="h6"
-              noWrap
-              component="div"
-              sx={{ marginRight: 'auto' }}
-            >
-              {isEmbedded ? '' : title}
-            </Typography>
+
+            {isEmbedded ? null : (
+              <Tooltip title={title}>
+                <Typography
+                  variant="h6"
+                  noWrap
+                  component="div"
+                  sx={{
+                    marginRight: 'auto',
+                  }}
+                >
+                  {title}
+                </Typography>
+              </Tooltip>
+            )}
             {isEmbedded ? null : (
               <>
                 <Tooltip title="Copy current URL">
