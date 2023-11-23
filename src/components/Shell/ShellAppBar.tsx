@@ -1,4 +1,4 @@
-import { styled } from '@mui/material/styles'
+import { styled, useTheme } from '@mui/material/styles'
 
 import IconButton from '@mui/material/IconButton'
 import MuiAppBar, { AppBarProps as MuiAppBarProps } from '@mui/material/AppBar'
@@ -9,6 +9,7 @@ import Tooltip from '@mui/material/Tooltip'
 import Typography from '@mui/material/Typography'
 import Slide from '@mui/material/Slide'
 import Zoom from '@mui/material/Zoom'
+import Divider from '@mui/material/Divider'
 
 import ExpandMore from '@mui/icons-material/ExpandMore'
 import Fullscreen from '@mui/icons-material/Fullscreen'
@@ -85,6 +86,7 @@ export const ShellAppBar = ({
   isFullscreen,
   setIsFullscreen,
 }: ShellAppBarProps) => {
+  const theme = useTheme()
   const { peerList, isEmbedded, showRoomControls } = useContext(ShellContext)
   const handleQRCodeClick = () => setIsQRCodeDialogOpen(true)
   const onClickFullscreen = () => setIsFullscreen(!isFullscreen)
@@ -148,6 +150,12 @@ export const ShellAppBar = ({
                   </IconButton>
                 </Tooltip>
               </>
+            )}
+            {isEmbedded ? null : (
+              <Divider
+                orientation="vertical"
+                sx={{ height: theme.spacing(3.5), mx: theme.spacing(1) }}
+              />
             )}
             <Tooltip
               title={
