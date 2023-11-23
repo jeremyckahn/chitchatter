@@ -45,8 +45,12 @@ export const isConfigMessageEvent = (
   event: MessageEvent
 ): event is ConfigMessageEvent => {
   const queryParams = new URLSearchParams(window.location.search)
+  const parentDomain = queryParams.get(QueryParamKeys.PARENT_DOMAIN)
+
+  if (parentDomain === null) return false
+
   const { origin: parentFrameOrigin } = new URL(
-    decodeURIComponent(queryParams.get(QueryParamKeys.PARENT_DOMAIN) ?? '')
+    decodeURIComponent(parentDomain)
   )
 
   if (event.origin !== parentFrameOrigin) return false
