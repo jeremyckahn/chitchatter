@@ -1,9 +1,11 @@
-import { HTMLAttributes, useRef, useEffect, useState } from 'react'
+import { HTMLAttributes, useRef, useEffect, useState, useContext } from 'react'
 import cx from 'classnames'
 import Box from '@mui/material/Box'
+import useTheme from '@mui/material/styles/useTheme'
 
 import { Message as IMessage, InlineMedia } from 'models/chat'
 import { Message } from 'components/Message'
+import { ShellContext } from 'contexts/ShellContext'
 
 export interface ChatTranscriptProps extends HTMLAttributes<HTMLDivElement> {
   messageLog: Array<IMessage | InlineMedia>
@@ -15,6 +17,8 @@ export const ChatTranscript = ({
   messageLog,
   userId,
 }: ChatTranscriptProps) => {
+  const { showRoomControls } = useContext(ShellContext)
+  const theme = useTheme()
   const boxRef = useRef<HTMLDivElement>(null)
   const [previousMessageLogLength, setPreviousMessageLogLength] = useState(0)
 
@@ -53,18 +57,25 @@ export const ChatTranscript = ({
     setPreviousMessageLogLength(messageLog.length)
   }, [messageLog.length])
 
+  const transcriptMaxWidth = theme.breakpoints.values.md
+  const transcriptPaddingX = `(50% - ${
+    transcriptMaxWidth / 2
+  }px) - ${theme.spacing(1)}`
+  const transcriptMinPadding = theme.spacing(1)
+
   return (
     <Box
       ref={boxRef}
       className={cx('ChatTranscript', className)}
-      sx={theme => ({
+      sx={{
         display: 'flex',
         flexDirection: 'column',
-        mx: 'auto',
-        paddingY: theme.spacing(1),
+        py: transcriptMinPadding,
+        pt: showRoomControls ? theme.spacing(10) : theme.spacing(2),
+        px: `max(${transcriptPaddingX}, ${transcriptMinPadding})`,
+        transition: `padding-top ${theme.transitions.duration.short}ms ${theme.transitions.easing.easeInOut}`,
         width: '100%',
-        maxWidth: theme.breakpoints.values.md,
-      })}
+      }}
     >
       {messageLog.map((message, idx) => {
         const previousMessage = messageLog[idx - 1]
