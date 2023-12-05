@@ -1,3 +1,13 @@
+export enum AllowedKeyType {
+  PUBLIC,
+  PRIVATE,
+}
+
+const arrayBufferToBase64 = (buffer: ArrayBuffer) => {
+  const binary = String.fromCharCode(...new Uint8Array(buffer))
+  return btoa(binary)
+}
+
 export class EncryptionService {
   static cryptoKeyStub: CryptoKey = {
     algorithm: { name: 'STUB-ALGORITHM' },
@@ -29,5 +39,20 @@ export class EncryptionService {
     const encodedPassword = window.btoa(String.fromCharCode(...bytes))
 
     return encodedPassword
+  }
+
+  // FIXME: Use this to serialize CryptoKeys for IndexedDB storage
+  static convertCryptoKeyToString = async (
+    key: CryptoKeyPair,
+    type: AllowedKeyType
+  ) => {
+    const exportedKey = await window.crypto.subtle.exportKey(
+      type === AllowedKeyType.PUBLIC ? 'spki' : 'pkcs8',
+      type === AllowedKeyType.PUBLIC ? key.publicKey : key.privateKey
+    )
+
+    const exportedAsString = arrayBufferToBase64(exportedKey)
+
+    return exportedAsString
   }
 }
