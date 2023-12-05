@@ -2,23 +2,24 @@ import { act, render } from '@testing-library/react'
 import localforage from 'localforage'
 
 import { PersistedStorageKeys } from 'models/storage'
+import { userSettingsStubFactory } from 'test-utils/stubs/userSettings'
 
-import Bootstrap, { BootstrapProps } from './Bootstrap'
+import { Bootstrap, BootstrapProps } from './Bootstrap'
 
 const mockPersistedStorage =
   jest.createMockFromModule<jest.Mock<typeof localforage>>('localforage')
 
-const mockGetUuid = jest.fn()
-
 const mockGetItem = jest.fn()
 const mockSetItem = jest.fn()
+
+const userSettingsStub = userSettingsStubFactory()
 
 beforeEach(() => {
   mockGetItem.mockImplementation(() => Promise.resolve(null))
   mockSetItem.mockImplementation((data: any) => Promise.resolve(data))
 })
 
-const renderBootstrap = async (overrides: BootstrapProps = {}) => {
+const renderBootstrap = async (overrides: Partial<BootstrapProps> = {}) => {
   Object.assign(mockPersistedStorage, {
     getItem: mockGetItem,
     setItem: mockSetItem,
@@ -27,6 +28,7 @@ const renderBootstrap = async (overrides: BootstrapProps = {}) => {
   render(
     <Bootstrap
       persistedStorage={mockPersistedStorage as any as typeof localforage}
+      initialUserSettings={userSettingsStub}
       {...overrides}
     />
   )
@@ -48,7 +50,7 @@ test('checks persistedStorage for user settings', async () => {
 
 test('persists user settings if none were already persisted', async () => {
   await renderBootstrap({
-    getUuid: mockGetUuid.mockImplementation(() => 'abc123'),
+    initialUserSettings: { ...userSettingsStub, userId: 'abc123' },
   })
 
   expect(mockSetItem).toHaveBeenCalledWith(PersistedStorageKeys.USER_SETTINGS, {

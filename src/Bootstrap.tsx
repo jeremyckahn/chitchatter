@@ -30,7 +30,7 @@ import {
 
 export interface BootstrapProps {
   persistedStorage?: typeof localforage
-  getUuid?: typeof uuid
+  initialUserSettings: UserSettings
 }
 
 const configListenerTimeout = 3000
@@ -71,13 +71,13 @@ const getConfigFromSdk = () => {
   })
 }
 
-function Bootstrap({
+export const Bootstrap = ({
   persistedStorage: persistedStorageProp = localforage.createInstance({
     name: 'chitchatter',
     description: 'Persisted settings data for chitchatter',
   }),
-  getUuid = uuid,
-}: BootstrapProps) {
+  initialUserSettings,
+}: BootstrapProps) => {
   const queryParams = useMemo(
     () => new URLSearchParams(window.location.search),
     []
@@ -86,14 +86,8 @@ function Bootstrap({
   const [persistedStorage] = useState(persistedStorageProp)
   const [appNeedsUpdate, setAppNeedsUpdate] = useState(false)
   const [hasLoadedSettings, setHasLoadedSettings] = useState(false)
-  const [userSettings, setUserSettings] = useState<UserSettings>({
-    userId: getUuid(),
-    customUsername: '',
-    colorMode: ColorMode.DARK,
-    playSoundOnNewMessage: true,
-    showNotificationOnNewMessage: true,
-    showActiveTypingStatus: true,
-  })
+  const [userSettings, setUserSettings] =
+    useState<UserSettings>(initialUserSettings)
   const { userId } = userSettings
 
   const handleServiceWorkerUpdate = () => {
@@ -253,4 +247,22 @@ function Bootstrap({
   )
 }
 
-export default Bootstrap
+export interface BootstrapShimProps
+  extends Omit<BootstrapProps, 'initialUserSettings'> {
+  getUuid?: typeof uuid
+}
+
+const BootstrapShim = ({ getUuid = uuid, ...props }: BootstrapShimProps) => {
+  const userSettings = {
+    userId: getUuid(),
+    customUsername: '',
+    colorMode: ColorMode.DARK,
+    playSoundOnNewMessage: true,
+    showNotificationOnNewMessage: true,
+    showActiveTypingStatus: true,
+  }
+
+  return <Bootstrap {...props} initialUserSettings={userSettings} />
+}
+
+export default BootstrapShim
