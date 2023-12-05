@@ -27,7 +27,7 @@ import {
   PostMessageEvent,
   PostMessageEventName,
 } from 'models/sdk'
-import { generateKeyPair } from 'utils'
+import { EncryptionService } from 'services/Encryption'
 
 export interface BootstrapProps {
   persistedStorage?: typeof localforage
@@ -260,7 +260,8 @@ const BootstrapShim = ({ getUuid = uuid, ...props }: BootstrapShimProps) => {
       if (userSettings !== null) return
 
       // FIXME: Handle potential exception here
-      const { publicKey, privateKey } = await generateKeyPair()
+      const { publicKey, privateKey } =
+        await EncryptionService.generateKeyPair()
 
       setUserSettings({
         userId: getUuid(),
@@ -269,6 +270,8 @@ const BootstrapShim = ({ getUuid = uuid, ...props }: BootstrapShimProps) => {
         playSoundOnNewMessage: true,
         showNotificationOnNewMessage: true,
         showActiveTypingStatus: true,
+        // FIXME: Persist keys for new users
+        // FIXME: Persist keys for preexisting users
         publicKey,
         privateKey,
       })

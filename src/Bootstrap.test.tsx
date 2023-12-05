@@ -2,8 +2,8 @@ import { act, render } from '@testing-library/react'
 import localforage from 'localforage'
 
 import { PersistedStorageKeys } from 'models/storage'
+import { EncryptionService } from 'services/Encryption'
 import { userSettingsStubFactory } from 'test-utils/stubs/userSettings'
-import { cryptoKeyStub } from 'utils'
 
 import { Bootstrap, BootstrapProps } from './Bootstrap'
 
@@ -61,8 +61,8 @@ test('persists user settings if none were already persisted', async () => {
     playSoundOnNewMessage: true,
     showNotificationOnNewMessage: true,
     showActiveTypingStatus: true,
-    publicKey: cryptoKeyStub,
-    privateKey: cryptoKeyStub,
+    publicKey: EncryptionService.cryptoKeyStub,
+    privateKey: EncryptionService.cryptoKeyStub,
   })
 })
 
