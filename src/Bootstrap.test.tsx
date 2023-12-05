@@ -3,6 +3,7 @@ import localforage from 'localforage'
 
 import { PersistedStorageKeys } from 'models/storage'
 import { userSettingsStubFactory } from 'test-utils/stubs/userSettings'
+import { cryptoKeyStub } from 'utils'
 
 import { Bootstrap, BootstrapProps } from './Bootstrap'
 
@@ -60,6 +61,8 @@ test('persists user settings if none were already persisted', async () => {
     playSoundOnNewMessage: true,
     showNotificationOnNewMessage: true,
     showActiveTypingStatus: true,
+    publicKey: cryptoKeyStub,
+    privateKey: cryptoKeyStub,
   })
 })
 

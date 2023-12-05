@@ -1,4 +1,5 @@
 import { ColorMode, UserSettings } from 'models/settings'
+import { cryptoKeyStub } from 'utils'
 
 export const userSettingsStubFactory = (
   overrides: Partial<UserSettings> = {}
@@ -10,6 +11,8 @@ export const userSettingsStubFactory = (
     playSoundOnNewMessage: true,
     showNotificationOnNewMessage: true,
     showActiveTypingStatus: true,
+    publicKey: cryptoKeyStub,
+    privateKey: cryptoKeyStub,
     ...overrides,
   }
 }

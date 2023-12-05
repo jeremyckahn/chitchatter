@@ -27,6 +27,7 @@ import {
   PostMessageEvent,
   PostMessageEventName,
 } from 'models/sdk'
+import { generateKeyPair } from 'utils'
 
 export interface BootstrapProps {
   persistedStorage?: typeof localforage
@@ -253,13 +254,30 @@ export interface BootstrapShimProps
 }
 
 const BootstrapShim = ({ getUuid = uuid, ...props }: BootstrapShimProps) => {
-  const userSettings = {
-    userId: getUuid(),
-    customUsername: '',
-    colorMode: ColorMode.DARK,
-    playSoundOnNewMessage: true,
-    showNotificationOnNewMessage: true,
-    showActiveTypingStatus: true,
+  const [userSettings, setUserSettings] = useState<UserSettings | null>(null)
+  useEffect(() => {
+    ;(async () => {
+      if (userSettings !== null) return
+
+      // FIXME: Handle potential exception here
+      const { publicKey, privateKey } = await generateKeyPair()
+
+      setUserSettings({
+        userId: getUuid(),
+        customUsername: '',
+        colorMode: ColorMode.DARK,
+        playSoundOnNewMessage: true,
+        showNotificationOnNewMessage: true,
+        showActiveTypingStatus: true,
+        publicKey,
+        privateKey,
+      })
+    })()
+  }, [getUuid, userSettings])
+
+  // FIXME: Show key generation error if necessary
+  if (userSettings === null) {
+    return <></>
   }
 
   return <Bootstrap {...props} initialUserSettings={userSettings} />
