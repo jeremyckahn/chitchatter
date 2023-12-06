@@ -1,8 +1,12 @@
 import { act, render } from '@testing-library/react'
 import localforage from 'localforage'
+import { UserSettings } from 'models/settings'
 
 import { PersistedStorageKeys } from 'models/storage'
-import { EncryptionService } from 'services/Encryption'
+import {
+  SerializationService,
+  UserSettingsForIndexedDb,
+} from 'services/Serialization'
 import { userSettingsStubFactory } from 'test-utils/stubs/userSettings'
 
 import { Bootstrap, BootstrapProps } from './Bootstrap'
@@ -20,6 +24,23 @@ beforeEach(() => {
   mockSetItem.mockImplementation((data: any) => Promise.resolve(data))
 })
 
+const mockSerializedPublicKey = 'public key'
+const mockSerializedPrivateKey = 'private key'
+
+const mockSerializationService = {
+  getUserSettingsForIndexedDb: async (
+    userSettings: UserSettings
+  ): Promise<UserSettingsForIndexedDb> => {
+    const { publicKey, privateKey, ...userSettingsRest } = userSettings
+
+    return {
+      publicKey: mockSerializedPublicKey,
+      privateKey: mockSerializedPrivateKey,
+      ...userSettingsRest,
+    }
+  },
+}
+
 const renderBootstrap = async (overrides: Partial<BootstrapProps> = {}) => {
   Object.assign(mockPersistedStorage, {
     getItem: mockGetItem,
@@ -30,6 +51,9 @@ const renderBootstrap = async (overrides: Partial<BootstrapProps> = {}) => {
     <Bootstrap
       persistedStorage={mockPersistedStorage as any as typeof localforage}
       initialUserSettings={userSettingsStub}
+      serializationService={
+        mockSerializationService as typeof SerializationService
+      }
       {...overrides}
     />
   )
@@ -61,8 +85,8 @@ test('persists user settings if none were already persisted', async () => {
     playSoundOnNewMessage: true,
     showNotificationOnNewMessage: true,
     showActiveTypingStatus: true,
-    publicKey: EncryptionService.cryptoKeyStub,
-    privateKey: EncryptionService.cryptoKeyStub,
+    publicKey: mockSerializedPublicKey,
+    privateKey: mockSerializedPrivateKey,
   })
 })
 

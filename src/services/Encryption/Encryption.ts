@@ -41,14 +41,13 @@ export class EncryptionService {
     return encodedPassword
   }
 
-  // FIXME: Use this to serialize CryptoKeys for IndexedDB storage
   static convertCryptoKeyToString = async (
-    key: CryptoKeyPair,
+    cryptoKey: CryptoKey,
     type: AllowedKeyType
   ) => {
     const exportedKey = await window.crypto.subtle.exportKey(
       type === AllowedKeyType.PUBLIC ? 'spki' : 'pkcs8',
-      type === AllowedKeyType.PUBLIC ? key.publicKey : key.privateKey
+      cryptoKey
     )
 
     const exportedAsString = arrayBufferToBase64(exportedKey)

@@ -28,10 +28,12 @@ import {
   PostMessageEventName,
 } from 'models/sdk'
 import { EncryptionService } from 'services/Encryption'
+import { SerializationService } from 'services/Serialization'
 
 export interface BootstrapProps {
   persistedStorage?: typeof localforage
   initialUserSettings: UserSettings
+  serializationService?: typeof SerializationService
 }
 
 const configListenerTimeout = 3000
@@ -78,6 +80,7 @@ export const Bootstrap = ({
     description: 'Persisted settings data for chitchatter',
   }),
   initialUserSettings,
+  serializationService = SerializationService,
 }: BootstrapProps) => {
   const queryParams = useMemo(
     () => new URLSearchParams(window.location.search),
@@ -96,17 +99,21 @@ export const Bootstrap = ({
   }
 
   const persistUserSettings = useCallback(
-    (newUserSettings: UserSettings) => {
+    async (newUserSettings: UserSettings) => {
       if (queryParams.has(QueryParamKeys.IS_EMBEDDED)) {
         return Promise.resolve(userSettings)
       }
 
+      // FIXME: Deserialize keys when loading from IndexedDB
+      const userSettingsForIndexedDb =
+        await serializationService.getUserSettingsForIndexedDb(newUserSettings)
+
       return persistedStorageProp.setItem(
         PersistedStorageKeys.USER_SETTINGS,
-        newUserSettings
+        userSettingsForIndexedDb
       )
     },
-    [persistedStorageProp, queryParams, userSettings]
+    [persistedStorageProp, queryParams, serializationService, userSettings]
   )
 
   useEffect(() => {
