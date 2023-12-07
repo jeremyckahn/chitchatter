@@ -16,10 +16,13 @@ export const usePeerVerification = ({
   privateKey,
   encryptionService = encryptionServiceInstance,
 }: UserPeerVerificationProps) => {
-  const { updatePeer } = useContext(ShellContext)
+  const { updatePeer, peerList } = useContext(ShellContext)
 
   const [sendVerificationTokenEncrypted, receiveVerificationTokenEncrypted] =
     peerRoom.makeAction<ArrayBuffer>(PeerActions.VERIFICATION_TOKEN_ENCRYPTED)
+
+  const [sendVerificationTokenRaw, receiveVerificationTokenRaw] =
+    peerRoom.makeAction<string>(PeerActions.VERIFICATION_TOKEN_RAW)
 
   const verifyPeer = async (peer: Peer) => {
     const { verificationToken } = peer
@@ -34,24 +37,40 @@ export const usePeerVerification = ({
     await sendVerificationTokenEncrypted(encryptedVerificationToken, [
       peer.peerId,
     ])
-
-    // FIXME: Wait for token response from peer
-
-    // FIXME: Mark the peer as verified
   }
 
-  receiveVerificationTokenEncrypted(async encryptedVerificationToken => {
-    try {
-      const decryptedVerificationToken = await encryptionService.decryptString(
-        privateKey,
-        encryptedVerificationToken
-      )
+  receiveVerificationTokenEncrypted(
+    async (encryptedVerificationToken, peerId) => {
+      try {
+        const decryptedVerificationToken =
+          await encryptionService.decryptString(
+            privateKey,
+            encryptedVerificationToken
+          )
 
-      // FIXME: Remove this
-      console.log({ encryptedVerificationToken, decryptedVerificationToken })
-    } catch (e) {
-      console.error(e)
+        await sendVerificationTokenRaw(decryptedVerificationToken, [peerId])
+      } catch (e) {
+        // FIXME: Surface error to the user
+        console.error(e)
+      }
     }
+  )
+
+  receiveVerificationTokenRaw((decryptedVerificationToken, peerId) => {
+    const matchingPeer = peerList.find(peer => peer.peerId === peerId)
+
+    if (!matchingPeer) {
+      throw new Error(`peerId not found: ${peerId}`)
+    }
+
+    if (decryptedVerificationToken !== matchingPeer.verificationToken) {
+      // FIXME: Surface error to the user
+      throw new Error(
+        `Verification token for peerId ${peerId} does not match. [expected: ${matchingPeer.verificationToken}] [received: ${decryptedVerificationToken}]`
+      )
+    }
+
+    updatePeer(peerId, { isVerified: true })
   })
 
   return { verifyPeer }
