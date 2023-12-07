@@ -269,6 +269,8 @@ export function useRoom(
           screenShareState: ScreenShareState.NOT_SHARING,
           offeredFileId: null,
           isTyping: false,
+          verificationToken: getUuid(),
+          encryptedVerificationToken: new ArrayBuffer(0),
           isVerified: false,
         }
 

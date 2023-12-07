@@ -1,17 +1,20 @@
 import { useContext } from 'react'
 import { ShellContext } from 'contexts/ShellContext'
 import { Peer } from 'models/chat'
+import { encryptionService } from 'services/Encryption'
 
 export const usePeerVerification = () => {
   const { updatePeer } = useContext(ShellContext)
 
-  const verifyPeer = (peer: Peer) => {
-    // FIXME: Remove this
-    console.log({ peer, updatePeer })
+  const verifyPeer = async (peer: Peer) => {
+    const { verificationToken } = peer
 
-    // FIXME: Create UUID token and store it
+    const encryptedVerificationToken = await encryptionService.encryptString(
+      peer.publicKey,
+      verificationToken
+    )
 
-    // FIXME: Hash token with publicKey
+    updatePeer(peer.peerId, { encryptedVerificationToken })
 
     // FIXME: Send hashed token to peer
 

@@ -85,6 +85,29 @@ export class EncryptionService {
 
     return importedKey
   }
+
+  encryptString = async (publicKey: CryptoKey, plaintext: string) => {
+    const encodedText = new TextEncoder().encode(plaintext)
+    const encryptedData = await crypto.subtle.encrypt(
+      algorithmName,
+      publicKey,
+      encodedText
+    )
+
+    return encryptedData
+  }
+
+  decryptString = async (privateKey: CryptoKey, encryptedData: ArrayBuffer) => {
+    const decryptedArrayBuffer = await crypto.subtle.decrypt(
+      algorithmName,
+      privateKey,
+      encryptedData
+    )
+
+    const decryptedText = new TextDecoder().decode(decryptedArrayBuffer)
+
+    return decryptedText
+  }
 }
 
 export const encryptionService = new EncryptionService()

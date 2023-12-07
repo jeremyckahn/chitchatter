@@ -51,6 +51,8 @@ export interface Peer {
   screenShareState: ScreenShareState
   offeredFileId: string | null
   isTyping: boolean
+  verificationToken: string
+  encryptedVerificationToken: ArrayBuffer
   isVerified: boolean
 }
 
