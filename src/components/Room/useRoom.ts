@@ -225,7 +225,13 @@ export function useRoom(
   const [sendPeerInlineMedia, receivePeerInlineMedia] =
     peerRoom.makeAction<UnsentInlineMedia>(PeerActions.MEDIA_MESSAGE)
 
-  const { verifyPeer } = usePeerVerification()
+  const { privateKey } = settingsContext.getUserSettings()
+
+  const { verifyPeer } = usePeerVerification({
+    peerRoom,
+    privateKey,
+    encryptionService,
+  })
 
   const sendMessage = async (message: string) => {
     if (isMessageSending) return
