@@ -1,16 +1,16 @@
 import { UserSettings } from 'models/settings'
 import { AllowedKeyType, EncryptionService } from 'services/Encryption'
 
-export interface UserSettingsForIndexedDb
+export interface SerializedUserSettings
   extends Omit<UserSettings, 'publicKey' | 'privateKey'> {
   publicKey: string
   privateKey: string
 }
 
 export class SerializationService {
-  static getUserSettingsForIndexedDb = async (
+  static serializeUserSettings = async (
     userSettings: UserSettings
-  ): Promise<UserSettingsForIndexedDb> => {
+  ): Promise<SerializedUserSettings> => {
     const {
       publicKey: publicCryptoKey,
       privateKey: privateCryptoKey,
@@ -29,6 +29,31 @@ export class SerializationService {
 
     return {
       ...userSettingsRest,
+      publicKey,
+      privateKey,
+    }
+  }
+
+  static deserializeUserSettings = async (
+    serializedUserSettings: SerializedUserSettings
+  ): Promise<UserSettings> => {
+    const {
+      publicKey: publicCryptoKey,
+      privateKey: privateCryptoKey,
+      ...userSettingsForIndexedDbRest
+    } = serializedUserSettings
+
+    const publicKey = await EncryptionService.convertStringToCryptoKey(
+      publicCryptoKey,
+      AllowedKeyType.PUBLIC
+    )
+    const privateKey = await EncryptionService.convertStringToCryptoKey(
+      privateCryptoKey,
+      AllowedKeyType.PRIVATE
+    )
+
+    return {
+      ...userSettingsForIndexedDbRest,
       publicKey,
       privateKey,
     }

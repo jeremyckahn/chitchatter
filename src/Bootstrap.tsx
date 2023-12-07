@@ -28,7 +28,10 @@ import {
   PostMessageEventName,
 } from 'models/sdk'
 import { EncryptionService } from 'services/Encryption'
-import { SerializationService } from 'services/Serialization'
+import {
+  SerializationService,
+  SerializedUserSettings,
+} from 'services/Serialization'
 
 export interface BootstrapProps {
   persistedStorage?: typeof localforage
@@ -104,9 +107,8 @@ export const Bootstrap = ({
         return Promise.resolve(userSettings)
       }
 
-      // FIXME: Deserialize keys when loading from IndexedDB
       const userSettingsForIndexedDb =
-        await serializationService.getUserSettingsForIndexedDb(newUserSettings)
+        await serializationService.serializeUserSettings(newUserSettings)
 
       return persistedStorageProp.setItem(
         PersistedStorageKeys.USER_SETTINGS,
@@ -124,10 +126,17 @@ export const Bootstrap = ({
     ;(async () => {
       if (hasLoadedSettings) return
 
-      const persistedUserSettings =
-        await persistedStorageProp.getItem<UserSettings>(
+      const serializedUserSettings =
+        await persistedStorageProp.getItem<SerializedUserSettings>(
           PersistedStorageKeys.USER_SETTINGS
         )
+
+      const persistedUserSettings =
+        serializedUserSettings === null
+          ? serializedUserSettings
+          : await serializationService.deserializeUserSettings(
+              serializedUserSettings
+            )
 
       const computeUserSettings = async (): Promise<UserSettings> => {
         if (queryParams.has(QueryParamKeys.GET_SDK_CONFIG)) {
@@ -155,6 +164,7 @@ export const Bootstrap = ({
       const computedUserSettings = await computeUserSettings()
       setUserSettings(computedUserSettings)
 
+      // FIXME: Remove this guard
       if (persistedUserSettings === null) {
         await persistUserSettings(computedUserSettings)
       }
@@ -168,6 +178,7 @@ export const Bootstrap = ({
     userId,
     queryParams,
     persistUserSettings,
+    serializationService,
   ])
 
   useEffect(() => {

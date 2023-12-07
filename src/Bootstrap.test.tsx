@@ -3,9 +3,10 @@ import localforage from 'localforage'
 import { UserSettings } from 'models/settings'
 
 import { PersistedStorageKeys } from 'models/storage'
+import { EncryptionService } from 'services/Encryption/Encryption'
 import {
   SerializationService,
-  UserSettingsForIndexedDb,
+  SerializedUserSettings,
 } from 'services/Serialization'
 import { userSettingsStubFactory } from 'test-utils/stubs/userSettings'
 
@@ -28,14 +29,27 @@ const mockSerializedPublicKey = 'public key'
 const mockSerializedPrivateKey = 'private key'
 
 const mockSerializationService = {
-  getUserSettingsForIndexedDb: async (
+  serializeUserSettings: async (
     userSettings: UserSettings
-  ): Promise<UserSettingsForIndexedDb> => {
+  ): Promise<SerializedUserSettings> => {
     const { publicKey, privateKey, ...userSettingsRest } = userSettings
 
     return {
       publicKey: mockSerializedPublicKey,
       privateKey: mockSerializedPrivateKey,
+      ...userSettingsRest,
+    }
+  },
+
+  deserializeUserSettings: async (
+    serializedUserSettings: SerializedUserSettings
+  ): Promise<UserSettings> => {
+    const { publicKey, privateKey, ...userSettingsRest } =
+      serializedUserSettings
+
+    return {
+      publicKey: EncryptionService.cryptoKeyStub,
+      privateKey: EncryptionService.cryptoKeyStub,
       ...userSettingsRest,
     }
   },

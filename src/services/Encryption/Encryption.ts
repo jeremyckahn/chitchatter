@@ -1,3 +1,8 @@
+// NOTE: Much of what's here is derived from various ChatGPT responses:
+//
+//  - https://gist.github.com/jeremyckahn/cbb6107e7de6c83b620960a19266055e
+//  - https://gist.github.com/jeremyckahn/c49ca17a849ecf35c5f957ffde956cf4
+
 export enum AllowedKeyType {
   PUBLIC,
   PRIVATE,
@@ -6,6 +11,16 @@ export enum AllowedKeyType {
 const arrayBufferToBase64 = (buffer: ArrayBuffer) => {
   const binary = String.fromCharCode(...new Uint8Array(buffer))
   return btoa(binary)
+}
+
+const base64ToArrayBuffer = (base64: string) => {
+  const binaryString = atob(base64)
+  const bytes = new Uint8Array(binaryString.length)
+  for (let i = 0; i < binaryString.length; i++) {
+    bytes[i] = binaryString.charCodeAt(i)
+  }
+
+  return bytes.buffer
 }
 
 export class EncryptionService {
@@ -53,5 +68,25 @@ export class EncryptionService {
     const exportedAsString = arrayBufferToBase64(exportedKey)
 
     return exportedAsString
+  }
+
+  static convertStringToCryptoKey = async (
+    stringKey: string,
+    type: AllowedKeyType
+  ) => {
+    const importedKey = await window.crypto.subtle.importKey(
+      type === AllowedKeyType.PUBLIC ? 'spki' : 'pkcs8',
+      base64ToArrayBuffer(stringKey),
+      {
+        name: 'RSA-OAEP',
+        hash: {
+          name: 'SHA-256',
+        },
+      },
+      false,
+      type === AllowedKeyType.PUBLIC ? ['encrypt'] : ['decrypt']
+    )
+
+    return importedKey
   }
 }
