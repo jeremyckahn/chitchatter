@@ -126,17 +126,20 @@ export const Bootstrap = ({
     ;(async () => {
       if (hasLoadedSettings) return
 
-      const serializedUserSettings =
-        await persistedStorageProp.getItem<SerializedUserSettings>(
+      const serializedUserSettings = {
+        // NOTE: This migrates persisted user to latest version
+        ...(await serializationService.serializeUserSettings(
+          initialUserSettings
+        )),
+        ...(await persistedStorageProp.getItem<SerializedUserSettings>(
           PersistedStorageKeys.USER_SETTINGS
-        )
+        )),
+      }
 
       const persistedUserSettings =
-        serializedUserSettings === null
-          ? serializedUserSettings
-          : await serializationService.deserializeUserSettings(
-              serializedUserSettings
-            )
+        await serializationService.deserializeUserSettings(
+          serializedUserSettings
+        )
 
       const computeUserSettings = async (): Promise<UserSettings> => {
         if (queryParams.has(QueryParamKeys.GET_SDK_CONFIG)) {
@@ -175,6 +178,7 @@ export const Bootstrap = ({
     queryParams,
     persistUserSettings,
     serializationService,
+    initialUserSettings,
   ])
 
   useEffect(() => {
