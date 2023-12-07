@@ -27,7 +27,7 @@ import {
   PostMessageEvent,
   PostMessageEventName,
 } from 'models/sdk'
-import { EncryptionService } from 'services/Encryption'
+import { encryptionService } from 'services/Encryption'
 import {
   SerializationService,
   SerializedUserSettings,
@@ -279,7 +279,7 @@ const BootstrapShim = ({ getUuid = uuid, ...props }: BootstrapShimProps) => {
 
       // FIXME: Handle potential exception here
       const { publicKey, privateKey } =
-        await EncryptionService.generateKeyPair()
+        await encryptionService.generateKeyPair()
 
       setUserSettings({
         userId: getUuid(),

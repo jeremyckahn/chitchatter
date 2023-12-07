@@ -1,5 +1,5 @@
 import { UserSettings } from 'models/settings'
-import { EncryptionService } from 'services/Encryption'
+import { encryptionService } from 'services/Encryption'
 import {
   SerializationService,
   SerializedUserSettings,
@@ -29,8 +29,8 @@ export const mockSerializationService = {
       serializedUserSettings
 
     return {
-      publicKey: EncryptionService.cryptoKeyStub,
-      privateKey: EncryptionService.cryptoKeyStub,
+      publicKey: encryptionService.cryptoKeyStub,
+      privateKey: encryptionService.cryptoKeyStub,
       ...userSettingsRest,
     }
   },

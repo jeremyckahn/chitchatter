@@ -27,7 +27,10 @@ import { NotificationService } from 'services/Notification'
 import { Audio as AudioService } from 'services/Audio'
 import { PeerRoom, PeerHookType } from 'services/PeerRoom'
 import { fileTransfer } from 'services/FileTransfer'
-import { AllowedKeyType, EncryptionService } from 'services/Encryption'
+import {
+  AllowedKeyType,
+  encryptionService as encryptionServiceInstance,
+} from 'services/Encryption'
 
 import { messageTranscriptSizeLimit } from 'config/messaging'
 
@@ -36,7 +39,7 @@ interface UseRoomConfig {
   userId: string
   publicKey: CryptoKey
   getUuid?: typeof uuid
-  encryptionService?: typeof EncryptionService
+  encryptionService?: typeof encryptionServiceInstance
 }
 
 interface UserMetadata {
@@ -52,7 +55,7 @@ export function useRoom(
     userId,
     publicKey,
     getUuid = uuid,
-    encryptionService = EncryptionService,
+    encryptionService = encryptionServiceInstance,
   }: UseRoomConfig
 ) {
   const isPrivate = password !== undefined

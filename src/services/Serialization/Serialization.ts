@@ -1,5 +1,5 @@
 import { UserSettings } from 'models/settings'
-import { AllowedKeyType, EncryptionService } from 'services/Encryption'
+import { AllowedKeyType, encryptionService } from 'services/Encryption'
 
 export interface SerializedUserSettings
   extends Omit<UserSettings, 'publicKey' | 'privateKey'> {
@@ -17,11 +17,11 @@ export class SerializationService {
       ...userSettingsRest
     } = userSettings
 
-    const publicKey = await EncryptionService.stringifyCryptoKey(
+    const publicKey = await encryptionService.stringifyCryptoKey(
       publicCryptoKey
     )
 
-    const privateKey = await EncryptionService.stringifyCryptoKey(
+    const privateKey = await encryptionService.stringifyCryptoKey(
       privateCryptoKey
     )
 
@@ -41,11 +41,11 @@ export class SerializationService {
       ...userSettingsForIndexedDbRest
     } = serializedUserSettings
 
-    const publicKey = await EncryptionService.parseCryptoKeyString(
+    const publicKey = await encryptionService.parseCryptoKeyString(
       publicCryptoKeyString,
       AllowedKeyType.PUBLIC
     )
-    const privateKey = await EncryptionService.parseCryptoKeyString(
+    const privateKey = await encryptionService.parseCryptoKeyString(
       privateCryptoKeyString,
       AllowedKeyType.PRIVATE
     )

@@ -5,7 +5,7 @@ import { useParams } from 'react-router-dom'
 import { ShellContext } from 'contexts/ShellContext'
 import { NotificationService } from 'services/Notification'
 import { PasswordPrompt } from 'components/PasswordPrompt/PasswordPrompt'
-import { EncryptionService } from 'services/Encryption'
+import { encryptionService } from 'services/Encryption'
 
 interface PublicRoomProps {
   userId: string
@@ -31,7 +31,7 @@ export function PrivateRoom({ userId }: PublicRoomProps) {
 
   const handlePasswordEntered = async (password: string) => {
     if (password.length !== 0)
-      setSecret(await EncryptionService.encodePassword(roomId, password))
+      setSecret(await encryptionService.encodePassword(roomId, password))
   }
 
   if (urlParams.has('pwd') && !urlParams.has('secret'))

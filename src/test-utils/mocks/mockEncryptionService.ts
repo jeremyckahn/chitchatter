@@ -1,10 +1,16 @@
-import { EncryptionService } from 'services/Encryption'
+import { encryptionService } from 'services/Encryption'
 
-// FIXME: Mock the rest of the service
-export const mockEncryptionService = {
-  ...EncryptionService,
+export const mockEncryptionService = encryptionService
 
-  stringifyCryptoKey: async () => {
-    return ''
-  },
-} as unknown as typeof EncryptionService
+mockEncryptionService.generateKeyPair = jest.fn(async () => ({
+  publicKey: encryptionService.cryptoKeyStub,
+  privateKey: encryptionService.cryptoKeyStub,
+}))
+
+mockEncryptionService.encodePassword = jest.fn(async () => '')
+
+mockEncryptionService.stringifyCryptoKey = jest.fn(async () => '')
+
+mockEncryptionService.parseCryptoKeyString = jest.fn(
+  async () => encryptionService.cryptoKeyStub
+)

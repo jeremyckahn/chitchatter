@@ -1,5 +1,5 @@
 import { ColorMode, UserSettings } from 'models/settings'
-import { EncryptionService } from 'services/Encryption'
+import { encryptionService } from 'services/Encryption'
 
 export const userSettingsStubFactory = (
   overrides: Partial<UserSettings> = {}
@@ -11,8 +11,8 @@ export const userSettingsStubFactory = (
     playSoundOnNewMessage: true,
     showNotificationOnNewMessage: true,
     showActiveTypingStatus: true,
-    publicKey: EncryptionService.cryptoKeyStub,
-    privateKey: EncryptionService.cryptoKeyStub,
+    publicKey: encryptionService.cryptoKeyStub,
+    privateKey: encryptionService.cryptoKeyStub,
     ...overrides,
   }
 }

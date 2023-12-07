@@ -28,7 +28,7 @@ const algorithmName = 'RSA-OAEP'
 const algorithmHash = 'SHA-256'
 
 export class EncryptionService {
-  static cryptoKeyStub: CryptoKey = {
+  cryptoKeyStub: CryptoKey = {
     algorithm: { name: 'STUB-ALGORITHM' },
     extractable: false,
     type: 'private',
@@ -36,7 +36,7 @@ export class EncryptionService {
   }
 
   // TODO: Make this configurable
-  static generateKeyPair = async (): Promise<CryptoKeyPair> => {
+  generateKeyPair = async (): Promise<CryptoKeyPair> => {
     const keyPair = await window.crypto.subtle.generateKey(
       {
         name: algorithmName,
@@ -51,7 +51,7 @@ export class EncryptionService {
     return keyPair
   }
 
-  static encodePassword = async (roomId: string, password: string) => {
+  encodePassword = async (roomId: string, password: string) => {
     const data = new TextEncoder().encode(`${roomId}_${password}`)
     const digest = await window.crypto.subtle.digest('SHA-256', data)
     const bytes = new Uint8Array(digest)
@@ -60,7 +60,7 @@ export class EncryptionService {
     return encodedPassword
   }
 
-  static stringifyCryptoKey = async (cryptoKey: CryptoKey) => {
+  stringifyCryptoKey = async (cryptoKey: CryptoKey) => {
     const exportedKey = await window.crypto.subtle.exportKey(
       cryptoKey.type === 'public' ? 'spki' : 'pkcs8',
       cryptoKey
@@ -71,10 +71,7 @@ export class EncryptionService {
     return exportedKeyAsString
   }
 
-  static parseCryptoKeyString = async (
-    keyString: string,
-    type: AllowedKeyType
-  ) => {
+  parseCryptoKeyString = async (keyString: string, type: AllowedKeyType) => {
     const importedKey = await window.crypto.subtle.importKey(
       type === AllowedKeyType.PUBLIC ? 'spki' : 'pkcs8',
       base64ToArrayBuffer(keyString),
@@ -89,3 +86,5 @@ export class EncryptionService {
     return importedKey
   }
 }
+
+export const encryptionService = new EncryptionService()
