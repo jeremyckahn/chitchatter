@@ -41,6 +41,12 @@ export enum ScreenShareState {
   NOT_SHARING = 'NOT_SHARING',
 }
 
+export enum PeerVerificationState {
+  VERIFYING,
+  UNVERIFIED,
+  VERIFIED,
+}
+
 export interface Peer {
   peerId: string
   userId: string
@@ -53,7 +59,7 @@ export interface Peer {
   isTyping: boolean
   verificationToken: string
   encryptedVerificationToken: ArrayBuffer
-  isVerified: boolean
+  verificationState: PeerVerificationState
 }
 
 export const isMessageReceived = (

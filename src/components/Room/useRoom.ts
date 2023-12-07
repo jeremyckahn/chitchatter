@@ -22,6 +22,7 @@ import {
   FileOfferMetadata,
   TypingStatus,
   Peer,
+  PeerVerificationState,
 } from 'models/chat'
 import { getPeerName, usePeerNameDisplay } from 'components/PeerNameDisplay'
 import { NotificationService } from 'services/Notification'
@@ -277,7 +278,7 @@ export function useRoom(
           isTyping: false,
           verificationToken: getUuid(),
           encryptedVerificationToken: new ArrayBuffer(0),
-          isVerified: false,
+          verificationState: PeerVerificationState.VERIFYING,
         }
 
         setPeerList([...peerList, newPeer])

@@ -1,6 +1,6 @@
 import { useContext } from 'react'
 import { ShellContext } from 'contexts/ShellContext'
-import { Peer } from 'models/chat'
+import { Peer, PeerVerificationState } from 'models/chat'
 import { encryptionService as encryptionServiceInstance } from 'services/Encryption'
 import { PeerRoom } from 'services/PeerRoom'
 import { PeerActions } from 'models/network'
@@ -64,13 +64,17 @@ export const usePeerVerification = ({
     }
 
     if (decryptedVerificationToken !== matchingPeer.verificationToken) {
+      updatePeer(peerId, {
+        verificationState: PeerVerificationState.UNVERIFIED,
+      })
+
       // FIXME: Surface error to the user
       throw new Error(
         `Verification token for peerId ${peerId} does not match. [expected: ${matchingPeer.verificationToken}] [received: ${decryptedVerificationToken}]`
       )
     }
 
-    updatePeer(peerId, { isVerified: true })
+    updatePeer(peerId, { verificationState: PeerVerificationState.VERIFIED })
   })
 
   return { verifyPeer }
