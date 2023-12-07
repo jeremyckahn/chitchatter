@@ -23,6 +23,10 @@ const base64ToArrayBuffer = (base64: string) => {
   return bytes.buffer
 }
 
+const algorithmName = 'RSA-OAEP'
+
+const algorithmHash = 'SHA-256'
+
 export class EncryptionService {
   static cryptoKeyStub: CryptoKey = {
     algorithm: { name: 'STUB-ALGORITHM' },
@@ -35,10 +39,10 @@ export class EncryptionService {
   static generateKeyPair = async (): Promise<CryptoKeyPair> => {
     const keyPair = await window.crypto.subtle.generateKey(
       {
-        name: 'RSA-OAEP',
+        name: algorithmName,
+        hash: algorithmHash,
         modulusLength: 2048,
         publicExponent: new Uint8Array([0x01, 0x00, 0x01]),
-        hash: 'SHA-256',
       },
       true,
       ['encrypt', 'decrypt']
@@ -75,10 +79,8 @@ export class EncryptionService {
       type === AllowedKeyType.PUBLIC ? 'spki' : 'pkcs8',
       base64ToArrayBuffer(keyString),
       {
-        name: 'RSA-OAEP',
-        hash: {
-          name: 'SHA-256',
-        },
+        name: algorithmName,
+        hash: algorithmHash,
       },
       true,
       type === AllowedKeyType.PUBLIC ? ['encrypt'] : ['decrypt']

@@ -127,7 +127,7 @@ export const Bootstrap = ({
       if (hasLoadedSettings) return
 
       const serializedUserSettings = {
-        // NOTE: This migrates persisted user to latest version
+        // NOTE: This migrates persisted user settings data to latest version
         ...(await serializationService.serializeUserSettings(
           initialUserSettings
         )),
