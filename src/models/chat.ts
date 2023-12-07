@@ -44,6 +44,7 @@ export enum ScreenShareState {
 export interface Peer {
   peerId: string
   userId: string
+  publicKey: CryptoKey
   customUsername: string
   audioState: AudioState
   videoState: VideoState

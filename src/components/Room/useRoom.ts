@@ -27,23 +27,33 @@ import { NotificationService } from 'services/Notification'
 import { Audio as AudioService } from 'services/Audio'
 import { PeerRoom, PeerHookType } from 'services/PeerRoom'
 import { fileTransfer } from 'services/FileTransfer'
+import { AllowedKeyType, EncryptionService } from 'services/Encryption'
 
 import { messageTranscriptSizeLimit } from 'config/messaging'
 
 interface UseRoomConfig {
   roomId: string
   userId: string
+  publicKey: CryptoKey
   getUuid?: typeof uuid
+  encryptionService?: typeof EncryptionService
 }
 
 interface UserMetadata {
   userId: string
   customUsername: string
+  publicKeyString: string
 }
 
 export function useRoom(
   { password, ...roomConfig }: BaseRoomConfig & TorrentRoomConfig,
-  { roomId, userId, getUuid = uuid }: UseRoomConfig
+  {
+    roomId,
+    userId,
+    publicKey,
+    getUuid = uuid,
+    encryptionService = EncryptionService,
+  }: UseRoomConfig
 ) {
   const isPrivate = password !== undefined
 
@@ -231,40 +241,48 @@ export function useRoom(
     setIsMessageSending(false)
   }
 
-  receivePeerMetadata(({ userId, customUsername }, peerId: string) => {
-    const peerIndex = peerList.findIndex(peer => peer.peerId === peerId)
+  receivePeerMetadata(
+    async ({ userId, customUsername, publicKeyString }, peerId: string) => {
+      const publicKey = await encryptionService.parseCryptoKeyString(
+        publicKeyString,
+        AllowedKeyType.PUBLIC
+      )
 
-    if (peerIndex === -1) {
-      setPeerList([
-        ...peerList,
-        {
-          peerId,
-          userId,
-          customUsername,
-          audioState: AudioState.STOPPED,
-          videoState: VideoState.STOPPED,
-          screenShareState: ScreenShareState.NOT_SHARING,
-          offeredFileId: null,
-          isTyping: false,
-        },
-      ])
+      const peerIndex = peerList.findIndex(peer => peer.peerId === peerId)
 
-      sendTypingStatusChange({ isTyping }, peerId)
-    } else {
-      const oldUsername =
-        peerList[peerIndex].customUsername || getPeerName(userId)
-      const newUsername = customUsername || getPeerName(userId)
+      if (peerIndex === -1) {
+        setPeerList([
+          ...peerList,
+          {
+            peerId,
+            userId,
+            publicKey,
+            customUsername,
+            audioState: AudioState.STOPPED,
+            videoState: VideoState.STOPPED,
+            screenShareState: ScreenShareState.NOT_SHARING,
+            offeredFileId: null,
+            isTyping: false,
+          },
+        ])
 
-      const newPeerList = [...peerList]
-      const newPeer = { ...newPeerList[peerIndex], userId, customUsername }
-      newPeerList[peerIndex] = newPeer
-      setPeerList(newPeerList)
+        sendTypingStatusChange({ isTyping }, peerId)
+      } else {
+        const oldUsername =
+          peerList[peerIndex].customUsername || getPeerName(userId)
+        const newUsername = customUsername || getPeerName(userId)
 
-      if (oldUsername !== newUsername) {
-        showAlert(`${oldUsername} is now ${newUsername}`)
+        const newPeerList = [...peerList]
+        const newPeer = { ...newPeerList[peerIndex], userId, customUsername }
+        newPeerList[peerIndex] = newPeer
+        setPeerList(newPeerList)
+
+        if (oldUsername !== newUsername) {
+          showAlert(`${oldUsername} is now ${newUsername}`)
+        }
       }
     }
-  })
+  )
 
   receiveMessageTranscript(transcript => {
     if (messageLog.length) return
@@ -303,8 +321,12 @@ export function useRoom(
     })
     ;(async () => {
       try {
+        const publicKeyString = await encryptionService.stringifyCryptoKey(
+          publicKey
+        )
+
         const promises: Promise<any>[] = [
-          sendPeerMetadata({ userId, customUsername }, peerId),
+          sendPeerMetadata({ userId, customUsername, publicKeyString }, peerId),
         ]
 
         if (!isPrivate) {
@@ -408,8 +430,18 @@ export function useRoom(
   })
 
   useEffect(() => {
-    sendPeerMetadata({ customUsername, userId })
-  }, [customUsername, userId, sendPeerMetadata])
+    ;(async () => {
+      const userPublicKeyString = await encryptionService.stringifyCryptoKey(
+        publicKey
+      )
+
+      sendPeerMetadata({
+        customUsername,
+        userId,
+        publicKeyString: userPublicKeyString,
+      })
+    })()
+  }, [customUsername, userId, sendPeerMetadata, publicKey, encryptionService])
 
   useEffect(() => {
     ;(async () => {

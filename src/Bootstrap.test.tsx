@@ -1,13 +1,12 @@
 import { act, render } from '@testing-library/react'
 import localforage from 'localforage'
-import { UserSettings } from 'models/settings'
 
 import { PersistedStorageKeys } from 'models/storage'
-import { EncryptionService } from 'services/Encryption/Encryption'
 import {
-  SerializationService,
-  SerializedUserSettings,
-} from 'services/Serialization'
+  mockSerializationService,
+  mockSerializedPrivateKey,
+  mockSerializedPublicKey,
+} from 'test-utils/mocks/mockSerializationService'
 import { userSettingsStubFactory } from 'test-utils/stubs/userSettings'
 
 import { Bootstrap, BootstrapProps } from './Bootstrap'
@@ -25,36 +24,6 @@ beforeEach(() => {
   mockSetItem.mockImplementation((data: any) => Promise.resolve(data))
 })
 
-const mockSerializedPublicKey = 'public key'
-const mockSerializedPrivateKey = 'private key'
-
-const mockSerializationService = {
-  serializeUserSettings: async (
-    userSettings: UserSettings
-  ): Promise<SerializedUserSettings> => {
-    const { publicKey, privateKey, ...userSettingsRest } = userSettings
-
-    return {
-      publicKey: mockSerializedPublicKey,
-      privateKey: mockSerializedPrivateKey,
-      ...userSettingsRest,
-    }
-  },
-
-  deserializeUserSettings: async (
-    serializedUserSettings: SerializedUserSettings
-  ): Promise<UserSettings> => {
-    const { publicKey, privateKey, ...userSettingsRest } =
-      serializedUserSettings
-
-    return {
-      publicKey: EncryptionService.cryptoKeyStub,
-      privateKey: EncryptionService.cryptoKeyStub,
-      ...userSettingsRest,
-    }
-  },
-}
-
 const renderBootstrap = async (overrides: Partial<BootstrapProps> = {}) => {
   Object.assign(mockPersistedStorage, {
     getItem: mockGetItem,
@@ -65,9 +34,7 @@ const renderBootstrap = async (overrides: Partial<BootstrapProps> = {}) => {
     <Bootstrap
       persistedStorage={mockPersistedStorage as any as typeof localforage}
       initialUserSettings={userSettingsStub}
-      serializationService={
-        mockSerializationService as typeof SerializationService
-      }
+      serializationService={mockSerializationService}
       {...overrides}
     />
   )

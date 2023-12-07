@@ -4,10 +4,11 @@ import userEvent from '@testing-library/user-event'
 import { MemoryRouter as Router, Route, Routes } from 'react-router-dom'
 
 import { userSettingsContextStubFactory } from 'test-utils/stubs/settingsContext'
+import { mockEncryptionService } from 'test-utils/mocks/mockEncryptionService'
 
 import { SettingsContext } from 'contexts/SettingsContext'
 
-import { Room } from './'
+import { Room, RoomProps } from './'
 
 const mockUserId = 'user-id'
 const mockRoomId = 'room-123'
@@ -54,11 +55,15 @@ const RouteStub = ({ children }: PropsWithChildren) => {
 
 jest.useFakeTimers().setSystemTime(100)
 
+const RoomStub = (props: RoomProps) => {
+  return <Room encryptionService={mockEncryptionService} {...props} />
+}
+
 describe('Room', () => {
   test('is available', () => {
     render(
       <RouteStub>
-        <Room userId={mockUserId} roomId={mockRoomId} />
+        <RoomStub userId={mockUserId} roomId={mockRoomId} />
       </RouteStub>
     )
   })
@@ -66,7 +71,7 @@ describe('Room', () => {
   test('send button is disabled', () => {
     render(
       <RouteStub>
-        <Room userId={mockUserId} roomId={mockRoomId} />
+        <RoomStub userId={mockUserId} roomId={mockRoomId} />
       </RouteStub>
     )
 
@@ -77,7 +82,7 @@ describe('Room', () => {
   test('inputting text enabled send button', async () => {
     render(
       <RouteStub>
-        <Room userId={mockUserId} roomId={mockRoomId} />
+        <RoomStub userId={mockUserId} roomId={mockRoomId} />
       </RouteStub>
     )
 
@@ -94,7 +99,7 @@ describe('Room', () => {
   test('sending a message clears the text input', async () => {
     render(
       <RouteStub>
-        <Room userId={mockUserId} roomId={mockRoomId} />
+        <RoomStub userId={mockUserId} roomId={mockRoomId} />
       </RouteStub>
     )
 
@@ -115,7 +120,7 @@ describe('Room', () => {
   test('message is sent to peer', async () => {
     render(
       <RouteStub>
-        <Room
+        <RoomStub
           getUuid={mockGetUuid.mockImplementation(() => 'abc123')}
           userId={mockUserId}
           roomId={mockRoomId}
