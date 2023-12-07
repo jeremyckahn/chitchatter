@@ -56,27 +56,24 @@ export class EncryptionService {
     return encodedPassword
   }
 
-  static convertCryptoKeyToString = async (
-    cryptoKey: CryptoKey,
-    type: AllowedKeyType
-  ) => {
+  static stringifyCryptoKey = async (cryptoKey: CryptoKey) => {
     const exportedKey = await window.crypto.subtle.exportKey(
-      type === AllowedKeyType.PUBLIC ? 'spki' : 'pkcs8',
+      cryptoKey.type === 'public' ? 'spki' : 'pkcs8',
       cryptoKey
     )
 
-    const exportedAsString = arrayBufferToBase64(exportedKey)
+    const exportedKeyAsString = arrayBufferToBase64(exportedKey)
 
-    return exportedAsString
+    return exportedKeyAsString
   }
 
-  static convertStringToCryptoKey = async (
-    stringKey: string,
+  static parseCryptoKeyString = async (
+    keyString: string,
     type: AllowedKeyType
   ) => {
     const importedKey = await window.crypto.subtle.importKey(
       type === AllowedKeyType.PUBLIC ? 'spki' : 'pkcs8',
-      base64ToArrayBuffer(stringKey),
+      base64ToArrayBuffer(keyString),
       {
         name: 'RSA-OAEP',
         hash: {

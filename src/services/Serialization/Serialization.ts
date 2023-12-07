@@ -17,14 +17,12 @@ export class SerializationService {
       ...userSettingsRest
     } = userSettings
 
-    const publicKey = await EncryptionService.convertCryptoKeyToString(
-      publicCryptoKey,
-      AllowedKeyType.PUBLIC
+    const publicKey = await EncryptionService.stringifyCryptoKey(
+      publicCryptoKey
     )
 
-    const privateKey = await EncryptionService.convertCryptoKeyToString(
-      privateCryptoKey,
-      AllowedKeyType.PRIVATE
+    const privateKey = await EncryptionService.stringifyCryptoKey(
+      privateCryptoKey
     )
 
     return {
@@ -38,17 +36,17 @@ export class SerializationService {
     serializedUserSettings: SerializedUserSettings
   ): Promise<UserSettings> => {
     const {
-      publicKey: publicCryptoKey,
-      privateKey: privateCryptoKey,
+      publicKey: publicCryptoKeyString,
+      privateKey: privateCryptoKeyString,
       ...userSettingsForIndexedDbRest
     } = serializedUserSettings
 
-    const publicKey = await EncryptionService.convertStringToCryptoKey(
-      publicCryptoKey,
+    const publicKey = await EncryptionService.parseCryptoKeyString(
+      publicCryptoKeyString,
       AllowedKeyType.PUBLIC
     )
-    const privateKey = await EncryptionService.convertStringToCryptoKey(
-      privateCryptoKey,
+    const privateKey = await EncryptionService.parseCryptoKeyString(
+      privateCryptoKeyString,
       AllowedKeyType.PRIVATE
     )
 
