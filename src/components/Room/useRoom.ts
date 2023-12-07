@@ -21,6 +21,7 @@ import {
   isInlineMedia,
   FileOfferMetadata,
   TypingStatus,
+  Peer,
 } from 'models/chat'
 import { getPeerName, usePeerNameDisplay } from 'components/PeerNameDisplay'
 import { NotificationService } from 'services/Notification'
@@ -33,6 +34,8 @@ import {
 } from 'services/Encryption'
 
 import { messageTranscriptSizeLimit } from 'config/messaging'
+
+import { usePeerVerification } from './usePeerVerification'
 
 interface UseRoomConfig {
   roomId: string
@@ -222,6 +225,8 @@ export function useRoom(
   const [sendPeerInlineMedia, receivePeerInlineMedia] =
     peerRoom.makeAction<UnsentInlineMedia>(PeerActions.MEDIA_MESSAGE)
 
+  const { verifyPeer } = usePeerVerification()
+
   const sendMessage = async (message: string) => {
     if (isMessageSending) return
 
@@ -254,22 +259,23 @@ export function useRoom(
       const peerIndex = peerList.findIndex(peer => peer.peerId === peerId)
 
       if (peerIndex === -1) {
-        setPeerList([
-          ...peerList,
-          {
-            peerId,
-            userId,
-            publicKey,
-            customUsername,
-            audioState: AudioState.STOPPED,
-            videoState: VideoState.STOPPED,
-            screenShareState: ScreenShareState.NOT_SHARING,
-            offeredFileId: null,
-            isTyping: false,
-          },
-        ])
+        const newPeer: Peer = {
+          peerId,
+          userId,
+          publicKey,
+          customUsername,
+          audioState: AudioState.STOPPED,
+          videoState: VideoState.STOPPED,
+          screenShareState: ScreenShareState.NOT_SHARING,
+          offeredFileId: null,
+          isTyping: false,
+          isVerified: false,
+        }
+
+        setPeerList([...peerList, newPeer])
 
         sendTypingStatusChange({ isTyping }, peerId)
+        verifyPeer(newPeer)
       } else {
         const oldUsername =
           peerList[peerIndex].customUsername || getPeerName(userId)

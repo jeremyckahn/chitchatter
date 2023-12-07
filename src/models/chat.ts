@@ -51,6 +51,7 @@ export interface Peer {
   screenShareState: ScreenShareState
   offeredFileId: string | null
   isTyping: boolean
+  isVerified: boolean
 }
 
 export const isMessageReceived = (
