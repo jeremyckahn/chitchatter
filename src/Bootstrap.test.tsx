@@ -87,7 +87,7 @@ test('checks persistedStorage for user settings', async () => {
   expect(mockGetItem).toHaveBeenCalledWith(PersistedStorageKeys.USER_SETTINGS)
 })
 
-test('persists user settings if none were already persisted', async () => {
+test('updates persisted user settings', async () => {
   await renderBootstrap({
     initialUserSettings: { ...userSettingsStub, userId: 'abc123' },
   })
@@ -102,14 +102,4 @@ test('persists user settings if none were already persisted', async () => {
     publicKey: mockSerializedPublicKey,
     privateKey: mockSerializedPrivateKey,
   })
-})
-
-test('does not update user settings if they were already persisted', async () => {
-  mockGetItem.mockImplementation(() => ({
-    userId: 'abc123',
-  }))
-
-  await renderBootstrap()
-
-  expect(mockSetItem).not.toHaveBeenCalled()
 })

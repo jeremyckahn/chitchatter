@@ -163,13 +163,9 @@ export const Bootstrap = ({
 
       const computedUserSettings = await computeUserSettings()
       setUserSettings(computedUserSettings)
-
-      // FIXME: Remove this guard
-      if (persistedUserSettings === null) {
-        await persistUserSettings(computedUserSettings)
-      }
-
       setHasLoadedSettings(true)
+
+      await persistUserSettings(computedUserSettings)
     })()
   }, [
     hasLoadedSettings,

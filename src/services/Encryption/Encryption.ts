@@ -83,7 +83,7 @@ export class EncryptionService {
           name: 'SHA-256',
         },
       },
-      false,
+      true,
       type === AllowedKeyType.PUBLIC ? ['encrypt'] : ['decrypt']
     )
 
