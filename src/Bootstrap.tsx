@@ -29,14 +29,14 @@ import {
 } from 'models/sdk'
 import { encryptionService } from 'services/Encryption'
 import {
-  SerializationService,
+  serializationService as serializationServiceInstance,
   SerializedUserSettings,
 } from 'services/Serialization'
 
 export interface BootstrapProps {
   persistedStorage?: typeof localforage
   initialUserSettings: UserSettings
-  serializationService?: typeof SerializationService
+  serializationService?: typeof serializationServiceInstance
 }
 
 const configListenerTimeout = 3000
@@ -83,7 +83,7 @@ export const Bootstrap = ({
     description: 'Persisted settings data for chitchatter',
   }),
   initialUserSettings,
-  serializationService = SerializationService,
+  serializationService = serializationServiceInstance,
 }: BootstrapProps) => {
   const queryParams = useMemo(
     () => new URLSearchParams(window.location.search),

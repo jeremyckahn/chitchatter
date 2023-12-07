@@ -8,7 +8,7 @@ export interface SerializedUserSettings
 }
 
 export class SerializationService {
-  static serializeUserSettings = async (
+  serializeUserSettings = async (
     userSettings: UserSettings
   ): Promise<SerializedUserSettings> => {
     const {
@@ -32,7 +32,7 @@ export class SerializationService {
     }
   }
 
-  static deserializeUserSettings = async (
+  deserializeUserSettings = async (
     serializedUserSettings: SerializedUserSettings
   ): Promise<UserSettings> => {
     const {
@@ -57,3 +57,5 @@ export class SerializationService {
     }
   }
 }
+
+export const serializationService = new SerializationService()

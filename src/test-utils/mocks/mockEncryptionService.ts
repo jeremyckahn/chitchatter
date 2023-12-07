@@ -7,10 +7,9 @@ mockEncryptionService.generateKeyPair = jest.fn(async () => ({
   privateKey: encryptionService.cryptoKeyStub,
 }))
 
-mockEncryptionService.encodePassword = jest.fn(async () => '')
+mockEncryptionService.encodePassword = async () => ''
 
-mockEncryptionService.stringifyCryptoKey = jest.fn(async () => '')
+mockEncryptionService.stringifyCryptoKey = async () => ''
 
-mockEncryptionService.parseCryptoKeyString = jest.fn(
-  async () => encryptionService.cryptoKeyStub
-)
+mockEncryptionService.parseCryptoKeyString = async () =>
+  encryptionService.cryptoKeyStub

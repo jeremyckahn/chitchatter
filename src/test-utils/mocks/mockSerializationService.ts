@@ -1,37 +1,35 @@
 import { UserSettings } from 'models/settings'
 import { encryptionService } from 'services/Encryption'
 import {
-  SerializationService,
+  serializationService,
   SerializedUserSettings,
 } from 'services/Serialization'
 
 export const mockSerializedPublicKey = 'public key'
 export const mockSerializedPrivateKey = 'private key'
 
-// FIXME: Use jest functions to mock the methods
-export const mockSerializationService = {
-  serializeUserSettings: async (
-    userSettings: UserSettings
-  ): Promise<SerializedUserSettings> => {
-    const { publicKey, privateKey, ...userSettingsRest } = userSettings
+export const mockSerializationService = serializationService
 
-    return {
-      publicKey: mockSerializedPublicKey,
-      privateKey: mockSerializedPrivateKey,
-      ...userSettingsRest,
-    }
-  },
+mockSerializationService.serializeUserSettings = async (
+  userSettings: UserSettings
+) => {
+  const { publicKey, privateKey, ...userSettingsRest } = userSettings
 
-  deserializeUserSettings: async (
-    serializedUserSettings: SerializedUserSettings
-  ): Promise<UserSettings> => {
-    const { publicKey, privateKey, ...userSettingsRest } =
-      serializedUserSettings
+  return {
+    publicKey: mockSerializedPublicKey,
+    privateKey: mockSerializedPrivateKey,
+    ...userSettingsRest,
+  }
+}
 
-    return {
-      publicKey: encryptionService.cryptoKeyStub,
-      privateKey: encryptionService.cryptoKeyStub,
-      ...userSettingsRest,
-    }
-  },
-} as typeof SerializationService
+mockSerializationService.deserializeUserSettings = async (
+  serializedUserSettings: SerializedUserSettings
+) => {
+  const { publicKey, privateKey, ...userSettingsRest } = serializedUserSettings
+
+  return {
+    publicKey: encryptionService.cryptoKeyStub,
+    privateKey: encryptionService.cryptoKeyStub,
+    ...userSettingsRest,
+  }
+}
