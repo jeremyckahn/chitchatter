@@ -1,4 +1,4 @@
-import { useContext } from 'react'
+import { useCallback, useContext, useEffect, useState } from 'react'
 import { ShellContext } from 'contexts/ShellContext'
 import { Peer, PeerVerificationState } from 'models/chat'
 import { encryptionService as encryptionServiceInstance } from 'services/Encryption'
@@ -28,35 +28,63 @@ export const usePeerVerification = ({
   const [sendVerificationTokenRaw, receiveVerificationTokenRaw] =
     peerRoom.makeAction<string>(PeerActions.VERIFICATION_TOKEN_RAW)
 
-  const verifyPeer = async (peer: Peer) => {
-    const { verificationToken } = peer
+  const initPeerVerification = useCallback(
+    async (peer: Peer) => {
+      const { verificationToken } = peer
 
-    const encryptedVerificationToken = await encryptionService.encryptString(
-      peer.publicKey,
-      verificationToken
-    )
-
-    const verificationTimer = setTimeout(() => {
-      updatePeer(peer.peerId, {
-        verificationState: PeerVerificationState.UNVERIFIED,
-        verificationTimer: null,
-      })
-
-      showAlert(
-        `Verification for ${getDisplayUsername(peer.userId)} timed out`,
-        {
-          severity: 'error',
-        }
+      const encryptedVerificationToken = await encryptionService.encryptString(
+        peer.publicKey,
+        verificationToken
       )
 
-      console.warn(`Verification for peerId ${peer.peerId} timed out`)
-    }, verificationTimeout)
+      const verificationTimer = setTimeout(() => {
+        updatePeer(peer.peerId, {
+          verificationState: PeerVerificationState.UNVERIFIED,
+          verificationTimer: null,
+        })
 
-    updatePeer(peer.peerId, { encryptedVerificationToken, verificationTimer })
+        showAlert(
+          `Verification for ${getDisplayUsername(peer.userId)} timed out`,
+          {
+            severity: 'error',
+          }
+        )
 
-    await sendVerificationTokenEncrypted(encryptedVerificationToken, [
-      peer.peerId,
-    ])
+        console.warn(`Verification for peerId ${peer.peerId} timed out`)
+      }, verificationTimeout)
+
+      updatePeer(peer.peerId, { encryptedVerificationToken, verificationTimer })
+
+      await sendVerificationTokenEncrypted(encryptedVerificationToken, [
+        peer.peerId,
+      ])
+    },
+    [
+      encryptionService,
+      getDisplayUsername,
+      sendVerificationTokenEncrypted,
+      showAlert,
+      updatePeer,
+    ]
+  )
+
+  // NOTE: This useState and useEffect is a hacky workaround for stale data
+  // being used when verifying new peers. It would be much simpler to call
+  // initPeerVerification directly, but doing so when the peer metadata is
+  // received results in peerList being out of date (which is used by
+  // getDisplayUsername).
+  const [scheduledPeerToVerify, setScheduledPeerToVerify] =
+    useState<Peer | null>(null)
+  useEffect(() => {
+    if (scheduledPeerToVerify === null) return
+
+    initPeerVerification(scheduledPeerToVerify)
+    setScheduledPeerToVerify(null)
+  }, [scheduledPeerToVerify, initPeerVerification])
+  // NOTE: END HACKY WORKAROUND
+
+  const verifyPeer = (peer: Peer) => {
+    setScheduledPeerToVerify(peer)
   }
 
   receiveVerificationTokenEncrypted(
