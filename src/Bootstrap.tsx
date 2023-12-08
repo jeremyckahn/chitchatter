@@ -22,6 +22,7 @@ import { ColorMode, UserSettings } from 'models/settings'
 import { PersistedStorageKeys } from 'models/storage'
 import { QueryParamKeys } from 'models/shell'
 import { Shell } from 'components/Shell'
+import { WholePageLoading } from 'components/Loading/Loading'
 import {
   isConfigMessageEvent,
   PostMessageEvent,
@@ -258,7 +259,7 @@ export const Bootstrap = ({
               </Routes>
             </Shell>
           ) : (
-            <></>
+            <WholePageLoading sx={{ height: '100vh' }} />
           )}
         </SettingsContext.Provider>
       </StorageContext.Provider>
@@ -296,7 +297,7 @@ const BootstrapShim = ({ getUuid = uuid, ...props }: BootstrapShimProps) => {
 
   // FIXME: Show key generation error if necessary
   if (userSettings === null) {
-    return <></>
+    return <WholePageLoading sx={{ height: '100vh' }} />
   }
 
   return <Bootstrap {...props} initialUserSettings={userSettings} />
