@@ -109,17 +109,19 @@ export const Shell = ({ appNeedsUpdate, children, userPeerId }: ShellProps) => {
 
   const updatePeer = useCallback(
     (peerId: string, updatedProperties: Partial<Peer>) => {
-      const peerIndex = peerList.findIndex(peer => peer.peerId === peerId)
-      const doesPeerExist = peerIndex !== -1
+      setPeerList(peerList => {
+        const peerIndex = peerList.findIndex(peer => peer.peerId === peerId)
+        const doesPeerExist = peerIndex !== -1
 
-      if (!doesPeerExist) return
+        if (!doesPeerExist) return peerList
 
-      const peerListClone = [...peerList]
-      const peer = peerList[peerIndex]
-      peerListClone[peerIndex] = { ...peer, ...updatedProperties }
-      setPeerList(peerListClone)
+        const peerListClone = [...peerList]
+        const peer = peerList[peerIndex]
+        peerListClone[peerIndex] = { ...peer, ...updatedProperties }
+        return peerListClone
+      })
     },
-    [peerList]
+    []
   )
 
   const shellContextValue = useMemo(
