@@ -288,8 +288,6 @@ const BootstrapShim = ({ getUuid = uuid, ...props }: BootstrapShimProps) => {
         playSoundOnNewMessage: true,
         showNotificationOnNewMessage: true,
         showActiveTypingStatus: true,
-        // FIXME: Persist keys for new users
-        // FIXME: Persist keys for preexisting users
         publicKey,
         privateKey,
       })
