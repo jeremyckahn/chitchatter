@@ -7,6 +7,8 @@ import {
 } from 'react-router-dom'
 import { v4 as uuid } from 'uuid'
 import localforage from 'localforage'
+import Box from '@mui/material/Box'
+import Typography from '@mui/material/Typography'
 
 import * as serviceWorkerRegistration from 'serviceWorkerRegistration'
 import { StorageContext } from 'contexts/StorageContext'
@@ -33,6 +35,7 @@ import {
   serializationService as serializationServiceInstance,
   SerializedUserSettings,
 } from 'services/Serialization'
+import { EnvironmentUnsupportedDialog } from 'components/Shell/EnvironmentUnsupportedDialog'
 
 export interface BootstrapProps {
   persistedStorage?: typeof localforage
@@ -274,28 +277,54 @@ export interface BootstrapShimProps
 
 const BootstrapShim = ({ getUuid = uuid, ...props }: BootstrapShimProps) => {
   const [userSettings, setUserSettings] = useState<UserSettings | null>(null)
+  const [errorMessage, setErrorMessage] = useState<string | null>(null)
+
   useEffect(() => {
     ;(async () => {
       if (userSettings !== null) return
 
-      // FIXME: Handle potential exception here
-      const { publicKey, privateKey } =
-        await encryptionService.generateKeyPair()
+      try {
+        const { publicKey, privateKey } =
+          await encryptionService.generateKeyPair()
 
-      setUserSettings({
-        userId: getUuid(),
-        customUsername: '',
-        colorMode: ColorMode.DARK,
-        playSoundOnNewMessage: true,
-        showNotificationOnNewMessage: true,
-        showActiveTypingStatus: true,
-        publicKey,
-        privateKey,
-      })
+        setUserSettings({
+          userId: getUuid(),
+          customUsername: '',
+          colorMode: ColorMode.DARK,
+          playSoundOnNewMessage: true,
+          showNotificationOnNewMessage: true,
+          showActiveTypingStatus: true,
+          publicKey,
+          privateKey,
+        })
+      } catch (e) {
+        console.error(e)
+        setErrorMessage(
+          'Chitchatter was unable to boot up. Please check the browser console.'
+        )
+      }
     })()
   }, [getUuid, userSettings])
 
-  // FIXME: Show key generation error if necessary
+  if (!window.isSecureContext) {
+    return <EnvironmentUnsupportedDialog />
+  }
+
+  if (errorMessage) {
+    return (
+      <Box
+        sx={{
+          display: 'flex',
+          height: '100vh',
+          justifyContent: 'center',
+          alignItems: 'center',
+        }}
+      >
+        <Typography>{errorMessage}</Typography>
+      </Box>
+    )
+  }
+
   if (userSettings === null) {
     return <WholePageLoading sx={{ height: '100vh' }} />
   }
