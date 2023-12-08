@@ -1,4 +1,4 @@
-import { useContext, useRef } from 'react'
+import { useContext } from 'react'
 import { ShellContext } from 'contexts/ShellContext'
 import { Peer, PeerVerificationState } from 'models/chat'
 import { encryptionService as encryptionServiceInstance } from 'services/Encryption'
@@ -19,10 +19,6 @@ export const usePeerVerification = ({
 }: UserPeerVerificationProps) => {
   const { updatePeer, peerList } = useContext(ShellContext)
 
-  const verificationTimersRef = useRef<Record<Peer['peerId'], NodeJS.Timeout>>(
-    {}
-  )
-
   const [sendVerificationTokenEncrypted, receiveVerificationTokenEncrypted] =
     peerRoom.makeAction<ArrayBuffer>(PeerActions.VERIFICATION_TOKEN_ENCRYPTED)
 
@@ -40,16 +36,13 @@ export const usePeerVerification = ({
     const verificationTimer = setTimeout(() => {
       updatePeer(peer.peerId, {
         verificationState: PeerVerificationState.UNVERIFIED,
+        verificationTimer: null,
       })
-
-      delete verificationTimersRef.current[peer.peerId]
 
       console.warn(`Verification for peerId ${peer.peerId} timed out`)
     }, verificationTimeout)
 
-    verificationTimersRef.current[peer.peerId] = verificationTimer
-
-    updatePeer(peer.peerId, { encryptedVerificationToken })
+    updatePeer(peer.peerId, { encryptedVerificationToken, verificationTimer })
 
     await sendVerificationTokenEncrypted(encryptedVerificationToken, [
       peer.peerId,
@@ -80,11 +73,12 @@ export const usePeerVerification = ({
       throw new Error(`peerId not found: ${peerId}`)
     }
 
-    const { verificationToken } = matchingPeer
+    const { verificationToken, verificationTimer } = matchingPeer
 
     if (decryptedVerificationToken !== verificationToken) {
       updatePeer(peerId, {
         verificationState: PeerVerificationState.UNVERIFIED,
+        verificationTimer: null,
       })
 
       // FIXME: Surface error to the user
@@ -93,16 +87,13 @@ export const usePeerVerification = ({
       )
     }
 
-    const verificationTimer = verificationTimersRef.current[peerId]
-
     if (verificationTimer) {
       clearTimeout(verificationTimer)
     }
 
-    delete verificationTimersRef.current[peerId]
-
     updatePeer(peerId, {
       verificationState: PeerVerificationState.VERIFIED,
+      verificationTimer: null,
     })
   })
 

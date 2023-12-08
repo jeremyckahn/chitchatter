@@ -279,6 +279,7 @@ export function useRoom(
           verificationToken: getUuid(),
           encryptedVerificationToken: new ArrayBuffer(0),
           verificationState: PeerVerificationState.VERIFYING,
+          verificationTimer: null,
         }
 
         setPeerList([...peerList, newPeer])

@@ -60,6 +60,7 @@ export interface Peer {
   verificationToken: string
   encryptedVerificationToken: ArrayBuffer
   verificationState: PeerVerificationState
+  verificationTimer: NodeJS.Timeout | null
 }
 
 export const isMessageReceived = (
