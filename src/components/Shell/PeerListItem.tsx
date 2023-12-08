@@ -1,17 +1,28 @@
-import { Box } from '@mui/system'
+import { useEffect, useState } from 'react'
+import Box from '@mui/material/Box'
 import ListItemText from '@mui/material/ListItemText'
 import SyncAltIcon from '@mui/icons-material/SyncAlt'
 import NetworkPingIcon from '@mui/icons-material/NetworkPing'
 import ListItem from '@mui/material/ListItem'
 import Tooltip from '@mui/material/Tooltip'
 import CircularProgress from '@mui/material/CircularProgress'
+import Button from '@mui/material/Button'
+import Dialog from '@mui/material/Dialog'
+import DialogActions from '@mui/material/DialogActions'
+import DialogContent from '@mui/material/DialogContent'
+import DialogContentText from '@mui/material/DialogContentText'
+import DialogTitle from '@mui/material/DialogTitle'
+import { materialDark } from 'react-syntax-highlighter/dist/esm/styles/prism'
+import { PrismAsyncLight as SyntaxHighlighter } from 'react-syntax-highlighter'
 import NoEncryptionIcon from '@mui/icons-material/NoEncryption'
 import EnhancedEncryptionIcon from '@mui/icons-material/EnhancedEncryption'
 
+import { CopyableBlock } from 'components/CopyableBlock/CopyableBlock'
 import { AudioVolume } from 'components/AudioVolume'
 import { PeerNameDisplay } from 'components/PeerNameDisplay'
 import { Peer, PeerVerificationState } from 'models/chat'
 import { PeerConnectionType } from 'services/PeerRoom/PeerRoom'
+import { encryptionService } from 'services/Encryption/Encryption'
 
 import { PeerDownloadFileButton } from './PeerDownloadFileButton'
 
@@ -46,65 +57,127 @@ export const PeerListItem = ({
   peerConnectionTypes,
   peerAudios,
 }: PeerListItemProps): JSX.Element => {
+  const [showPeerDialog, setShowPeerDialog] = useState(false)
+
+  const [publicKeyString, setPublicKeyString] = useState('')
+
+  useEffect(() => {
+    ;(async () => {
+      setPublicKeyString(
+        await encryptionService.stringifyCryptoKey(peer.publicKey)
+      )
+    })()
+  }, [peer.publicKey])
+
   const hasPeerConnection = peer.peerId in peerConnectionTypes
 
   const isPeerConnectionDirect =
     peerConnectionTypes[peer.peerId] === PeerConnectionType.DIRECT
 
+  const handleListItemClick = () => {
+    setShowPeerDialog(true)
+  }
+
+  const handleDialogClose = () => {
+    setShowPeerDialog(false)
+  }
+
   return (
-    <ListItem key={peer.peerId} divider={true}>
-      <PeerDownloadFileButton peer={peer} />
-      <ListItemText
-        primaryTypographyProps={{
-          sx: { display: 'flex', alignContent: 'center' },
-        }}
+    <>
+      <ListItem
+        key={peer.peerId}
+        divider={true}
+        onClick={handleListItemClick}
+        sx={{ cursor: 'pointer' }}
       >
-        {hasPeerConnection ? (
-          <Tooltip
-            title={
-              isPeerConnectionDirect ? (
-                <>
-                  You are connected directly to{' '}
-                  <PeerNameDisplay
-                    sx={{ fontSize: 'inherit', fontWeight: 'inherit' }}
-                  >
-                    {peer.userId}
-                  </PeerNameDisplay>
-                </>
-              ) : (
-                <>
-                  You are connected to{' '}
-                  <PeerNameDisplay
-                    sx={{ fontSize: 'inherit', fontWeight: 'inherit' }}
-                  >
-                    {peer.userId}
-                  </PeerNameDisplay>{' '}
-                  via a relay server. Your connection is still private and
-                  encrypted, but performance may be degraded.
-                </>
-              )
-            }
-          >
-            <Box
-              component="span"
-              sx={{ pr: iconRightPadding, cursor: 'pointer' }}
+        <PeerDownloadFileButton peer={peer} />
+        <ListItemText
+          primaryTypographyProps={{
+            sx: { display: 'flex', alignContent: 'center' },
+          }}
+        >
+          {hasPeerConnection ? (
+            <Tooltip
+              title={
+                isPeerConnectionDirect ? (
+                  <>
+                    You are connected directly to{' '}
+                    <PeerNameDisplay
+                      sx={{ fontSize: 'inherit', fontWeight: 'inherit' }}
+                    >
+                      {peer.userId}
+                    </PeerNameDisplay>
+                  </>
+                ) : (
+                  <>
+                    You are connected to{' '}
+                    <PeerNameDisplay
+                      sx={{ fontSize: 'inherit', fontWeight: 'inherit' }}
+                    >
+                      {peer.userId}
+                    </PeerNameDisplay>{' '}
+                    via a relay server. Your connection is still private and
+                    encrypted, but performance may be degraded.
+                  </>
+                )
+              }
             >
-              {isPeerConnectionDirect ? (
-                <SyncAltIcon color="success" />
-              ) : (
-                <NetworkPingIcon color="warning" />
-              )}
-            </Box>
-          </Tooltip>
-        ) : null}
-        <Box component="span" sx={{ pr: iconRightPadding, cursor: 'pointer' }}>
+              <Box
+                component="span"
+                sx={{ pr: iconRightPadding, cursor: 'pointer' }}
+              >
+                {isPeerConnectionDirect ? (
+                  <SyncAltIcon color="success" />
+                ) : (
+                  <NetworkPingIcon color="warning" />
+                )}
+              </Box>
+            </Tooltip>
+          ) : null}
+          <Box
+            component="span"
+            sx={{ pr: iconRightPadding, cursor: 'pointer' }}
+          >
+            {verificationStateDisplayMap[peer.verificationState]}
+          </Box>
+          <PeerNameDisplay>{peer.userId}</PeerNameDisplay>
+          {peer.peerId in peerAudios && (
+            <AudioVolume audioEl={peerAudios[peer.peerId]} />
+          )}
+        </ListItemText>
+      </ListItem>
+      <Dialog open={showPeerDialog} onClose={handleDialogClose}>
+        <DialogTitle sx={{ display: 'flex', alignItems: 'center' }}>
           {verificationStateDisplayMap[peer.verificationState]}
-        </Box>
-        <PeerNameDisplay>{peer.userId}</PeerNameDisplay>
-        {peer.peerId in peerAudios && (
-          <AudioVolume audioEl={peerAudios[peer.peerId]} />
-        )}
-      </ListItemText>
-    </ListItem>
+          <Box component="span" sx={{ ml: 1 }}>
+            <PeerNameDisplay sx={{ fontSize: 'inherit' }}>
+              {peer.userId}
+            </PeerNameDisplay>
+          </Box>
+        </DialogTitle>
+        <DialogContent>
+          <DialogContentText>Public key:</DialogContentText>
+          <CopyableBlock>
+            <SyntaxHighlighter
+              language="plaintext"
+              style={materialDark}
+              PreTag="div"
+              lineProps={{
+                style: {
+                  wordBreak: 'break-all',
+                  whiteSpace: 'pre-wrap',
+                },
+              }}
+              wrapLines={true}
+            >
+              {publicKeyString}
+            </SyntaxHighlighter>
+          </CopyableBlock>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleDialogClose}>Close</Button>
+        </DialogActions>
+      </Dialog>
+    </>
   )
 }
