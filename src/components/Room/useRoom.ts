@@ -256,6 +256,23 @@ export function useRoom(
     setIsMessageSending(false)
   }
 
+  // NOTE: This useState and useEffect is a hacky workaround for stale data
+  // being used when verifying new peers. It would be much simpler to call
+  // verifyPeer in the receivePeerMetadata handler below, but doing so would
+  // result in peerList being out of date (which is used in some error handling
+  // code called downstream of verifyPeer).
+  //
+  // DO NOT use this hook for anything other than calling verifyPeer.
+  const [scheduledPeerToVerify, setScheduledPeerToVerify] =
+    useState<Peer | null>(null)
+  useEffect(() => {
+    if (scheduledPeerToVerify === null) return
+
+    verifyPeer(scheduledPeerToVerify)
+    setScheduledPeerToVerify(null)
+  }, [scheduledPeerToVerify, verifyPeer])
+  // NOTE: END HACKY WORKAROUND
+
   receivePeerMetadata(
     async ({ userId, customUsername, publicKeyString }, peerId: string) => {
       const publicKey = await encryptionService.parseCryptoKeyString(
@@ -285,7 +302,8 @@ export function useRoom(
         setPeerList([...peerList, newPeer])
 
         sendTypingStatusChange({ isTyping }, peerId)
-        verifyPeer(newPeer)
+
+        setScheduledPeerToVerify(newPeer)
       } else {
         const oldUsername =
           peerList[peerIndex].customUsername || getPeerName(userId)

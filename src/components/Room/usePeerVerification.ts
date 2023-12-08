@@ -5,6 +5,7 @@ import { encryptionService as encryptionServiceInstance } from 'services/Encrypt
 import { PeerRoom } from 'services/PeerRoom'
 import { PeerActions } from 'models/network'
 import { verificationTimeout } from 'config/messaging'
+import { usePeerNameDisplay } from 'components/PeerNameDisplay/usePeerNameDisplay'
 
 interface UserPeerVerificationProps {
   peerRoom: PeerRoom
@@ -17,7 +18,9 @@ export const usePeerVerification = ({
   privateKey,
   encryptionService = encryptionServiceInstance,
 }: UserPeerVerificationProps) => {
-  const { updatePeer, peerList } = useContext(ShellContext)
+  const { updatePeer, peerList, showAlert } = useContext(ShellContext)
+
+  const { getDisplayUsername } = usePeerNameDisplay()
 
   const [sendVerificationTokenEncrypted, receiveVerificationTokenEncrypted] =
     peerRoom.makeAction<ArrayBuffer>(PeerActions.VERIFICATION_TOKEN_ENCRYPTED)
@@ -38,6 +41,13 @@ export const usePeerVerification = ({
         verificationState: PeerVerificationState.UNVERIFIED,
         verificationTimer: null,
       })
+
+      showAlert(
+        `Verification for ${getDisplayUsername(peer.userId)} timed out`,
+        {
+          severity: 'error',
+        }
+      )
 
       console.warn(`Verification for peerId ${peer.peerId} timed out`)
     }, verificationTimeout)
@@ -60,7 +70,6 @@ export const usePeerVerification = ({
 
         await sendVerificationTokenRaw(decryptedVerificationToken, [peerId])
       } catch (e) {
-        // FIXME: Surface error to the user
         console.error(e)
       }
     }
@@ -81,7 +90,13 @@ export const usePeerVerification = ({
         verificationTimer: null,
       })
 
-      // FIXME: Surface error to the user
+      showAlert(
+        `Verification for ${getDisplayUsername(matchingPeer.userId)} failed`,
+        {
+          severity: 'error',
+        }
+      )
+
       throw new Error(
         `Verification token for peerId ${peerId} does not match. [expected: ${verificationToken}] [received: ${decryptedVerificationToken}]`
       )
