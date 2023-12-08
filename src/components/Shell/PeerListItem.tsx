@@ -22,12 +22,24 @@ interface PeerListItemProps {
 }
 
 const verificationStateDisplayMap = {
-  [PeerVerificationState.UNVERIFIED]: <NoEncryptionIcon color="error" />,
-  [PeerVerificationState.VERIFIED]: <EnhancedEncryptionIcon color="success" />,
+  [PeerVerificationState.UNVERIFIED]: (
+    <Tooltip title="This person could not be verified with public-key cryptography. They may be misrepresenting themself. Be careful with what you share with them.">
+      <NoEncryptionIcon color="error" />
+    </Tooltip>
+  ),
+  [PeerVerificationState.VERIFIED]: (
+    <Tooltip title="This person has been verified with public-key cryptography">
+      <EnhancedEncryptionIcon color="success" />
+    </Tooltip>
+  ),
   [PeerVerificationState.VERIFYING]: (
-    <CircularProgress size={16} sx={{ position: 'relative', top: 3 }} />
+    <Tooltip title="Attempting to verify this person...">
+      <CircularProgress size={16} sx={{ position: 'relative', top: 3 }} />
+    </Tooltip>
   ),
 }
+
+const iconRightPadding = 1
 
 export const PeerListItem = ({
   peer,
@@ -73,7 +85,10 @@ export const PeerListItem = ({
               )
             }
           >
-            <Box component="span" sx={{ pr: 1, cursor: 'pointer' }}>
+            <Box
+              component="span"
+              sx={{ pr: iconRightPadding, cursor: 'pointer' }}
+            >
               {isPeerConnectionDirect ? (
                 <SyncAltIcon color="success" />
               ) : (
@@ -82,7 +97,7 @@ export const PeerListItem = ({
             </Box>
           </Tooltip>
         ) : null}
-        <Box component="span" sx={{ pr: 1 }}>
+        <Box component="span" sx={{ pr: iconRightPadding, cursor: 'pointer' }}>
           {verificationStateDisplayMap[peer.verificationState]}
         </Box>
         <PeerNameDisplay>{peer.userId}</PeerNameDisplay>
