@@ -5,10 +5,7 @@ import {
   Route,
   Navigate,
 } from 'react-router-dom'
-import { v4 as uuid } from 'uuid'
 import localforage from 'localforage'
-import Box from '@mui/material/Box'
-import Typography from '@mui/material/Typography'
 
 import * as serviceWorkerRegistration from 'serviceWorkerRegistration'
 import { StorageContext } from 'contexts/StorageContext'
@@ -20,7 +17,7 @@ import { Disclaimer } from 'pages/Disclaimer'
 import { Settings } from 'pages/Settings'
 import { PublicRoom } from 'pages/PublicRoom'
 import { PrivateRoom } from 'pages/PrivateRoom'
-import { ColorMode, UserSettings } from 'models/settings'
+import { UserSettings } from 'models/settings'
 import { PersistedStorageKeys } from 'models/storage'
 import { QueryParamKeys } from 'models/shell'
 import { Shell } from 'components/Shell'
@@ -30,12 +27,10 @@ import {
   PostMessageEvent,
   PostMessageEventName,
 } from 'models/sdk'
-import { encryptionService } from 'services/Encryption'
 import {
   serializationService as serializationServiceInstance,
   SerializedUserSettings,
 } from 'services/Serialization'
-import { EnvironmentUnsupportedDialog } from 'components/Shell/EnvironmentUnsupportedDialog'
 
 export interface BootstrapProps {
   persistedStorage?: typeof localforage
@@ -269,67 +264,3 @@ export const Bootstrap = ({
     </Router>
   )
 }
-
-export interface BootstrapShimProps
-  extends Omit<BootstrapProps, 'initialUserSettings'> {
-  getUuid?: typeof uuid
-}
-
-const BootstrapShim = ({ getUuid = uuid, ...props }: BootstrapShimProps) => {
-  const [userSettings, setUserSettings] = useState<UserSettings | null>(null)
-  const [errorMessage, setErrorMessage] = useState<string | null>(null)
-
-  useEffect(() => {
-    ;(async () => {
-      if (userSettings !== null) return
-
-      try {
-        const { publicKey, privateKey } =
-          await encryptionService.generateKeyPair()
-
-        setUserSettings({
-          userId: getUuid(),
-          customUsername: '',
-          colorMode: ColorMode.DARK,
-          playSoundOnNewMessage: true,
-          showNotificationOnNewMessage: true,
-          showActiveTypingStatus: true,
-          publicKey,
-          privateKey,
-        })
-      } catch (e) {
-        console.error(e)
-        setErrorMessage(
-          'Chitchatter was unable to boot up. Please check the browser console.'
-        )
-      }
-    })()
-  }, [getUuid, userSettings])
-
-  if (!window.isSecureContext) {
-    return <EnvironmentUnsupportedDialog />
-  }
-
-  if (errorMessage) {
-    return (
-      <Box
-        sx={{
-          display: 'flex',
-          height: '100vh',
-          justifyContent: 'center',
-          alignItems: 'center',
-        }}
-      >
-        <Typography>{errorMessage}</Typography>
-      </Box>
-    )
-  }
-
-  if (userSettings === null) {
-    return <WholePageLoading sx={{ height: '100vh' }} />
-  }
-
-  return <Bootstrap {...props} initialUserSettings={userSettings} />
-}
-
-export default BootstrapShim
