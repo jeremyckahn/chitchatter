@@ -41,15 +41,26 @@ export enum ScreenShareState {
   NOT_SHARING = 'NOT_SHARING',
 }
 
+export enum PeerVerificationState {
+  VERIFYING,
+  UNVERIFIED,
+  VERIFIED,
+}
+
 export interface Peer {
   peerId: string
   userId: string
+  publicKey: CryptoKey
   customUsername: string
   audioState: AudioState
   videoState: VideoState
   screenShareState: ScreenShareState
   offeredFileId: string | null
   isTyping: boolean
+  verificationToken: string
+  encryptedVerificationToken: ArrayBuffer
+  verificationState: PeerVerificationState
+  verificationTimer: NodeJS.Timeout | null
 }
 
 export const isMessageReceived = (

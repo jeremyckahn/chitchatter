@@ -1,5 +1,6 @@
 import { SettingsContextProps } from 'contexts/SettingsContext'
 import { ColorMode, UserSettings } from 'models/settings'
+import { encryptionService } from 'services/Encryption'
 
 export const userSettingsContextStubFactory = (
   userSettingsOverrides: Partial<UserSettings> = {}
@@ -13,6 +14,8 @@ export const userSettingsContextStubFactory = (
       playSoundOnNewMessage: true,
       showNotificationOnNewMessage: true,
       showActiveTypingStatus: true,
+      publicKey: encryptionService.cryptoKeyStub,
+      privateKey: encryptionService.cryptoKeyStub,
       ...userSettingsOverrides,
     }),
   }

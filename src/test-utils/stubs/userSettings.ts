@@ -1,17 +1,11 @@
-import { createContext } from 'react'
-
 import { ColorMode, UserSettings } from 'models/settings'
 import { encryptionService } from 'services/Encryption'
 
-export interface SettingsContextProps {
-  updateUserSettings: (settings: Partial<UserSettings>) => Promise<void>
-  getUserSettings: () => UserSettings
-}
-
-export const SettingsContext = createContext<SettingsContextProps>({
-  updateUserSettings: () => Promise.resolve(),
-  getUserSettings: () => ({
-    userId: '',
+export const userSettingsStubFactory = (
+  overrides: Partial<UserSettings> = {}
+): UserSettings => {
+  return {
+    userId: '1234-abcd',
     customUsername: '',
     colorMode: ColorMode.DARK,
     playSoundOnNewMessage: true,
@@ -19,5 +13,6 @@ export const SettingsContext = createContext<SettingsContextProps>({
     showActiveTypingStatus: true,
     publicKey: encryptionService.cryptoKeyStub,
     privateKey: encryptionService.cryptoKeyStub,
-  }),
-})
+    ...overrides,
+  }
+}

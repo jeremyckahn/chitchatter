@@ -14,7 +14,8 @@ import CloseIcon from '@mui/icons-material/Close'
 
 import { AlertOptions } from 'models/shell'
 import { useEffect, useState, SyntheticEvent } from 'react'
-import { encodePassword, sleep } from 'utils'
+import { sleep } from 'utils'
+import { encryptionService } from 'services/Encryption'
 
 export interface RoomShareDialogProps {
   isOpen: boolean
@@ -50,22 +51,30 @@ export function RoomShareDialog(props: RoomShareDialogProps) {
   const url = window.location.href.split('#')[0]
 
   const copyWithPass = async () => {
-    const encoded = await encodePassword(props.roomId, password)
+    const encoded = await encryptionService.encodePassword(
+      props.roomId,
+      password
+    )
+
     if (encoded === props.password) {
       const params = new URLSearchParams()
       params.set('secret', props.password)
+
       await props.copyToClipboard(
         `${url}#${params}`,
         'Private room URL with password copied to clipboard',
         'warning'
       )
+
       handleClose()
     } else {
       setPassThrottled(true)
       props.showAlert('Incorrect password entered. Please wait 2s to retry.', {
         severity: 'error',
       })
+
       await sleep(2000)
+
       setPassThrottled(false)
     }
   }
@@ -78,11 +87,13 @@ export function RoomShareDialog(props: RoomShareDialogProps) {
         : 'Current URL copied to clipboard',
       'success'
     )
+
     handleClose()
   }
 
   const handleFormSubmit = (event: SyntheticEvent<HTMLFormElement>) => {
     event.preventDefault()
+
     if (!passThrottled) copyWithPass()
   }
 

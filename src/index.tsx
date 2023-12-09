@@ -2,12 +2,12 @@ import './polyfills'
 import ReactDOM from 'react-dom/client'
 import 'typeface-roboto'
 
-import 'index.sass'
-import Bootstrap from 'Bootstrap'
-import reportWebVitals from 'reportWebVitals'
+import './index.sass'
+import Init from './Init'
+import reportWebVitals from './reportWebVitals'
 
 const root = ReactDOM.createRoot(document.getElementById('root') as HTMLElement)
-root.render(<Bootstrap />)
+root.render(<Init />)
 
 // If you want to start measuring performance in your app, pass a function
 // to log results (for example: reportWebVitals(console.log))

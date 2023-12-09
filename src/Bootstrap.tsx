@@ -5,7 +5,6 @@ import {
   Route,
   Navigate,
 } from 'react-router-dom'
-import { v4 as uuid } from 'uuid'
 import localforage from 'localforage'
 
 import * as serviceWorkerRegistration from 'serviceWorkerRegistration'
@@ -18,19 +17,25 @@ import { Disclaimer } from 'pages/Disclaimer'
 import { Settings } from 'pages/Settings'
 import { PublicRoom } from 'pages/PublicRoom'
 import { PrivateRoom } from 'pages/PrivateRoom'
-import { ColorMode, UserSettings } from 'models/settings'
+import { UserSettings } from 'models/settings'
 import { PersistedStorageKeys } from 'models/storage'
 import { QueryParamKeys } from 'models/shell'
 import { Shell } from 'components/Shell'
+import { WholePageLoading } from 'components/Loading/Loading'
 import {
   isConfigMessageEvent,
   PostMessageEvent,
   PostMessageEventName,
 } from 'models/sdk'
+import {
+  serializationService as serializationServiceInstance,
+  SerializedUserSettings,
+} from 'services/Serialization'
 
 export interface BootstrapProps {
   persistedStorage?: typeof localforage
-  getUuid?: typeof uuid
+  initialUserSettings: UserSettings
+  serializationService?: typeof serializationServiceInstance
 }
 
 const configListenerTimeout = 3000
@@ -71,13 +76,14 @@ const getConfigFromSdk = () => {
   })
 }
 
-function Bootstrap({
+export const Bootstrap = ({
   persistedStorage: persistedStorageProp = localforage.createInstance({
     name: 'chitchatter',
     description: 'Persisted settings data for chitchatter',
   }),
-  getUuid = uuid,
-}: BootstrapProps) {
+  initialUserSettings,
+  serializationService = serializationServiceInstance,
+}: BootstrapProps) => {
   const queryParams = useMemo(
     () => new URLSearchParams(window.location.search),
     []
@@ -86,14 +92,8 @@ function Bootstrap({
   const [persistedStorage] = useState(persistedStorageProp)
   const [appNeedsUpdate, setAppNeedsUpdate] = useState(false)
   const [hasLoadedSettings, setHasLoadedSettings] = useState(false)
-  const [userSettings, setUserSettings] = useState<UserSettings>({
-    userId: getUuid(),
-    customUsername: '',
-    colorMode: ColorMode.DARK,
-    playSoundOnNewMessage: true,
-    showNotificationOnNewMessage: true,
-    showActiveTypingStatus: true,
-  })
+  const [userSettings, setUserSettings] =
+    useState<UserSettings>(initialUserSettings)
   const { userId } = userSettings
 
   const handleServiceWorkerUpdate = () => {
@@ -101,17 +101,20 @@ function Bootstrap({
   }
 
   const persistUserSettings = useCallback(
-    (newUserSettings: UserSettings) => {
+    async (newUserSettings: UserSettings) => {
       if (queryParams.has(QueryParamKeys.IS_EMBEDDED)) {
         return Promise.resolve(userSettings)
       }
 
+      const userSettingsForIndexedDb =
+        await serializationService.serializeUserSettings(newUserSettings)
+
       return persistedStorageProp.setItem(
         PersistedStorageKeys.USER_SETTINGS,
-        newUserSettings
+        userSettingsForIndexedDb
       )
     },
-    [persistedStorageProp, queryParams, userSettings]
+    [persistedStorageProp, queryParams, serializationService, userSettings]
   )
 
   useEffect(() => {
@@ -122,9 +125,19 @@ function Bootstrap({
     ;(async () => {
       if (hasLoadedSettings) return
 
-      const persistedUserSettings =
-        await persistedStorageProp.getItem<UserSettings>(
+      const serializedUserSettings = {
+        // NOTE: This migrates persisted user settings data to latest version
+        ...(await serializationService.serializeUserSettings(
+          initialUserSettings
+        )),
+        ...(await persistedStorageProp.getItem<SerializedUserSettings>(
           PersistedStorageKeys.USER_SETTINGS
+        )),
+      }
+
+      const persistedUserSettings =
+        await serializationService.deserializeUserSettings(
+          serializedUserSettings
         )
 
       const computeUserSettings = async (): Promise<UserSettings> => {
@@ -152,12 +165,9 @@ function Bootstrap({
 
       const computedUserSettings = await computeUserSettings()
       setUserSettings(computedUserSettings)
-
-      if (persistedUserSettings === null) {
-        await persistUserSettings(computedUserSettings)
-      }
-
       setHasLoadedSettings(true)
+
+      await persistUserSettings(computedUserSettings)
     })()
   }, [
     hasLoadedSettings,
@@ -166,6 +176,8 @@ function Bootstrap({
     userId,
     queryParams,
     persistUserSettings,
+    serializationService,
+    initialUserSettings,
   ])
 
   useEffect(() => {
@@ -245,12 +257,10 @@ function Bootstrap({
               </Routes>
             </Shell>
           ) : (
-            <></>
+            <WholePageLoading />
           )}
         </SettingsContext.Provider>
       </StorageContext.Provider>
     </Router>
   )
 }
-
-export default Bootstrap

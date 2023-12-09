@@ -16,4 +16,6 @@ export interface UserSettings {
   playSoundOnNewMessage: boolean
   showNotificationOnNewMessage: boolean
   showActiveTypingStatus: boolean
+  publicKey: CryptoKeyPair['publicKey']
+  privateKey: CryptoKeyPair['privateKey']
 }

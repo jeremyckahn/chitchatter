@@ -12,7 +12,7 @@ import { RoomContext } from 'contexts/RoomContext'
 import { ShellContext } from 'contexts/ShellContext'
 import { MessageForm } from 'components/MessageForm'
 import { ChatTranscript } from 'components/ChatTranscript'
-
+import { encryptionService as encryptionServiceInstance } from 'services/Encryption'
 import { SettingsContext } from 'contexts/SettingsContext'
 
 import { useRoom } from './useRoom'
@@ -30,18 +30,21 @@ export interface RoomProps {
   password?: string
   roomId: string
   userId: string
+  encryptionService?: typeof encryptionServiceInstance
 }
 
 export function Room({
   appId = `${encodeURI(window.location.origin)}_${process.env.REACT_APP_NAME}`,
   getUuid = uuid,
+  encryptionService = encryptionServiceInstance,
   roomId,
   password,
   userId,
 }: RoomProps) {
   const theme = useTheme()
   const settingsContext = useContext(SettingsContext)
-  const { showActiveTypingStatus } = settingsContext.getUserSettings()
+  const { showActiveTypingStatus, publicKey } =
+    settingsContext.getUserSettings()
   const {
     isMessageSending,
     handleInlineMediaUpload,
@@ -63,6 +66,8 @@ export function Room({
       roomId,
       userId,
       getUuid,
+      publicKey,
+      encryptionService,
     }
   )
 
