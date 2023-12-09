@@ -4,7 +4,10 @@ import Typography from '@mui/material/Typography'
 import { v4 as uuid } from 'uuid'
 
 import { encryptionService } from 'services/Encryption'
-import { EnvironmentUnsupportedDialog } from 'components/Shell/EnvironmentUnsupportedDialog'
+import {
+  EnvironmentUnsupportedDialog,
+  isEnvironmentSupported,
+} from 'components/Shell/EnvironmentUnsupportedDialog'
 import { WholePageLoading } from 'components/Loading/Loading'
 import { ColorMode, UserSettings } from 'models/settings'
 
@@ -48,7 +51,7 @@ const Init = ({ getUuid = uuid, ...props }: InitProps) => {
     })()
   }, [getUuid, userSettings])
 
-  if (!window.isSecureContext) {
+  if (!isEnvironmentSupported) {
     return <EnvironmentUnsupportedDialog />
   }
 
@@ -68,7 +71,7 @@ const Init = ({ getUuid = uuid, ...props }: InitProps) => {
   }
 
   if (userSettings === null) {
-    return <WholePageLoading sx={{ height: '100vh' }} />
+    return <WholePageLoading />
   }
 
   return <Bootstrap {...props} initialUserSettings={userSettings} />

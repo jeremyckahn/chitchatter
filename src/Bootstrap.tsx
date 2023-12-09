@@ -257,7 +257,7 @@ export const Bootstrap = ({
               </Routes>
             </Shell>
           ) : (
-            <WholePageLoading sx={{ height: '100vh' }} />
+            <WholePageLoading />
           )}
         </SettingsContext.Provider>
       </StorageContext.Provider>

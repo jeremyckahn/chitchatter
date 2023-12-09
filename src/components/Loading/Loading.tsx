@@ -10,7 +10,12 @@ export const WholePageLoading = ({
   return (
     <Box
       sx={[
-        { display: 'flex', justifyContent: 'center', alignItems: 'center' },
+        {
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          height: '100vh',
+        },
         ...(Array.isArray(sx) ? sx : [sx]),
       ]}
       {...props}
