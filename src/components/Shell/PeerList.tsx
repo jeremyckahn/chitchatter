@@ -8,10 +8,10 @@ import ListItem from '@mui/material/ListItem'
 import Box from '@mui/material/Box'
 import CircularProgress from '@mui/material/CircularProgress'
 
-import { Username } from 'components/Username/Username'
+import { UserInfo } from 'components/UserInfo'
 import { AudioState, Peer } from 'models/chat'
-import { PeerConnectionType } from 'services/PeerRoom/PeerRoom'
-import { TrackerConnection } from 'services/ConnectionTest/ConnectionTest'
+import { PeerConnectionType } from 'services/PeerRoom'
+import { TrackerConnection } from 'services/ConnectionTest'
 
 import { PeerListHeader } from './PeerListHeader'
 import { PeerListItem } from './PeerListItem'
@@ -55,7 +55,7 @@ export const PeerList = ({
             </ListItemIcon>
           )}
           <ListItemText>
-            <Username userId={userId} />
+            <UserInfo userId={userId} />
           </ListItemText>
         </ListItem>
         {peerList.map((peer: Peer) => (

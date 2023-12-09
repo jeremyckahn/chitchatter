@@ -19,13 +19,13 @@ import { SettingsContext } from 'contexts/SettingsContext'
 import { PublicKey } from 'components/PublicKey'
 import { PeerNameDisplay } from 'components/PeerNameDisplay'
 
-interface UsernameProps {
+interface UserInfoProps {
   userId: string
 }
 
 const maxCustomUsernameLength = 30
 
-export const Username = ({ userId }: UsernameProps) => {
+export const UserInfo = ({ userId }: UserInfoProps) => {
   const theme = useTheme()
   const userName = getPeerName(userId)
 

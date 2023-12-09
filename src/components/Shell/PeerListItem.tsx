@@ -143,7 +143,7 @@ export const PeerListItem = ({
           </Box>
         </DialogTitle>
         <DialogContent>
-          <DialogContentText>Public key:</DialogContentText>
+          <DialogContentText>Their public key:</DialogContentText>
           <PublicKey publicKey={peer.publicKey} />
         </DialogContent>
         <DialogActions>
