@@ -42,6 +42,7 @@ Open https://chitchatter.im/ and join a room to start chatting with anyone else 
 - Conversation backfilling from peers when a new participant joins.
 - Multiline message support (hold `shift` and press `enter`).
 - Dark and light themes.
+- Automatic peer verification via client-side [public-key cryptography](https://en.wikipedia.org/wiki/Public-key_cryptography).
 
 ## Anti-features
 
