@@ -108,8 +108,14 @@ export const UserInfo = ({ userId }: UserInfoProps) => {
           </Box>
         </DialogTitle>
         <DialogContent>
-          <DialogContentText>Your public key:</DialogContentText>
+          <DialogContentText>
+            Your public key (generated locally):
+          </DialogContentText>
           <PublicKey publicKey={publicKey} />
+          <DialogContentText>
+            Your private key, which was also generated locally, is hidden and
+            only exists on your device.
+          </DialogContentText>
         </DialogContent>
         <DialogActions>
           <Button onClick={handleInfoDialogClose}>Close</Button>
