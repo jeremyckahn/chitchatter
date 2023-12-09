@@ -2,9 +2,22 @@ import { useState, useContext, ChangeEvent, SyntheticEvent } from 'react'
 import TextField from '@mui/material/TextField'
 import FormControl from '@mui/material/FormControl'
 import FormHelperText from '@mui/material/FormHelperText'
+import Button from '@mui/material/Button'
+import Box from '@mui/material/Box'
+import IconButton from '@mui/material/IconButton'
+import Dialog from '@mui/material/Dialog'
+import DialogActions from '@mui/material/DialogActions'
+import DialogContent from '@mui/material/DialogContent'
+import DialogContentText from '@mui/material/DialogContentText'
+import DialogTitle from '@mui/material/DialogTitle'
+import useTheme from '@mui/material/styles/useTheme'
+import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined'
 
 import { ShellContext } from 'contexts/ShellContext'
-import { getPeerName } from 'components/PeerNameDisplay/getPeerName'
+import { getPeerName } from 'components/PeerNameDisplay'
+import { SettingsContext } from 'contexts/SettingsContext'
+import { PublicKey } from 'components/PublicKey'
+import { PeerNameDisplay } from 'components/PeerNameDisplay'
 
 interface UsernameProps {
   userId: string
@@ -13,12 +26,17 @@ interface UsernameProps {
 const maxCustomUsernameLength = 30
 
 export const Username = ({ userId }: UsernameProps) => {
+  const theme = useTheme()
   const userName = getPeerName(userId)
 
   const { customUsername, setCustomUsername, showAlert } =
     useContext(ShellContext)
+  const { getUserSettings } = useContext(SettingsContext)
   const [inflightCustomUsername, setInflightCustomUsername] =
     useState(customUsername)
+  const [isInfoDialogOpen, setIsInfoDialogOpen] = useState(false)
+
+  const { publicKey } = getUserSettings()
 
   const handleChange = (evt: ChangeEvent<HTMLInputElement>) => {
     setInflightCustomUsername(evt.target.value)
@@ -46,20 +64,57 @@ export const Username = ({ userId }: UsernameProps) => {
     updateCustomUsername()
   }
 
+  const handleInfoButtonClick = () => {
+    setIsInfoDialogOpen(true)
+  }
+
+  const handleInfoDialogClose = () => {
+    setIsInfoDialogOpen(false)
+  }
+
   return (
-    <form onSubmit={handleSubmit}>
-      <FormControl sx={{ width: '100%' }}>
-        <TextField
-          onChange={handleChange}
-          onBlur={handleBlur}
-          variant="outlined"
-          label={`${userName}`}
-          sx={{ width: '100%' }}
-          value={inflightCustomUsername}
-          inputProps={{ maxLength: maxCustomUsernameLength }}
-        />
-        <FormHelperText>Your username</FormHelperText>
-      </FormControl>
-    </form>
+    <>
+      <form onSubmit={handleSubmit}>
+        <FormControl sx={{ width: '100%' }}>
+          <Box sx={{ display: 'flex', alignItems: 'center' }}>
+            <TextField
+              onChange={handleChange}
+              onBlur={handleBlur}
+              variant="outlined"
+              label={`${userName}`}
+              sx={{ width: '100%' }}
+              value={inflightCustomUsername}
+              inputProps={{ maxLength: maxCustomUsernameLength }}
+            />
+            <IconButton
+              sx={{
+                ml: 1.5,
+                color: theme.palette.action.active,
+              }}
+              onClick={handleInfoButtonClick}
+            >
+              <InfoOutlinedIcon fontSize="large" />
+            </IconButton>
+          </Box>
+          <FormHelperText>Your username</FormHelperText>
+        </FormControl>
+      </form>
+      <Dialog open={isInfoDialogOpen} onClose={handleInfoDialogClose}>
+        <DialogTitle>
+          <Box component="span">
+            <PeerNameDisplay sx={{ fontSize: 'inherit' }}>
+              {userId}
+            </PeerNameDisplay>
+          </Box>
+        </DialogTitle>
+        <DialogContent>
+          <DialogContentText>Your public key:</DialogContentText>
+          <PublicKey publicKey={publicKey} />
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleInfoDialogClose}>Close</Button>
+        </DialogActions>
+      </Dialog>
+    </>
   )
 }
