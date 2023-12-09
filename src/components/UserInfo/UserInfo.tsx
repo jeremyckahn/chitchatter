@@ -10,6 +10,7 @@ import DialogActions from '@mui/material/DialogActions'
 import DialogContent from '@mui/material/DialogContent'
 import DialogContentText from '@mui/material/DialogContentText'
 import DialogTitle from '@mui/material/DialogTitle'
+import Tooltip from '@mui/material/Tooltip'
 import useTheme from '@mui/material/styles/useTheme'
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined'
 
@@ -86,15 +87,17 @@ export const UserInfo = ({ userId }: UserInfoProps) => {
               value={inflightCustomUsername}
               inputProps={{ maxLength: maxCustomUsernameLength }}
             />
-            <IconButton
-              sx={{
-                ml: 1.5,
-                color: theme.palette.action.active,
-              }}
-              onClick={handleInfoButtonClick}
-            >
-              <InfoOutlinedIcon fontSize="large" />
-            </IconButton>
+            <Tooltip title="Reveal your user info">
+              <IconButton
+                sx={{
+                  ml: 1.5,
+                  color: theme.palette.action.active,
+                }}
+                onClick={handleInfoButtonClick}
+              >
+                <InfoOutlinedIcon fontSize="large" />
+              </IconButton>
+            </Tooltip>
           </Box>
           <FormHelperText>Your username</FormHelperText>
         </FormControl>
