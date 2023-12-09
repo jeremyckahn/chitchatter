@@ -17,7 +17,7 @@ import EnhancedEncryptionIcon from '@mui/icons-material/EnhancedEncryption'
 
 import { AudioVolume } from 'components/AudioVolume'
 import { PeerNameDisplay } from 'components/PeerNameDisplay'
-import { PeerPublicKey } from 'components/PeerPublicKey'
+import { PublicKey } from 'components/PublicKey'
 import { Peer, PeerVerificationState } from 'models/chat'
 import { PeerConnectionType } from 'services/PeerRoom/PeerRoom'
 
@@ -144,7 +144,7 @@ export const PeerListItem = ({
         </DialogTitle>
         <DialogContent>
           <DialogContentText>Public key:</DialogContentText>
-          <PeerPublicKey peer={peer} />
+          <PublicKey publicKey={peer.publicKey} />
         </DialogContent>
         <DialogActions>
           <Button onClick={handleDialogClose}>Close</Button>
