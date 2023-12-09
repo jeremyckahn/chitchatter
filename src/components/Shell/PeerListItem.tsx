@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import Box from '@mui/material/Box'
 import ListItemText from '@mui/material/ListItemText'
 import SyncAltIcon from '@mui/icons-material/SyncAlt'
@@ -12,17 +12,14 @@ import DialogActions from '@mui/material/DialogActions'
 import DialogContent from '@mui/material/DialogContent'
 import DialogContentText from '@mui/material/DialogContentText'
 import DialogTitle from '@mui/material/DialogTitle'
-import { materialDark } from 'react-syntax-highlighter/dist/esm/styles/prism'
-import { PrismAsyncLight as SyntaxHighlighter } from 'react-syntax-highlighter'
 import NoEncryptionIcon from '@mui/icons-material/NoEncryption'
 import EnhancedEncryptionIcon from '@mui/icons-material/EnhancedEncryption'
 
-import { CopyableBlock } from 'components/CopyableBlock/CopyableBlock'
 import { AudioVolume } from 'components/AudioVolume'
 import { PeerNameDisplay } from 'components/PeerNameDisplay'
+import { PeerPublicKey } from 'components/PeerPublicKey'
 import { Peer, PeerVerificationState } from 'models/chat'
 import { PeerConnectionType } from 'services/PeerRoom/PeerRoom'
-import { encryptionService } from 'services/Encryption/Encryption'
 
 import { PeerDownloadFileButton } from './PeerDownloadFileButton'
 
@@ -58,16 +55,6 @@ export const PeerListItem = ({
   peerAudios,
 }: PeerListItemProps): JSX.Element => {
   const [showPeerDialog, setShowPeerDialog] = useState(false)
-
-  const [publicKeyString, setPublicKeyString] = useState('')
-
-  useEffect(() => {
-    ;(async () => {
-      setPublicKeyString(
-        await encryptionService.stringifyCryptoKey(peer.publicKey)
-      )
-    })()
-  }, [peer.publicKey])
 
   const hasPeerConnection = peer.peerId in peerConnectionTypes
 
@@ -157,22 +144,7 @@ export const PeerListItem = ({
         </DialogTitle>
         <DialogContent>
           <DialogContentText>Public key:</DialogContentText>
-          <CopyableBlock>
-            <SyntaxHighlighter
-              language="plaintext"
-              style={materialDark}
-              PreTag="div"
-              lineProps={{
-                style: {
-                  wordBreak: 'break-all',
-                  whiteSpace: 'pre-wrap',
-                },
-              }}
-              wrapLines={true}
-            >
-              {publicKeyString}
-            </SyntaxHighlighter>
-          </CopyableBlock>
+          <PeerPublicKey peer={peer} />
         </DialogContent>
         <DialogActions>
           <Button onClick={handleDialogClose}>Close</Button>
