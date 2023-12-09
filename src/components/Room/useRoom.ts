@@ -449,14 +449,14 @@ export function useRoom(
 
   useEffect(() => {
     ;(async () => {
-      const userPublicKeyString = await encryptionService.stringifyCryptoKey(
+      const publicKeyString = await encryptionService.stringifyCryptoKey(
         publicKey
       )
 
       sendPeerMetadata({
         customUsername,
         userId,
-        publicKeyString: userPublicKeyString,
+        publicKeyString,
       })
     })()
   }, [customUsername, userId, sendPeerMetadata, publicKey, encryptionService])

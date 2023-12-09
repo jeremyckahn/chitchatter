@@ -4,7 +4,7 @@ import { useParams } from 'react-router-dom'
 
 import { ShellContext } from 'contexts/ShellContext'
 import { NotificationService } from 'services/Notification'
-import { PasswordPrompt } from 'components/PasswordPrompt/PasswordPrompt'
+import { PasswordPrompt } from 'components/PasswordPrompt'
 import { encryptionService } from 'services/Encryption'
 
 interface PublicRoomProps {

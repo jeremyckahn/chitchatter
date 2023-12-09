@@ -104,9 +104,9 @@ export class EncryptionService {
       encryptedData
     )
 
-    const decryptedText = new TextDecoder().decode(decryptedArrayBuffer)
+    const decryptedString = new TextDecoder().decode(decryptedArrayBuffer)
 
-    return decryptedText
+    return decryptedString
   }
 }
 

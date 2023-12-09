@@ -5,7 +5,7 @@ import { encryptionService as encryptionServiceInstance } from 'services/Encrypt
 import { PeerRoom } from 'services/PeerRoom'
 import { PeerActions } from 'models/network'
 import { verificationTimeout } from 'config/messaging'
-import { usePeerNameDisplay } from 'components/PeerNameDisplay/usePeerNameDisplay'
+import { usePeerNameDisplay } from 'components/PeerNameDisplay'
 
 interface UserPeerVerificationProps {
   peerRoom: PeerRoom
