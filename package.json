@@ -30,6 +30,7 @@
     "querystring": "^0.2.1",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
+    "react-file-reader-input": "^2.0.0",
     "react-git-info": "^2.0.1",
     "react-markdown": "^8.0.3",
     "react-qrcode-logo": "^2.8.0",
@@ -91,6 +92,7 @@
   "devDependencies": {
     "@babel/plugin-proposal-private-property-in-object": "^7.21.11",
     "@types/file-saver": "^2.0.7",
+    "@types/react-file-reader-input": "^2.0.4",
     "@types/react-syntax-highlighter": "^15.5.5",
     "@types/streamsaver": "^2.0.1",
     "@types/uuid": "^8.3.4",
@@ -124,6 +126,10 @@
     "ipfs-core": "npm:dry-uninstall",
     "@svgr/plugin-svgo": {
       "nth-check": "2.0.1"
+    },
+    "react-file-reader-input": {
+      "react": "$react",
+      "react-dom": "$react-dom"
     },
     "resolve-url-loader": {
       "postcss": "8.4.31"

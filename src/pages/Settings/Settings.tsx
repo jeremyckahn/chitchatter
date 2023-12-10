@@ -1,4 +1,5 @@
 import { ChangeEvent, useContext, useEffect, useState } from 'react'
+import FileReaderInput, { Result } from 'react-file-reader-input'
 import Box from '@mui/material/Box'
 import Button from '@mui/material/Button'
 import Typography from '@mui/material/Typography'
@@ -22,7 +23,7 @@ interface SettingsProps {
 }
 
 export const Settings = ({ userId }: SettingsProps) => {
-  const { setTitle } = useContext(ShellContext)
+  const { setTitle, showAlert } = useContext(ShellContext)
   const { updateUserSettings, getUserSettings } = useContext(SettingsContext)
   const { getPersistedStorage } = useContext(StorageContext)
   const [
@@ -88,6 +89,23 @@ export const Settings = ({ userId }: SettingsProps) => {
 
   const handleExportSettingsClick = () => {
     settingsService.exportSettings(getUserSettings())
+  }
+
+  const handleImportSettingsClick = async ([[, file]]: Result[]) => {
+    try {
+      await settingsService.importSettings(file)
+
+      showAlert('Profile successfully imported', { severity: 'success' })
+    } catch (e) {
+      if (
+        typeof e === 'object' &&
+        e !== null &&
+        'message' in e &&
+        typeof e.message === 'string'
+      ) {
+        showAlert(e.message, { severity: 'error' })
+      }
+    }
   }
 
   const areNotificationsAvailable = NotificationService.permission === 'granted'
@@ -178,6 +196,16 @@ export const Settings = ({ userId }: SettingsProps) => {
         <strong>Be careful not to share the exported data with anyone</strong>,
         as it contains your unique verification keys.
       </Typography>
+      <Typography
+        variant="h2"
+        sx={theme => ({
+          fontSize: theme.typography.h5.fontSize,
+          fontWeight: theme.typography.fontWeightMedium,
+          mb: 1.5,
+        })}
+      >
+        Import profile data
+      </Typography>
       <Button
         variant="outlined"
         sx={_theme => ({
@@ -187,6 +215,32 @@ export const Settings = ({ userId }: SettingsProps) => {
       >
         Export profile data
       </Button>
+      <Typography
+        variant="body1"
+        sx={_theme => ({
+          mb: 2,
+        })}
+      >
+        Import data that was previously exported from another browser or device.
+      </Typography>
+      <FileReaderInput
+        {...{
+          as: 'text',
+          onChange: (e, results) => {
+            handleImportSettingsClick(results)
+          },
+        }}
+      >
+        <Button
+          color="warning"
+          variant="outlined"
+          sx={_theme => ({
+            mb: 2,
+          })}
+        >
+          Import profile data
+        </Button>
+      </FileReaderInput>
       <Typography
         variant="h2"
         sx={theme => ({
