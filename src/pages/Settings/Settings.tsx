@@ -8,6 +8,7 @@ import FormGroup from '@mui/material/FormGroup'
 import FormControlLabel from '@mui/material/FormControlLabel'
 import Paper from '@mui/material/Paper'
 
+import { settingsService } from 'services/Settings'
 import { NotificationService } from 'services/Notification'
 import { ShellContext } from 'contexts/ShellContext'
 import { StorageContext } from 'contexts/StorageContext'
@@ -85,6 +86,10 @@ export const Settings = ({ userId }: SettingsProps) => {
     window.location.reload()
   }
 
+  const handleExportSettingsClick = () => {
+    settingsService.exportSettings(getUserSettings())
+  }
+
   const areNotificationsAvailable = NotificationService.permission === 'granted'
 
   return (
@@ -160,7 +165,37 @@ export const Settings = ({ userId }: SettingsProps) => {
           mb: 1.5,
         })}
       >
-        Delete all settings data
+        Export profile data
+      </Typography>
+      <Typography
+        variant="body1"
+        sx={_theme => ({
+          mb: 2,
+        })}
+      >
+        You can export your profile data so that it can be moved to another
+        browser or device.{' '}
+        <strong>Be careful not to share the exported data with anyone</strong>,
+        as it contains your unique verification keys.
+      </Typography>
+      <Button
+        variant="outlined"
+        sx={_theme => ({
+          mb: 2,
+        })}
+        onClick={handleExportSettingsClick}
+      >
+        Export profile data
+      </Button>
+      <Typography
+        variant="h2"
+        sx={theme => ({
+          fontSize: theme.typography.h5.fontSize,
+          fontWeight: theme.typography.fontWeightMedium,
+          mb: 1.5,
+        })}
+      >
+        Delete all profile data
       </Typography>
       <Typography
         variant="body1"
