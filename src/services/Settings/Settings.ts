@@ -1,7 +1,10 @@
 import { saveAs } from 'file-saver'
 
 import { UserSettings } from 'models/settings'
-import { serializationService } from 'services/Serialization/Serialization'
+import {
+  isSerializedUserSettings,
+  serializationService,
+} from 'services/Serialization/Serialization'
 
 class InvalidFileError extends Error {
   message = 'InvalidFileError: File could not be imported'
@@ -22,21 +25,30 @@ export class SettingsService {
   importSettings = async (file: File) => {
     const fileReader = new FileReader()
 
-    const promise = new Promise<void>((resolve, reject) => {
-      fileReader.addEventListener('loadend', evt => {
+    const promise = new Promise<UserSettings>((resolve, reject) => {
+      fileReader.addEventListener('loadend', async evt => {
         try {
-          const result = evt.target?.result
+          const fileReaderResult = evt.target?.result
 
-          if (typeof result !== 'string') {
-            throw new InvalidFileError()
+          if (typeof fileReaderResult !== 'string') {
+            throw new Error()
           }
 
-          // FIXME: Validate and import file
+          const parsedFileResult = JSON.parse(fileReaderResult)
 
-          resolve()
+          if (!isSerializedUserSettings(parsedFileResult)) {
+            throw new Error()
+          }
+
+          const deserializeUserSettings =
+            await serializationService.deserializeUserSettings(parsedFileResult)
+          // FIXME: Verify that public key can be derived from private key
+
+          resolve(deserializeUserSettings)
         } catch (e) {
-          console.error(e)
-          reject(e)
+          const err = new InvalidFileError()
+          console.error(err)
+          reject(err)
         }
       })
 

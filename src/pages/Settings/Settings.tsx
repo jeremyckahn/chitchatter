@@ -93,7 +93,9 @@ export const Settings = ({ userId }: SettingsProps) => {
 
   const handleImportSettingsClick = async ([[, file]]: Result[]) => {
     try {
-      await settingsService.importSettings(file)
+      const userSettings = await settingsService.importSettings(file)
+
+      updateUserSettings(userSettings)
 
       showAlert('Profile successfully imported', { severity: 'success' })
     } catch (e) {
