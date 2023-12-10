@@ -61,7 +61,7 @@ export const PeerListItem = ({
   const isPeerConnectionDirect =
     peerConnectionTypes[peer.peerId] === PeerConnectionType.DIRECT
 
-  const handleListItemClick = () => {
+  const handleListItemTextClick = () => {
     setShowPeerDialog(true)
   }
 
@@ -76,7 +76,7 @@ export const PeerListItem = ({
         <ListItemText>
           <Box
             sx={{ display: 'flex', alignContent: 'center', cursor: 'pointer' }}
-            onClick={handleListItemClick}
+            onClick={handleListItemTextClick}
           >
             {hasPeerConnection ? (
               <Tooltip
