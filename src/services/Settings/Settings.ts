@@ -1,6 +1,7 @@
 import { saveAs } from 'file-saver'
 
 import { UserSettings } from 'models/settings'
+import { encryptionService } from 'services/Encryption'
 import {
   isSerializedUserSettings,
   serializationService,
@@ -9,6 +10,8 @@ import {
 class InvalidFileError extends Error {
   message = 'InvalidFileError: File could not be imported'
 }
+
+const encryptionTestTarget = 'chitchatter'
 
 export class SettingsService {
   exportSettings = async (userSettings: UserSettings) => {
@@ -42,7 +45,22 @@ export class SettingsService {
 
           const deserializeUserSettings =
             await serializationService.deserializeUserSettings(parsedFileResult)
-          // FIXME: Verify that public key can be derived from private key
+
+          const encryptedString = await encryptionService.encryptString(
+            deserializeUserSettings.publicKey,
+            encryptionTestTarget
+          )
+
+          const decryptedString = await encryptionService.decryptString(
+            deserializeUserSettings.privateKey,
+            encryptedString
+          )
+
+          // NOTE: This determines whether the public and private keys match
+          // and are compatible with Chitchatter.
+          if (decryptedString !== encryptionTestTarget) {
+            throw new Error()
+          }
 
           resolve(deserializeUserSettings)
         } catch (e) {
