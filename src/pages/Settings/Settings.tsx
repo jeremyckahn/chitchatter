@@ -200,9 +200,9 @@ export const Settings = ({ userId }: SettingsProps) => {
       </Typography>
       <Button
         variant="outlined"
-        sx={_theme => ({
+        sx={{
           mb: 2,
-        })}
+        }}
         onClick={handleExportSettingsClick}
       >
         Export profile data
@@ -219,9 +219,9 @@ export const Settings = ({ userId }: SettingsProps) => {
       </Typography>
       <Typography
         variant="body1"
-        sx={_theme => ({
+        sx={{
           mb: 2,
-        })}
+        }}
       >
         Import your Chitchatter profile that was previously exported from
         another browser or device.
