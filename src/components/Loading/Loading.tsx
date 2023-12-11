@@ -14,7 +14,11 @@ export const WholePageLoading = ({
           display: 'flex',
           justifyContent: 'center',
           alignItems: 'center',
-          height: '100vh',
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
         },
         ...(Array.isArray(sx) ? sx : [sx]),
       ]}

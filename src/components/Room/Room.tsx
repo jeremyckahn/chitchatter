@@ -33,14 +33,14 @@ export interface RoomProps {
   encryptionService?: typeof encryptionServiceInstance
 }
 
-export function Room({
+const Room = ({
   appId = `${encodeURI(window.location.origin)}_${process.env.REACT_APP_NAME}`,
   getUuid = uuid,
   encryptionService = encryptionServiceInstance,
   roomId,
   password,
   userId,
-}: RoomProps) {
+}: RoomProps) => {
   const theme = useTheme()
   const settingsContext = useContext(SettingsContext)
   const { showActiveTypingStatus, publicKey } =
@@ -175,3 +175,5 @@ export function Room({
     </RoomContext.Provider>
   )
 }
+
+export default Room

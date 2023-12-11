@@ -1,13 +1,17 @@
-import { useContext, useEffect } from 'react'
-import { Room } from 'components/Room'
+import { lazy, Suspense, useContext, useEffect } from 'react'
+//import { Room } from 'components/Room'
 import { useParams } from 'react-router-dom'
 
 import { ShellContext } from 'contexts/ShellContext'
 import { NotificationService } from 'services/Notification'
+import { WholePageLoading } from 'components/Loading'
 
 interface PublicRoomProps {
   userId: string
 }
+
+// @ts-ignore
+const Room = lazy(() => import('../../components/Room/Room'))
 
 export function PublicRoom({ userId }: PublicRoomProps) {
   const { roomId = '' } = useParams()
@@ -21,5 +25,9 @@ export function PublicRoom({ userId }: PublicRoomProps) {
     setTitle(`Room: ${roomId}`)
   }, [roomId, setTitle])
 
-  return <Room userId={userId} roomId={roomId} />
+  return (
+    <Suspense fallback={<WholePageLoading />}>
+      <Room userId={userId} roomId={roomId} />
+    </Suspense>
+  )
 }
