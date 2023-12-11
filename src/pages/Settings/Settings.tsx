@@ -1,4 +1,5 @@
 import { ChangeEvent, useContext, useEffect, useState } from 'react'
+import FileReaderInput, { Result } from 'react-file-reader-input'
 import Box from '@mui/material/Box'
 import Button from '@mui/material/Button'
 import Typography from '@mui/material/Typography'
@@ -7,21 +8,26 @@ import Switch from '@mui/material/Switch'
 import FormGroup from '@mui/material/FormGroup'
 import FormControlLabel from '@mui/material/FormControlLabel'
 import Paper from '@mui/material/Paper'
+import useTheme from '@mui/material/styles/useTheme'
 
+import { settingsService } from 'services/Settings'
 import { NotificationService } from 'services/Notification'
 import { ShellContext } from 'contexts/ShellContext'
 import { StorageContext } from 'contexts/StorageContext'
+import { SettingsContext } from 'contexts/SettingsContext'
 import { PeerNameDisplay } from 'components/PeerNameDisplay'
+import { ConfirmDialog } from 'components/ConfirmDialog'
 
-import { ConfirmDialog } from '../../components/ConfirmDialog'
-import { SettingsContext } from '../../contexts/SettingsContext'
+import { isErrorWithMessage } from '../../utils'
 
 interface SettingsProps {
   userId: string
 }
 
 export const Settings = ({ userId }: SettingsProps) => {
-  const { setTitle } = useContext(ShellContext)
+  const theme = useTheme()
+
+  const { setTitle, showAlert } = useContext(ShellContext)
   const { updateUserSettings, getUserSettings } = useContext(SettingsContext)
   const { getPersistedStorage } = useContext(StorageContext)
   const [
@@ -85,17 +91,41 @@ export const Settings = ({ userId }: SettingsProps) => {
     window.location.reload()
   }
 
+  const handleExportSettingsClick = async () => {
+    try {
+      await settingsService.exportSettings(getUserSettings())
+    } catch (e) {
+      if (isErrorWithMessage(e)) {
+        showAlert(e.message, { severity: 'error' })
+      }
+    }
+  }
+
+  const handleImportSettingsClick = async ([[, file]]: Result[]) => {
+    try {
+      const userSettings = await settingsService.importSettings(file)
+
+      updateUserSettings(userSettings)
+
+      showAlert('Profile successfully imported', { severity: 'success' })
+    } catch (e) {
+      if (isErrorWithMessage(e)) {
+        showAlert(e.message, { severity: 'error' })
+      }
+    }
+  }
+
   const areNotificationsAvailable = NotificationService.permission === 'granted'
 
   return (
     <Box className="max-w-3xl mx-auto p-4">
       <Typography
         variant="h2"
-        sx={theme => ({
+        sx={{
           fontSize: theme.typography.h3.fontSize,
           fontWeight: theme.typography.fontWeightMedium,
           mb: 2,
-        })}
+        }}
       >
         Chat
       </Typography>
@@ -137,44 +167,111 @@ export const Settings = ({ userId }: SettingsProps) => {
             label="Show active typing indicators"
           />
         </FormGroup>
-        <Typography variant="subtitle2" sx={_theme => ({})}>
+        <Typography variant="subtitle2">
           Disabling this will also hide your active typing status from others.
         </Typography>
       </Paper>
       <Divider sx={{ my: 2 }} />
       <Typography
         variant="h2"
-        sx={theme => ({
+        sx={{
           fontSize: theme.typography.h3.fontSize,
           fontWeight: theme.typography.fontWeightMedium,
           mb: 2,
-        })}
+        }}
       >
         Data
       </Typography>
       <Typography
         variant="h2"
-        sx={theme => ({
+        sx={{
           fontSize: theme.typography.h5.fontSize,
           fontWeight: theme.typography.fontWeightMedium,
           mb: 1.5,
-        })}
+        }}
       >
-        Delete all settings data
+        Export profile data
       </Typography>
       <Typography
         variant="body1"
-        sx={_theme => ({
+        sx={{
           mb: 2,
-        })}
+        }}
+      >
+        Export your Chitchatter profile data so that it can be moved to another
+        browser or device.{' '}
+        <strong>Be careful not to share the exported data with anyone</strong>.
+        It contains your unique verification keys.
+      </Typography>
+      <Button
+        variant="outlined"
+        sx={{
+          mb: 2,
+        }}
+        onClick={handleExportSettingsClick}
+      >
+        Export profile data
+      </Button>
+      <Typography
+        variant="h2"
+        sx={{
+          fontSize: theme.typography.h5.fontSize,
+          fontWeight: theme.typography.fontWeightMedium,
+          mb: 1.5,
+        }}
+      >
+        Import profile data
+      </Typography>
+      <Typography
+        variant="body1"
+        sx={{
+          mb: 2,
+        }}
+      >
+        Import your Chitchatter profile that was previously exported from
+        another browser or device.
+      </Typography>
+      <FileReaderInput
+        {...{
+          as: 'text',
+          onChange: (_e, results) => {
+            handleImportSettingsClick(results)
+          },
+        }}
+      >
+        <Button
+          color="warning"
+          variant="outlined"
+          sx={{
+            mb: 2,
+          }}
+        >
+          Import profile data
+        </Button>
+      </FileReaderInput>
+      <Typography
+        variant="h2"
+        sx={{
+          fontSize: theme.typography.h5.fontSize,
+          fontWeight: theme.typography.fontWeightMedium,
+          mb: 1.5,
+        }}
+      >
+        Delete all profile data
+      </Typography>
+      <Typography
+        variant="body1"
+        sx={{
+          mb: 2,
+        }}
       >
         <strong>Be careful with this</strong>. This will cause your user name to
         change from{' '}
         <strong>
           <PeerNameDisplay
-            sx={theme => ({
+            sx={{
               fontWeight: theme.typography.fontWeightMedium,
-            })}
+            }}
           >
             {userId}
           </PeerNameDisplay>
@@ -185,9 +282,9 @@ export const Settings = ({ userId }: SettingsProps) => {
       <Button
         variant="outlined"
         color="error"
-        sx={_theme => ({
+        sx={{
           mb: 2,
-        })}
+        }}
         onClick={handleDeleteSettingsClick}
       >
         Delete all data and restart
@@ -199,9 +296,9 @@ export const Settings = ({ userId }: SettingsProps) => {
       />
       <Typography
         variant="subtitle2"
-        sx={_theme => ({
+        sx={{
           mb: 2,
-        })}
+        }}
       >
         Chitchatter only stores user preferences and never message content of
         any kind. This preference data is only stored locally on your device and
