@@ -9,7 +9,7 @@ import {
 } from 'test-utils/mocks/mockSerializationService'
 import { userSettingsStubFactory } from 'test-utils/stubs/userSettings'
 
-import { Bootstrap, BootstrapProps } from './Bootstrap'
+import Bootstrap, { BootstrapProps } from './Bootstrap'
 
 const mockPersistedStorage =
   jest.createMockFromModule<jest.Mock<typeof localforage>>('localforage')

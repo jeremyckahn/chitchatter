@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { lazy, Suspense, useEffect, useState } from 'react'
 import Box from '@mui/material/Box'
 import Typography from '@mui/material/Typography'
 import { v4 as uuid } from 'uuid'
@@ -11,7 +11,10 @@ import {
 import { WholePageLoading } from 'components/Loading/Loading'
 import { ColorMode, UserSettings } from 'models/settings'
 
-import { Bootstrap, BootstrapProps } from './Bootstrap'
+import type { BootstrapProps } from './Bootstrap'
+
+// @ts-expect-error
+const Bootstrap = lazy(() => import('./Bootstrap.js'))
 
 export interface InitProps extends Omit<BootstrapProps, 'initialUserSettings'> {
   getUuid?: typeof uuid
@@ -74,7 +77,11 @@ const Init = ({ getUuid = uuid, ...props }: InitProps) => {
     return <WholePageLoading />
   }
 
-  return <Bootstrap {...props} initialUserSettings={userSettings} />
+  return (
+    <Suspense fallback={<WholePageLoading />}>
+      <Bootstrap {...props} initialUserSettings={userSettings} />
+    </Suspense>
+  )
 }
 
 export default Init

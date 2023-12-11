@@ -76,7 +76,7 @@ const getConfigFromSdk = () => {
   })
 }
 
-export const Bootstrap = ({
+const Bootstrap = ({
   persistedStorage: persistedStorageProp = localforage.createInstance({
     name: 'chitchatter',
     description: 'Persisted settings data for chitchatter',
@@ -264,3 +264,5 @@ export const Bootstrap = ({
     </Router>
   )
 }
+
+export default Bootstrap
