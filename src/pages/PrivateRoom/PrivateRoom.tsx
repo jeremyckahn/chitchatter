@@ -1,19 +1,15 @@
-import { lazy, Suspense, useContext, useEffect, useState } from 'react'
-//import { Room } from 'components/Room'
+import { useContext, useEffect, useState } from 'react'
+import { Room } from 'components/Room'
 import { useParams } from 'react-router-dom'
 
 import { ShellContext } from 'contexts/ShellContext'
 import { NotificationService } from 'services/Notification'
 import { PasswordPrompt } from 'components/PasswordPrompt'
 import { encryptionService } from 'services/Encryption'
-import { WholePageLoading } from 'components/Loading'
 
 interface PublicRoomProps {
   userId: string
 }
-
-// @ts-ignore
-const Room = lazy(() => import('../../components/Room/Room'))
 
 export function PrivateRoom({ userId }: PublicRoomProps) {
   const { roomId = '' } = useParams()
@@ -49,8 +45,6 @@ export function PrivateRoom({ userId }: PublicRoomProps) {
       onPasswordEntered={handlePasswordEntered}
     />
   ) : (
-    <Suspense fallback={<WholePageLoading />}>
-      <Room userId={userId} roomId={roomId} password={secret} />
-    </Suspense>
+    <Room userId={userId} roomId={roomId} password={secret} />
   )
 }

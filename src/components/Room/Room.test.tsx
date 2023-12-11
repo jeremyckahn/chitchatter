@@ -8,7 +8,7 @@ import { mockEncryptionService } from 'test-utils/mocks/mockEncryptionService'
 
 import { SettingsContext } from 'contexts/SettingsContext'
 
-import Room, { RoomProps } from './Room'
+import { Room, RoomProps } from './'
 
 const mockUserId = 'user-id'
 const mockRoomId = 'room-123'
