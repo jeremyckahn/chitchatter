@@ -43,16 +43,16 @@ export class SettingsService {
             throw new Error()
           }
 
-          const deserializeUserSettings =
+          const deserializedUserSettings =
             await serializationService.deserializeUserSettings(parsedFileResult)
 
           const encryptedString = await encryptionService.encryptString(
-            deserializeUserSettings.publicKey,
+            deserializedUserSettings.publicKey,
             encryptionTestTarget
           )
 
           const decryptedString = await encryptionService.decryptString(
-            deserializeUserSettings.privateKey,
+            deserializedUserSettings.privateKey,
             encryptedString
           )
 
@@ -62,7 +62,7 @@ export class SettingsService {
             throw new Error()
           }
 
-          resolve(deserializeUserSettings)
+          resolve(deserializedUserSettings)
         } catch (e) {
           const err = new InvalidFileError()
           console.error(err)

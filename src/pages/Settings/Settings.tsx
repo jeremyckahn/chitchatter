@@ -14,10 +14,11 @@ import { settingsService } from 'services/Settings'
 import { NotificationService } from 'services/Notification'
 import { ShellContext } from 'contexts/ShellContext'
 import { StorageContext } from 'contexts/StorageContext'
+import { SettingsContext } from 'contexts/SettingsContext'
 import { PeerNameDisplay } from 'components/PeerNameDisplay'
+import { ConfirmDialog } from 'components/ConfirmDialog'
 
-import { ConfirmDialog } from '../../components/ConfirmDialog'
-import { SettingsContext } from '../../contexts/SettingsContext'
+import { isErrorWithMessage } from '../../utils'
 
 interface SettingsProps {
   userId: string
@@ -90,8 +91,14 @@ export const Settings = ({ userId }: SettingsProps) => {
     window.location.reload()
   }
 
-  const handleExportSettingsClick = () => {
-    settingsService.exportSettings(getUserSettings())
+  const handleExportSettingsClick = async () => {
+    try {
+      await settingsService.exportSettings(getUserSettings())
+    } catch (e) {
+      if (isErrorWithMessage(e)) {
+        showAlert(e.message, { severity: 'error' })
+      }
+    }
   }
 
   const handleImportSettingsClick = async ([[, file]]: Result[]) => {
@@ -102,12 +109,7 @@ export const Settings = ({ userId }: SettingsProps) => {
 
       showAlert('Profile successfully imported', { severity: 'success' })
     } catch (e) {
-      if (
-        typeof e === 'object' &&
-        e !== null &&
-        'message' in e &&
-        typeof e.message === 'string'
-      ) {
+      if (isErrorWithMessage(e)) {
         showAlert(e.message, { severity: 'error' })
       }
     }
