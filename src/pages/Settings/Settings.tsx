@@ -193,20 +193,10 @@ export const Settings = ({ userId }: SettingsProps) => {
           mb: 2,
         })}
       >
-        You can export your profile data so that it can be moved to another
+        Export your Chitchatter profile data so that it can be moved to another
         browser or device.{' '}
-        <strong>Be careful not to share the exported data with anyone</strong>,
-        as it contains your unique verification keys.
-      </Typography>
-      <Typography
-        variant="h2"
-        sx={theme => ({
-          fontSize: theme.typography.h5.fontSize,
-          fontWeight: theme.typography.fontWeightMedium,
-          mb: 1.5,
-        })}
-      >
-        Import profile data
+        <strong>Be careful not to share the exported data with anyone</strong>.
+        It contains your unique verification keys.
       </Typography>
       <Button
         variant="outlined"
@@ -218,17 +208,28 @@ export const Settings = ({ userId }: SettingsProps) => {
         Export profile data
       </Button>
       <Typography
+        variant="h2"
+        sx={theme => ({
+          fontSize: theme.typography.h5.fontSize,
+          fontWeight: theme.typography.fontWeightMedium,
+          mb: 1.5,
+        })}
+      >
+        Import profile data
+      </Typography>
+      <Typography
         variant="body1"
         sx={_theme => ({
           mb: 2,
         })}
       >
-        Import data that was previously exported from another browser or device.
+        Import your Chitchatter profile that was previously exported from
+        another browser or device.
       </Typography>
       <FileReaderInput
         {...{
           as: 'text',
-          onChange: (e, results) => {
+          onChange: (_e, results) => {
             handleImportSettingsClick(results)
           },
         }}
