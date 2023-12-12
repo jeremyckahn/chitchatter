@@ -35,6 +35,7 @@ const renderBootstrap = async (overrides: Partial<BootstrapProps> = {}) => {
       persistedStorage={mockPersistedStorage as any as typeof localforage}
       initialUserSettings={userSettingsStub}
       serializationService={mockSerializationService}
+      appNeedsUpdate={false}
       {...overrides}
     />
   )

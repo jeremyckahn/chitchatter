@@ -12,11 +12,13 @@ import { WholePageLoading } from 'components/Loading/Loading'
 import { ColorMode, UserSettings } from 'models/settings'
 
 import type { BootstrapProps } from './Bootstrap'
+import * as serviceWorkerRegistration from './serviceWorkerRegistration'
 
 // @ts-expect-error
 const Bootstrap = lazy(() => import('./Bootstrap.js'))
 
-export interface InitProps extends Omit<BootstrapProps, 'initialUserSettings'> {
+export interface InitProps
+  extends Omit<BootstrapProps, 'initialUserSettings' | 'appNeedsUpdate'> {
   getUuid?: typeof uuid
 }
 
@@ -26,6 +28,15 @@ export interface InitProps extends Omit<BootstrapProps, 'initialUserSettings'> {
 const Init = ({ getUuid = uuid, ...props }: InitProps) => {
   const [userSettings, setUserSettings] = useState<UserSettings | null>(null)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
+  const [appNeedsUpdate, setAppNeedsUpdate] = useState(false)
+
+  const handleServiceWorkerUpdate = () => {
+    setAppNeedsUpdate(true)
+  }
+
+  useEffect(() => {
+    serviceWorkerRegistration.register({ onUpdate: handleServiceWorkerUpdate })
+  }, [])
 
   useEffect(() => {
     ;(async () => {
@@ -79,7 +90,11 @@ const Init = ({ getUuid = uuid, ...props }: InitProps) => {
 
   return (
     <Suspense fallback={<WholePageLoading />}>
-      <Bootstrap {...props} initialUserSettings={userSettings} />
+      <Bootstrap
+        {...props}
+        initialUserSettings={userSettings}
+        appNeedsUpdate={appNeedsUpdate}
+      />
     </Suspense>
   )
 }
