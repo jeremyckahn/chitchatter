@@ -7,7 +7,6 @@ import {
 } from 'react-router-dom'
 import localforage from 'localforage'
 
-import * as serviceWorkerRegistration from 'serviceWorkerRegistration'
 import { StorageContext } from 'contexts/StorageContext'
 import { SettingsContext } from 'contexts/SettingsContext'
 import { homepageUrl, routes } from 'config/routes'
@@ -30,6 +29,7 @@ import {
 import { serialization, SerializedUserSettings } from 'services/Serialization'
 
 export interface BootstrapProps {
+  appNeedsUpdate: boolean
   persistedStorage?: typeof localforage
   initialUserSettings: UserSettings
   serializationService?: typeof serialization
@@ -80,6 +80,7 @@ const Bootstrap = ({
   }),
   initialUserSettings,
   serializationService = serialization,
+  appNeedsUpdate,
 }: BootstrapProps) => {
   const queryParams = useMemo(
     () => new URLSearchParams(window.location.search),
@@ -87,15 +88,10 @@ const Bootstrap = ({
   )
 
   const [persistedStorage] = useState(persistedStorageProp)
-  const [appNeedsUpdate, setAppNeedsUpdate] = useState(false)
   const [hasLoadedSettings, setHasLoadedSettings] = useState(false)
   const [userSettings, setUserSettings] =
     useState<UserSettings>(initialUserSettings)
   const { userId } = userSettings
-
-  const handleServiceWorkerUpdate = () => {
-    setAppNeedsUpdate(true)
-  }
 
   const persistUserSettings = useCallback(
     async (newUserSettings: UserSettings) => {
@@ -113,10 +109,6 @@ const Bootstrap = ({
     },
     [persistedStorageProp, queryParams, serializationService, userSettings]
   )
-
-  useEffect(() => {
-    serviceWorkerRegistration.register({ onUpdate: handleServiceWorkerUpdate })
-  }, [])
 
   useEffect(() => {
     ;(async () => {

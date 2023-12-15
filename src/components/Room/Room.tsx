@@ -34,7 +34,7 @@ export interface RoomProps {
 }
 
 export function Room({
-  appId = `${encodeURI(window.location.origin)}_${process.env.REACT_APP_NAME}`,
+  appId = `${encodeURI(window.location.origin)}_${process.env.VITE_NAME}`,
   getUuid = uuid,
   encryptionService = encryption,
   roomId,

@@ -145,7 +145,7 @@ export const Drawer = ({ isDrawerOpen, onDrawerClose, theme }: DrawerProps) => {
               <MuiLink
                 target="_blank"
                 rel="noopener"
-                href={`${process.env.REACT_APP_GITHUB_REPO}/commit/${commit.hash}`}
+                href={`${process.env.VITE_GITHUB_REPO}/commit/${commit.hash}`}
               >
                 {commit.shortHash}
               </MuiLink>
