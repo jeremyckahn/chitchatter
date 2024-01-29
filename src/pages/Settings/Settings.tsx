@@ -10,7 +10,7 @@ import FormControlLabel from '@mui/material/FormControlLabel'
 import Paper from '@mui/material/Paper'
 import useTheme from '@mui/material/styles/useTheme'
 
-import { settingsService } from 'services/Settings'
+import { settings } from 'services/Settings'
 import { notification } from 'services/Notification'
 import { ShellContext } from 'contexts/ShellContext'
 import { StorageContext } from 'contexts/StorageContext'
@@ -93,7 +93,7 @@ export const Settings = ({ userId }: SettingsProps) => {
 
   const handleExportSettingsClick = async () => {
     try {
-      await settingsService.exportSettings(getUserSettings())
+      await settings.exportSettings(getUserSettings())
     } catch (e) {
       if (isErrorWithMessage(e)) {
         showAlert(e.message, { severity: 'error' })
@@ -103,7 +103,7 @@ export const Settings = ({ userId }: SettingsProps) => {
 
   const handleImportSettingsClick = async ([[, file]]: Result[]) => {
     try {
-      const userSettings = await settingsService.importSettings(file)
+      const userSettings = await settings.importSettings(file)
 
       updateUserSettings(userSettings)
 

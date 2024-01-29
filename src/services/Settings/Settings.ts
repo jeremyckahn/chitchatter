@@ -78,4 +78,4 @@ export class SettingsService {
   }
 }
 
-export const settingsService = new SettingsService()
+export const settings = new SettingsService()
