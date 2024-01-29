@@ -6,7 +6,7 @@ import Download from '@mui/icons-material/Download'
 import CircularProgress from '@mui/material/CircularProgress'
 
 import { isError } from 'utils'
-import { fileTransfer } from 'services/FileTransfer/index'
+import { fileTransfer } from 'lib/FileTransfer'
 import { Peer } from 'models/chat'
 import { ShellContext } from 'contexts/ShellContext'
 

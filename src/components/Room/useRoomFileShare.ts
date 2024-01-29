@@ -6,8 +6,7 @@ import { ShellContext } from 'contexts/ShellContext'
 import { PeerActions } from 'models/network'
 import { FileOfferMetadata, Peer } from 'models/chat'
 import { PeerRoom, PeerHookType } from 'services/PeerRoom'
-
-import { fileTransfer } from 'services/FileTransfer/index'
+import { fileTransfer } from 'lib/FileTransfer'
 
 interface UseRoomFileShareConfig {
   onInlineMediaUpload: (files: File[]) => void

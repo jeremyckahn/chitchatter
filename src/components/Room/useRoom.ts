@@ -28,7 +28,7 @@ import { getPeerName, usePeerNameDisplay } from 'components/PeerNameDisplay'
 import { Audio } from 'lib/Audio'
 import { notification } from 'services/Notification'
 import { PeerRoom, PeerHookType } from 'services/PeerRoom'
-import { fileTransfer } from 'services/FileTransfer'
+import { fileTransfer } from 'lib/FileTransfer'
 import { AllowedKeyType, encryption } from 'services/Encryption'
 
 import { messageTranscriptSizeLimit } from 'config/messaging'
