@@ -25,7 +25,7 @@ import {
   PeerVerificationState,
 } from 'models/chat'
 import { getPeerName, usePeerNameDisplay } from 'components/PeerNameDisplay'
-import { Audio as AudioService } from 'services/Audio'
+import { Audio } from 'lib/Audio'
 import { notification } from 'services/Notification'
 import { PeerRoom, PeerHookType } from 'services/PeerRoom'
 import { fileTransfer } from 'services/FileTransfer'
@@ -87,7 +87,7 @@ export function useRoom(
     []
   )
   const [newMessageAudio] = useState(
-    () => new AudioService(process.env.PUBLIC_URL + '/sounds/new-message.aac')
+    () => new Audio(process.env.PUBLIC_URL + '/sounds/new-message.aac')
   )
 
   const { getDisplayUsername } = usePeerNameDisplay()
