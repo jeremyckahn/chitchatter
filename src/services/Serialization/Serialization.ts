@@ -79,4 +79,4 @@ export class SerializationService {
   }
 }
 
-export const serializationService = new SerializationService()
+export const serialization = new SerializationService()

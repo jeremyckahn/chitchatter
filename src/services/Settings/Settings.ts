@@ -4,7 +4,7 @@ import { UserSettings } from 'models/settings'
 import { encryption } from 'services/Encryption'
 import {
   isSerializedUserSettings,
-  serializationService,
+  serialization,
 } from 'services/Serialization/Serialization'
 
 class InvalidFileError extends Error {
@@ -15,8 +15,9 @@ const encryptionTestTarget = 'chitchatter'
 
 export class SettingsService {
   exportSettings = async (userSettings: UserSettings) => {
-    const serializedUserSettings =
-      await serializationService.serializeUserSettings(userSettings)
+    const serializedUserSettings = await serialization.serializeUserSettings(
+      userSettings
+    )
 
     const blob = new Blob([JSON.stringify(serializedUserSettings)], {
       type: 'application/json;charset=utf-8',
@@ -44,7 +45,7 @@ export class SettingsService {
           }
 
           const deserializedUserSettings =
-            await serializationService.deserializeUserSettings(parsedFileResult)
+            await serialization.deserializeUserSettings(parsedFileResult)
 
           const encryptedString = await encryption.encryptString(
             deserializedUserSettings.publicKey,

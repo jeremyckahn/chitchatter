@@ -3,7 +3,7 @@ import localforage from 'localforage'
 
 import { PersistedStorageKeys } from 'models/storage'
 import {
-  mockSerializationService,
+  mockSerialization,
   mockSerializedPrivateKey,
   mockSerializedPublicKey,
 } from 'test-utils/mocks/mockSerializationService'
@@ -34,7 +34,7 @@ const renderBootstrap = async (overrides: Partial<BootstrapProps> = {}) => {
     <Bootstrap
       persistedStorage={mockPersistedStorage as any as typeof localforage}
       initialUserSettings={userSettingsStub}
-      serializationService={mockSerializationService}
+      serializationService={mockSerialization}
       {...overrides}
     />
   )

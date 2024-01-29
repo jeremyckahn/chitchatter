@@ -1,16 +1,13 @@
 import { UserSettings } from 'models/settings'
 import { encryption } from 'services/Encryption'
-import {
-  serializationService,
-  SerializedUserSettings,
-} from 'services/Serialization'
+import { serialization, SerializedUserSettings } from 'services/Serialization'
 
 export const mockSerializedPublicKey = 'public key'
 export const mockSerializedPrivateKey = 'private key'
 
-export const mockSerializationService = serializationService
+export const mockSerialization = serialization
 
-mockSerializationService.serializeUserSettings = async (
+mockSerialization.serializeUserSettings = async (
   userSettings: UserSettings
 ) => {
   const { publicKey, privateKey, ...userSettingsRest } = userSettings
@@ -22,7 +19,7 @@ mockSerializationService.serializeUserSettings = async (
   }
 }
 
-mockSerializationService.deserializeUserSettings = async (
+mockSerialization.deserializeUserSettings = async (
   serializedUserSettings: SerializedUserSettings
 ) => {
   const { publicKey, privateKey, ...userSettingsRest } = serializedUserSettings
