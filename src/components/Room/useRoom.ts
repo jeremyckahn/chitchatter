@@ -27,7 +27,7 @@ import {
 import { getPeerName, usePeerNameDisplay } from 'components/PeerNameDisplay'
 import { Audio } from 'lib/Audio'
 import { notification } from 'services/Notification'
-import { PeerRoom, PeerHookType } from 'services/PeerRoom'
+import { PeerRoom, PeerHookType } from 'lib/PeerRoom'
 import { fileTransfer } from 'lib/FileTransfer'
 import { AllowedKeyType, encryption } from 'services/Encryption'
 

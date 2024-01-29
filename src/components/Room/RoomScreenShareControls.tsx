@@ -3,7 +3,7 @@ import ScreenShare from '@mui/icons-material/ScreenShare'
 import StopScreenShare from '@mui/icons-material/StopScreenShare'
 import Tooltip from '@mui/material/Tooltip'
 
-import { PeerRoom } from 'services/PeerRoom/PeerRoom'
+import { PeerRoom } from 'lib/PeerRoom'
 
 import { useRoomScreenShare } from './useRoomScreenShare'
 import { MediaButton } from './MediaButton'

@@ -48,6 +48,18 @@ export class PeerRoom {
 
   private isProcessingPendingStreams = false
 
+  private processPendingStreams = async () => {
+    if (this.isProcessingPendingStreams) return
+
+    this.isProcessingPendingStreams = true
+
+    while (this.streamQueue.length > 0) {
+      await this.streamQueue.shift()?.()
+    }
+
+    this.isProcessingPendingStreams = false
+  }
+
   constructor(config: TorrentRoomConfig & BaseRoomConfig, roomId: string) {
     this.roomConfig = config
     this.room = joinRoom(this.roomConfig, roomId)
@@ -169,18 +181,6 @@ export class PeerRoom {
     )
 
     this.processPendingStreams()
-  }
-
-  private processPendingStreams = async () => {
-    if (this.isProcessingPendingStreams) return
-
-    this.isProcessingPendingStreams = true
-
-    while (this.streamQueue.length > 0) {
-      await this.streamQueue.shift()?.()
-    }
-
-    this.isProcessingPendingStreams = false
   }
 
   removeStream: Room['removeStream'] = (stream, targetPeers) => {

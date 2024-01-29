@@ -21,8 +21,7 @@ import { SettingsContext } from 'contexts/SettingsContext'
 import { AlertOptions, QueryParamKeys } from 'models/shell'
 import { AudioState, ScreenShareState, VideoState, Peer } from 'models/chat'
 import { ErrorBoundary } from 'components/ErrorBoundary'
-
-import { PeerConnectionType } from 'services/PeerRoom/PeerRoom'
+import { PeerConnectionType } from 'lib/PeerRoom'
 
 import { Drawer } from './Drawer'
 import { UpgradeDialog } from './UpgradeDialog'

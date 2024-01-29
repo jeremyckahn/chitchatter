@@ -5,7 +5,7 @@ import { RoomContext } from 'contexts/RoomContext'
 import { ShellContext } from 'contexts/ShellContext'
 import { PeerActions } from 'models/network'
 import { FileOfferMetadata, Peer } from 'models/chat'
-import { PeerRoom, PeerHookType } from 'services/PeerRoom'
+import { PeerRoom, PeerHookType } from 'lib/PeerRoom'
 import { fileTransfer } from 'lib/FileTransfer'
 
 interface UseRoomFileShareConfig {

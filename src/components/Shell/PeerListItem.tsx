@@ -19,7 +19,7 @@ import { AudioVolume } from 'components/AudioVolume'
 import { PeerNameDisplay } from 'components/PeerNameDisplay'
 import { PublicKey } from 'components/PublicKey'
 import { Peer, PeerVerificationState } from 'models/chat'
-import { PeerConnectionType } from 'services/PeerRoom/PeerRoom'
+import { PeerConnectionType } from 'lib/PeerRoom'
 
 import { PeerDownloadFileButton } from './PeerDownloadFileButton'
 

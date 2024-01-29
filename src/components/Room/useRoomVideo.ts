@@ -4,7 +4,7 @@ import { RoomContext } from 'contexts/RoomContext'
 import { ShellContext } from 'contexts/ShellContext'
 import { PeerActions } from 'models/network'
 import { VideoState, Peer, VideoStreamType } from 'models/chat'
-import { PeerRoom, PeerHookType, PeerStreamType } from 'services/PeerRoom'
+import { PeerRoom, PeerHookType, PeerStreamType } from 'lib/PeerRoom'
 
 import { isRecord } from 'utils'
 
