@@ -1,10 +1,10 @@
-import { encryptionService } from 'services/Encryption'
+import { encryption } from 'services/Encryption'
 
-export const mockEncryptionService = encryptionService
+export const mockEncryptionService = encryption
 
 mockEncryptionService.generateKeyPair = jest.fn(async () => ({
-  publicKey: encryptionService.cryptoKeyStub,
-  privateKey: encryptionService.cryptoKeyStub,
+  publicKey: encryption.cryptoKeyStub,
+  privateKey: encryption.cryptoKeyStub,
 }))
 
 mockEncryptionService.encodePassword = async () => ''
@@ -12,4 +12,4 @@ mockEncryptionService.encodePassword = async () => ''
 mockEncryptionService.stringifyCryptoKey = async () => ''
 
 mockEncryptionService.parseCryptoKeyString = async () =>
-  encryptionService.cryptoKeyStub
+  encryption.cryptoKeyStub

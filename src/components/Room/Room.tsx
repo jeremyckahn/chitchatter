@@ -12,7 +12,7 @@ import { RoomContext } from 'contexts/RoomContext'
 import { ShellContext } from 'contexts/ShellContext'
 import { MessageForm } from 'components/MessageForm'
 import { ChatTranscript } from 'components/ChatTranscript'
-import { encryptionService as encryptionServiceInstance } from 'services/Encryption'
+import { encryption } from 'services/Encryption'
 import { SettingsContext } from 'contexts/SettingsContext'
 
 import { useRoom } from './useRoom'
@@ -30,13 +30,13 @@ export interface RoomProps {
   password?: string
   roomId: string
   userId: string
-  encryptionService?: typeof encryptionServiceInstance
+  encryptionService?: typeof encryption
 }
 
 export function Room({
   appId = `${encodeURI(window.location.origin)}_${process.env.REACT_APP_NAME}`,
   getUuid = uuid,
-  encryptionService = encryptionServiceInstance,
+  encryptionService = encryption,
   roomId,
   password,
   userId,

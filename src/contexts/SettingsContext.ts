@@ -1,7 +1,7 @@
 import { createContext } from 'react'
 
 import { ColorMode, UserSettings } from 'models/settings'
-import { encryptionService } from 'services/Encryption'
+import { encryption } from 'services/Encryption'
 
 export interface SettingsContextProps {
   updateUserSettings: (settings: Partial<UserSettings>) => Promise<void>
@@ -17,7 +17,7 @@ export const SettingsContext = createContext<SettingsContextProps>({
     playSoundOnNewMessage: true,
     showNotificationOnNewMessage: true,
     showActiveTypingStatus: true,
-    publicKey: encryptionService.cryptoKeyStub,
-    privateKey: encryptionService.cryptoKeyStub,
+    publicKey: encryption.cryptoKeyStub,
+    privateKey: encryption.cryptoKeyStub,
   }),
 })

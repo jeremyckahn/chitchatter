@@ -1,7 +1,7 @@
 import { useCallback, useContext, useEffect, useState } from 'react'
 import { ShellContext } from 'contexts/ShellContext'
 import { Peer, PeerVerificationState } from 'models/chat'
-import { encryptionService as encryptionServiceInstance } from 'services/Encryption'
+import { encryption } from 'services/Encryption'
 import { PeerRoom } from 'services/PeerRoom'
 import { PeerActions } from 'models/network'
 import { verificationTimeout } from 'config/messaging'
@@ -10,13 +10,13 @@ import { usePeerNameDisplay } from 'components/PeerNameDisplay'
 interface UserPeerVerificationProps {
   peerRoom: PeerRoom
   privateKey: CryptoKey
-  encryptionService?: typeof encryptionServiceInstance
+  encryptionService?: typeof encryption
 }
 
 export const usePeerVerification = ({
   peerRoom,
   privateKey,
-  encryptionService = encryptionServiceInstance,
+  encryptionService = encryption,
 }: UserPeerVerificationProps) => {
   const { updatePeer, peerList, showAlert } = useContext(ShellContext)
 

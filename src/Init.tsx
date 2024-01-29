@@ -3,7 +3,7 @@ import Box from '@mui/material/Box'
 import Typography from '@mui/material/Typography'
 import { v4 as uuid } from 'uuid'
 
-import { encryptionService } from 'services/Encryption'
+import { encryption } from 'services/Encryption'
 import {
   EnvironmentUnsupportedDialog,
   isEnvironmentSupported,
@@ -32,8 +32,7 @@ const Init = ({ getUuid = uuid, ...props }: InitProps) => {
       if (userSettings !== null) return
 
       try {
-        const { publicKey, privateKey } =
-          await encryptionService.generateKeyPair()
+        const { publicKey, privateKey } = await encryption.generateKeyPair()
 
         setUserSettings({
           userId: getUuid(),

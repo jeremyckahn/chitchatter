@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { materialDark } from 'react-syntax-highlighter/dist/esm/styles/prism'
 import { PrismAsyncLight as SyntaxHighlighter } from 'react-syntax-highlighter'
 import { CopyableBlock } from 'components/CopyableBlock/CopyableBlock'
-import { encryptionService } from 'services/Encryption/Encryption'
+import { encryption } from 'services/Encryption/Encryption'
 
 interface PeerPublicKeyProps {
   publicKey: CryptoKey
@@ -13,7 +13,7 @@ export const PublicKey = ({ publicKey }: PeerPublicKeyProps) => {
 
   useEffect(() => {
     ;(async () => {
-      setPublicKeyString(await encryptionService.stringifyCryptoKey(publicKey))
+      setPublicKeyString(await encryption.stringifyCryptoKey(publicKey))
     })()
   }, [publicKey])
 

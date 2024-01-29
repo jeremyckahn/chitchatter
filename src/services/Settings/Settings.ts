@@ -1,7 +1,7 @@
 import { saveAs } from 'file-saver'
 
 import { UserSettings } from 'models/settings'
-import { encryptionService } from 'services/Encryption'
+import { encryption } from 'services/Encryption'
 import {
   isSerializedUserSettings,
   serializationService,
@@ -46,12 +46,12 @@ export class SettingsService {
           const deserializedUserSettings =
             await serializationService.deserializeUserSettings(parsedFileResult)
 
-          const encryptedString = await encryptionService.encryptString(
+          const encryptedString = await encryption.encryptString(
             deserializedUserSettings.publicKey,
             encryptionTestTarget
           )
 
-          const decryptedString = await encryptionService.decryptString(
+          const decryptedString = await encryption.decryptString(
             deserializedUserSettings.privateKey,
             encryptedString
           )

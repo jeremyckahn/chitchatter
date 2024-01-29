@@ -15,7 +15,7 @@ import CloseIcon from '@mui/icons-material/Close'
 import { AlertOptions } from 'models/shell'
 import { useEffect, useState, SyntheticEvent } from 'react'
 import { sleep } from 'utils'
-import { encryptionService } from 'services/Encryption'
+import { encryption } from 'services/Encryption'
 
 export interface RoomShareDialogProps {
   isOpen: boolean
@@ -51,10 +51,7 @@ export function RoomShareDialog(props: RoomShareDialogProps) {
   const url = window.location.href.split('#')[0]
 
   const copyWithPass = async () => {
-    const encoded = await encryptionService.encodePassword(
-      props.roomId,
-      password
-    )
+    const encoded = await encryption.encodePassword(props.roomId, password)
 
     if (encoded === props.password) {
       const params = new URLSearchParams()
