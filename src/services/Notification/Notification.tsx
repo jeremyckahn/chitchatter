@@ -1,18 +1,17 @@
 export class NotificationService {
-  static permission: NotificationPermission
+  permission: NotificationPermission = 'default'
 
-  static requestPermission = async () => {
-    if (NotificationService.permission === 'granted') return
+  requestPermission = async () => {
+    if (this.permission === 'granted') return
 
-    NotificationService.permission = await Notification.requestPermission()
+    this.permission = await Notification.requestPermission()
   }
 
-  static showNotification = (
-    message: string,
-    options?: NotificationOptions
-  ) => {
-    if (NotificationService.permission !== 'granted') return
+  showNotification = (message: string, options?: NotificationOptions) => {
+    if (this.permission !== 'granted') return
 
     new Notification(message, options)
   }
 }
+
+export const notification = new NotificationService()

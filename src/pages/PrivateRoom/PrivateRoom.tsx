@@ -3,7 +3,7 @@ import { Room } from 'components/Room'
 import { useParams } from 'react-router-dom'
 
 import { ShellContext } from 'contexts/ShellContext'
-import { NotificationService } from 'services/Notification'
+import { notification } from 'services/Notification'
 import { PasswordPrompt } from 'components/PasswordPrompt'
 import { encryptionService } from 'services/Encryption'
 
@@ -22,7 +22,7 @@ export function PrivateRoom({ userId }: PublicRoomProps) {
   const [secret, setSecret] = useState(urlParams.get('secret') ?? '')
 
   useEffect(() => {
-    NotificationService.requestPermission()
+    notification.requestPermission()
   }, [])
 
   useEffect(() => {

@@ -11,7 +11,7 @@ import Paper from '@mui/material/Paper'
 import useTheme from '@mui/material/styles/useTheme'
 
 import { settingsService } from 'services/Settings'
-import { NotificationService } from 'services/Notification'
+import { notification } from 'services/Notification'
 import { ShellContext } from 'contexts/ShellContext'
 import { StorageContext } from 'contexts/StorageContext'
 import { SettingsContext } from 'contexts/SettingsContext'
@@ -45,7 +45,7 @@ export const Settings = ({ userId }: SettingsProps) => {
 
   useEffect(() => {
     ;(async () => {
-      await NotificationService.requestPermission()
+      await notification.requestPermission()
 
       // This state needs to be set to cause a rerender so that
       // areNotificationsAvailable is up-to-date.
@@ -115,7 +115,7 @@ export const Settings = ({ userId }: SettingsProps) => {
     }
   }
 
-  const areNotificationsAvailable = NotificationService.permission === 'granted'
+  const areNotificationsAvailable = notification.permission === 'granted'
 
   return (
     <Box className="max-w-3xl mx-auto p-4">

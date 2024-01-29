@@ -25,8 +25,8 @@ import {
   PeerVerificationState,
 } from 'models/chat'
 import { getPeerName, usePeerNameDisplay } from 'components/PeerNameDisplay'
-import { NotificationService } from 'services/Notification'
 import { Audio as AudioService } from 'services/Audio'
+import { notification } from 'services/Notification'
 import { PeerRoom, PeerHookType } from 'services/PeerRoom'
 import { fileTransfer } from 'services/FileTransfer'
 import {
@@ -323,9 +323,7 @@ export function useRoom(
       if (userSettings.showNotificationOnNewMessage) {
         const displayUsername = getDisplayUsername(message.authorId)
 
-        NotificationService.showNotification(
-          `${displayUsername}: ${message.text}`
-        )
+        notification.showNotification(`${displayUsername}: ${message.text}`)
       }
     }
 
@@ -433,7 +431,7 @@ export function useRoom(
       }
 
       if (userSettings.showNotificationOnNewMessage) {
-        NotificationService.showNotification(
+        notification.showNotification(
           `${getDisplayUsername(inlineMedia.authorId)} shared media`
         )
       }
