@@ -1,6 +1,6 @@
 import { useContext, useEffect, useState } from 'react'
 
-import { sleep } from 'utils'
+import { sleep } from 'lib/sleep'
 import { RoomContext } from 'contexts/RoomContext'
 import { ShellContext } from 'contexts/ShellContext'
 import { PeerActions } from 'models/network'

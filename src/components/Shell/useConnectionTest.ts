@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
-import { sleep } from 'utils'
+
+import { sleep } from 'lib/sleep'
 import {
   ConnectionTest,
   ConnectionTestEvent,

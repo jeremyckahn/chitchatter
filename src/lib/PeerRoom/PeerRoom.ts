@@ -1,7 +1,7 @@
 import { joinRoom, Room, BaseRoomConfig } from 'trystero'
 import { TorrentRoomConfig } from 'trystero/torrent'
 
-import { sleep } from 'utils'
+import { sleep } from 'lib/sleep'
 
 export enum PeerHookType {
   NEW_PEER = 'NEW_PEER',
