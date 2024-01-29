@@ -110,4 +110,4 @@ export class EncryptionService {
   }
 }
 
-export const encryptionService = new EncryptionService()
+export const encryption = new EncryptionService()

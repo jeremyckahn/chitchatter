@@ -3,7 +3,7 @@ import { TorrentFile } from 'webtorrent'
 import CircularProgress from '@mui/material/CircularProgress'
 import Typography from '@mui/material/Typography'
 
-import { fileTransfer } from 'services/FileTransfer'
+import { fileTransfer } from 'lib/FileTransfer'
 import { ShellContext } from 'contexts/ShellContext'
 
 type TorrentFiles = Awaited<ReturnType<typeof fileTransfer.download>>

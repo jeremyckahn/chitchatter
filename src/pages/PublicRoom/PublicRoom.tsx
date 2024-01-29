@@ -3,7 +3,7 @@ import { Room } from 'components/Room'
 import { useParams } from 'react-router-dom'
 
 import { ShellContext } from 'contexts/ShellContext'
-import { NotificationService } from 'services/Notification'
+import { notification } from 'services/Notification'
 
 interface PublicRoomProps {
   userId: string
@@ -14,7 +14,7 @@ export function PublicRoom({ userId }: PublicRoomProps) {
   const { setTitle } = useContext(ShellContext)
 
   useEffect(() => {
-    NotificationService.requestPermission()
+    notification.requestPermission()
   }, [])
 
   useEffect(() => {

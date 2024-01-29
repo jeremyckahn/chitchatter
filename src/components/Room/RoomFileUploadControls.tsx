@@ -6,7 +6,7 @@ import Tooltip from '@mui/material/Tooltip'
 import CircularProgress from '@mui/material/CircularProgress'
 
 import { RoomContext } from 'contexts/RoomContext'
-import { PeerRoom } from 'services/PeerRoom/PeerRoom'
+import { PeerRoom } from 'lib/PeerRoom'
 
 import { useRoomFileShare } from './useRoomFileShare'
 import { MediaButton } from './MediaButton'

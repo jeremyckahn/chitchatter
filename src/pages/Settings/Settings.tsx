@@ -10,15 +10,15 @@ import FormControlLabel from '@mui/material/FormControlLabel'
 import Paper from '@mui/material/Paper'
 import useTheme from '@mui/material/styles/useTheme'
 
-import { settingsService } from 'services/Settings'
-import { NotificationService } from 'services/Notification'
+import { settings } from 'services/Settings'
+import { notification } from 'services/Notification'
 import { ShellContext } from 'contexts/ShellContext'
 import { StorageContext } from 'contexts/StorageContext'
 import { SettingsContext } from 'contexts/SettingsContext'
 import { PeerNameDisplay } from 'components/PeerNameDisplay'
 import { ConfirmDialog } from 'components/ConfirmDialog'
 
-import { isErrorWithMessage } from '../../utils'
+import { isErrorWithMessage } from '../../lib/type-guards'
 
 interface SettingsProps {
   userId: string
@@ -45,7 +45,7 @@ export const Settings = ({ userId }: SettingsProps) => {
 
   useEffect(() => {
     ;(async () => {
-      await NotificationService.requestPermission()
+      await notification.requestPermission()
 
       // This state needs to be set to cause a rerender so that
       // areNotificationsAvailable is up-to-date.
@@ -93,7 +93,7 @@ export const Settings = ({ userId }: SettingsProps) => {
 
   const handleExportSettingsClick = async () => {
     try {
-      await settingsService.exportSettings(getUserSettings())
+      await settings.exportSettings(getUserSettings())
     } catch (e) {
       if (isErrorWithMessage(e)) {
         showAlert(e.message, { severity: 'error' })
@@ -103,7 +103,7 @@ export const Settings = ({ userId }: SettingsProps) => {
 
   const handleImportSettingsClick = async ([[, file]]: Result[]) => {
     try {
-      const userSettings = await settingsService.importSettings(file)
+      const userSettings = await settings.importSettings(file)
 
       updateUserSettings(userSettings)
 
@@ -115,7 +115,7 @@ export const Settings = ({ userId }: SettingsProps) => {
     }
   }
 
-  const areNotificationsAvailable = NotificationService.permission === 'granted'
+  const areNotificationsAvailable = notification.permission === 'granted'
 
   return (
     <Box className="max-w-3xl mx-auto p-4">

@@ -1,11 +1,12 @@
 import { useEffect, useState } from 'react'
-import { sleep } from 'utils'
+
+import { sleep } from 'lib/sleep'
 import {
   ConnectionTest,
   ConnectionTestEvent,
   ConnectionTestEvents,
   TrackerConnection,
-} from 'services/ConnectionTest/ConnectionTest'
+} from 'lib/ConnectionTest'
 
 export interface ConnectionTestResults {
   hasHost: boolean

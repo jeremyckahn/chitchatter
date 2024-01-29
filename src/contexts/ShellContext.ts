@@ -2,9 +2,9 @@ import { createContext, Dispatch, SetStateAction } from 'react'
 
 import { AlertOptions } from 'models/shell'
 import { AudioState, ScreenShareState, VideoState, Peer } from 'models/chat'
-import { PeerConnectionType } from 'services/PeerRoom/PeerRoom'
+import { PeerConnectionType } from 'lib/PeerRoom'
 import { ConnectionTestResults } from 'components/Shell/useConnectionTest'
-import { TrackerConnection } from 'services/ConnectionTest/ConnectionTest'
+import { TrackerConnection } from 'lib/ConnectionTest'
 
 interface ShellContextProps {
   isEmbedded: boolean

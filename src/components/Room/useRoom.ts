@@ -25,14 +25,11 @@ import {
   PeerVerificationState,
 } from 'models/chat'
 import { getPeerName, usePeerNameDisplay } from 'components/PeerNameDisplay'
-import { NotificationService } from 'services/Notification'
-import { Audio as AudioService } from 'services/Audio'
-import { PeerRoom, PeerHookType } from 'services/PeerRoom'
-import { fileTransfer } from 'services/FileTransfer'
-import {
-  AllowedKeyType,
-  encryptionService as encryptionServiceInstance,
-} from 'services/Encryption'
+import { Audio } from 'lib/Audio'
+import { notification } from 'services/Notification'
+import { PeerRoom, PeerHookType } from 'lib/PeerRoom'
+import { fileTransfer } from 'lib/FileTransfer'
+import { AllowedKeyType, encryption } from 'services/Encryption'
 
 import { messageTranscriptSizeLimit } from 'config/messaging'
 
@@ -43,7 +40,7 @@ interface UseRoomConfig {
   userId: string
   publicKey: CryptoKey
   getUuid?: typeof uuid
-  encryptionService?: typeof encryptionServiceInstance
+  encryptionService?: typeof encryption
 }
 
 interface UserMetadata {
@@ -59,7 +56,7 @@ export function useRoom(
     userId,
     publicKey,
     getUuid = uuid,
-    encryptionService = encryptionServiceInstance,
+    encryptionService = encryption,
   }: UseRoomConfig
 ) {
   const isPrivate = password !== undefined
@@ -87,7 +84,7 @@ export function useRoom(
     []
   )
   const [newMessageAudio] = useState(
-    () => new AudioService(process.env.PUBLIC_URL + '/sounds/new-message.aac')
+    () => new Audio(process.env.PUBLIC_URL + '/sounds/new-message.aac')
   )
 
   const { getDisplayUsername } = usePeerNameDisplay()
@@ -323,9 +320,7 @@ export function useRoom(
       if (userSettings.showNotificationOnNewMessage) {
         const displayUsername = getDisplayUsername(message.authorId)
 
-        NotificationService.showNotification(
-          `${displayUsername}: ${message.text}`
-        )
+        notification.showNotification(`${displayUsername}: ${message.text}`)
       }
     }
 
@@ -433,7 +428,7 @@ export function useRoom(
       }
 
       if (userSettings.showNotificationOnNewMessage) {
-        NotificationService.showNotification(
+        notification.showNotification(
           `${getDisplayUsername(inlineMedia.authorId)} shared media`
         )
       }

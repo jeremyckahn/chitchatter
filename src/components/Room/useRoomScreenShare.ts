@@ -1,11 +1,11 @@
 import { useContext, useEffect, useCallback, useState } from 'react'
 
-import { isRecord } from 'utils'
+import { isRecord } from 'lib/type-guards'
 import { RoomContext } from 'contexts/RoomContext'
 import { ShellContext } from 'contexts/ShellContext'
 import { PeerActions } from 'models/network'
 import { ScreenShareState, Peer, VideoStreamType } from 'models/chat'
-import { PeerRoom, PeerHookType, PeerStreamType } from 'services/PeerRoom'
+import { PeerRoom, PeerHookType, PeerStreamType } from 'lib/PeerRoom'
 
 interface UseRoomScreenShareConfig {
   peerRoom: PeerRoom

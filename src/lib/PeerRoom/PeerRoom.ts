@@ -1,7 +1,7 @@
 import { joinRoom, Room, BaseRoomConfig } from 'trystero'
 import { TorrentRoomConfig } from 'trystero/torrent'
 
-import { sleep } from 'utils'
+import { sleep } from 'lib/sleep'
 
 export enum PeerHookType {
   NEW_PEER = 'NEW_PEER',
@@ -47,6 +47,18 @@ export class PeerRoom {
   private streamQueue: (() => Promise<any>)[] = []
 
   private isProcessingPendingStreams = false
+
+  private processPendingStreams = async () => {
+    if (this.isProcessingPendingStreams) return
+
+    this.isProcessingPendingStreams = true
+
+    while (this.streamQueue.length > 0) {
+      await this.streamQueue.shift()?.()
+    }
+
+    this.isProcessingPendingStreams = false
+  }
 
   constructor(config: TorrentRoomConfig & BaseRoomConfig, roomId: string) {
     this.roomConfig = config
@@ -169,18 +181,6 @@ export class PeerRoom {
     )
 
     this.processPendingStreams()
-  }
-
-  private processPendingStreams = async () => {
-    if (this.isProcessingPendingStreams) return
-
-    this.isProcessingPendingStreams = true
-
-    while (this.streamQueue.length > 0) {
-      await this.streamQueue.shift()?.()
-    }
-
-    this.isProcessingPendingStreams = false
   }
 
   removeStream: Room['removeStream'] = (stream, targetPeers) => {

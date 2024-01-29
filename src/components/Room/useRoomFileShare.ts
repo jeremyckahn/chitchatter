@@ -1,13 +1,12 @@
 import { useContext, useEffect, useState } from 'react'
 
-import { sleep } from 'utils'
+import { sleep } from 'lib/sleep'
 import { RoomContext } from 'contexts/RoomContext'
 import { ShellContext } from 'contexts/ShellContext'
 import { PeerActions } from 'models/network'
 import { FileOfferMetadata, Peer } from 'models/chat'
-import { PeerRoom, PeerHookType } from 'services/PeerRoom'
-
-import { fileTransfer } from 'services/FileTransfer/index'
+import { PeerRoom, PeerHookType } from 'lib/PeerRoom'
+import { fileTransfer } from 'lib/FileTransfer'
 
 interface UseRoomFileShareConfig {
   onInlineMediaUpload: (files: File[]) => void
