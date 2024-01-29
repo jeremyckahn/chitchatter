@@ -5,8 +5,7 @@ import { ShellContext } from 'contexts/ShellContext'
 import { PeerActions } from 'models/network'
 import { VideoState, Peer, VideoStreamType } from 'models/chat'
 import { PeerRoom, PeerHookType, PeerStreamType } from 'lib/PeerRoom'
-
-import { isRecord } from 'utils'
+import { isRecord } from 'lib/type-guards'
 
 interface UseRoomVideoConfig {
   peerRoom: PeerRoom

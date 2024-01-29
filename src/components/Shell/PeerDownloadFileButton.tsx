@@ -5,7 +5,7 @@ import Tooltip from '@mui/material/Tooltip'
 import Download from '@mui/icons-material/Download'
 import CircularProgress from '@mui/material/CircularProgress'
 
-import { isError } from 'utils'
+import { isError } from 'lib/type-guards'
 import { fileTransfer } from 'lib/FileTransfer'
 import { Peer } from 'models/chat'
 import { ShellContext } from 'contexts/ShellContext'

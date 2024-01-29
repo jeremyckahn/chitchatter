@@ -1,6 +1,6 @@
 import { useContext, useEffect, useCallback, useState } from 'react'
 
-import { isRecord } from 'utils'
+import { isRecord } from 'lib/type-guards'
 import { RoomContext } from 'contexts/RoomContext'
 import { ShellContext } from 'contexts/ShellContext'
 import { PeerActions } from 'models/network'

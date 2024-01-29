@@ -18,7 +18,7 @@ import { SettingsContext } from 'contexts/SettingsContext'
 import { PeerNameDisplay } from 'components/PeerNameDisplay'
 import { ConfirmDialog } from 'components/ConfirmDialog'
 
-import { isErrorWithMessage } from '../../utils'
+import { isErrorWithMessage } from '../../lib/type-guards'
 
 interface SettingsProps {
   userId: string
