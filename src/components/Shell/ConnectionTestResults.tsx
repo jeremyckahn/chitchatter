@@ -6,7 +6,7 @@ import Circle from '@mui/icons-material/FiberManualRecord'
 import { Box } from '@mui/system'
 import ReportIcon from '@mui/icons-material/Report'
 
-import { TrackerConnection } from 'services/ConnectionTest/ConnectionTest'
+import { TrackerConnection } from 'lib/ConnectionTest'
 import { ShellContext } from 'contexts/ShellContext'
 
 import { ConnectionTestResults as IConnectionTestResults } from './useConnectionTest'

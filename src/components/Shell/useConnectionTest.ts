@@ -5,7 +5,7 @@ import {
   ConnectionTestEvent,
   ConnectionTestEvents,
   TrackerConnection,
-} from 'services/ConnectionTest/ConnectionTest'
+} from 'lib/ConnectionTest'
 
 export interface ConnectionTestResults {
   hasHost: boolean

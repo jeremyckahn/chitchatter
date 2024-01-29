@@ -11,7 +11,7 @@ import CircularProgress from '@mui/material/CircularProgress'
 import { UserInfo } from 'components/UserInfo'
 import { AudioState, Peer } from 'models/chat'
 import { PeerConnectionType } from 'services/PeerRoom'
-import { TrackerConnection } from 'services/ConnectionTest'
+import { TrackerConnection } from 'lib/ConnectionTest'
 
 import { PeerListHeader } from './PeerListHeader'
 import { PeerListItem } from './PeerListItem'
