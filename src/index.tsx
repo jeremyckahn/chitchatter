@@ -3,8 +3,18 @@ import ReactDOM from 'react-dom/client'
 import 'typeface-roboto'
 
 import './index.sass'
+
+import { ThemeProvider, createTheme } from '@mui/material/styles'
+
 import Init from './Init'
 import reportWebVitals from './reportWebVitals'
+
+// NOTE: This is a workaround for MUI components attempting to load theme code
+// before it has loaded.
+// See: https://stackoverflow.com/a/76017295/470685
+const theme = createTheme()
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+const _ = <ThemeProvider theme={theme} />
 
 const root = ReactDOM.createRoot(document.getElementById('root') as HTMLElement)
 root.render(<Init />)
