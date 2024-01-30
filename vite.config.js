@@ -7,6 +7,7 @@ const srcPaths = [
   'components',
   'config',
   'contexts',
+  'lib',
   'models',
   'pages',
   'services',
