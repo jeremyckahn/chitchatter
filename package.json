@@ -8,8 +8,8 @@
   "dependencies": {
     "@emotion/react": "^11.10.0",
     "@emotion/styled": "^11.10.0",
-    "@mui/icons-material": "^5.8.4",
-    "@mui/material": "^5.14.12",
+    "@mui/icons-material": "^5.15.6",
+    "@mui/material": "^5.15.6",
     "@react-hook/debounce": "^4.0.0",
     "@react-hook/window-size": "^3.1.1",
     "@testing-library/jest-dom": "^5.16.5",
@@ -123,7 +123,7 @@
     "tailwindcss": "^3.1.8",
     "url": "^0.11.0",
     "util": "^0.12.5",
-    "vite": "^5.0.9"
+    "vite": "^5.0.12"
   },
   "overrides": {
     "ipfs-core": "npm:dry-uninstall",
