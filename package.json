@@ -4,6 +4,7 @@
   "homepage": "https://chitchatter.im/",
   "author": "Jeremy Kahn <jeremyckahn@gmail.com>",
   "license": "GPL-2.0-or-later",
+  "type": "module",
   "dependencies": {
     "@emotion/react": "^11.10.0",
     "@emotion/styled": "^11.10.0",
