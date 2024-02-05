@@ -9,6 +9,8 @@ import { ThemeProvider, createTheme } from '@mui/material/styles'
 import Init from './Init'
 import reportWebVitals from './reportWebVitals'
 
+window.global ||= window
+
 // NOTE: This is a workaround for MUI components attempting to load theme code
 // before it has loaded.
 // See: https://stackoverflow.com/a/76017295/470685
