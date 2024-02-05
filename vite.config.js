@@ -2,6 +2,7 @@ import path from 'path'
 
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
+import svgr from 'vite-plugin-svgr'
 
 const srcPaths = [
   'components',
@@ -22,7 +23,7 @@ const srcPathAliases = srcPaths.reduce((acc, dir) => {
 
 const config = () => {
   return defineConfig({
-    plugins: [react()],
+    plugins: [svgr(), react()],
     resolve: {
       alias: {
         ...srcPathAliases,

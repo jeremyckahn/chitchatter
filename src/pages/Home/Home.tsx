@@ -16,7 +16,7 @@ import { v4 as uuid } from 'uuid'
 import { routes } from 'config/routes'
 import { ShellContext } from 'contexts/ShellContext'
 import { PeerNameDisplay } from 'components/PeerNameDisplay'
-import { ReactComponent as Logo } from 'img/logo.svg'
+import Logo from 'img/logo.svg'
 
 import { EmbedCodeDialog } from './EmbedCodeDialog'
 
