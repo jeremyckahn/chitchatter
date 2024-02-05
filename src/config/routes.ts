@@ -9,5 +9,5 @@ export enum routes {
 }
 
 export const homepageUrl = new URL(
-  process.env.VITE_HOMEPAGE ?? 'https://chitchatter.im/'
+  import.meta.env.VITE_HOMEPAGE ?? 'https://chitchatter.im/'
 )
