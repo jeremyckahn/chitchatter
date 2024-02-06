@@ -54,7 +54,7 @@
   },
   "scripts": {
     "analyze": "source-map-explorer 'build/static/js/*.js'",
-    "start": "cross-env REACT_APP_HOMEPAGE=$(npm pkg get homepage) react-scripts start",
+    "start": "cross-env REACT_APP_HOMEPAGE=$(npm pkg get homepage) parcel src/index.html",
     "start:tracker": "bittorrent-tracker",
     "start:streamsaver": "serve -p 3015 node_modules/streamsaver",
     "dev": "mprocs \"npx cross-env REACT_APP_TRACKER_URL=\"ws://localhost:8000\" REACT_APP_STREAMSAVER_URL=\"http://localhost:3015/mitm.html\" npm run start\" \"npm run start:tracker\" \"npm run start:streamsaver\"",
@@ -91,6 +91,9 @@
   },
   "devDependencies": {
     "@babel/plugin-proposal-private-property-in-object": "^7.21.11",
+    "@parcel/packager-raw-url": "^2.11.0",
+    "@parcel/transformer-sass": "^2.11.0",
+    "@parcel/transformer-webmanifest": "^2.11.0",
     "@types/file-saver": "^2.0.7",
     "@types/react-file-reader-input": "^2.0.4",
     "@types/react-syntax-highlighter": "^15.5.5",
@@ -102,22 +105,29 @@
     "autoprefixer": "^10.4.8",
     "bittorrent-tracker": "^9.19.0",
     "cross-env": "^7.0.3",
+    "crypto-browserify": "^3.12.0",
     "eslint": "^8.21.0",
     "eslint-config-react-app": "^7.0.1",
     "eslint-plugin-import": "^2.26.0",
     "eslint-plugin-jsx-a11y": "^6.6.1",
     "eslint-plugin-react": "^7.30.1",
     "eslint-plugin-react-hooks": "^4.6.0",
+    "https-browserify": "^1.0.0",
     "husky": "^8.0.1",
     "mprocs": "^0.6.4",
     "nodemon": "^3.0.1",
-    "parcel": "^2.10.0",
+    "os-browserify": "^0.3.0",
+    "parcel": "^2.11.0",
+    "path-browserify": "^1.0.1",
     "postcss": "^8.4.31",
     "prettier": "^2.7.1",
     "pretty-quick": "^3.1.3",
     "process": "^0.11.10",
+    "querystring-es3": "^0.2.1",
     "serve": "^14.1.2",
     "source-map-explorer": "^2.5.3",
+    "stream-browserify": "^3.0.0",
+    "stream-http": "^3.2.0",
     "tailwindcss": "^3.1.8",
     "url": "^0.11.0",
     "util": "^0.12.5"
@@ -139,5 +149,8 @@
     "transformIgnorePatterns": [
       "node_modules/(?!trystero)/"
     ]
+  },
+  "alias": {
+    "trystero/torrent": "./node_modules/trystero/src/torrent.js"
   }
 }

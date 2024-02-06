@@ -7,7 +7,6 @@ import {
 } from 'react-router-dom'
 import localforage from 'localforage'
 
-import * as serviceWorkerRegistration from 'serviceWorkerRegistration'
 import { StorageContext } from 'contexts/StorageContext'
 import { SettingsContext } from 'contexts/SettingsContext'
 import { homepageUrl, routes } from 'config/routes'
@@ -28,6 +27,8 @@ import {
   PostMessageEventName,
 } from 'models/sdk'
 import { serialization, SerializedUserSettings } from 'services/Serialization'
+
+import * as serviceWorkerRegistration from './serviceWorkerRegistration'
 
 export interface BootstrapProps {
   persistedStorage?: typeof localforage

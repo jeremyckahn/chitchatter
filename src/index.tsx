@@ -6,6 +6,9 @@ import './index.sass'
 import Init from './Init'
 import reportWebVitals from './reportWebVitals'
 
+// FIXME: Get the actual node version here
+window.process.versions.node = 'v18.12.1'
+
 const root = ReactDOM.createRoot(document.getElementById('root') as HTMLElement)
 root.render(<Init />)
 
