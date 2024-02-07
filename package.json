@@ -93,6 +93,7 @@
     "@babel/plugin-proposal-private-property-in-object": "^7.21.11",
     "@parcel/packager-raw-url": "^2.11.0",
     "@parcel/transformer-sass": "^2.11.0",
+    "@parcel/transformer-svg-react": "^2.11.0",
     "@parcel/transformer-webmanifest": "^2.11.0",
     "@types/file-saver": "^2.0.7",
     "@types/react-file-reader-input": "^2.0.4",
