@@ -8,12 +8,12 @@ let trackerUrls: string[] | undefined = [
   // https://github.com/dmotz/trystero/blob/694f49974974cc9df8b621db09215d6df10fad09/src/torrent.js#L27-L33
 ]
 
-// If a tracker URL has been provided via the REACT_APP_TRACKER_URL environment
+// If a tracker URL has been provided via the TRACKER_URL environment
 // variable, prioritize using it. This is mainly relevant for local development
 // when using the `npm run dev` script. If you are hosting your own Chitchatter
 // instance, consider populating the trackerUrls above instead.
-if (process.env.REACT_APP_TRACKER_URL) {
-  trackerUrls.unshift(process.env.REACT_APP_TRACKER_URL)
+if (process.env.TRACKER_URL) {
+  trackerUrls.unshift(process.env.TRACKER_URL)
 }
 
 // If no tracker URL overrides have been provided, set trackerUrls to undefined

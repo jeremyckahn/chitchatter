@@ -9,5 +9,5 @@ export enum routes {
 }
 
 export const homepageUrl = new URL(
-  process.env.REACT_APP_HOMEPAGE ?? 'https://chitchatter.im/'
+  process.env.HOMEPAGE ?? 'https://chitchatter.im/'
 )
