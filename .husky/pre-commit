@@ -3,6 +3,7 @@
 
 set -e
 
+npx tsc
 npx pretty-quick --staged
 npm run lint
 CI=true npm test

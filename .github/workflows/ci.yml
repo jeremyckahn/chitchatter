@@ -15,6 +15,7 @@ jobs:
         with:
           node-version: 18
       - run: npm ci
+      - run: npx tsc
       - run: npm test
 
       - name: 'Build web app artifacts'
