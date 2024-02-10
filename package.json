@@ -59,7 +59,7 @@
     "start:streamsaver": "serve -p 3015 node_modules/streamsaver",
     "dev": "mprocs \"npx cross-env TRACKER_URL=\"ws://localhost:8000\" STREAMSAVER_URL=\"http://localhost:3015/mitm.html\" npm run start\" \"npm run start:tracker\" \"npm run start:streamsaver\"",
     "build": "npm run build:app && npm run build:sdk",
-    "build:app": "cross-env HOMEPAGE=$(npm pkg get homepage) parcel build src/index.html --dist-dir build",
+    "build:app": "cross-env HOMEPAGE=$(npm pkg get homepage) parcel build src/index.html src/404.html --dist-dir build",
     "build:sdk": "parcel build sdk/sdk.ts --dist-dir build --no-content-hash",
     "build:sdk:watch": "nodemon --exec \"npm run build:sdk\"",
     "test": "react-scripts test",
