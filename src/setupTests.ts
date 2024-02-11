@@ -15,3 +15,8 @@ jest.mock('secure-file-transfer', () => ({
   },
   setStreamSaverMitm: () => {},
 }))
+
+jest.mock('./serviceWorkerRegistration', () => ({
+  __esModule: true,
+  register: () => {},
+}))
