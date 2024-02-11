@@ -83,9 +83,7 @@ export function useRoom(
   const [messageLog, _setMessageLog] = useState<Array<Message | InlineMedia>>(
     []
   )
-  const [newMessageAudio] = useState(
-    () => new Audio(process.env.PUBLIC_URL + '/sounds/new-message.aac')
-  )
+  const [newMessageAudio] = useState(() => new Audio('/sounds/new-message.aac'))
 
   const { getDisplayUsername } = usePeerNameDisplay()
 

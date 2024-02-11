@@ -121,6 +121,7 @@
     "nodemon": "^3.0.1",
     "os-browserify": "^0.3.0",
     "parcel": "^2.11.0",
+    "parcel-reporter-static-files-copy": "^1.5.3",
     "path-browserify": "^1.0.1",
     "postcss": "^8.4.31",
     "prettier": "^2.7.1",

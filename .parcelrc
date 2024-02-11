@@ -2,5 +2,6 @@
   "extends": "@parcel/config-default",
   "transformers": {
     "*.svg": ["...", "@parcel/transformer-svg-react"],
-  }
+  },
+  "reporters":  ["...", "parcel-reporter-static-files-copy"]
 }
