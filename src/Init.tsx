@@ -77,7 +77,11 @@ const Init = ({ getUuid = uuid, ...props }: InitProps) => {
 
   return (
     <Suspense fallback={<WholePageLoading />}>
-      <Bootstrap {...props} initialUserSettings={userSettings} />
+      <Bootstrap
+        {...props}
+        appNeedsUpdate={false}
+        initialUserSettings={userSettings}
+      />
     </Suspense>
   )
 }
