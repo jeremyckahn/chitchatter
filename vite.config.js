@@ -28,7 +28,9 @@ const srcPathAliases = srcPaths.reduce((acc, dir) => {
 const config = () => {
   return defineConfig({
     plugins: [
-      svgr(),
+      svgr({
+        include: '**/*.svg',
+      }),
       react(),
       macrosPlugin(),
       nodePolyfills({
