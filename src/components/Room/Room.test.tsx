@@ -1,3 +1,4 @@
+import { vi } from 'vitest'
 import { PropsWithChildren } from 'react'
 import { waitFor, render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
@@ -17,13 +18,11 @@ const userSettingsStub = userSettingsContextStubFactory({
   userId: mockUserId,
 })
 
-window.AudioContext = jest.fn().mockImplementation()
-const mockGetUuid = jest.fn()
-const mockMessagedSender = jest
-  .fn()
-  .mockImplementation(() => Promise.resolve([]))
+window.AudioContext = vi.fn().mockImplementation(() => {})
+const mockGetUuid = vi.fn()
+const mockMessagedSender = vi.fn().mockImplementation(() => Promise.resolve([]))
 
-jest.mock('trystero', () => ({
+vi.mock('trystero', () => ({
   joinRoom: () => ({
     makeAction: () => [mockMessagedSender, () => {}, () => {}],
     ping: () => Promise.resolve(0),
@@ -53,7 +52,7 @@ const RouteStub = ({ children }: PropsWithChildren) => {
   )
 }
 
-jest.useFakeTimers().setSystemTime(100)
+vi.useFakeTimers().setSystemTime(100)
 
 const RoomStub = (props: RoomProps) => {
   return <Room encryptionService={mockEncryptionService} {...props} />

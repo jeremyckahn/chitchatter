@@ -1,3 +1,4 @@
+import { vi } from 'vitest'
 import { act, render } from '@testing-library/react'
 import localforage from 'localforage'
 
@@ -11,11 +12,13 @@ import { userSettingsStubFactory } from 'test-utils/stubs/userSettings'
 
 import Bootstrap, { BootstrapProps } from './Bootstrap'
 
-const mockPersistedStorage =
-  jest.createMockFromModule<jest.Mock<typeof localforage>>('localforage')
+const mockPersistedStorage = vi.fn(() => ({
+  getItem: () => {},
+  setItem: () => {},
+}))
 
-const mockGetItem = jest.fn()
-const mockSetItem = jest.fn()
+const mockGetItem = vi.fn()
+const mockSetItem = vi.fn()
 
 const userSettingsStub = userSettingsStubFactory()
 

@@ -1,3 +1,4 @@
+/// <reference types="vitest" />
 import path from 'path'
 
 import { fileURLToPath } from 'url'
@@ -18,6 +19,7 @@ const srcPaths = [
   'services',
   'img',
   'utils',
+  'test-utils',
 ]
 
 const srcPathAliases = srcPaths.reduce((acc, dir) => {
@@ -51,6 +53,15 @@ const config = () => {
           )
         ),
         ...srcPathAliases,
+      },
+    },
+    test: {
+      globals: true,
+      environment: 'jsdom',
+      setupFiles: './src/setupTests.ts',
+      coverage: {
+        reporter: ['text', 'html'],
+        exclude: ['node_modules/', 'src/setupTests.ts'],
       },
     },
   })

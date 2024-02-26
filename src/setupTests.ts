@@ -3,12 +3,16 @@
 // expect(element).toHaveTextContent(/react/i)
 // learn more: https://github.com/testing-library/jest-dom
 import '@testing-library/jest-dom'
+import { vi } from 'vitest'
 
 afterEach(() => {
-  jest.restoreAllMocks()
+  vi.restoreAllMocks()
 })
 
-jest.mock('secure-file-transfer', () => ({
+vi.mock('trystero')
+vi.mock('trystero/torrent')
+
+vi.mock('secure-file-transfer', () => ({
   __esModule: true,
   FileTransfer: class FileTransfer {
     rescindAll() {}

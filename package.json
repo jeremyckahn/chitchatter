@@ -63,7 +63,7 @@
     "build:app": "cross-env VITE_HOMEPAGE=$(npm pkg get homepage) vite build",
     "build:sdk": "parcel build sdk/sdk.ts --dist-dir build --no-content-hash",
     "build:sdk:watch": "nodemon --exec \"npm run build:sdk\"",
-    "test": "react-scripts test",
+    "test": "vitest",
     "prepare": "husky install",
     "prettier": "prettier 'src/**/*.js' --write",
     "lint": "eslint src --max-warnings=0"
@@ -111,6 +111,7 @@
     "eslint-plugin-react": "^7.30.1",
     "eslint-plugin-react-hooks": "^4.6.0",
     "husky": "^8.0.1",
+    "jsdom": "^24.0.0",
     "mprocs": "^0.6.4",
     "nodemon": "^3.0.1",
     "parcel": "^2.10.0",
@@ -126,7 +127,8 @@
     "util": "^0.12.5",
     "vite": "^5.0.12",
     "vite-plugin-node-polyfills": "^0.19.0",
-    "vite-plugin-svgr": "^4.2.0"
+    "vite-plugin-svgr": "^4.2.0",
+    "vitest": "^1.3.1"
   },
   "overrides": {
     "ipfs-core": "npm:dry-uninstall",
