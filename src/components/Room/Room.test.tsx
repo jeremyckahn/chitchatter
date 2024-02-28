@@ -22,6 +22,8 @@ window.AudioContext = vi.fn().mockImplementation(() => {})
 const mockGetUuid = vi.fn()
 const mockMessagedSender = vi.fn().mockImplementation(() => Promise.resolve([]))
 
+vi.mock('../../lib/Audio')
+
 vi.mock('trystero', () => ({
   joinRoom: () => ({
     makeAction: () => [mockMessagedSender, () => {}, () => {}],
