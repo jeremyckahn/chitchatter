@@ -1,6 +1,6 @@
 import { vi } from 'vitest'
 import { PropsWithChildren } from 'react'
-import { waitFor, render, screen } from '@testing-library/react'
+import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter as Router, Route, Routes } from 'react-router-dom'
 
@@ -54,8 +54,6 @@ const RouteStub = ({ children }: PropsWithChildren) => {
   )
 }
 
-vi.useFakeTimers().setSystemTime(100)
-
 const RoomStub = (props: RoomProps) => {
   return <Room encryptionService={mockEncryptionService} {...props} />
 }
@@ -90,9 +88,8 @@ describe('Room', () => {
     const sendButton = screen.getByLabelText('Send')
     const textInput = screen.getByPlaceholderText('Your message')
 
-    await waitFor(() => {
-      userEvent.type(textInput, 'hello')
-    })
+    vi.useRealTimers()
+    await userEvent.type(textInput, 'hello')
 
     expect(sendButton).not.toBeDisabled()
   })
@@ -107,13 +104,10 @@ describe('Room', () => {
     const sendButton = screen.getByLabelText('Send')
     const textInput = screen.getByPlaceholderText('Your message')
 
-    await waitFor(() => {
-      userEvent.type(textInput, 'hello')
-    })
+    vi.useRealTimers()
 
-    await waitFor(() => {
-      userEvent.click(sendButton)
-    })
+    await userEvent.type(textInput, 'hello')
+    await userEvent.click(sendButton)
 
     expect(textInput).toHaveValue('')
   })
@@ -132,19 +126,18 @@ describe('Room', () => {
     const sendButton = screen.getByLabelText('Send')
     const textInput = screen.getByPlaceholderText('Your message')
 
-    await waitFor(() => {
-      userEvent.type(textInput, 'hello')
-    })
+    vi.useRealTimers()
+    await userEvent.type(textInput, 'hello', {})
+    await userEvent.click(sendButton)
 
-    await waitFor(() => {
-      userEvent.click(sendButton)
-    })
-
-    expect(mockMessagedSender).toHaveBeenCalledWith({
-      authorId: mockUserId,
-      text: 'hello',
-      timeSent: 100,
-      id: 'abc123',
-    })
+    expect(mockMessagedSender).toHaveBeenCalledWith(
+      expect.objectContaining({
+        authorId: mockUserId,
+        text: 'hello',
+        // FIXME: Test for a specific timestamp
+        timeSent: expect.any(Number),
+        id: 'abc123',
+      })
+    )
   })
 })

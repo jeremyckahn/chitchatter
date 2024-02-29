@@ -35,7 +35,7 @@ describe('Shell', () => {
         userEvent.click(menuButton)
       })
 
-      const navigation = screen.getByRole('navigation')
+      const navigation = screen.getByLabelText('Navigation menu')
 
       await waitFor(() => {
         expect(navigation).toBeVisible()
@@ -56,7 +56,7 @@ describe('Shell', () => {
         userEvent.click(closeMenu)
       })
 
-      const navigation = screen.getByRole('navigation')
+      const navigation = screen.getByLabelText('Navigation menu')
 
       await waitFor(() => {
         expect(navigation).not.toBeVisible()
