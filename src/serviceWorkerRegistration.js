@@ -21,6 +21,8 @@ const isLocalhost = Boolean(
 )
 
 export function register(config) {
+  // FIXME: Remove this
+  console.log('Attempting to register service worker')
   if (
     import.meta.env.NODE_ENV === 'production' &&
     'serviceWorker' in navigator
@@ -31,10 +33,14 @@ export function register(config) {
       // Our service worker won't work if PUBLIC_URL is on a different origin
       // from what our page is served on. This might happen if a CDN is used to
       // serve assets; see https://github.com/facebook/create-react-app/issues/2374
+      // FIXME: Remove this
+      console.log('Early returning')
       return
     }
 
     const swUrl = `${import.meta.env.VITE_HOMEPAGE}/service-worker.js`
+    // FIXME: Remove this
+    console.log({ swUrl })
 
     if (isLocalhost) {
       // This is running on localhost. Let's check if a service worker still exists or not.
