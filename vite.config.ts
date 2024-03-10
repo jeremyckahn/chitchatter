@@ -29,6 +29,12 @@ const srcPathAliases = srcPaths.reduce((acc, dir) => {
 
 const config = () => {
   return defineConfig({
+    build: {
+      // NOTE: This isn't really working. At the very least, it's still useful
+      // for exposing source code to users.
+      // See: https://github.com/vitejs/vite/issues/15012#issuecomment-1956429165
+      sourcemap: true,
+    },
     plugins: [
       svgr({
         include: '**/*.svg',
