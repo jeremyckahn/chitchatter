@@ -6,8 +6,8 @@ import { MemoryRouter as Router, Route, Routes } from 'react-router-dom'
 
 import { userSettingsContextStubFactory } from 'test-utils/stubs/settingsContext'
 import { mockEncryptionService } from 'test-utils/mocks/mockEncryptionService'
-
 import { SettingsContext } from 'contexts/SettingsContext'
+import { Time } from 'lib/Time'
 
 import { Room, RoomProps } from './'
 
@@ -21,6 +21,10 @@ const userSettingsStub = userSettingsContextStubFactory({
 window.AudioContext = vi.fn().mockImplementation(() => {})
 const mockGetUuid = vi.fn()
 const mockMessagedSender = vi.fn().mockImplementation(() => Promise.resolve([]))
+
+const mockTimeService = new Time()
+const mockNowTime = 1234
+mockTimeService.now = () => mockNowTime
 
 vi.mock('../../lib/Audio')
 
@@ -55,7 +59,13 @@ const RouteStub = ({ children }: PropsWithChildren) => {
 }
 
 const RoomStub = (props: RoomProps) => {
-  return <Room encryptionService={mockEncryptionService} {...props} />
+  return (
+    <Room
+      encryptionService={mockEncryptionService}
+      timeService={mockTimeService}
+      {...props}
+    />
+  )
 }
 
 describe('Room', () => {
@@ -129,8 +139,7 @@ describe('Room', () => {
     expect(mockMessagedSender).toHaveBeenCalledWith({
       authorId: mockUserId,
       text: 'hello',
-      // FIXME: Test for a specific timestamp
-      timeSent: expect.any(Number),
+      timeSent: mockNowTime,
       id: 'abc123',
     })
   })

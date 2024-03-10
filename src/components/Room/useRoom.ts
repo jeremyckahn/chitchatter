@@ -26,8 +26,9 @@ import {
 } from 'models/chat'
 import { getPeerName, usePeerNameDisplay } from 'components/PeerNameDisplay'
 import { Audio } from 'lib/Audio'
-import { notification } from 'services/Notification'
+import { time } from 'lib/Time'
 import { PeerRoom, PeerHookType } from 'lib/PeerRoom'
+import { notification } from 'services/Notification'
 import { fileTransfer } from 'lib/FileTransfer'
 import { AllowedKeyType, encryption } from 'services/Encryption'
 
@@ -41,6 +42,7 @@ interface UseRoomConfig {
   publicKey: CryptoKey
   getUuid?: typeof uuid
   encryptionService?: typeof encryption
+  timeService?: typeof time
 }
 
 interface UserMetadata {
@@ -57,6 +59,7 @@ export function useRoom(
     publicKey,
     getUuid = uuid,
     encryptionService = encryption,
+    timeService = time,
   }: UseRoomConfig
 ) {
   const isPrivate = password !== undefined
@@ -235,7 +238,7 @@ export function useRoom(
     const unsentMessage: UnsentMessage = {
       authorId: userId,
       text: message,
-      timeSent: Date.now(),
+      timeSent: timeService.now(),
       id: getUuid(),
     }
 
@@ -246,7 +249,7 @@ export function useRoom(
 
     setMessageLog([
       ...messageLog,
-      { ...unsentMessage, timeReceived: Date.now() },
+      { ...unsentMessage, timeReceived: timeService.now() },
     ])
     setIsMessageSending(false)
   }
@@ -322,7 +325,10 @@ export function useRoom(
       }
     }
 
-    setMessageLog([...messageLog, { ...message, timeReceived: Date.now() }])
+    setMessageLog([
+      ...messageLog,
+      { ...message, timeReceived: timeService.now() },
+    ])
     updatePeer(peerId, { isTyping: false })
   })
 
@@ -389,7 +395,7 @@ export function useRoom(
     const unsentInlineMedia: UnsentInlineMedia = {
       authorId: userId,
       magnetURI: fileOfferId,
-      timeSent: Date.now(),
+      timeSent: timeService.now(),
       id: getUuid(),
     }
 
@@ -400,7 +406,7 @@ export function useRoom(
 
     setMessageLog([
       ...messageLog,
-      { ...unsentInlineMedia, timeReceived: Date.now() },
+      { ...unsentInlineMedia, timeReceived: timeService.now() },
     ])
     setIsMessageSending(false)
   }
@@ -432,7 +438,10 @@ export function useRoom(
       }
     }
 
-    setMessageLog([...messageLog, { ...inlineMedia, timeReceived: Date.now() }])
+    setMessageLog([
+      ...messageLog,
+      { ...inlineMedia, timeReceived: timeService.now() },
+    ])
   })
 
   receiveTypingStatusChange((typingStatus, peerId) => {
