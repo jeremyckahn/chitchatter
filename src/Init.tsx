@@ -13,7 +13,7 @@ import { ColorMode, UserSettings } from 'models/settings'
 
 import type { BootstrapProps } from './Bootstrap'
 
-const Bootstrap = lazy(() => import('./Bootstrap.js'))
+const Bootstrap = lazy(() => import('./Bootstrap'))
 
 export interface InitProps extends Omit<BootstrapProps, 'initialUserSettings'> {
   getUuid?: typeof uuid
@@ -77,10 +77,7 @@ const Init = ({ getUuid = uuid, ...props }: InitProps) => {
 
   return (
     <Suspense fallback={<WholePageLoading />}>
-      <Bootstrap
-        {...props}
-        initialUserSettings={userSettings}
-      />
+      <Bootstrap {...props} initialUserSettings={userSettings} />
     </Suspense>
   )
 }

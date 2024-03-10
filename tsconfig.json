@@ -16,6 +16,7 @@
     "noEmit": true,
     "jsx": "react-jsx",
     "baseUrl": "src",
+    "allowImportingTsExtensions": true,
     "paths": {
       "trystero/torrent": ["../node_modules/trystero/src/torrent.d.ts"]
     }
