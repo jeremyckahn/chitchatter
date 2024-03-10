@@ -88,7 +88,6 @@ describe('Room', () => {
     const sendButton = screen.getByLabelText('Send')
     const textInput = screen.getByPlaceholderText('Your message')
 
-    vi.useRealTimers()
     await userEvent.type(textInput, 'hello')
 
     expect(sendButton).not.toBeDisabled()
@@ -103,8 +102,6 @@ describe('Room', () => {
 
     const sendButton = screen.getByLabelText('Send')
     const textInput = screen.getByPlaceholderText('Your message')
-
-    vi.useRealTimers()
 
     await userEvent.type(textInput, 'hello')
     await userEvent.click(sendButton)
@@ -126,18 +123,15 @@ describe('Room', () => {
     const sendButton = screen.getByLabelText('Send')
     const textInput = screen.getByPlaceholderText('Your message')
 
-    vi.useRealTimers()
-    await userEvent.type(textInput, 'hello', {})
+    await userEvent.type(textInput, 'hello')
     await userEvent.click(sendButton)
 
-    expect(mockMessagedSender).toHaveBeenCalledWith(
-      expect.objectContaining({
-        authorId: mockUserId,
-        text: 'hello',
-        // FIXME: Test for a specific timestamp
-        timeSent: expect.any(Number),
-        id: 'abc123',
-      })
-    )
+    expect(mockMessagedSender).toHaveBeenCalledWith({
+      authorId: mockUserId,
+      text: 'hello',
+      // FIXME: Test for a specific timestamp
+      timeSent: expect.any(Number),
+      id: 'abc123',
+    })
   })
 })
