@@ -53,7 +53,6 @@
     "webrtc-adapter": "^8.2.2"
   },
   "scripts": {
-    "analyze": "source-map-explorer 'build/static/js/*.js'",
     "start": "cross-env VITE_HOMEPAGE=$(npm pkg get homepage) vite --port 3000",
     "start:tracker": "bittorrent-tracker",
     "start:streamsaver": "serve -p 3015 node_modules/streamsaver",
@@ -120,7 +119,6 @@
     "process": "^0.11.10",
     "sass": "^1.69.5",
     "serve": "^14.1.2",
-    "source-map-explorer": "^2.5.3",
     "tailwindcss": "^3.1.8",
     "url": "^0.11.0",
     "util": "^0.12.5",
