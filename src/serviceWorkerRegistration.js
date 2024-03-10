@@ -23,10 +23,7 @@ const isLocalhost = Boolean(
 export function register(config) {
   // FIXME: Remove this
   console.log('Attempting to register service worker')
-  if (
-    import.meta.env.NODE_ENV === 'production' &&
-    'serviceWorker' in navigator
-  ) {
+  if (import.meta.env.MODE === 'production' && 'serviceWorker' in navigator) {
     // The URL constructor is available in all browsers that support SW.
     const publicUrl = window.location.href
     if (publicUrl.origin !== window.location.origin) {
