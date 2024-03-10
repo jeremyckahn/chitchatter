@@ -1,5 +1,10 @@
-export const joinRoom = (_config, _roomId) => {
-  const room = {
+import { joinRoom as trysteroJoinRoom, Room, BaseRoomConfig } from 'trystero'
+
+export const joinRoom: typeof trysteroJoinRoom = (
+  _config: BaseRoomConfig,
+  _roomId: string
+) => {
+  const room: Room = {
     makeAction: () => [() => Promise.resolve([]), () => {}, () => {}],
     ping: () => Promise.resolve(0),
     leave: () => {},
