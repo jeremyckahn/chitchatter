@@ -177,7 +177,7 @@ Launches the test runner in the interactive watch mode. See the section about [r
 
 ### `npm run build`
 
-Builds the app for production to the `build` folder. It correctly bundles React in production mode and optimizes the build for the best performance.
+Builds the app for production to the `dist` folder. It correctly bundles React in production mode and optimizes the build for the best performance.
 
 The build is minified and the filenames include the hashes.
 
@@ -204,7 +204,7 @@ When hosted on GitHub Pages and the configuration above has been done, the Produ
 
 ##### On non-GitHub hosts
 
-Build the app with `PUBLIC_URL="https://your-domain-here.com" npm run build`, and then serve the `build` directory. Any static file serving solution should work provided it is using a [secure context](https://developer.mozilla.org/en-US/docs/Web/Security/Secure_Contexts).
+Build the app with `npm pkg set homepage="https://your-domain-here.com" && npm run build` (with `https://your-domain-here.com` substituted for the root URL that Chitchatter will be served from), and then serve the `dist` directory. Any static file serving solution should work provided it is using a [secure context](https://developer.mozilla.org/en-US/docs/Web/Security/Secure_Contexts).
 
 #### Runtime configuration
 
