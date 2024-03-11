@@ -10,6 +10,8 @@ import { nodePolyfills } from 'vite-plugin-node-polyfills'
 import macrosPlugin from 'vite-plugin-babel-macros'
 import { VitePWA } from 'vite-plugin-pwa'
 
+import { manifest } from './manifest'
+
 const srcPaths = [
   'components',
   'config',
@@ -56,6 +58,7 @@ const config = () => {
           enabled: false,
         },
         injectRegister: 'auto',
+        manifest,
       }),
     ],
     resolve: {
