@@ -19,7 +19,8 @@
     "allowImportingTsExtensions": true,
     "paths": {
       "trystero/torrent": ["../node_modules/trystero/src/torrent.d.ts"]
-    }
+    },
+    "types": ["vite-plugin-pwa/client"]
   },
   "include": ["src"]
 }

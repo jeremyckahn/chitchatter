@@ -8,6 +8,7 @@ import react from '@vitejs/plugin-react'
 import svgr from 'vite-plugin-svgr'
 import { nodePolyfills } from 'vite-plugin-node-polyfills'
 import macrosPlugin from 'vite-plugin-babel-macros'
+import { VitePWA } from 'vite-plugin-pwa'
 
 const srcPaths = [
   'components',
@@ -48,6 +49,13 @@ const config = () => {
           process: true,
         },
         protocolImports: true,
+      }),
+      VitePWA({
+        registerType: 'autoUpdate',
+        devOptions: {
+          enabled: false,
+        },
+        injectRegister: 'auto',
       }),
     ],
     resolve: {

@@ -28,7 +28,7 @@ import {
 } from 'models/sdk'
 import { serialization, SerializedUserSettings } from 'services/Serialization'
 
-import * as serviceWorkerRegistration from './serviceWorkerRegistration'
+import { registerSW } from 'virtual:pwa-register'
 
 export interface BootstrapProps {
   persistedStorage?: typeof localforage
@@ -116,7 +116,7 @@ const Bootstrap = ({
   )
 
   useEffect(() => {
-    serviceWorkerRegistration.register({ onUpdate: handleServiceWorkerUpdate })
+    registerSW({ onNeedRefresh: handleServiceWorkerUpdate })
   }, [])
 
   useEffect(() => {
