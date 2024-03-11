@@ -6,6 +6,7 @@ import {
   Navigate,
 } from 'react-router-dom'
 import localforage from 'localforage'
+import { useRegisterSW } from 'virtual:pwa-register/react'
 
 import { StorageContext } from 'contexts/StorageContext'
 import { SettingsContext } from 'contexts/SettingsContext'
@@ -27,8 +28,6 @@ import {
   PostMessageEventName,
 } from 'models/sdk'
 import { serialization, SerializedUserSettings } from 'services/Serialization'
-
-import { registerSW } from 'virtual:pwa-register'
 
 export interface BootstrapProps {
   persistedStorage?: typeof localforage
@@ -88,15 +87,10 @@ const Bootstrap = ({
   )
 
   const [persistedStorage] = useState(persistedStorageProp)
-  const [appNeedsUpdate, setAppNeedsUpdate] = useState(false)
   const [hasLoadedSettings, setHasLoadedSettings] = useState(false)
   const [userSettings, setUserSettings] =
     useState<UserSettings>(initialUserSettings)
   const { userId } = userSettings
-
-  const handleServiceWorkerUpdate = () => {
-    setAppNeedsUpdate(true)
-  }
 
   const persistUserSettings = useCallback(
     async (newUserSettings: UserSettings) => {
@@ -115,9 +109,9 @@ const Bootstrap = ({
     [persistedStorageProp, queryParams, serializationService, userSettings]
   )
 
-  useEffect(() => {
-    registerSW({ onNeedRefresh: handleServiceWorkerUpdate })
-  }, [])
+  const {
+    needRefresh: [appNeedsUpdate],
+  } = useRegisterSW()
 
   useEffect(() => {
     ;(async () => {

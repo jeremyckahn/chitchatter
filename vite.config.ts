@@ -51,7 +51,7 @@ const config = () => {
         protocolImports: true,
       }),
       VitePWA({
-        registerType: 'autoUpdate',
+        registerType: 'prompt',
         devOptions: {
           enabled: false,
         },
