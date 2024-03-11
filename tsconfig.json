@@ -20,7 +20,7 @@
     "paths": {
       "trystero/torrent": ["../node_modules/trystero/src/torrent.d.ts"]
     },
-    "types": ["vite-plugin-pwa/client"]
+    "types": ["vite-plugin-pwa/client", "vite/client"]
   },
   "include": ["src"]
 }
