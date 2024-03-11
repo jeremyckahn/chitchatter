@@ -17,7 +17,7 @@ Chitchatter is a free (as in both price and freedom) communication tool. Designe
 - Embeddable
 - [Self-hostable](#self-hosting)
 
-Chitchatter uses the [Create React App](https://github.com/facebook/create-react-app) toolchain. The secure networking and streaming magic would not be possible without [Trystero](https://github.com/dmotz/trystero). File transfer functionality is powered by [`secure-file-transfer`](https://github.com/jeremyckahn/secure-file-transfer).
+Chitchatter uses [Vite](https://vitejs.dev/). The secure networking and streaming magic would not be possible without [Trystero](https://github.com/dmotz/trystero). File transfer functionality is powered by [`secure-file-transfer`](https://github.com/jeremyckahn/secure-file-transfer).
 
 ## Status
 
@@ -173,7 +173,7 @@ The page will reload when you make changes. You may also see any lint errors in 
 
 ### `npm test`
 
-Launches the test runner in the interactive watch mode. See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+Launches the test runner in the interactive watch mode.
 
 ### `npm run build`
 
