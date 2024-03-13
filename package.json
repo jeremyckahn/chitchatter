@@ -9,7 +9,7 @@
     "@emotion/react": "^11.10.0",
     "@emotion/styled": "^11.10.0",
     "@mui/icons-material": "^5.15.6",
-    "@mui/material": "^5.15.6",
+    "@mui/material": "^5.15.10",
     "@react-hook/debounce": "^4.0.0",
     "@react-hook/window-size": "^3.1.1",
     "@testing-library/jest-dom": "^6.4.2",
