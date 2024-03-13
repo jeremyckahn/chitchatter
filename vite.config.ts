@@ -40,7 +40,7 @@ const config = () => {
     },
     plugins: [
       svgr({
-        include: '**/*.svg',
+        include: '**/*.svg?react',
       }),
       react(),
       macrosPlugin(),
