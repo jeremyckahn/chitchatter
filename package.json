@@ -4,17 +4,17 @@
   "homepage": "https://chitchatter.im/",
   "author": "Jeremy Kahn <jeremyckahn@gmail.com>",
   "license": "GPL-2.0-or-later",
+  "type": "module",
   "dependencies": {
     "@emotion/react": "^11.10.0",
     "@emotion/styled": "^11.10.0",
-    "@mui/icons-material": "^5.8.4",
-    "@mui/material": "^5.14.12",
+    "@mui/icons-material": "^5.15.6",
+    "@mui/material": "^5.15.6",
     "@react-hook/debounce": "^4.0.0",
     "@react-hook/window-size": "^3.1.1",
-    "@testing-library/jest-dom": "^5.16.5",
-    "@testing-library/react": "^13.3.0",
-    "@testing-library/user-event": "^13.5.0",
-    "@types/jest": "^28.1.6",
+    "@testing-library/jest-dom": "^6.4.2",
+    "@testing-library/react": "^14.2.1",
+    "@testing-library/user-event": "^14.5.2",
     "@types/node": "^18.18.4",
     "@types/react": "^18.2.25",
     "@types/react-dom": "^18.0.6",
@@ -35,42 +35,39 @@
     "react-markdown": "^8.0.3",
     "react-qrcode-logo": "^2.8.0",
     "react-router-dom": "^6.16.0",
-    "react-scripts": "5.0.1",
     "react-syntax-highlighter": "^15.5.0",
     "react-youtube": "^10.1.0",
     "readable-web-to-node-stream": "^3.0.2",
     "remark-gfm": "^3.0.1",
-    "sass": "^1.54.3",
     "sdp": "^3.2.0",
     "secure-file-transfer": "^0.0.7",
     "streamsaver": "^2.0.6",
     "trystero": "^0.15.0",
     "typeface-public-sans": "^1.1.13",
     "typeface-roboto": "^1.1.13",
-    "typescript": "^4.9.5",
+    "typescript": "^5.4.2",
     "uuid": "^8.3.2",
+    "vite-plugin-babel-macros": "^1.0.6",
     "web-vitals": "^2.1.4",
     "webrtc-adapter": "^8.2.2"
   },
   "scripts": {
-    "analyze": "source-map-explorer 'build/static/js/*.js'",
-    "start": "cross-env REACT_APP_HOMEPAGE=$(npm pkg get homepage) react-scripts start",
+    "start": "cross-env VITE_HOMEPAGE=$(npm pkg get homepage) vite --port 3000",
     "start:tracker": "bittorrent-tracker",
     "start:streamsaver": "serve -p 3015 node_modules/streamsaver",
-    "dev": "mprocs \"npx cross-env REACT_APP_TRACKER_URL=\"ws://localhost:8000\" REACT_APP_STREAMSAVER_URL=\"http://localhost:3015/mitm.html\" npm run start\" \"npm run start:tracker\" \"npm run start:streamsaver\"",
+    "dev": "mprocs \"npx cross-env VITE_TRACKER_URL=\"ws://localhost:8000\" VITE_STREAMSAVER_URL=\"http://localhost:3015/mitm.html\" npm run start\" \"npm run start:tracker\" \"npm run start:streamsaver\"",
     "build": "npm run build:app && npm run build:sdk",
-    "build:app": "cross-env REACT_APP_HOMEPAGE=$(npm pkg get homepage) react-scripts build",
-    "build:sdk": "parcel build sdk/sdk.ts --dist-dir build --no-content-hash",
+    "build:app": "cross-env VITE_HOMEPAGE=$(npm pkg get homepage) vite build",
+    "build:sdk": "parcel build sdk/sdk.ts --no-content-hash",
     "build:sdk:watch": "nodemon --exec \"npm run build:sdk\"",
-    "test": "react-scripts test",
+    "test": "vitest",
     "prepare": "husky install",
     "prettier": "prettier 'src/**/*.js' --write",
     "lint": "eslint src --max-warnings=0"
   },
   "eslintConfig": {
     "extends": [
-      "react-app",
-      "react-app/jest"
+      "react-app"
     ]
   },
   "engines": {
@@ -99,6 +96,7 @@
     "@types/webtorrent": "^0.109.3",
     "@typescript-eslint/eslint-plugin": "^5.33.0",
     "@typescript-eslint/parser": "^5.33.0",
+    "@vitejs/plugin-react": "^4.2.1",
     "autoprefixer": "^10.4.8",
     "bittorrent-tracker": "^9.19.0",
     "cross-env": "^7.0.3",
@@ -109,6 +107,7 @@
     "eslint-plugin-react": "^7.30.1",
     "eslint-plugin-react-hooks": "^4.6.0",
     "husky": "^8.0.1",
+    "jsdom": "^24.0.0",
     "mprocs": "^0.6.4",
     "nodemon": "^3.0.1",
     "parcel": "^2.10.0",
@@ -116,11 +115,16 @@
     "prettier": "^2.7.1",
     "pretty-quick": "^3.1.3",
     "process": "^0.11.10",
+    "sass": "^1.69.5",
     "serve": "^14.1.2",
-    "source-map-explorer": "^2.5.3",
     "tailwindcss": "^3.1.8",
     "url": "^0.11.0",
-    "util": "^0.12.5"
+    "util": "^0.12.5",
+    "vite": "^5.0.12",
+    "vite-plugin-node-polyfills": "^0.19.0",
+    "vite-plugin-pwa": "^0.19.2",
+    "vite-plugin-svgr": "^4.2.0",
+    "vitest": "^1.3.1"
   },
   "overrides": {
     "ipfs-core": "npm:dry-uninstall",
@@ -134,10 +138,5 @@
     "resolve-url-loader": {
       "postcss": "8.4.31"
     }
-  },
-  "jest": {
-    "transformIgnorePatterns": [
-      "node_modules/(?!trystero)/"
-    ]
   }
 }

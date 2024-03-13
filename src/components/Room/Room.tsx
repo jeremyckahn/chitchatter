@@ -8,6 +8,7 @@ import { v4 as uuid } from 'uuid'
 
 import { rtcConfig } from 'config/rtcConfig'
 import { trackerUrls } from 'config/trackerUrls'
+import { time } from 'lib/Time'
 import { RoomContext } from 'contexts/RoomContext'
 import { ShellContext } from 'contexts/ShellContext'
 import { MessageForm } from 'components/MessageForm'
@@ -31,12 +32,14 @@ export interface RoomProps {
   roomId: string
   userId: string
   encryptionService?: typeof encryption
+  timeService?: typeof time
 }
 
 export function Room({
-  appId = `${encodeURI(window.location.origin)}_${process.env.REACT_APP_NAME}`,
+  appId = `${encodeURI(window.location.origin)}_${process.env.VITE_NAME}`,
   getUuid = uuid,
   encryptionService = encryption,
+  timeService = time,
   roomId,
   password,
   userId,
@@ -68,6 +71,7 @@ export function Room({
       getUuid,
       publicKey,
       encryptionService,
+      timeService,
     }
   )
 

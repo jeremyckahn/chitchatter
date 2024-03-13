@@ -1,12 +1,13 @@
+import { vi } from 'vitest'
 import { PropsWithChildren } from 'react'
-import { waitFor, render, screen } from '@testing-library/react'
+import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter as Router, Route, Routes } from 'react-router-dom'
 
 import { userSettingsContextStubFactory } from 'test-utils/stubs/settingsContext'
 import { mockEncryptionService } from 'test-utils/mocks/mockEncryptionService'
-
 import { SettingsContext } from 'contexts/SettingsContext'
+import { Time } from 'lib/Time'
 
 import { Room, RoomProps } from './'
 
@@ -17,13 +18,17 @@ const userSettingsStub = userSettingsContextStubFactory({
   userId: mockUserId,
 })
 
-window.AudioContext = jest.fn().mockImplementation()
-const mockGetUuid = jest.fn()
-const mockMessagedSender = jest
-  .fn()
-  .mockImplementation(() => Promise.resolve([]))
+window.AudioContext = vi.fn().mockImplementation(() => {})
+const mockGetUuid = vi.fn()
+const mockMessagedSender = vi.fn().mockImplementation(() => Promise.resolve([]))
 
-jest.mock('trystero', () => ({
+const mockTimeService = new Time()
+const mockNowTime = 1234
+mockTimeService.now = () => mockNowTime
+
+vi.mock('../../lib/Audio')
+
+vi.mock('trystero', () => ({
   joinRoom: () => ({
     makeAction: () => [mockMessagedSender, () => {}, () => {}],
     ping: () => Promise.resolve(0),
@@ -53,10 +58,14 @@ const RouteStub = ({ children }: PropsWithChildren) => {
   )
 }
 
-jest.useFakeTimers().setSystemTime(100)
-
 const RoomStub = (props: RoomProps) => {
-  return <Room encryptionService={mockEncryptionService} {...props} />
+  return (
+    <Room
+      encryptionService={mockEncryptionService}
+      timeService={mockTimeService}
+      {...props}
+    />
+  )
 }
 
 describe('Room', () => {
@@ -89,9 +98,7 @@ describe('Room', () => {
     const sendButton = screen.getByLabelText('Send')
     const textInput = screen.getByPlaceholderText('Your message')
 
-    await waitFor(() => {
-      userEvent.type(textInput, 'hello')
-    })
+    await userEvent.type(textInput, 'hello')
 
     expect(sendButton).not.toBeDisabled()
   })
@@ -106,13 +113,8 @@ describe('Room', () => {
     const sendButton = screen.getByLabelText('Send')
     const textInput = screen.getByPlaceholderText('Your message')
 
-    await waitFor(() => {
-      userEvent.type(textInput, 'hello')
-    })
-
-    await waitFor(() => {
-      userEvent.click(sendButton)
-    })
+    await userEvent.type(textInput, 'hello')
+    await userEvent.click(sendButton)
 
     expect(textInput).toHaveValue('')
   })
@@ -131,18 +133,13 @@ describe('Room', () => {
     const sendButton = screen.getByLabelText('Send')
     const textInput = screen.getByPlaceholderText('Your message')
 
-    await waitFor(() => {
-      userEvent.type(textInput, 'hello')
-    })
-
-    await waitFor(() => {
-      userEvent.click(sendButton)
-    })
+    await userEvent.type(textInput, 'hello')
+    await userEvent.click(sendButton)
 
     expect(mockMessagedSender).toHaveBeenCalledWith({
       authorId: mockUserId,
       text: 'hello',
-      timeSent: 100,
+      timeSent: mockNowTime,
       id: 'abc123',
     })
   })

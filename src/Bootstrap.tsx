@@ -6,8 +6,8 @@ import {
   Navigate,
 } from 'react-router-dom'
 import localforage from 'localforage'
+import { useRegisterSW } from 'virtual:pwa-register/react'
 
-import * as serviceWorkerRegistration from 'serviceWorkerRegistration'
 import { StorageContext } from 'contexts/StorageContext'
 import { SettingsContext } from 'contexts/SettingsContext'
 import { homepageUrl, routes } from 'config/routes'
@@ -87,15 +87,10 @@ const Bootstrap = ({
   )
 
   const [persistedStorage] = useState(persistedStorageProp)
-  const [appNeedsUpdate, setAppNeedsUpdate] = useState(false)
   const [hasLoadedSettings, setHasLoadedSettings] = useState(false)
   const [userSettings, setUserSettings] =
     useState<UserSettings>(initialUserSettings)
   const { userId } = userSettings
-
-  const handleServiceWorkerUpdate = () => {
-    setAppNeedsUpdate(true)
-  }
 
   const persistUserSettings = useCallback(
     async (newUserSettings: UserSettings) => {
@@ -114,9 +109,9 @@ const Bootstrap = ({
     [persistedStorageProp, queryParams, serializationService, userSettings]
   )
 
-  useEffect(() => {
-    serviceWorkerRegistration.register({ onUpdate: handleServiceWorkerUpdate })
-  }, [])
+  const {
+    needRefresh: [appNeedsUpdate],
+  } = useRegisterSW()
 
   useEffect(() => {
     ;(async () => {

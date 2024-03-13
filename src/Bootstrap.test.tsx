@@ -1,5 +1,6 @@
+import { vi } from 'vitest'
 import { act, render } from '@testing-library/react'
-import localforage from 'localforage'
+import persistedStorage from 'localforage'
 
 import { PersistedStorageKeys } from 'models/storage'
 import {
@@ -11,28 +12,14 @@ import { userSettingsStubFactory } from 'test-utils/stubs/userSettings'
 
 import Bootstrap, { BootstrapProps } from './Bootstrap'
 
-const mockPersistedStorage =
-  jest.createMockFromModule<jest.Mock<typeof localforage>>('localforage')
-
-const mockGetItem = jest.fn()
-const mockSetItem = jest.fn()
+vi.mock('localforage')
 
 const userSettingsStub = userSettingsStubFactory()
 
-beforeEach(() => {
-  mockGetItem.mockImplementation(() => Promise.resolve(null))
-  mockSetItem.mockImplementation((data: any) => Promise.resolve(data))
-})
-
 const renderBootstrap = async (overrides: Partial<BootstrapProps> = {}) => {
-  Object.assign(mockPersistedStorage, {
-    getItem: mockGetItem,
-    setItem: mockSetItem,
-  })
-
   render(
     <Bootstrap
-      persistedStorage={mockPersistedStorage as any as typeof localforage}
+      persistedStorage={persistedStorage}
       initialUserSettings={userSettingsStub}
       serializationService={mockSerialization}
       {...overrides}
@@ -51,7 +38,9 @@ test('renders', async () => {
 
 test('checks persistedStorage for user settings', async () => {
   await renderBootstrap()
-  expect(mockGetItem).toHaveBeenCalledWith(PersistedStorageKeys.USER_SETTINGS)
+  expect(persistedStorage.getItem).toHaveBeenCalledWith(
+    PersistedStorageKeys.USER_SETTINGS
+  )
 })
 
 test('updates persisted user settings', async () => {
@@ -59,14 +48,17 @@ test('updates persisted user settings', async () => {
     initialUserSettings: { ...userSettingsStub, userId: 'abc123' },
   })
 
-  expect(mockSetItem).toHaveBeenCalledWith(PersistedStorageKeys.USER_SETTINGS, {
-    colorMode: 'dark',
-    userId: 'abc123',
-    customUsername: '',
-    playSoundOnNewMessage: true,
-    showNotificationOnNewMessage: true,
-    showActiveTypingStatus: true,
-    publicKey: mockSerializedPublicKey,
-    privateKey: mockSerializedPrivateKey,
-  })
+  expect(persistedStorage.setItem).toHaveBeenCalledWith(
+    PersistedStorageKeys.USER_SETTINGS,
+    {
+      colorMode: 'dark',
+      userId: 'abc123',
+      customUsername: '',
+      playSoundOnNewMessage: true,
+      showNotificationOnNewMessage: true,
+      showActiveTypingStatus: true,
+      publicKey: mockSerializedPublicKey,
+      privateKey: mockSerializedPrivateKey,
+    }
+  )
 })

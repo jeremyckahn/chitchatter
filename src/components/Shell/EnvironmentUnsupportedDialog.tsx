@@ -12,7 +12,7 @@ const { isSecureContext, RTCDataChannel } = window
 const doesSupportWebRtc = RTCDataChannel !== undefined
 
 export const isEnvironmentSupported =
-  (isSecureContext && doesSupportWebRtc) || process.env.NODE_ENV === 'test'
+  (isSecureContext && doesSupportWebRtc) || import.meta.env.MODE === 'test'
 
 export const EnvironmentUnsupportedDialog = () => {
   const theme = useTheme()

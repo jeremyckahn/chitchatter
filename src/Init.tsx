@@ -13,8 +13,7 @@ import { ColorMode, UserSettings } from 'models/settings'
 
 import type { BootstrapProps } from './Bootstrap'
 
-// @ts-expect-error
-const Bootstrap = lazy(() => import('./Bootstrap.js'))
+const Bootstrap = lazy(() => import('./Bootstrap'))
 
 export interface InitProps extends Omit<BootstrapProps, 'initialUserSettings'> {
   getUuid?: typeof uuid

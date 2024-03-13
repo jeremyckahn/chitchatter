@@ -1,8 +1,9 @@
+import { vi } from 'vitest'
 import { encryption } from 'services/Encryption'
 
 export const mockEncryptionService = encryption
 
-mockEncryptionService.generateKeyPair = jest.fn(async () => ({
+mockEncryptionService.generateKeyPair = vi.fn(async () => ({
   publicKey: encryption.cryptoKeyStub,
   privateKey: encryption.cryptoKeyStub,
 }))
