@@ -10,7 +10,7 @@ import { PrismAsyncLight as SyntaxHighlighter } from 'react-syntax-highlighter'
 import Init from './Init'
 import reportWebVitals from './reportWebVitals'
 
-// NOTE: This is a workaround for MUI components attempting to load theme code
+// NOTE: This is a workaround for MUI components attempting to access theme code
 // before it has loaded.
 // See: https://stackoverflow.com/a/76017295/470685
 ;<ThemeProvider theme={createTheme()} />

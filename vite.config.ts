@@ -46,7 +46,7 @@ const config = () => {
       macrosPlugin(),
       nodePolyfills({
         globals: {
-          Buffer: true, // can also be 'build', 'dev', or false
+          Buffer: true,
           global: true,
           process: true,
         },
