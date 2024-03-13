@@ -8,7 +8,7 @@
   "dependencies": {
     "@emotion/react": "^11.10.0",
     "@emotion/styled": "^11.10.0",
-    "@mui/icons-material": "^5.15.6",
+    "@mui/icons-material": "^5.15.10",
     "@mui/material": "^5.15.6",
     "@react-hook/debounce": "^4.0.0",
     "@react-hook/window-size": "^3.1.1",
