@@ -24,6 +24,12 @@ jobs:
         run: |
           npm ci
           npm run build
+          # NOTE: This is a compatibility shim needed for upgrading installed
+          # Chitchatter PWAs after the switch to Vite:
+          # https://github.com/jeremyckahn/chitchatter/commit/ea34058fa7ac2cbfd165837cdbef5caf6a9645ce#diff-639916bc14c3f311c31f629a2ec116292a4b2f64d06b3607b9ddd2e495703895
+          #
+          # TODO: Remove this cp operation after 9/1/2023.
+          cp dist/manifest.webmanifest dist/manifest.json
 
       - name: Deploy
         uses: peaceiris/actions-gh-pages@v3
