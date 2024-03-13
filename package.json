@@ -15,7 +15,6 @@
     "@testing-library/jest-dom": "^6.4.2",
     "@testing-library/react": "^14.2.1",
     "@testing-library/user-event": "^14.5.2",
-    "@types/jest": "^28.1.6",
     "@types/node": "^18.18.4",
     "@types/react": "^18.2.25",
     "@types/react-dom": "^18.0.6",
@@ -68,8 +67,7 @@
   },
   "eslintConfig": {
     "extends": [
-      "react-app",
-      "react-app/jest"
+      "react-app"
     ]
   },
   "engines": {
@@ -140,10 +138,5 @@
     "resolve-url-loader": {
       "postcss": "8.4.31"
     }
-  },
-  "jest": {
-    "transformIgnorePatterns": [
-      "node_modules/(?!trystero)/"
-    ]
   }
 }
