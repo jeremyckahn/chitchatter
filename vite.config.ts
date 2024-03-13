@@ -58,6 +58,7 @@ const config = () => {
           enabled: false,
         },
         injectRegister: 'auto',
+        filename: 'service-worker.js',
         manifest,
       }),
     ],
