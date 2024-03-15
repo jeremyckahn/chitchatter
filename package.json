@@ -17,7 +17,7 @@
     "@testing-library/user-event": "^14.5.2",
     "@types/node": "^18.19.17",
     "@types/react": "^18.2.25",
-    "@types/react-dom": "^18.0.6",
+    "@types/react-dom": "^18.2.19",
     "buffer": "^6.0.3",
     "classnames": "^2.3.1",
     "detectincognitojs": "^1.1.2",
