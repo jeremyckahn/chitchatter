@@ -60,10 +60,10 @@ export function Room({
   } = useRoom(
     {
       appId,
-      trackerUrls,
+      relayUrls: trackerUrls,
       rtcConfig,
       password,
-      trackerRedundancy: 4,
+      relayRedundancy: 4,
     },
     {
       roomId,

@@ -1,4 +1,4 @@
-import { getTrackers } from 'trystero/torrent'
+import { getRelaySockets } from 'trystero/torrent'
 import { rtcConfig } from 'config/rtcConfig'
 import { parseCandidate } from 'sdp'
 
@@ -104,17 +104,15 @@ export class ConnectionTest extends EventTarget {
   }
 
   testTrackerConnection() {
-    const trackers = getTrackers()
+    const relaySockets = Object.values(getRelaySockets())
 
-    const trackerSockets = Object.values(trackers)
-
-    if (trackerSockets.length === 0) {
+    if (relaySockets.length === 0) {
       // Trystero has not yet initialized tracker sockets
       this.trackerConnection = TrackerConnection.SEARCHING
       return this.trackerConnection
     }
 
-    const readyStates = trackerSockets.map(({ readyState }) => readyState)
+    const readyStates = relaySockets.map(({ readyState }) => readyState)
 
     const haveAllTrackerConnectionsFailed = readyStates.every(
       readyState => readyState === WebSocket.CLOSED

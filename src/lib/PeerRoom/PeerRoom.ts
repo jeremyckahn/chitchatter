@@ -1,5 +1,5 @@
-import { joinRoom, Room, BaseRoomConfig } from 'trystero'
-import { TorrentRoomConfig } from 'trystero/torrent'
+import { joinRoom, Room, BaseRoomConfig, DataPayload } from 'trystero'
+import { RelayConfig } from 'trystero/torrent'
 
 import { sleep } from 'lib/sleep'
 
@@ -27,7 +27,7 @@ const streamQueueAddDelay = 1000
 export class PeerRoom {
   private room: Room
 
-  private roomConfig: TorrentRoomConfig & BaseRoomConfig
+  private roomConfig: RelayConfig & BaseRoomConfig
 
   private peerJoinHandlers: Map<
     PeerHookType,
@@ -60,7 +60,7 @@ export class PeerRoom {
     this.isProcessingPendingStreams = false
   }
 
-  constructor(config: TorrentRoomConfig & BaseRoomConfig, roomId: string) {
+  constructor(config: RelayConfig & BaseRoomConfig, roomId: string) {
     this.roomConfig = config
     this.room = joinRoom(this.roomConfig, roomId)
 
@@ -167,7 +167,7 @@ export class PeerRoom {
     return peerConnections
   }
 
-  makeAction = <T>(namespace: string) => {
+  makeAction = <T extends DataPayload>(namespace: string) => {
     return this.room.makeAction<T>(namespace)
   }
 

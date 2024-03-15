@@ -1,4 +1,4 @@
-export interface UnsentMessage {
+export interface UnsentMessage extends Record<string, any> {
   id: string
   text: string
   timeSent: number
@@ -73,11 +73,11 @@ export const isInlineMedia = (
   return 'magnetURI' in message
 }
 
-export interface FileOfferMetadata {
+export interface FileOfferMetadata extends Record<string, any> {
   magnetURI: string
   isAllInlineMedia: boolean
 }
 
-export interface TypingStatus {
+export interface TypingStatus extends Record<string, any> {
   isTyping: boolean
 }

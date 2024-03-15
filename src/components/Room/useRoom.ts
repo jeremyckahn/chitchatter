@@ -1,6 +1,6 @@
 import { useContext, useEffect, useMemo, useState } from 'react'
 import { BaseRoomConfig } from 'trystero'
-import { TorrentRoomConfig } from 'trystero/torrent'
+import { RelayConfig } from 'trystero/torrent'
 import { v4 as uuid } from 'uuid'
 import { useDebounce } from '@react-hook/debounce'
 
@@ -45,14 +45,14 @@ interface UseRoomConfig {
   timeService?: typeof time
 }
 
-interface UserMetadata {
+interface UserMetadata extends Record<string, any> {
   userId: string
   customUsername: string
   publicKeyString: string
 }
 
 export function useRoom(
-  { password, ...roomConfig }: BaseRoomConfig & TorrentRoomConfig,
+  { password, ...roomConfig }: BaseRoomConfig & RelayConfig,
   {
     roomId,
     userId,
