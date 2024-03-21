@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import Slider from '@mui/material/Slider'
 import Box from '@mui/material/Box'
+import Paper from '@mui/material/Paper'
 import ListItemIcon from '@mui/material/ListItemIcon'
 import VolumeUpIcon from '@mui/icons-material/VolumeUp'
 import VolumeDownIcon from '@mui/icons-material/VolumeDown'
@@ -43,14 +44,23 @@ export const AudioVolume = ({ audioEl }: AudioVolumeProps) => {
   }
 
   return (
-    <Box sx={{ display: 'flex', pt: 1, pr: 3, alignItems: 'center' }}>
+    <Paper
+      sx={{
+        alignItems: 'center',
+        display: 'flex',
+        mt: 1.5,
+        pl: 2,
+        pr: 3,
+        py: 1,
+      }}
+    >
       <ListItemIcon sx={{ cursor: 'pointer' }} onClick={handleIconClick}>
         <VolumeIcon fontSize="small" />
         {
           // FIXME: Show peer's name
         }
         <Tooltip title="Their microphone volume">
-          <MicIcon fontSize="small" sx={{ mx: 1 }} />
+          <MicIcon fontSize="small" sx={{ ml: 1, mr: 2 }} />
         </Tooltip>
       </ListItemIcon>
       <Box display="flex" width={1}>
@@ -63,6 +73,6 @@ export const AudioVolume = ({ audioEl }: AudioVolumeProps) => {
           value={audioVolume * 100}
         ></Slider>
       </Box>
-    </Box>
+    </Paper>
   )
 }
