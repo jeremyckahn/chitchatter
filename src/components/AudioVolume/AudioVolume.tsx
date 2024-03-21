@@ -2,9 +2,11 @@ import { useState, useEffect } from 'react'
 import Slider from '@mui/material/Slider'
 import Box from '@mui/material/Box'
 import ListItemIcon from '@mui/material/ListItemIcon'
-import VolumeUp from '@mui/icons-material/VolumeUp'
-import VolumeDown from '@mui/icons-material/VolumeDown'
-import VolumeMute from '@mui/icons-material/VolumeMute'
+import VolumeUpIcon from '@mui/icons-material/VolumeUp'
+import VolumeDownIcon from '@mui/icons-material/VolumeDown'
+import VolumeMuteIcon from '@mui/icons-material/VolumeMute'
+import MicIcon from '@mui/icons-material/Mic'
+import Tooltip from '@mui/material/Tooltip'
 
 interface AudioVolumeProps {
   audioEl: HTMLAudioElement
@@ -32,27 +34,35 @@ export const AudioVolume = ({ audioEl }: AudioVolumeProps) => {
 
   const formatLabelValue = () => `${Math.round(audioVolume * 100)}%`
 
-  let VolumeIcon = VolumeUp
+  let VolumeIcon = VolumeUpIcon
 
   if (audioVolume === 0) {
-    VolumeIcon = VolumeMute
+    VolumeIcon = VolumeMuteIcon
   } else if (audioVolume < 0.5) {
-    VolumeIcon = VolumeDown
+    VolumeIcon = VolumeDownIcon
   }
 
   return (
     <Box sx={{ display: 'flex', pt: 1, pr: 3, alignItems: 'center' }}>
-      <ListItemIcon>
-        <VolumeIcon sx={{ cursor: 'pointer' }} onClick={handleIconClick} />
+      <ListItemIcon sx={{ cursor: 'pointer' }} onClick={handleIconClick}>
+        <VolumeIcon fontSize="small" />
+        {
+          // FIXME: Show peer's name
+        }
+        <Tooltip title="Their microphone volume">
+          <MicIcon fontSize="small" sx={{ mx: 1 }} />
+        </Tooltip>
       </ListItemIcon>
-      <Slider
-        aria-label="Volume"
-        getAriaValueText={formatLabelValue}
-        valueLabelFormat={formatLabelValue}
-        valueLabelDisplay="auto"
-        onChange={handleSliderChange}
-        value={audioVolume * 100}
-      ></Slider>
+      <Box display="flex" width={1}>
+        <Slider
+          aria-label="Volume"
+          getAriaValueText={formatLabelValue}
+          valueLabelFormat={formatLabelValue}
+          valueLabelDisplay="auto"
+          onChange={handleSliderChange}
+          value={audioVolume * 100}
+        ></Slider>
+      </Box>
     </Box>
   )
 }
