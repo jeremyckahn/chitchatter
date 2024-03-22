@@ -18,7 +18,7 @@ import EnhancedEncryptionIcon from '@mui/icons-material/EnhancedEncryption'
 import { AudioVolume } from 'components/AudioVolume'
 import { PeerNameDisplay } from 'components/PeerNameDisplay'
 import { PublicKey } from 'components/PublicKey'
-import { Peer, PeerVerificationState } from 'models/chat'
+import { Peer, PeerAudioChannel, PeerVerificationState } from 'models/chat'
 import { PeerConnectionType } from 'lib/PeerRoom'
 
 import { PeerDownloadFileButton } from './PeerDownloadFileButton'
@@ -26,7 +26,7 @@ import { PeerDownloadFileButton } from './PeerDownloadFileButton'
 interface PeerListItemProps {
   peer: Peer
   peerConnectionTypes: Record<string, PeerConnectionType>
-  peerAudios: Record<string, HTMLAudioElement>
+  peerAudios: Record<string, PeerAudioChannel>
 }
 
 const verificationStateDisplayMap = {
@@ -53,7 +53,7 @@ export const PeerListItem = ({
   peer,
   peerConnectionTypes,
   peerAudios,
-}: PeerListItemProps): JSX.Element => {
+}: PeerListItemProps) => {
   const [showPeerDialog, setShowPeerDialog] = useState(false)
 
   const hasPeerConnection = peer.peerId in peerConnectionTypes
@@ -125,7 +125,15 @@ export const PeerListItem = ({
             <PeerNameDisplay>{peer.userId}</PeerNameDisplay>
           </Box>
           {peer.peerId in peerAudios && (
-            <AudioVolume audioEl={peerAudios[peer.peerId]} />
+            <>
+              {
+                // FIXME: This is appearing when a peer is sending audio,
+                // leaves the room, and reconnects without audio.
+              }
+              {peerAudios[peer.peerId].microphone && (
+                <AudioVolume audioEl={peerAudios[peer.peerId].microphone} />
+              )}
+            </>
           )}
         </ListItemText>
       </ListItem>
