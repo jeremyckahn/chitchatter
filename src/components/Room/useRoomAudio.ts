@@ -63,7 +63,13 @@ export function useRoomAudio({ peerRoom }: UseRoomAudioConfig) {
     audio.srcObject = stream
     audio.autoplay = true
 
-    setPeerAudios({ ...peerAudios, [peerId]: audio })
+    setPeerAudios({
+      ...peerAudios,
+      [peerId]: {
+        ...peerAudios[peerId],
+        microphone: audio,
+      },
+    })
   })
 
   const cleanupAudio = useCallback(() => {
@@ -143,6 +149,7 @@ export function useRoomAudio({ peerRoom }: UseRoomAudioConfig) {
     setAudioStream(newSelfStream)
   }
 
+  // FIXME: Add channel support here
   const deletePeerAudio = (peerId: string) => {
     const newPeerAudios = { ...peerAudios }
     delete newPeerAudios[peerId]

@@ -1,7 +1,13 @@
 import { createContext, Dispatch, SetStateAction } from 'react'
 
 import { AlertOptions } from 'models/shell'
-import { AudioState, ScreenShareState, VideoState, Peer } from 'models/chat'
+import {
+  AudioState,
+  ScreenShareState,
+  VideoState,
+  Peer,
+  PeerAudioChannel,
+} from 'models/chat'
 import { PeerConnectionType } from 'lib/PeerRoom'
 import { ConnectionTestResults } from 'components/Shell/useConnectionTest'
 import { TrackerConnection } from 'lib/ConnectionTest'
@@ -33,8 +39,8 @@ interface ShellContextProps {
   setVideoState: Dispatch<SetStateAction<VideoState>>
   screenState: ScreenShareState
   setScreenState: Dispatch<SetStateAction<ScreenShareState>>
-  peerAudios: Record<string, HTMLAudioElement>
-  setPeerAudios: Dispatch<SetStateAction<Record<string, HTMLAudioElement>>>
+  peerAudios: Record<string, PeerAudioChannel>
+  setPeerAudios: Dispatch<SetStateAction<Record<string, PeerAudioChannel>>>
   customUsername: string
   setCustomUsername: Dispatch<SetStateAction<string>>
   connectionTestResults: ConnectionTestResults

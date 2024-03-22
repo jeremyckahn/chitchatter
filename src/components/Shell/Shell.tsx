@@ -19,7 +19,13 @@ import { useWindowSize } from '@react-hook/window-size'
 import { ShellContext } from 'contexts/ShellContext'
 import { SettingsContext } from 'contexts/SettingsContext'
 import { AlertOptions, QueryParamKeys } from 'models/shell'
-import { AudioState, ScreenShareState, VideoState, Peer } from 'models/chat'
+import {
+  AudioState,
+  ScreenShareState,
+  VideoState,
+  Peer,
+  PeerAudioChannel,
+} from 'models/chat'
 import { ErrorBoundary } from 'components/ErrorBoundary'
 import { PeerConnectionType } from 'lib/PeerRoom'
 
@@ -95,7 +101,7 @@ export const Shell = ({ appNeedsUpdate, children, userPeerId }: ShellProps) => {
     getUserSettings().customUsername
   )
   const [peerAudios, setPeerAudios] = useState<
-    Record<string, HTMLAudioElement>
+    Record<string, PeerAudioChannel>
   >({})
 
   const showAlert = useCallback((message: string, options?: AlertOptions) => {

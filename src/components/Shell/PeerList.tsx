@@ -9,7 +9,7 @@ import Box from '@mui/material/Box'
 import CircularProgress from '@mui/material/CircularProgress'
 
 import { UserInfo } from 'components/UserInfo'
-import { AudioState, Peer } from 'models/chat'
+import { AudioState, Peer, PeerAudioChannel } from 'models/chat'
 import { PeerConnectionType } from 'lib/PeerRoom'
 import { TrackerConnection } from 'lib/ConnectionTest'
 
@@ -26,7 +26,7 @@ export interface PeerListProps extends PropsWithChildren {
   peerList: Peer[]
   peerConnectionTypes: Record<string, PeerConnectionType>
   audioState: AudioState
-  peerAudios: Record<string, HTMLAudioElement>
+  peerAudios: Record<string, PeerAudioChannel>
   connectionTestResults: IConnectionTestResults
 }
 

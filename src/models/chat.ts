@@ -47,6 +47,10 @@ export enum PeerVerificationState {
   VERIFIED,
 }
 
+export interface PeerAudioChannel {
+  microphone: HTMLAudioElement
+}
+
 export interface Peer {
   peerId: string
   userId: string
