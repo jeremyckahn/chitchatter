@@ -269,7 +269,7 @@ export function useRoom(
           userId,
           publicKey,
           customUsername,
-          audioState: AudioState.STOPPED,
+          audioChannelState: { microphone: AudioState.STOPPED },
           videoState: VideoState.STOPPED,
           screenShareState: ScreenShareState.NOT_SHARING,
           offeredFileId: null,
