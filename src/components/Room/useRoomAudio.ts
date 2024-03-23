@@ -165,8 +165,9 @@ export function useRoomAudio({ peerRoom }: UseRoomAudioConfig) {
   const handleAudioForLeavingPeer = (peerId: string) => {
     if (audioStream) {
       peerRoom.removeStream(audioStream, peerId)
-      deletePeerAudio(peerId)
     }
+
+    deletePeerAudio(peerId)
   }
 
   peerRoom.onPeerJoin(PeerHookType.AUDIO, (peerId: string) => {
