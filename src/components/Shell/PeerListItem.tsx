@@ -69,6 +69,8 @@ export const PeerListItem = ({
     setShowPeerDialog(false)
   }
 
+  const microphoneAudio = peerAudios[peer.peerId]?.microphone
+
   return (
     <>
       <ListItem key={peer.peerId} divider={true}>
@@ -124,13 +126,7 @@ export const PeerListItem = ({
             </Box>
             <PeerNameDisplay>{peer.userId}</PeerNameDisplay>
           </Box>
-          {peer.peerId in peerAudios && (
-            <>
-              {peerAudios[peer.peerId].microphone && (
-                <AudioVolume audioEl={peerAudios[peer.peerId].microphone} />
-              )}
-            </>
-          )}
+          {microphoneAudio && <AudioVolume audioEl={microphoneAudio} />}
         </ListItemText>
       </ListItem>
       <Dialog open={showPeerDialog} onClose={handleDialogClose}>

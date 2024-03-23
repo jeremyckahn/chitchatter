@@ -2,7 +2,7 @@ import { useContext, useEffect, useCallback, useState } from 'react'
 
 import { ShellContext } from 'contexts/ShellContext'
 import { PeerActions } from 'models/network'
-import { AudioState, Peer } from 'models/chat'
+import { AudioState, Peer, PeerAudioChannel } from 'models/chat'
 import { PeerRoom, PeerHookType, PeerStreamType } from 'lib/PeerRoom'
 
 interface UseRoomAudioConfig {
@@ -149,10 +149,19 @@ export function useRoomAudio({ peerRoom }: UseRoomAudioConfig) {
     setAudioStream(newSelfStream)
   }
 
-  // FIXME: Add channel support here
-  const deletePeerAudio = (peerId: string) => {
+  const deletePeerAudio = (
+    peerId: string,
+    channel?: keyof PeerAudioChannel
+  ) => {
     const newPeerAudios = { ...peerAudios }
-    delete newPeerAudios[peerId]
+
+    if (channel) {
+      // FIXME: Use this code path
+      delete newPeerAudios[peerId][channel]
+    } else {
+      delete newPeerAudios[peerId]
+    }
+
     setPeerAudios(newPeerAudios)
   }
 
