@@ -2,7 +2,13 @@ import { useContext, useEffect, useCallback, useState } from 'react'
 
 import { ShellContext } from 'contexts/ShellContext'
 import { PeerActions } from 'models/network'
-import { AudioState, Peer, PeerAudioChannel } from 'models/chat'
+import {
+  AudioState,
+  Peer,
+  PeerAudioChannel,
+  PeerAudioChannelState,
+  doesPeerHaveAudioChannel,
+} from 'models/chat'
 import { PeerRoom, PeerHookType, PeerStreamType } from 'lib/PeerRoom'
 
 interface UseRoomAudioConfig {
@@ -32,19 +38,27 @@ export function useRoomAudio({ peerRoom }: UseRoomAudioConfig) {
     })()
   }, [audioStream])
 
-  const [sendAudioChange, receiveAudioChange] = peerRoom.makeAction<AudioState>(
-    PeerActions.AUDIO_CHANGE
-  )
+  const [sendAudioChange, receiveAudioChange] =
+    peerRoom.makeAction<PeerAudioChannelState>(PeerActions.AUDIO_CHANGE)
 
-  receiveAudioChange((audioState, peerId) => {
+  receiveAudioChange((peerAudioChannelState, peerId) => {
     const newPeerList = peerList.map(peer => {
       const newPeer: Peer = { ...peer }
 
-      if (peer.peerId === peerId) {
-        newPeer.audioState = audioState
+      for (const channel of Object.keys(peerAudioChannelState)) {
+        if (!doesPeerHaveAudioChannel(newPeer, channel)) {
+          continue
+        }
 
-        if (audioState === AudioState.STOPPED) {
-          deletePeerAudio(peerId)
+        if (peer.peerId === peerId) {
+          newPeer.audioChannelState = {
+            ...newPeer.audioChannelState,
+            ...peerAudioChannelState,
+          }
+
+          if (peerAudioChannelState[channel] === AudioState.STOPPED) {
+            deletePeerAudio(peerId, channel)
+          }
         }
       }
 
@@ -93,7 +107,7 @@ export function useRoomAudio({ peerRoom }: UseRoomAudioConfig) {
           })
 
           peerRoom.addStream(newSelfStream)
-          sendAudioChange(AudioState.PLAYING)
+          sendAudioChange({ microphone: AudioState.PLAYING })
           setAudioState(AudioState.PLAYING)
           setAudioStream(newSelfStream)
         }
@@ -102,7 +116,7 @@ export function useRoomAudio({ peerRoom }: UseRoomAudioConfig) {
           cleanupAudio()
 
           peerRoom.removeStream(audioStream, peerRoom.getPeers())
-          sendAudioChange(AudioState.STOPPED)
+          sendAudioChange({ microphone: AudioState.STOPPED })
           setAudioState(AudioState.STOPPED)
           setAudioStream(null)
         }

@@ -51,12 +51,14 @@ export interface PeerAudioChannel {
   microphone?: HTMLAudioElement
 }
 
+export type PeerAudioChannelState = Record<keyof PeerAudioChannel, AudioState>
+
 export interface Peer {
   peerId: string
   userId: string
   publicKey: CryptoKey
   customUsername: string
-  audioState: AudioState
+  audioChannelState: PeerAudioChannelState
   videoState: VideoState
   screenShareState: ScreenShareState
   offeredFileId: string | null
@@ -65,6 +67,13 @@ export interface Peer {
   encryptedVerificationToken: ArrayBuffer
   verificationState: PeerVerificationState
   verificationTimer: NodeJS.Timeout | null
+}
+
+export const doesPeerHaveAudioChannel = (
+  peer: Peer,
+  channelName: string
+): channelName is keyof PeerAudioChannel => {
+  return channelName in peer.audioChannelState
 }
 
 export const isMessageReceived = (
