@@ -126,10 +126,6 @@ export const PeerListItem = ({
           </Box>
           {peer.peerId in peerAudios && (
             <>
-              {
-                // FIXME: This is appearing when a peer is sending audio,
-                // leaves the room, and reconnects without audio.
-              }
               {peerAudios[peer.peerId].microphone && (
                 <AudioVolume audioEl={peerAudios[peer.peerId].microphone} />
               )}
