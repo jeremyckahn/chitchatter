@@ -26,8 +26,13 @@ export function useRoomAudio({ peerRoom }: UseRoomAudioConfig) {
     string | null
   >(null)
 
-  const { peerList, setPeerList, setAudioState, peerAudios, setPeerAudios } =
-    shellContext
+  const {
+    peerList,
+    setPeerList,
+    setAudioChannelState,
+    peerAudios,
+    setPeerAudios,
+  } = shellContext
 
   useEffect(() => {
     ;(async () => {
@@ -109,10 +114,16 @@ export function useRoomAudio({ peerRoom }: UseRoomAudioConfig) {
           })
 
           peerRoom.addStream(newSelfStream)
+
           sendAudioChange({
             [PeerAudioChannelName.MICROPHONE]: AudioState.PLAYING,
           })
-          setAudioState(AudioState.PLAYING)
+
+          setAudioChannelState(prevState => ({
+            ...prevState,
+            [PeerAudioChannelName.MICROPHONE]: AudioState.PLAYING,
+          }))
+
           setAudioStream(newSelfStream)
         }
       } else {
@@ -120,10 +131,16 @@ export function useRoomAudio({ peerRoom }: UseRoomAudioConfig) {
           cleanupAudio()
 
           peerRoom.removeStream(audioStream, peerRoom.getPeers())
+
           sendAudioChange({
             [PeerAudioChannelName.MICROPHONE]: AudioState.STOPPED,
           })
-          setAudioState(AudioState.STOPPED)
+
+          setAudioChannelState(prevState => ({
+            ...prevState,
+            [PeerAudioChannelName.MICROPHONE]: AudioState.STOPPED,
+          }))
+
           setAudioStream(null)
         }
       }
@@ -136,7 +153,7 @@ export function useRoomAudio({ peerRoom }: UseRoomAudioConfig) {
     peerRoom,
     selectedAudioDeviceId,
     sendAudioChange,
-    setAudioState,
+    setAudioChannelState,
   ])
 
   useEffect(() => {
