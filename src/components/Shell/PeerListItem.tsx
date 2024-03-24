@@ -18,7 +18,12 @@ import EnhancedEncryptionIcon from '@mui/icons-material/EnhancedEncryption'
 import { AudioVolume } from 'components/AudioVolume'
 import { PeerNameDisplay } from 'components/PeerNameDisplay'
 import { PublicKey } from 'components/PublicKey'
-import { Peer, PeerAudioChannel, PeerVerificationState } from 'models/chat'
+import {
+  Peer,
+  PeerAudioChannel,
+  PeerAudioChannelName,
+  PeerVerificationState,
+} from 'models/chat'
 import { PeerConnectionType } from 'lib/PeerRoom'
 
 import { PeerDownloadFileButton } from './PeerDownloadFileButton'
@@ -69,7 +74,8 @@ export const PeerListItem = ({
     setShowPeerDialog(false)
   }
 
-  const microphoneAudio = peerAudios[peer.peerId]?.microphone
+  const microphoneAudio =
+    peerAudios[peer.peerId]?.[PeerAudioChannelName.MICROPHONE]
 
   return (
     <>

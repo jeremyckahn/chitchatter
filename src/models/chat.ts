@@ -47,11 +47,15 @@ export enum PeerVerificationState {
   VERIFIED,
 }
 
-export interface PeerAudioChannel {
-  microphone?: HTMLAudioElement
+export enum PeerAudioChannelName {
+  MICROPHONE = 'microphone',
 }
 
-export type PeerAudioChannelState = Record<keyof PeerAudioChannel, AudioState>
+export type PeerAudioChannel = Partial<
+  Record<PeerAudioChannelName, HTMLAudioElement>
+>
+
+export type PeerAudioChannelState = Record<PeerAudioChannelName, AudioState>
 
 export interface Peer {
   peerId: string

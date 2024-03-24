@@ -23,6 +23,7 @@ import {
   TypingStatus,
   Peer,
   PeerVerificationState,
+  PeerAudioChannelName,
 } from 'models/chat'
 import { getPeerName, usePeerNameDisplay } from 'components/PeerNameDisplay'
 import { Audio } from 'lib/Audio'
@@ -269,7 +270,9 @@ export function useRoom(
           userId,
           publicKey,
           customUsername,
-          audioChannelState: { microphone: AudioState.STOPPED },
+          audioChannelState: {
+            [PeerAudioChannelName.MICROPHONE]: AudioState.STOPPED,
+          },
           videoState: VideoState.STOPPED,
           screenShareState: ScreenShareState.NOT_SHARING,
           offeredFileId: null,

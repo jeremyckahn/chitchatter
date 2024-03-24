@@ -6,6 +6,7 @@ import {
   AudioState,
   Peer,
   PeerAudioChannel,
+  PeerAudioChannelName,
   PeerAudioChannelState,
   doesPeerHaveAudioChannel,
 } from 'models/chat'
@@ -81,7 +82,7 @@ export function useRoomAudio({ peerRoom }: UseRoomAudioConfig) {
       ...peerAudios,
       [peerId]: {
         ...peerAudios[peerId],
-        microphone: audio,
+        [PeerAudioChannelName.MICROPHONE]: audio,
       },
     })
   })
@@ -107,7 +108,9 @@ export function useRoomAudio({ peerRoom }: UseRoomAudioConfig) {
           })
 
           peerRoom.addStream(newSelfStream)
-          sendAudioChange({ microphone: AudioState.PLAYING })
+          sendAudioChange({
+            [PeerAudioChannelName.MICROPHONE]: AudioState.PLAYING,
+          })
           setAudioState(AudioState.PLAYING)
           setAudioStream(newSelfStream)
         }
@@ -116,7 +119,9 @@ export function useRoomAudio({ peerRoom }: UseRoomAudioConfig) {
           cleanupAudio()
 
           peerRoom.removeStream(audioStream, peerRoom.getPeers())
-          sendAudioChange({ microphone: AudioState.STOPPED })
+          sendAudioChange({
+            [PeerAudioChannelName.MICROPHONE]: AudioState.STOPPED,
+          })
           setAudioState(AudioState.STOPPED)
           setAudioStream(null)
         }
