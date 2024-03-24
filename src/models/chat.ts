@@ -47,16 +47,14 @@ export enum PeerVerificationState {
   VERIFIED,
 }
 
-export enum PeerAudioChannelName {
+export enum AudioChannelName {
   MICROPHONE = 'microphone',
   SCREEN_SHARE = 'screen-share',
 }
 
-export type PeerAudioChannel = Partial<
-  Record<PeerAudioChannelName, HTMLAudioElement>
->
+export type AudioChannel = Partial<Record<AudioChannelName, HTMLAudioElement>>
 
-export type PeerAudioChannelState = Record<PeerAudioChannelName, AudioState>
+export type PeerAudioChannelState = Record<AudioChannelName, AudioState>
 
 export interface Peer {
   peerId: string
@@ -77,7 +75,7 @@ export interface Peer {
 export const doesPeerHaveAudioChannel = (
   peer: Peer,
   channelName: string
-): channelName is keyof PeerAudioChannel => {
+): channelName is keyof AudioChannel => {
   return channelName in peer.audioChannelState
 }
 

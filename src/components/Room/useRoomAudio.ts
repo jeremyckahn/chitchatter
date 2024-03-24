@@ -5,8 +5,7 @@ import { PeerActions } from 'models/network'
 import {
   AudioState,
   Peer,
-  PeerAudioChannel,
-  PeerAudioChannelName,
+  AudioChannelName,
   PeerAudioChannelState,
   doesPeerHaveAudioChannel,
 } from 'models/chat'
@@ -88,7 +87,7 @@ export function useRoomAudio({ peerRoom }: UseRoomAudioConfig) {
       ...peerAudios,
       [peerId]: {
         ...peerAudios[peerId],
-        [PeerAudioChannelName.MICROPHONE]: audio,
+        [AudioChannelName.MICROPHONE]: audio,
       },
     })
   })
@@ -116,12 +115,12 @@ export function useRoomAudio({ peerRoom }: UseRoomAudioConfig) {
           peerRoom.addStream(newSelfStream)
 
           sendAudioChange({
-            [PeerAudioChannelName.MICROPHONE]: AudioState.PLAYING,
+            [AudioChannelName.MICROPHONE]: AudioState.PLAYING,
           })
 
           setAudioChannelState(prevState => ({
             ...prevState,
-            [PeerAudioChannelName.MICROPHONE]: AudioState.PLAYING,
+            [AudioChannelName.MICROPHONE]: AudioState.PLAYING,
           }))
 
           setAudioStream(newSelfStream)
@@ -133,12 +132,12 @@ export function useRoomAudio({ peerRoom }: UseRoomAudioConfig) {
           peerRoom.removeStream(audioStream, peerRoom.getPeers())
 
           sendAudioChange({
-            [PeerAudioChannelName.MICROPHONE]: AudioState.STOPPED,
+            [AudioChannelName.MICROPHONE]: AudioState.STOPPED,
           })
 
           setAudioChannelState(prevState => ({
             ...prevState,
-            [PeerAudioChannelName.MICROPHONE]: AudioState.STOPPED,
+            [AudioChannelName.MICROPHONE]: AudioState.STOPPED,
           }))
 
           setAudioStream(null)
@@ -186,10 +185,7 @@ export function useRoomAudio({ peerRoom }: UseRoomAudioConfig) {
     setAudioStream(newSelfStream)
   }
 
-  const deletePeerAudio = (
-    peerId: string,
-    channel?: keyof PeerAudioChannel
-  ) => {
+  const deletePeerAudio = (peerId: string, channel?: AudioChannelName) => {
     const newPeerAudios = { ...peerAudios }
 
     if (channel) {

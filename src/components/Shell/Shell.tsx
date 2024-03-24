@@ -24,9 +24,9 @@ import {
   ScreenShareState,
   VideoState,
   Peer,
-  PeerAudioChannel,
+  AudioChannel,
   PeerAudioChannelState,
-  PeerAudioChannelName,
+  AudioChannelName,
 } from 'models/chat'
 import { ErrorBoundary } from 'components/ErrorBoundary'
 import { PeerConnectionType } from 'lib/PeerRoom'
@@ -96,8 +96,8 @@ export const Shell = ({ appNeedsUpdate, children, userPeerId }: ShellProps) => {
   const [tabHasFocus, setTabHasFocus] = useState(true)
   const [audioChannelState, setAudioChannelState] =
     useState<PeerAudioChannelState>({
-      [PeerAudioChannelName.MICROPHONE]: AudioState.STOPPED,
-      [PeerAudioChannelName.SCREEN_SHARE]: AudioState.STOPPED,
+      [AudioChannelName.MICROPHONE]: AudioState.STOPPED,
+      [AudioChannelName.SCREEN_SHARE]: AudioState.STOPPED,
     })
   const [videoState, setVideoState] = useState<VideoState>(VideoState.STOPPED)
   const [screenState, setScreenState] = useState<ScreenShareState>(
@@ -106,9 +106,7 @@ export const Shell = ({ appNeedsUpdate, children, userPeerId }: ShellProps) => {
   const [customUsername, setCustomUsername] = useState(
     getUserSettings().customUsername
   )
-  const [peerAudios, setPeerAudios] = useState<
-    Record<string, PeerAudioChannel>
-  >({})
+  const [peerAudios, setPeerAudios] = useState<Record<string, AudioChannel>>({})
 
   const showAlert = useCallback((message: string, options?: AlertOptions) => {
     setAlertText(message)
