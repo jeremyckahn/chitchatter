@@ -49,6 +49,7 @@ export enum PeerVerificationState {
 
 export enum PeerAudioChannelName {
   MICROPHONE = 'microphone',
+  SCREEN_SHARE = 'screen-share',
 }
 
 export type PeerAudioChannel = Partial<

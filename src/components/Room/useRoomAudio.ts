@@ -39,8 +39,9 @@ export function useRoomAudio({ peerRoom }: UseRoomAudioConfig) {
     })()
   }, [audioStream])
 
-  const [sendAudioChange, receiveAudioChange] =
-    peerRoom.makeAction<PeerAudioChannelState>(PeerActions.AUDIO_CHANGE)
+  const [sendAudioChange, receiveAudioChange] = peerRoom.makeAction<
+    Partial<PeerAudioChannelState>
+  >(PeerActions.AUDIO_CHANGE)
 
   receiveAudioChange((peerAudioChannelState, peerId) => {
     const newPeerList = peerList.map(peer => {

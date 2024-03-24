@@ -272,6 +272,7 @@ export function useRoom(
           customUsername,
           audioChannelState: {
             [PeerAudioChannelName.MICROPHONE]: AudioState.STOPPED,
+            [PeerAudioChannelName.SCREEN_SHARE]: AudioState.STOPPED,
           },
           videoState: VideoState.STOPPED,
           screenShareState: ScreenShareState.NOT_SHARING,
