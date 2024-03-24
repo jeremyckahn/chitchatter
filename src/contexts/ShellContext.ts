@@ -7,6 +7,8 @@ import {
   VideoState,
   Peer,
   PeerAudioChannel,
+  PeerAudioChannelState,
+  PeerAudioChannelName,
 } from 'models/chat'
 import { PeerConnectionType } from 'lib/PeerRoom'
 import { ConnectionTestResults } from 'components/Shell/useConnectionTest'
@@ -33,8 +35,8 @@ interface ShellContextProps {
   setPeerConnectionTypes: Dispatch<
     SetStateAction<Record<string, PeerConnectionType>>
   >
-  audioState: AudioState
-  setAudioState: Dispatch<SetStateAction<AudioState>>
+  audioChannelState: PeerAudioChannelState
+  setAudioChannelState: Dispatch<SetStateAction<PeerAudioChannelState>>
   videoState: VideoState
   setVideoState: Dispatch<SetStateAction<VideoState>>
   screenState: ScreenShareState
@@ -66,8 +68,11 @@ export const ShellContext = createContext<ShellContextProps>({
   setIsServerConnectionFailureDialogOpen: () => {},
   peerConnectionTypes: {},
   setPeerConnectionTypes: () => {},
-  audioState: AudioState.STOPPED,
-  setAudioState: () => {},
+  audioChannelState: {
+    [PeerAudioChannelName.MICROPHONE]: AudioState.STOPPED,
+    [PeerAudioChannelName.SCREEN_SHARE]: AudioState.STOPPED,
+  },
+  setAudioChannelState: () => {},
   videoState: VideoState.STOPPED,
   setVideoState: () => {},
   screenState: ScreenShareState.NOT_SHARING,

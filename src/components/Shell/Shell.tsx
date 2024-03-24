@@ -25,6 +25,8 @@ import {
   VideoState,
   Peer,
   PeerAudioChannel,
+  PeerAudioChannelState,
+  PeerAudioChannelName,
 } from 'models/chat'
 import { ErrorBoundary } from 'components/ErrorBoundary'
 import { PeerConnectionType } from 'lib/PeerRoom'
@@ -92,7 +94,11 @@ export const Shell = ({ appNeedsUpdate, children, userPeerId }: ShellProps) => {
     Record<string, PeerConnectionType>
   >({})
   const [tabHasFocus, setTabHasFocus] = useState(true)
-  const [audioState, setAudioState] = useState<AudioState>(AudioState.STOPPED)
+  const [audioChannelState, setAudioChannelState] =
+    useState<PeerAudioChannelState>({
+      [PeerAudioChannelName.MICROPHONE]: AudioState.STOPPED,
+      [PeerAudioChannelName.SCREEN_SHARE]: AudioState.STOPPED,
+    })
   const [videoState, setVideoState] = useState<VideoState>(VideoState.STOPPED)
   const [screenState, setScreenState] = useState<ScreenShareState>(
     ScreenShareState.NOT_SHARING
@@ -150,8 +156,8 @@ export const Shell = ({ appNeedsUpdate, children, userPeerId }: ShellProps) => {
       setIsServerConnectionFailureDialogOpen,
       peerConnectionTypes,
       setPeerConnectionTypes,
-      audioState,
-      setAudioState,
+      audioChannelState,
+      setAudioChannelState,
       videoState,
       setVideoState,
       screenState,
@@ -180,8 +186,8 @@ export const Shell = ({ appNeedsUpdate, children, userPeerId }: ShellProps) => {
       setShowRoomControls,
       setTitle,
       showAlert,
-      audioState,
-      setAudioState,
+      audioChannelState,
+      setAudioChannelState,
       videoState,
       setVideoState,
       screenState,
@@ -399,7 +405,7 @@ export const Shell = ({ appNeedsUpdate, children, userPeerId }: ShellProps) => {
                   onPeerListClose={handlePeerListClick}
                   peerList={peerList}
                   peerConnectionTypes={peerConnectionTypes}
-                  audioState={audioState}
+                  peerAudioChannelState={audioChannelState}
                   peerAudios={peerAudios}
                   connectionTestResults={connectionTestResults}
                 />
