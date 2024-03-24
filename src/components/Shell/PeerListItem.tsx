@@ -20,8 +20,8 @@ import { PeerNameDisplay } from 'components/PeerNameDisplay'
 import { PublicKey } from 'components/PublicKey'
 import {
   Peer,
-  PeerAudioChannel,
-  PeerAudioChannelName,
+  AudioChannel,
+  AudioChannelName,
   PeerVerificationState,
 } from 'models/chat'
 import { PeerConnectionType } from 'lib/PeerRoom'
@@ -31,7 +31,7 @@ import { PeerDownloadFileButton } from './PeerDownloadFileButton'
 interface PeerListItemProps {
   peer: Peer
   peerConnectionTypes: Record<string, PeerConnectionType>
-  peerAudios: Record<string, PeerAudioChannel>
+  peerAudios: Record<string, AudioChannel>
 }
 
 const verificationStateDisplayMap = {
@@ -74,8 +74,7 @@ export const PeerListItem = ({
     setShowPeerDialog(false)
   }
 
-  const microphoneAudio =
-    peerAudios[peer.peerId]?.[PeerAudioChannelName.MICROPHONE]
+  const microphoneAudio = peerAudios[peer.peerId]?.[AudioChannelName.MICROPHONE]
 
   return (
     <>

@@ -12,8 +12,8 @@ import { UserInfo } from 'components/UserInfo'
 import {
   AudioState,
   Peer,
-  PeerAudioChannel,
-  PeerAudioChannelName,
+  AudioChannel,
+  AudioChannelName,
   PeerAudioChannelState,
 } from 'models/chat'
 import { PeerConnectionType } from 'lib/PeerRoom'
@@ -32,7 +32,7 @@ export interface PeerListProps extends PropsWithChildren {
   peerList: Peer[]
   peerConnectionTypes: Record<string, PeerConnectionType>
   peerAudioChannelState: PeerAudioChannelState
-  peerAudios: Record<string, PeerAudioChannel>
+  peerAudios: Record<string, AudioChannel>
   connectionTestResults: IConnectionTestResults
 }
 
@@ -55,7 +55,7 @@ export const PeerList = ({
       <Divider />
       <List>
         <ListItem divider={true}>
-          {peerAudioChannelState[PeerAudioChannelName.MICROPHONE] ===
+          {peerAudioChannelState[AudioChannelName.MICROPHONE] ===
             AudioState.PLAYING && (
             <ListItemIcon>
               <VolumeUp />
