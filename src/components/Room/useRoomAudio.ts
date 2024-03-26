@@ -74,6 +74,7 @@ export function useRoomAudio({ peerRoom }: UseRoomAudioConfig) {
     setPeerList(newPeerList)
   })
 
+  // FIXME: This is mistakenly firing for screen share audio
   peerRoom.onPeerStream(PeerStreamType.AUDIO, (stream, peerId) => {
     const audioTracks = stream.getAudioTracks()
 

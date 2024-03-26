@@ -60,6 +60,9 @@ export const AudioVolume = ({ audioEl }: AudioVolumeProps) => {
           // FIXME: Show peer's name
         }
         <Tooltip title="Their microphone volume">
+          {
+            // FIXME: Show screen share icon as necessary
+          }
           <MicIcon fontSize="small" sx={{ ml: 1, mr: 2 }} />
         </Tooltip>
       </ListItemIcon>
