@@ -4,7 +4,13 @@ import { isRecord } from 'lib/type-guards'
 import { RoomContext } from 'contexts/RoomContext'
 import { ShellContext } from 'contexts/ShellContext'
 import { PeerActions } from 'models/network'
-import { ScreenShareState, Peer, VideoStreamType } from 'models/chat'
+import {
+  ScreenShareState,
+  Peer,
+  VideoStreamType,
+  AudioChannelName,
+  AudioState,
+} from 'models/chat'
 import { PeerRoom, PeerHookType, PeerStreamType } from 'lib/PeerRoom'
 
 interface UseRoomScreenShareConfig {
@@ -16,7 +22,13 @@ export function useRoomScreenShare({ peerRoom }: UseRoomScreenShareConfig) {
   const roomContext = useContext(RoomContext)
   const [isSharingScreen, setIsSharingScreen] = useState(false)
 
-  const { peerList, setPeerList, setScreenState } = shellContext
+  const {
+    peerList,
+    setPeerList,
+    setScreenState,
+    setAudioChannelState,
+    setPeerAudios,
+  } = shellContext
 
   const {
     peerScreenStreams,
@@ -58,6 +70,33 @@ export function useRoomScreenShare({ peerRoom }: UseRoomScreenShareConfig) {
       ...peerScreenStreams,
       [peerId]: stream,
     })
+
+    const [audioStream] = stream.getAudioTracks()
+
+    if (audioStream) {
+      setAudioChannelState(prevState => ({
+        ...prevState,
+        [AudioChannelName.SCREEN_SHARE]: AudioState.PLAYING,
+      }))
+
+      const audioTracks = stream.getAudioTracks()
+
+      if (audioTracks.length > 0) {
+        const audio = new Audio()
+        audio.srcObject = stream
+        audio.autoplay = true
+
+        setPeerAudios(prevState => {
+          return {
+            ...prevState,
+            [peerId]: {
+              ...prevState[peerId],
+              [AudioChannelName.SCREEN_SHARE]: audio,
+            },
+          }
+        })
+      }
+    }
   })
 
   const cleanupScreenStream = useCallback(() => {
