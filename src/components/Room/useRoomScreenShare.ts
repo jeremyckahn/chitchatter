@@ -17,6 +17,8 @@ interface UseRoomScreenShareConfig {
   peerRoom: PeerRoom
 }
 
+// FIXME: Screen share audio streams are not being removed
+
 export function useRoomScreenShare({ peerRoom }: UseRoomScreenShareConfig) {
   const shellContext = useContext(ShellContext)
   const roomContext = useContext(RoomContext)
