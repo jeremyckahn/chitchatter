@@ -119,6 +119,7 @@ export function useRoomScreenShare({ peerRoom }: UseRoomScreenShareConfig) {
     peerRoom.addStream(displayMedia, null, {
       type: VideoStreamType.SCREEN_SHARE,
     })
+
     setSelfScreenStream(displayMedia)
     sendScreenShare(ScreenShareState.SHARING)
     setScreenState(ScreenShareState.SHARING)

@@ -171,7 +171,8 @@ export class PeerRoom {
     return this.room.makeAction<T>(namespace)
   }
 
-  addStream = (...args: Parameters<Room['addStream']>) => {
+  // FIXME: Define constraints for metadata param
+  addStream = (...args: Required<Parameters<Room['addStream']>>) => {
     // New streams need to be added as a delayed queue to prevent race
     // conditions on the receiver's end where streams and their metadata get
     // mixed up.
