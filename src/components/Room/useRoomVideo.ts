@@ -62,6 +62,7 @@ export function useRoomVideo({ peerRoom }: UseRoomVideoConfig) {
         peerRoom.addStream(newSelfStream, null, {
           type: VideoStreamType.WEBCAM,
         })
+
         setSelfVideoStream(newSelfStream)
       }
     })()
@@ -126,6 +127,7 @@ export function useRoomVideo({ peerRoom }: UseRoomVideoConfig) {
           peerRoom.addStream(newSelfStream, null, {
             type: VideoStreamType.WEBCAM,
           })
+
           sendVideoChange(VideoState.PLAYING)
           setVideoState(VideoState.PLAYING)
           setSelfVideoStream(newSelfStream)
