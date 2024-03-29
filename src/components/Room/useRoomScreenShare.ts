@@ -17,8 +17,6 @@ interface UseRoomScreenShareConfig {
   peerRoom: PeerRoom
 }
 
-// FIXME: Screen share audio streams are not being removed
-
 export function useRoomScreenShare({ peerRoom }: UseRoomScreenShareConfig) {
   const shellContext = useContext(ShellContext)
   const roomContext = useContext(RoomContext)
@@ -26,6 +24,7 @@ export function useRoomScreenShare({ peerRoom }: UseRoomScreenShareConfig) {
 
   const {
     peerList,
+    peerAudios,
     setPeerList,
     setScreenState,
     setAudioChannelState,
@@ -165,6 +164,10 @@ export function useRoomScreenShare({ peerRoom }: UseRoomScreenShareConfig) {
     const newPeerScreens = { ...peerScreenStreams }
     delete newPeerScreens[peerId]
     setPeerScreenStreams(newPeerScreens)
+
+    const newPeerAudios = { ...peerAudios }
+    delete newPeerAudios[peerId][AudioChannelName.SCREEN_SHARE]
+    setPeerAudios(newPeerAudios)
   }
 
   const handleScreenForNewPeer = (peerId: string) => {
