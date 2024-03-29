@@ -64,7 +64,7 @@ export function useRoomAudio({ peerRoom }: UseRoomAudioConfig) {
           }
 
           if (peerAudioChannelState[channel] === AudioState.STOPPED) {
-            deletePeerAudio(peerId, channel)
+            deletePeerAudio(peerId)
           }
         }
       }
@@ -200,16 +200,9 @@ export function useRoomAudio({ peerRoom }: UseRoomAudioConfig) {
     setAudioStream(newSelfStream)
   }
 
-  const deletePeerAudio = (peerId: string, channel?: AudioChannelName) => {
+  const deletePeerAudio = (peerId: string) => {
     const newPeerAudios = { ...peerAudios }
-
-    if (channel) {
-      // FIXME: Use this code path
-      delete newPeerAudios[peerId][channel]
-    } else {
-      delete newPeerAudios[peerId]
-    }
-
+    delete newPeerAudios[peerId][AudioChannelName.MICROPHONE]
     setPeerAudios(newPeerAudios)
   }
 
