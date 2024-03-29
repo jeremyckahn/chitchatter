@@ -166,6 +166,11 @@ export function useRoomScreenShare({ peerRoom }: UseRoomScreenShareConfig) {
     setPeerScreenStreams(newPeerScreens)
 
     const newPeerAudios = { ...peerAudios }
+    const screenShareAudio =
+      newPeerAudios[peerId][AudioChannelName.SCREEN_SHARE]
+
+    screenShareAudio?.pause()
+
     delete newPeerAudios[peerId][AudioChannelName.SCREEN_SHARE]
     setPeerAudios(newPeerAudios)
   }

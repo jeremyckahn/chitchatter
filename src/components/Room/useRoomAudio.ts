@@ -202,6 +202,9 @@ export function useRoomAudio({ peerRoom }: UseRoomAudioConfig) {
 
   const deletePeerAudio = (peerId: string) => {
     const newPeerAudios = { ...peerAudios }
+    const microphoneAudio = newPeerAudios[peerId][AudioChannelName.MICROPHONE]
+    microphoneAudio?.pause()
+
     delete newPeerAudios[peerId][AudioChannelName.MICROPHONE]
     setPeerAudios(newPeerAudios)
   }
