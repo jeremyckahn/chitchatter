@@ -79,9 +79,10 @@ export function useRoomAudio({ peerRoom }: UseRoomAudioConfig) {
     if (
       typeof metadata === 'object' &&
       metadata !== null &&
-      'type' in metadata
+      'type' in metadata &&
+      metadata.type !== AudioStreamType.MICROPHONE
     ) {
-      if (metadata.type !== AudioStreamType.MICROPHONE) return
+      return
     }
 
     const audioTracks = stream.getAudioTracks()

@@ -88,6 +88,7 @@ export function useRoomScreenShare({ peerRoom }: UseRoomScreenShareConfig) {
         audio.srcObject = stream
         audio.autoplay = true
 
+        // FIXME: This audio needs to be removed when the stream ends
         setPeerAudios(prevState => {
           return {
             ...prevState,
