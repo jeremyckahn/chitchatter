@@ -47,6 +47,7 @@ export const PeerVideo = ({
 
     video.autoplay = true
     video.srcObject = videoStream
+    video.muted = true
   }, [videoRef, videoStream])
 
   const cols = Math.sqrt(nextPerfectSquare(numberOfVideos - 1))
