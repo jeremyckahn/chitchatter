@@ -133,8 +133,18 @@ export const PeerListItem = ({
             </Box>
             <PeerNameDisplay>{peer.userId}</PeerNameDisplay>
           </Box>
-          {microphoneAudio && <AudioVolume audioEl={microphoneAudio} />}
-          {screenShareAudio && <AudioVolume audioEl={screenShareAudio} />}
+          {microphoneAudio && (
+            <AudioVolume
+              audioEl={microphoneAudio}
+              audioChannelName={AudioChannelName.MICROPHONE}
+            />
+          )}
+          {screenShareAudio && (
+            <AudioVolume
+              audioEl={screenShareAudio}
+              audioChannelName={AudioChannelName.SCREEN_SHARE}
+            />
+          )}
         </ListItemText>
       </ListItem>
       <Dialog open={showPeerDialog} onClose={handleDialogClose}>

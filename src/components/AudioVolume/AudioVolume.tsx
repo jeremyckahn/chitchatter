@@ -7,13 +7,19 @@ import VolumeUpIcon from '@mui/icons-material/VolumeUp'
 import VolumeDownIcon from '@mui/icons-material/VolumeDown'
 import VolumeMuteIcon from '@mui/icons-material/VolumeMute'
 import MicIcon from '@mui/icons-material/Mic'
+import LaptopWindowsIcon from '@mui/icons-material/LaptopWindows'
 import Tooltip from '@mui/material/Tooltip'
+import { AudioChannelName } from 'models/chat'
 
 interface AudioVolumeProps {
   audioEl: HTMLAudioElement
+  audioChannelName: AudioChannelName
 }
 
-export const AudioVolume = ({ audioEl }: AudioVolumeProps) => {
+export const AudioVolume = ({
+  audioEl,
+  audioChannelName,
+}: AudioVolumeProps) => {
   const [audioVolume, setAudioVolume] = useState(audioEl.volume)
 
   useEffect(() => {
@@ -56,15 +62,16 @@ export const AudioVolume = ({ audioEl }: AudioVolumeProps) => {
     >
       <ListItemIcon sx={{ cursor: 'pointer' }} onClick={handleIconClick}>
         <VolumeIcon fontSize="small" />
-        {
-          // FIXME: Show peer's name
-        }
-        <Tooltip title="Their microphone volume">
-          {
-            // FIXME: Show screen share icon as necessary
-          }
-          <MicIcon fontSize="small" sx={{ ml: 1, mr: 2 }} />
-        </Tooltip>
+        {audioChannelName === AudioChannelName.MICROPHONE && (
+          <Tooltip title="Their microphone volume">
+            <MicIcon fontSize="small" sx={{ ml: 1, mr: 2 }} />
+          </Tooltip>
+        )}
+        {audioChannelName === AudioChannelName.SCREEN_SHARE && (
+          <Tooltip title="Their screen's volume">
+            <LaptopWindowsIcon fontSize="small" sx={{ ml: 1, mr: 2 }} />
+          </Tooltip>
+        )}
       </ListItemIcon>
       <Box display="flex" width={1}>
         <Slider
