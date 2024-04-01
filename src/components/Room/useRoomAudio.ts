@@ -7,7 +7,6 @@ import {
   Peer,
   AudioChannelName,
   PeerAudioChannelState,
-  doesPeerHaveAudioChannel,
   AudioStreamType,
 } from 'models/chat'
 import { PeerRoom, PeerHookType, PeerStreamType } from 'lib/PeerRoom'
@@ -47,18 +46,17 @@ export function useRoomAudio({ peerRoom }: UseRoomAudioConfig) {
     const newPeerList = peerList.map(peer => {
       const newPeer: Peer = { ...peer }
 
-      for (const channel of Object.keys(peerAudioChannelState)) {
-        if (!doesPeerHaveAudioChannel(newPeer, channel)) {
-          continue
-        }
+      const microphoneAudioChannel =
+        peerAudioChannelState[AudioChannelName.MICROPHONE]
 
+      if (microphoneAudioChannel) {
         if (peer.peerId === peerId) {
           newPeer.audioChannelState = {
             ...newPeer.audioChannelState,
             ...peerAudioChannelState,
           }
 
-          if (peerAudioChannelState[channel] === AudioState.STOPPED) {
+          if (microphoneAudioChannel === AudioState.STOPPED) {
             deletePeerAudio(peerId)
           }
         }

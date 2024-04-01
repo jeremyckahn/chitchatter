@@ -76,13 +76,6 @@ export interface Peer {
   verificationTimer: NodeJS.Timeout | null
 }
 
-export const doesPeerHaveAudioChannel = (
-  peer: Peer,
-  channelName: string
-): channelName is keyof AudioChannel => {
-  return channelName in peer.audioChannelState
-}
-
 export const isMessageReceived = (
   message: Message | InlineMedia
 ): message is ReceivedMessage | ReceivedInlineMedia => 'timeReceived' in message
