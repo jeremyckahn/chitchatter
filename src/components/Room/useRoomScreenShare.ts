@@ -24,7 +24,6 @@ export function useRoomScreenShare({ peerRoom }: UseRoomScreenShareConfig) {
 
   const {
     peerList,
-    peerAudios,
     setPeerList,
     setScreenState,
     setAudioChannelState,
@@ -161,18 +160,27 @@ export function useRoomScreenShare({ peerRoom }: UseRoomScreenShareConfig) {
   }, [setPeerScreenStreams])
 
   const deletePeerScreen = (peerId: string) => {
-    const newPeerScreens = { ...peerScreenStreams }
-    delete newPeerScreens[peerId]
-    setPeerScreenStreams(newPeerScreens)
+    setPeerScreenStreams(({ [peerId]: _, ...newPeerScreens }) => {
+      return newPeerScreens
+    })
 
-    const newPeerAudios = { ...peerAudios }
-    const screenShareAudio =
-      newPeerAudios[peerId][AudioChannelName.SCREEN_SHARE]
+    setPeerAudios(({ ...newPeerAudios }) => {
+      if (!newPeerAudios[peerId]) {
+        return newPeerAudios
+      }
 
-    screenShareAudio?.pause()
+      const screenShareAudio =
+        newPeerAudios[peerId][AudioChannelName.SCREEN_SHARE]
 
-    delete newPeerAudios[peerId][AudioChannelName.SCREEN_SHARE]
-    setPeerAudios(newPeerAudios)
+      screenShareAudio?.pause()
+
+      const { [AudioChannelName.SCREEN_SHARE]: _, ...newPeerAudioChannels } =
+        newPeerAudios[peerId]
+
+      newPeerAudios[peerId] = newPeerAudioChannels
+
+      return newPeerAudios
+    })
   }
 
   const handleScreenForNewPeer = (peerId: string) => {

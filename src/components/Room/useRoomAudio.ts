@@ -201,12 +201,21 @@ export function useRoomAudio({ peerRoom }: UseRoomAudioConfig) {
   }
 
   const deletePeerAudio = (peerId: string) => {
-    const newPeerAudios = { ...peerAudios }
-    const microphoneAudio = newPeerAudios[peerId][AudioChannelName.MICROPHONE]
-    microphoneAudio?.pause()
+    setPeerAudios(({ ...newPeerAudios }) => {
+      if (!newPeerAudios[peerId]) {
+        return newPeerAudios
+      }
 
-    delete newPeerAudios[peerId][AudioChannelName.MICROPHONE]
-    setPeerAudios(newPeerAudios)
+      const microphoneAudio = newPeerAudios[peerId][AudioChannelName.MICROPHONE]
+      microphoneAudio?.pause()
+
+      const { [AudioChannelName.MICROPHONE]: _, ...newPeerAudioChannels } =
+        newPeerAudios[peerId]
+
+      newPeerAudios[peerId] = newPeerAudioChannels
+
+      return newPeerAudios
+    })
   }
 
   const handleAudioForNewPeer = (peerId: string) => {
