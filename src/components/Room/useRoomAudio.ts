@@ -26,13 +26,8 @@ export function useRoomAudio({ peerRoom }: UseRoomAudioConfig) {
     string | null
   >(null)
 
-  const {
-    peerList,
-    setPeerList,
-    setAudioChannelState,
-    peerAudios,
-    setPeerAudios,
-  } = shellContext
+  const { peerList, setPeerList, setAudioChannelState, setPeerAudios } =
+    shellContext
 
   useEffect(() => {
     ;(async () => {
@@ -93,13 +88,13 @@ export function useRoomAudio({ peerRoom }: UseRoomAudioConfig) {
     audio.srcObject = stream
     audio.autoplay = true
 
-    setPeerAudios({
+    setPeerAudios(peerAudios => ({
       ...peerAudios,
       [peerId]: {
         ...peerAudios[peerId],
         [AudioChannelName.MICROPHONE]: audio,
       },
-    })
+    }))
   })
 
   const cleanupAudio = useCallback(() => {
@@ -160,7 +155,6 @@ export function useRoomAudio({ peerRoom }: UseRoomAudioConfig) {
     audioStream,
     cleanupAudio,
     isSpeakingToRoom,
-    peerAudios,
     peerRoom,
     selectedAudioDeviceId,
     sendAudioChange,
