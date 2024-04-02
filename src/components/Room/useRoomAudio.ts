@@ -7,7 +7,7 @@ import {
   Peer,
   AudioChannelName,
   PeerAudioChannelState,
-  AudioStreamType,
+  StreamType,
 } from 'models/chat'
 import { PeerRoom, PeerHookType, PeerStreamType } from 'lib/PeerRoom'
 
@@ -73,7 +73,7 @@ export function useRoomAudio({ peerRoom }: UseRoomAudioConfig) {
       typeof metadata === 'object' &&
       metadata !== null &&
       'type' in metadata &&
-      metadata.type !== AudioStreamType.MICROPHONE
+      metadata.type !== StreamType.MICROPHONE
     ) {
       return
     }
@@ -116,7 +116,7 @@ export function useRoomAudio({ peerRoom }: UseRoomAudioConfig) {
           })
 
           peerRoom.addStream(newSelfStream, null, {
-            type: AudioStreamType.MICROPHONE,
+            type: StreamType.MICROPHONE,
           })
 
           sendAudioChange({
@@ -186,7 +186,7 @@ export function useRoomAudio({ peerRoom }: UseRoomAudioConfig) {
     })
 
     peerRoom.addStream(newSelfStream, null, {
-      type: AudioStreamType.MICROPHONE,
+      type: StreamType.MICROPHONE,
     })
 
     setAudioStream(newSelfStream)
@@ -213,7 +213,7 @@ export function useRoomAudio({ peerRoom }: UseRoomAudioConfig) {
   const handleAudioForNewPeer = (peerId: string) => {
     if (audioStream) {
       peerRoom.addStream(audioStream, peerId, {
-        type: AudioStreamType.MICROPHONE,
+        type: StreamType.MICROPHONE,
       })
     }
   }

@@ -3,7 +3,7 @@ import Paper from '@mui/material/Paper'
 import Tooltip from '@mui/material/Tooltip'
 
 import { PeerNameDisplay } from 'components/PeerNameDisplay'
-import { VideoStreamType } from 'models/chat'
+import { StreamType } from 'models/chat'
 
 import { SelectedPeerStream } from './RoomVideoDisplay'
 
@@ -13,13 +13,13 @@ interface PeerVideoProps {
   numberOfVideos: number
   onVideoClick?: (
     userId: string,
-    videoStreamType: VideoStreamType,
+    streamType: StreamType,
     videoStream: MediaStream
   ) => void
   selectedPeerStream: SelectedPeerStream | null
   userId: string
   videoStream: MediaStream
-  videoStreamType: VideoStreamType
+  streamType: StreamType
 }
 
 // Adapted from https://www.geeksforgeeks.org/find-the-next-perfect-square-greater-than-a-given-number/
@@ -37,7 +37,7 @@ export const PeerVideo = ({
   userId,
   selectedPeerStream,
   videoStream,
-  videoStreamType,
+  streamType,
 }: PeerVideoProps) => {
   const videoRef = useRef<HTMLVideoElement>(null)
 
@@ -54,7 +54,7 @@ export const PeerVideo = ({
   const rows = Math.ceil(numberOfVideos / cols)
 
   const handleVideoClick = () => {
-    onVideoClick?.(userId, videoStreamType, videoStream)
+    onVideoClick?.(userId, streamType, videoStream)
   }
 
   return (

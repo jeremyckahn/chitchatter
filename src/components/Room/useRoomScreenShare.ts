@@ -7,7 +7,7 @@ import { PeerActions } from 'models/network'
 import {
   ScreenShareState,
   Peer,
-  VideoStreamType,
+  StreamType,
   AudioChannelName,
   AudioState,
 } from 'models/chat'
@@ -62,7 +62,7 @@ export function useRoomScreenShare({ peerRoom }: UseRoomScreenShareConfig) {
     const isScreenShareStream =
       isRecord(metadata) &&
       'type' in metadata &&
-      metadata.type === VideoStreamType.SCREEN_SHARE
+      metadata.type === StreamType.SCREEN_SHARE
 
     if (!isScreenShareStream) return
 
@@ -87,11 +87,11 @@ export function useRoomScreenShare({ peerRoom }: UseRoomScreenShareConfig) {
         audio.autoplay = true
 
         // FIXME: This audio needs to be removed when the stream ends
-        setPeerAudioChannels(prevState => {
+        setPeerAudioChannels(peerAudioChannels => {
           return {
-            ...prevState,
+            ...peerAudioChannels,
             [peerId]: {
-              ...prevState[peerId],
+              ...peerAudioChannels[peerId],
               [AudioChannelName.SCREEN_SHARE]: audio,
             },
           }
@@ -118,7 +118,7 @@ export function useRoomScreenShare({ peerRoom }: UseRoomScreenShareConfig) {
     })
 
     peerRoom.addStream(displayMedia, null, {
-      type: VideoStreamType.SCREEN_SHARE,
+      type: StreamType.SCREEN_SHARE,
     })
 
     setSelfScreenStream(displayMedia)
@@ -186,7 +186,7 @@ export function useRoomScreenShare({ peerRoom }: UseRoomScreenShareConfig) {
   const handleScreenForNewPeer = (peerId: string) => {
     if (selfScreenStream) {
       peerRoom.addStream(selfScreenStream, peerId, {
-        type: VideoStreamType.SCREEN_SHARE,
+        type: StreamType.SCREEN_SHARE,
       })
     }
   }

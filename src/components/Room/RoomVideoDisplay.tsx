@@ -4,7 +4,7 @@ import Paper from '@mui/material/Paper'
 
 import { RoomContext } from 'contexts/RoomContext'
 import { ShellContext } from 'contexts/ShellContext'
-import { Peer, VideoStreamType } from 'models/chat'
+import { Peer, StreamType } from 'models/chat'
 
 import { PeerVideo } from './PeerVideo'
 
@@ -16,7 +16,7 @@ interface PeerWithVideo {
 
 export interface SelectedPeerStream {
   peerId: string
-  videoStreamType: VideoStreamType
+  streamType: StreamType
   videoStream: MediaStream
 }
 
@@ -105,13 +105,13 @@ export const RoomVideoDisplay = ({
 
   const handleVideoClick = (
     peerId: string,
-    videoStreamType: VideoStreamType,
+    streamType: StreamType,
     videoStream: MediaStream
   ) => {
     if (selectedPeerStream?.videoStream === videoStream) {
       setSelectedPeerStream(null)
     } else if (numberOfVideos > 1) {
-      setSelectedPeerStream({ peerId, videoStreamType, videoStream })
+      setSelectedPeerStream({ peerId, streamType, videoStream })
     }
   }
 
@@ -139,7 +139,7 @@ export const RoomVideoDisplay = ({
             userId={selectedPeerStream.peerId}
             selectedPeerStream={selectedPeerStream}
             videoStream={selectedPeerStream.videoStream}
-            videoStreamType={selectedPeerStream.videoStreamType}
+            streamType={selectedPeerStream.streamType}
           />
         </Box>
       )}
@@ -168,7 +168,7 @@ export const RoomVideoDisplay = ({
             userId={userId}
             selectedPeerStream={selectedPeerStream}
             videoStream={selfVideoStream}
-            videoStreamType={VideoStreamType.WEBCAM}
+            streamType={StreamType.WEBCAM}
           />
         )}
         {selfScreenStream && (
@@ -179,7 +179,7 @@ export const RoomVideoDisplay = ({
             userId={userId}
             selectedPeerStream={selectedPeerStream}
             videoStream={selfScreenStream}
-            videoStreamType={VideoStreamType.SCREEN_SHARE}
+            streamType={StreamType.SCREEN_SHARE}
           />
         )}
         {peersWithVideo.map(peerWithVideo => (
@@ -191,7 +191,7 @@ export const RoomVideoDisplay = ({
                 userId={peerWithVideo.peer.userId}
                 selectedPeerStream={selectedPeerStream}
                 videoStream={peerWithVideo.videoStream}
-                videoStreamType={VideoStreamType.WEBCAM}
+                streamType={StreamType.WEBCAM}
               />
             )}
             {peerWithVideo.screenStream && (
@@ -201,7 +201,7 @@ export const RoomVideoDisplay = ({
                 userId={peerWithVideo.peer.userId}
                 selectedPeerStream={selectedPeerStream}
                 videoStream={peerWithVideo.screenStream}
-                videoStreamType={VideoStreamType.SCREEN_SHARE}
+                streamType={StreamType.SCREEN_SHARE}
               />
             )}
           </Fragment>
