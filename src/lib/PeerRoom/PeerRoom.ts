@@ -2,6 +2,7 @@ import { joinRoom, Room, BaseRoomConfig, DataPayload } from 'trystero'
 import { RelayConfig } from 'trystero/torrent'
 
 import { sleep } from 'lib/sleep'
+import { StreamType } from 'models/chat'
 
 export enum PeerHookType {
   NEW_PEER = 'NEW_PEER',
@@ -171,13 +172,16 @@ export class PeerRoom {
     return this.room.makeAction<T>(namespace)
   }
 
-  // FIXME: Define constraints for metadata param
-  addStream = (...args: Required<Parameters<Room['addStream']>>) => {
+  addStream = (
+    stream: Parameters<Room['addStream']>[0],
+    targetPeers: Parameters<Room['addStream']>[1],
+    metadata: { type: StreamType }
+  ) => {
     // New streams need to be added as a delayed queue to prevent race
     // conditions on the receiver's end where streams and their metadata get
     // mixed up.
     this.streamQueue.push(
-      () => Promise.all(this.room.addStream(...args)),
+      () => Promise.all(this.room.addStream(stream, targetPeers, metadata)),
       () => sleep(streamQueueAddDelay)
     )
 
