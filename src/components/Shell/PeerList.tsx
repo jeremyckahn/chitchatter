@@ -32,7 +32,7 @@ export interface PeerListProps extends PropsWithChildren {
   peerList: Peer[]
   peerConnectionTypes: Record<string, PeerConnectionType>
   peerAudioChannelState: PeerAudioChannelState
-  peerAudios: Record<string, AudioChannel>
+  peerAudioChannels: Record<string, AudioChannel>
   connectionTestResults: IConnectionTestResults
 }
 
@@ -43,7 +43,7 @@ export const PeerList = ({
   peerList,
   peerConnectionTypes,
   peerAudioChannelState,
-  peerAudios,
+  peerAudioChannels,
   connectionTestResults,
 }: PeerListProps) => {
   return (
@@ -70,7 +70,7 @@ export const PeerList = ({
             key={peer.peerId}
             peer={peer}
             peerConnectionTypes={peerConnectionTypes}
-            peerAudios={peerAudios}
+            peerAudioChannels={peerAudioChannels}
           />
         ))}
         {peerList.length === 0 &&

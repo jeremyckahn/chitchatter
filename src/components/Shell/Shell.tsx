@@ -106,7 +106,9 @@ export const Shell = ({ appNeedsUpdate, children, userPeerId }: ShellProps) => {
   const [customUsername, setCustomUsername] = useState(
     getUserSettings().customUsername
   )
-  const [peerAudios, setPeerAudios] = useState<Record<string, AudioChannel>>({})
+  const [peerAudioChannels, setPeerAudioChannels] = useState<
+    Record<string, AudioChannel>
+  >({})
 
   const showAlert = useCallback((message: string, options?: AlertOptions) => {
     setAlertText(message)
@@ -160,8 +162,8 @@ export const Shell = ({ appNeedsUpdate, children, userPeerId }: ShellProps) => {
       setVideoState,
       screenState,
       setScreenState,
-      peerAudios,
-      setPeerAudios,
+      peerAudioChannels,
+      setPeerAudioChannels,
       customUsername,
       setCustomUsername,
       connectionTestResults,
@@ -190,8 +192,8 @@ export const Shell = ({ appNeedsUpdate, children, userPeerId }: ShellProps) => {
       setVideoState,
       screenState,
       setScreenState,
-      peerAudios,
-      setPeerAudios,
+      peerAudioChannels,
+      setPeerAudioChannels,
       customUsername,
       setCustomUsername,
       connectionTestResults,
@@ -404,7 +406,7 @@ export const Shell = ({ appNeedsUpdate, children, userPeerId }: ShellProps) => {
                   peerList={peerList}
                   peerConnectionTypes={peerConnectionTypes}
                   peerAudioChannelState={audioChannelState}
-                  peerAudios={peerAudios}
+                  peerAudioChannels={peerAudioChannels}
                   connectionTestResults={connectionTestResults}
                 />
                 {isEmbedded ? (

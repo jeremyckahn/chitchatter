@@ -41,8 +41,8 @@ interface ShellContextProps {
   setVideoState: Dispatch<SetStateAction<VideoState>>
   screenState: ScreenShareState
   setScreenState: Dispatch<SetStateAction<ScreenShareState>>
-  peerAudios: Record<string, AudioChannel>
-  setPeerAudios: Dispatch<SetStateAction<Record<string, AudioChannel>>>
+  peerAudioChannels: Record<string, AudioChannel>
+  setPeerAudioChannels: Dispatch<SetStateAction<Record<string, AudioChannel>>>
   customUsername: string
   setCustomUsername: Dispatch<SetStateAction<string>>
   connectionTestResults: ConnectionTestResults
@@ -77,8 +77,8 @@ export const ShellContext = createContext<ShellContextProps>({
   setVideoState: () => {},
   screenState: ScreenShareState.NOT_SHARING,
   setScreenState: () => {},
-  peerAudios: {},
-  setPeerAudios: () => {},
+  peerAudioChannels: {},
+  setPeerAudioChannels: () => {},
   customUsername: '',
   setCustomUsername: () => {},
   connectionTestResults: {

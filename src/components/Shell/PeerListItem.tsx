@@ -31,7 +31,7 @@ import { PeerDownloadFileButton } from './PeerDownloadFileButton'
 interface PeerListItemProps {
   peer: Peer
   peerConnectionTypes: Record<string, PeerConnectionType>
-  peerAudios: Record<string, AudioChannel>
+  peerAudioChannels: Record<string, AudioChannel>
 }
 
 const verificationStateDisplayMap = {
@@ -57,7 +57,7 @@ const iconRightPadding = 1
 export const PeerListItem = ({
   peer,
   peerConnectionTypes,
-  peerAudios,
+  peerAudioChannels,
 }: PeerListItemProps) => {
   const [showPeerDialog, setShowPeerDialog] = useState(false)
 
@@ -74,9 +74,10 @@ export const PeerListItem = ({
     setShowPeerDialog(false)
   }
 
-  const microphoneAudio = peerAudios[peer.peerId]?.[AudioChannelName.MICROPHONE]
+  const microphoneAudio =
+    peerAudioChannels[peer.peerId]?.[AudioChannelName.MICROPHONE]
   const screenShareAudio =
-    peerAudios[peer.peerId]?.[AudioChannelName.SCREEN_SHARE]
+    peerAudioChannels[peer.peerId]?.[AudioChannelName.SCREEN_SHARE]
 
   return (
     <>

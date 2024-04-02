@@ -27,7 +27,7 @@ export function useRoomScreenShare({ peerRoom }: UseRoomScreenShareConfig) {
     setPeerList,
     setScreenState,
     setAudioChannelState,
-    setPeerAudios,
+    setPeerAudioChannels,
   } = shellContext
 
   const {
@@ -87,7 +87,7 @@ export function useRoomScreenShare({ peerRoom }: UseRoomScreenShareConfig) {
         audio.autoplay = true
 
         // FIXME: This audio needs to be removed when the stream ends
-        setPeerAudios(prevState => {
+        setPeerAudioChannels(prevState => {
           return {
             ...prevState,
             [peerId]: {
@@ -164,7 +164,7 @@ export function useRoomScreenShare({ peerRoom }: UseRoomScreenShareConfig) {
       return newPeerScreens
     })
 
-    setPeerAudios(({ ...newPeerAudios }) => {
+    setPeerAudioChannels(({ ...newPeerAudios }) => {
       if (!newPeerAudios[peerId]) {
         return newPeerAudios
       }
