@@ -31,9 +31,10 @@ export enum VideoState {
   STOPPED = 'STOPPED',
 }
 
-export enum VideoStreamType {
+export enum StreamType {
   WEBCAM = 'WEBCAM',
   SCREEN_SHARE = 'SCREEN_SHARE',
+  MICROPHONE = 'MICROPHONE',
 }
 
 export enum ScreenShareState {
@@ -47,12 +48,21 @@ export enum PeerVerificationState {
   VERIFIED,
 }
 
+export enum AudioChannelName {
+  MICROPHONE = 'microphone',
+  SCREEN_SHARE = 'screen-share',
+}
+
+export type AudioChannel = Partial<Record<AudioChannelName, HTMLAudioElement>>
+
+export type PeerAudioChannelState = Record<AudioChannelName, AudioState>
+
 export interface Peer {
   peerId: string
   userId: string
   publicKey: CryptoKey
   customUsername: string
-  audioState: AudioState
+  audioChannelState: PeerAudioChannelState
   videoState: VideoState
   screenShareState: ScreenShareState
   offeredFileId: string | null

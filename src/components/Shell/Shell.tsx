@@ -19,7 +19,15 @@ import { useWindowSize } from '@react-hook/window-size'
 import { ShellContext } from 'contexts/ShellContext'
 import { SettingsContext } from 'contexts/SettingsContext'
 import { AlertOptions, QueryParamKeys } from 'models/shell'
-import { AudioState, ScreenShareState, VideoState, Peer } from 'models/chat'
+import {
+  AudioState,
+  ScreenShareState,
+  VideoState,
+  Peer,
+  AudioChannel,
+  PeerAudioChannelState,
+  AudioChannelName,
+} from 'models/chat'
 import { ErrorBoundary } from 'components/ErrorBoundary'
 import { PeerConnectionType } from 'lib/PeerRoom'
 
@@ -86,7 +94,11 @@ export const Shell = ({ appNeedsUpdate, children, userPeerId }: ShellProps) => {
     Record<string, PeerConnectionType>
   >({})
   const [tabHasFocus, setTabHasFocus] = useState(true)
-  const [audioState, setAudioState] = useState<AudioState>(AudioState.STOPPED)
+  const [audioChannelState, setAudioChannelState] =
+    useState<PeerAudioChannelState>({
+      [AudioChannelName.MICROPHONE]: AudioState.STOPPED,
+      [AudioChannelName.SCREEN_SHARE]: AudioState.STOPPED,
+    })
   const [videoState, setVideoState] = useState<VideoState>(VideoState.STOPPED)
   const [screenState, setScreenState] = useState<ScreenShareState>(
     ScreenShareState.NOT_SHARING
@@ -94,8 +106,8 @@ export const Shell = ({ appNeedsUpdate, children, userPeerId }: ShellProps) => {
   const [customUsername, setCustomUsername] = useState(
     getUserSettings().customUsername
   )
-  const [peerAudios, setPeerAudios] = useState<
-    Record<string, HTMLAudioElement>
+  const [peerAudioChannels, setPeerAudioChannels] = useState<
+    Record<string, AudioChannel>
   >({})
 
   const showAlert = useCallback((message: string, options?: AlertOptions) => {
@@ -144,14 +156,14 @@ export const Shell = ({ appNeedsUpdate, children, userPeerId }: ShellProps) => {
       setIsServerConnectionFailureDialogOpen,
       peerConnectionTypes,
       setPeerConnectionTypes,
-      audioState,
-      setAudioState,
+      audioChannelState,
+      setAudioChannelState,
       videoState,
       setVideoState,
       screenState,
       setScreenState,
-      peerAudios,
-      setPeerAudios,
+      peerAudioChannels,
+      setPeerAudioChannels,
       customUsername,
       setCustomUsername,
       connectionTestResults,
@@ -174,14 +186,14 @@ export const Shell = ({ appNeedsUpdate, children, userPeerId }: ShellProps) => {
       setShowRoomControls,
       setTitle,
       showAlert,
-      audioState,
-      setAudioState,
+      audioChannelState,
+      setAudioChannelState,
       videoState,
       setVideoState,
       screenState,
       setScreenState,
-      peerAudios,
-      setPeerAudios,
+      peerAudioChannels,
+      setPeerAudioChannels,
       customUsername,
       setCustomUsername,
       connectionTestResults,
@@ -393,8 +405,8 @@ export const Shell = ({ appNeedsUpdate, children, userPeerId }: ShellProps) => {
                   onPeerListClose={handlePeerListClick}
                   peerList={peerList}
                   peerConnectionTypes={peerConnectionTypes}
-                  audioState={audioState}
-                  peerAudios={peerAudios}
+                  peerAudioChannelState={audioChannelState}
+                  peerAudioChannels={peerAudioChannels}
                   connectionTestResults={connectionTestResults}
                 />
                 {isEmbedded ? (

@@ -9,7 +9,13 @@ import Box from '@mui/material/Box'
 import CircularProgress from '@mui/material/CircularProgress'
 
 import { UserInfo } from 'components/UserInfo'
-import { AudioState, Peer } from 'models/chat'
+import {
+  AudioState,
+  Peer,
+  AudioChannel,
+  AudioChannelName,
+  PeerAudioChannelState,
+} from 'models/chat'
 import { PeerConnectionType } from 'lib/PeerRoom'
 import { TrackerConnection } from 'lib/ConnectionTest'
 
@@ -25,8 +31,8 @@ export interface PeerListProps extends PropsWithChildren {
   onPeerListClose: () => void
   peerList: Peer[]
   peerConnectionTypes: Record<string, PeerConnectionType>
-  audioState: AudioState
-  peerAudios: Record<string, HTMLAudioElement>
+  peerAudioChannelState: PeerAudioChannelState
+  peerAudioChannels: Record<string, AudioChannel>
   connectionTestResults: IConnectionTestResults
 }
 
@@ -36,8 +42,8 @@ export const PeerList = ({
   onPeerListClose,
   peerList,
   peerConnectionTypes,
-  audioState,
-  peerAudios,
+  peerAudioChannelState,
+  peerAudioChannels,
   connectionTestResults,
 }: PeerListProps) => {
   return (
@@ -49,7 +55,8 @@ export const PeerList = ({
       <Divider />
       <List>
         <ListItem divider={true}>
-          {audioState === AudioState.PLAYING && (
+          {peerAudioChannelState[AudioChannelName.MICROPHONE] ===
+            AudioState.PLAYING && (
             <ListItemIcon>
               <VolumeUp />
             </ListItemIcon>
@@ -63,7 +70,7 @@ export const PeerList = ({
             key={peer.peerId}
             peer={peer}
             peerConnectionTypes={peerConnectionTypes}
-            peerAudios={peerAudios}
+            peerAudioChannels={peerAudioChannels}
           />
         ))}
         {peerList.length === 0 &&

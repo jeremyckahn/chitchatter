@@ -1,7 +1,15 @@
 import { createContext, Dispatch, SetStateAction } from 'react'
 
 import { AlertOptions } from 'models/shell'
-import { AudioState, ScreenShareState, VideoState, Peer } from 'models/chat'
+import {
+  AudioState,
+  ScreenShareState,
+  VideoState,
+  Peer,
+  AudioChannel,
+  PeerAudioChannelState,
+  AudioChannelName,
+} from 'models/chat'
 import { PeerConnectionType } from 'lib/PeerRoom'
 import { ConnectionTestResults } from 'components/Shell/useConnectionTest'
 import { TrackerConnection } from 'lib/ConnectionTest'
@@ -27,14 +35,14 @@ interface ShellContextProps {
   setPeerConnectionTypes: Dispatch<
     SetStateAction<Record<string, PeerConnectionType>>
   >
-  audioState: AudioState
-  setAudioState: Dispatch<SetStateAction<AudioState>>
+  audioChannelState: PeerAudioChannelState
+  setAudioChannelState: Dispatch<SetStateAction<PeerAudioChannelState>>
   videoState: VideoState
   setVideoState: Dispatch<SetStateAction<VideoState>>
   screenState: ScreenShareState
   setScreenState: Dispatch<SetStateAction<ScreenShareState>>
-  peerAudios: Record<string, HTMLAudioElement>
-  setPeerAudios: Dispatch<SetStateAction<Record<string, HTMLAudioElement>>>
+  peerAudioChannels: Record<string, AudioChannel>
+  setPeerAudioChannels: Dispatch<SetStateAction<Record<string, AudioChannel>>>
   customUsername: string
   setCustomUsername: Dispatch<SetStateAction<string>>
   connectionTestResults: ConnectionTestResults
@@ -60,14 +68,17 @@ export const ShellContext = createContext<ShellContextProps>({
   setIsServerConnectionFailureDialogOpen: () => {},
   peerConnectionTypes: {},
   setPeerConnectionTypes: () => {},
-  audioState: AudioState.STOPPED,
-  setAudioState: () => {},
+  audioChannelState: {
+    [AudioChannelName.MICROPHONE]: AudioState.STOPPED,
+    [AudioChannelName.SCREEN_SHARE]: AudioState.STOPPED,
+  },
+  setAudioChannelState: () => {},
   videoState: VideoState.STOPPED,
   setVideoState: () => {},
   screenState: ScreenShareState.NOT_SHARING,
   setScreenState: () => {},
-  peerAudios: {},
-  setPeerAudios: () => {},
+  peerAudioChannels: {},
+  setPeerAudioChannels: () => {},
   customUsername: '',
   setCustomUsername: () => {},
   connectionTestResults: {

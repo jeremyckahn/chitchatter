@@ -18,7 +18,12 @@ import EnhancedEncryptionIcon from '@mui/icons-material/EnhancedEncryption'
 import { AudioVolume } from 'components/AudioVolume'
 import { PeerNameDisplay } from 'components/PeerNameDisplay'
 import { PublicKey } from 'components/PublicKey'
-import { Peer, PeerVerificationState } from 'models/chat'
+import {
+  Peer,
+  AudioChannel,
+  AudioChannelName,
+  PeerVerificationState,
+} from 'models/chat'
 import { PeerConnectionType } from 'lib/PeerRoom'
 
 import { PeerDownloadFileButton } from './PeerDownloadFileButton'
@@ -26,7 +31,7 @@ import { PeerDownloadFileButton } from './PeerDownloadFileButton'
 interface PeerListItemProps {
   peer: Peer
   peerConnectionTypes: Record<string, PeerConnectionType>
-  peerAudios: Record<string, HTMLAudioElement>
+  peerAudioChannels: Record<string, AudioChannel>
 }
 
 const verificationStateDisplayMap = {
@@ -52,8 +57,8 @@ const iconRightPadding = 1
 export const PeerListItem = ({
   peer,
   peerConnectionTypes,
-  peerAudios,
-}: PeerListItemProps): JSX.Element => {
+  peerAudioChannels,
+}: PeerListItemProps) => {
   const [showPeerDialog, setShowPeerDialog] = useState(false)
 
   const hasPeerConnection = peer.peerId in peerConnectionTypes
@@ -68,6 +73,11 @@ export const PeerListItem = ({
   const handleDialogClose = () => {
     setShowPeerDialog(false)
   }
+
+  const microphoneAudio =
+    peerAudioChannels[peer.peerId]?.[AudioChannelName.MICROPHONE]
+  const screenShareAudio =
+    peerAudioChannels[peer.peerId]?.[AudioChannelName.SCREEN_SHARE]
 
   return (
     <>
@@ -124,8 +134,17 @@ export const PeerListItem = ({
             </Box>
             <PeerNameDisplay>{peer.userId}</PeerNameDisplay>
           </Box>
-          {peer.peerId in peerAudios && (
-            <AudioVolume audioEl={peerAudios[peer.peerId]} />
+          {microphoneAudio && (
+            <AudioVolume
+              audioEl={microphoneAudio}
+              audioChannelName={AudioChannelName.MICROPHONE}
+            />
+          )}
+          {screenShareAudio && (
+            <AudioVolume
+              audioEl={screenShareAudio}
+              audioChannelName={AudioChannelName.SCREEN_SHARE}
+            />
           )}
         </ListItemText>
       </ListItem>

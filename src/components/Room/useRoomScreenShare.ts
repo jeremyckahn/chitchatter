@@ -4,7 +4,13 @@ import { isRecord } from 'lib/type-guards'
 import { RoomContext } from 'contexts/RoomContext'
 import { ShellContext } from 'contexts/ShellContext'
 import { PeerActions } from 'models/network'
-import { ScreenShareState, Peer, VideoStreamType } from 'models/chat'
+import {
+  ScreenShareState,
+  Peer,
+  StreamType,
+  AudioChannelName,
+  AudioState,
+} from 'models/chat'
 import { PeerRoom, PeerHookType, PeerStreamType } from 'lib/PeerRoom'
 
 interface UseRoomScreenShareConfig {
@@ -16,7 +22,13 @@ export function useRoomScreenShare({ peerRoom }: UseRoomScreenShareConfig) {
   const roomContext = useContext(RoomContext)
   const [isSharingScreen, setIsSharingScreen] = useState(false)
 
-  const { peerList, setPeerList, setScreenState } = shellContext
+  const {
+    peerList,
+    setPeerList,
+    setScreenState,
+    setAudioChannelState,
+    setPeerAudioChannels,
+  } = shellContext
 
   const {
     peerScreenStreams,
@@ -50,7 +62,7 @@ export function useRoomScreenShare({ peerRoom }: UseRoomScreenShareConfig) {
     const isScreenShareStream =
       isRecord(metadata) &&
       'type' in metadata &&
-      metadata.type === VideoStreamType.SCREEN_SHARE
+      metadata.type === StreamType.SCREEN_SHARE
 
     if (!isScreenShareStream) return
 
@@ -58,6 +70,33 @@ export function useRoomScreenShare({ peerRoom }: UseRoomScreenShareConfig) {
       ...peerScreenStreams,
       [peerId]: stream,
     })
+
+    const [audioStream] = stream.getAudioTracks()
+
+    if (audioStream) {
+      setAudioChannelState(prevState => ({
+        ...prevState,
+        [AudioChannelName.SCREEN_SHARE]: AudioState.PLAYING,
+      }))
+
+      const audioTracks = stream.getAudioTracks()
+
+      if (audioTracks.length > 0) {
+        const audio = new Audio()
+        audio.srcObject = stream
+        audio.autoplay = true
+
+        setPeerAudioChannels(peerAudioChannels => {
+          return {
+            ...peerAudioChannels,
+            [peerId]: {
+              ...peerAudioChannels[peerId],
+              [AudioChannelName.SCREEN_SHARE]: audio,
+            },
+          }
+        })
+      }
+    }
   })
 
   const cleanupScreenStream = useCallback(() => {
@@ -78,8 +117,9 @@ export function useRoomScreenShare({ peerRoom }: UseRoomScreenShareConfig) {
     })
 
     peerRoom.addStream(displayMedia, null, {
-      type: VideoStreamType.SCREEN_SHARE,
+      type: StreamType.SCREEN_SHARE,
     })
+
     setSelfScreenStream(displayMedia)
     sendScreenShare(ScreenShareState.SHARING)
     setScreenState(ScreenShareState.SHARING)
@@ -119,15 +159,33 @@ export function useRoomScreenShare({ peerRoom }: UseRoomScreenShareConfig) {
   }, [setPeerScreenStreams])
 
   const deletePeerScreen = (peerId: string) => {
-    const newPeerScreens = { ...peerScreenStreams }
-    delete newPeerScreens[peerId]
-    setPeerScreenStreams(newPeerScreens)
+    setPeerScreenStreams(({ [peerId]: _, ...newPeerScreens }) => {
+      return newPeerScreens
+    })
+
+    setPeerAudioChannels(({ ...newPeerAudios }) => {
+      if (!newPeerAudios[peerId]) {
+        return newPeerAudios
+      }
+
+      const screenShareAudio =
+        newPeerAudios[peerId][AudioChannelName.SCREEN_SHARE]
+
+      screenShareAudio?.pause()
+
+      const { [AudioChannelName.SCREEN_SHARE]: _, ...newPeerAudioChannels } =
+        newPeerAudios[peerId]
+
+      newPeerAudios[peerId] = newPeerAudioChannels
+
+      return newPeerAudios
+    })
   }
 
   const handleScreenForNewPeer = (peerId: string) => {
     if (selfScreenStream) {
       peerRoom.addStream(selfScreenStream, peerId, {
-        type: VideoStreamType.SCREEN_SHARE,
+        type: StreamType.SCREEN_SHARE,
       })
     }
   }

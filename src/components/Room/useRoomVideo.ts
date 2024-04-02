@@ -3,7 +3,7 @@ import { useContext, useEffect, useCallback, useState } from 'react'
 import { RoomContext } from 'contexts/RoomContext'
 import { ShellContext } from 'contexts/ShellContext'
 import { PeerActions } from 'models/network'
-import { VideoState, Peer, VideoStreamType } from 'models/chat'
+import { VideoState, Peer, StreamType } from 'models/chat'
 import { PeerRoom, PeerHookType, PeerStreamType } from 'lib/PeerRoom'
 import { isRecord } from 'lib/type-guards'
 
@@ -60,8 +60,9 @@ export function useRoomVideo({ peerRoom }: UseRoomVideoConfig) {
         })
 
         peerRoom.addStream(newSelfStream, null, {
-          type: VideoStreamType.WEBCAM,
+          type: StreamType.WEBCAM,
         })
+
         setSelfVideoStream(newSelfStream)
       }
     })()
@@ -93,7 +94,7 @@ export function useRoomVideo({ peerRoom }: UseRoomVideoConfig) {
     const isWebcamStream =
       isRecord(metadata) &&
       'type' in metadata &&
-      metadata.type === VideoStreamType.WEBCAM
+      metadata.type === StreamType.WEBCAM
 
     if (!isWebcamStream) return
 
@@ -124,8 +125,9 @@ export function useRoomVideo({ peerRoom }: UseRoomVideoConfig) {
           })
 
           peerRoom.addStream(newSelfStream, null, {
-            type: VideoStreamType.WEBCAM,
+            type: StreamType.WEBCAM,
           })
+
           sendVideoChange(VideoState.PLAYING)
           setVideoState(VideoState.PLAYING)
           setSelfVideoStream(newSelfStream)
@@ -193,7 +195,7 @@ export function useRoomVideo({ peerRoom }: UseRoomVideoConfig) {
       },
     })
 
-    peerRoom.addStream(newSelfStream, null, { type: VideoStreamType.WEBCAM })
+    peerRoom.addStream(newSelfStream, null, { type: StreamType.WEBCAM })
     setSelfVideoStream(newSelfStream)
   }
 
@@ -206,7 +208,7 @@ export function useRoomVideo({ peerRoom }: UseRoomVideoConfig) {
   const handleVideoForNewPeer = (peerId: string) => {
     if (selfVideoStream) {
       peerRoom.addStream(selfVideoStream, peerId, {
-        type: VideoStreamType.WEBCAM,
+        type: StreamType.WEBCAM,
       })
     }
   }
