@@ -195,6 +195,16 @@ Assuming you are hosting Chitchatter on [GitHub Pages](https://pages.github.com/
 
 1. Change the [`homepage` property in `package.json`](https://github.com/jeremyckahn/chitchatter/blob/1ea67e2c3a45115e054ebfe3457f2c3572c6213b/package.json#L4) to whatever URL your Chitchatter instance will be hosted from. This will be something like `https://github_user_or_org_name.github.io/chitchatter/`.
 2. Define a [`DEPLOY_KEY` GitHub Action secret](https://github.com/jeremyckahn/chitchatter/blob/e2bac732cf1288f7b5d0bec151098f18e8b1d0d6/.github/workflows/deploy.yml#L28-L31) (at `https://github.com/github_user_or_org_name/chitchatter/settings/secrets/actions`). See the docs for [`peaceiris/actions-gh-pages`](https://github.com/peaceiris/actions-gh-pages#%EF%B8%8F-set-ssh-private-key-deploy_key) for more information.
+3. If you're using gh-pages without custom domain then define `base` property as repo name under `vite.config.ts` like
+
+   ```js
+   const config = () => {
+      return defineConfig({
+         base: '/chitchatter/',
+         build: {
+          ...
+   }
+   ```
 
 #### Deployment
 
