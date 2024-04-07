@@ -9,6 +9,7 @@ import {
 } from 'config/messaging'
 
 import './index.sass'
+import useTheme from '@mui/material/styles/useTheme'
 
 const messageTranscriptSizeLimitFormatted = Intl.NumberFormat().format(
   messageTranscriptSizeLimit
@@ -20,13 +21,17 @@ const messageCharacterSizeLimitFormatted = Intl.NumberFormat().format(
 
 export const About = () => {
   const { setTitle } = useContext(ShellContext)
+  const theme = useTheme()
 
   useEffect(() => {
     setTitle('About')
   }, [setTitle])
 
   return (
-    <Box className="About max-w-3xl mx-auto p-4">
+    <Box
+      className="About"
+      sx={{ p: 2, mx: 'auto', maxWidth: theme.breakpoints.values.md }}
+    >
       <MuiMarkdown>
         {`
 ### User Guide

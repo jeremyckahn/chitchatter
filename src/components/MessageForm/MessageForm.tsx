@@ -14,7 +14,7 @@ import ArrowUpward from '@mui/icons-material/ArrowUpward'
 
 import { messageCharacterSizeLimit } from 'config/messaging'
 import { SettingsContext } from 'contexts/SettingsContext'
-import classNames from 'classnames'
+import { Form } from 'components/Elements'
 
 interface MessageFormProps {
   onMessageSubmit: (message: string) => void
@@ -76,12 +76,17 @@ export const MessageForm = ({
   }
 
   return (
-    <form
+    <Form
       onSubmit={handleMessageSubmit}
-      className={classNames({
-        'pt-4 px-4': showActiveTypingStatus,
-        'p-4': !showActiveTypingStatus,
-      })}
+      sx={{
+        ...(showActiveTypingStatus && {
+          pt: 2,
+          px: 2,
+        }),
+        ...(!showActiveTypingStatus && {
+          p: 2,
+        }),
+      }}
     >
       <Stack direction="row" spacing={2}>
         <FormControl fullWidth>
@@ -110,6 +115,6 @@ export const MessageForm = ({
           <ArrowUpward />
         </Fab>
       </Stack>
-    </form>
+    </Form>
   )
 }
