@@ -28,20 +28,20 @@ export const MediaButton = forwardRef<HTMLButtonElement, MediaButtonProps>(
                   },
                 }
             : isActive
-            ? {
-                color: theme.palette.common.white,
-                background: theme.palette.success.main,
-                '&:hover': {
-                  background: theme.palette.success.dark,
-                },
-              }
-            : {
-                color: theme.palette.common.black,
-                background: theme.palette.grey[400],
-                '&:hover': {
-                  background: theme.palette.grey[500],
-                },
-              }
+              ? {
+                  color: theme.palette.common.white,
+                  background: theme.palette.success.main,
+                  '&:hover': {
+                    background: theme.palette.success.dark,
+                  },
+                }
+              : {
+                  color: theme.palette.common.black,
+                  background: theme.palette.grey[400],
+                  '&:hover': {
+                    background: theme.palette.grey[500],
+                  },
+                }
         }
       />
     )

@@ -15,9 +15,8 @@ const encryptionTestTarget = 'chitchatter'
 
 export class SettingsService {
   exportSettings = async (userSettings: UserSettings) => {
-    const serializedUserSettings = await serialization.serializeUserSettings(
-      userSettings
-    )
+    const serializedUserSettings =
+      await serialization.serializeUserSettings(userSettings)
 
     const blob = new Blob([JSON.stringify(serializedUserSettings)], {
       type: 'application/json;charset=utf-8',

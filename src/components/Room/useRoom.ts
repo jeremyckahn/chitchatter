@@ -342,9 +342,8 @@ export function useRoom(
     })
     ;(async () => {
       try {
-        const publicKeyString = await encryptionService.stringifyCryptoKey(
-          publicKey
-        )
+        const publicKeyString =
+          await encryptionService.stringifyCryptoKey(publicKey)
 
         const promises: Promise<any>[] = [
           sendPeerMetadata({ userId, customUsername, publicKeyString }, peerId),
@@ -455,9 +454,8 @@ export function useRoom(
 
   useEffect(() => {
     ;(async () => {
-      const publicKeyString = await encryptionService.stringifyCryptoKey(
-        publicKey
-      )
+      const publicKeyString =
+        await encryptionService.stringifyCryptoKey(publicKey)
 
       sendPeerMetadata({
         customUsername,
