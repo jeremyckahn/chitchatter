@@ -2,7 +2,7 @@
   "name": "chitchatter",
   "version": "0.0.0",
   "homepage": "https://chitchatter.im/",
-  "author": "Jeremy Kahn <jeremyckahn@gmail.com>",
+  "author": "Jeremy Kahn <me@jeremyckahn.com>",
   "license": "GPL-2.0-or-later",
   "type": "module",
   "dependencies": {
@@ -71,8 +71,8 @@
     ]
   },
   "engines": {
-    "node": "18.12.1",
-    "npm": "8.19.2"
+    "node": "20.12.1",
+    "npm": "10.5.0"
   },
   "browserslist": {
     "production": [
