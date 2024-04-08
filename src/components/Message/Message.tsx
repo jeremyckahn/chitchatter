@@ -7,19 +7,10 @@ import Typography, { TypographyProps } from '@mui/material/Typography'
 import Link, { LinkProps } from '@mui/material/Link'
 import { materialDark } from 'react-syntax-highlighter/dist/esm/styles/prism'
 
-// These imports need to be ts-ignored to prevent spurious errors that look
-// like this:
-//
-//   Module 'react-markdown' cannot be imported using this construct. The
-//   specifier only resolves to an ES module, which cannot be imported
-//   synchronously. Use dynamic import instead. (tsserver 1471)
-//
-// @ts-ignore
 import Markdown from 'react-markdown'
-// @ts-ignore
 import { CodeProps } from 'react-markdown/lib/ast-to-react'
-// @ts-ignore
 import remarkGfm from 'remark-gfm'
+import styled from '@mui/material/styles/styled'
 
 import {
   InlineMedia as I_InlineMedia,
@@ -33,6 +24,8 @@ import { CopyableBlock } from 'components/CopyableBlock/CopyableBlock'
 import { InlineMedia } from './InlineMedia'
 
 import './Message.sass'
+
+const StyledMarkdown = styled(Markdown)({})
 
 export interface MessageProps {
   message: IMessage | I_InlineMedia
@@ -154,13 +147,23 @@ export const Message = ({ message, showAuthor, userId }: MessageProps) => {
           ) : isYouTubeLink(message) ? (
             <YouTube videoId={getYouTubeVideoId(message.text)} />
           ) : (
-            <Markdown
+            <StyledMarkdown
               components={componentMap}
               remarkPlugins={[remarkGfm]}
               linkTarget="_blank"
+              sx={{
+                '& ol': {
+                  pl: 2,
+                  listStyleType: 'decimal',
+                },
+                '& ul': {
+                  pl: 2,
+                  listStyleType: 'disc',
+                },
+              }}
             >
               {message.text}
-            </Markdown>
+            </StyledMarkdown>
           )}
         </Box>
       </Tooltip>
