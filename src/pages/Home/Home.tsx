@@ -10,12 +10,14 @@ import IconButton from '@mui/material/IconButton'
 import MuiLink from '@mui/material/Link'
 import GitHubIcon from '@mui/icons-material/GitHub'
 import Cached from '@mui/icons-material/Cached'
+import useTheme from '@mui/material/styles/useTheme'
 
 import { v4 as uuid } from 'uuid'
 
 import { routes } from 'config/routes'
 import { ShellContext } from 'contexts/ShellContext'
 import { PeerNameDisplay } from 'components/PeerNameDisplay'
+import { Main } from 'components/Elements'
 import Logo from 'img/logo.svg?react'
 
 import { EmbedCodeDialog } from './EmbedCodeDialog'
@@ -26,6 +28,7 @@ interface HomeProps {
 
 export function Home({ userId }: HomeProps) {
   const { setTitle } = useContext(ShellContext)
+  const theme = useTheme()
   const [roomName, setRoomName] = useState(uuid())
   const [showEmbedCode, setShowEmbedCode] = useState(false)
   const navigate = useNavigate()
@@ -63,7 +66,15 @@ export function Home({ userId }: HomeProps) {
 
   return (
     <Box className="Home">
-      <main className="mt-6 px-4 max-w-3xl text-center mx-auto">
+      <Main
+        sx={{
+          maxWidth: theme.breakpoints.values.md,
+          mt: 3,
+          mx: 'auto',
+          px: 2,
+          textAlign: 'center',
+        }}
+      >
         <Link to={routes.ABOUT}>
           <Logo className="px-1 pb-4 mx-auto max-w-md" />
         </Link>
@@ -136,7 +147,7 @@ export function Home({ userId }: HomeProps) {
             </Button>
           </Box>
         </form>
-      </main>
+      </Main>
       <Divider sx={{ my: 2 }} />
       <Box className="max-w-3xl text-center mx-auto px-4">
         <Typography variant="body1">

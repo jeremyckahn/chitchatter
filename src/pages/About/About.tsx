@@ -1,6 +1,7 @@
 import { useContext, useEffect } from 'react'
 import MuiMarkdown from 'mui-markdown'
 import Box from '@mui/material/Box'
+import useTheme from '@mui/material/styles/useTheme'
 
 import { ShellContext } from 'contexts/ShellContext'
 import {
@@ -9,7 +10,6 @@ import {
 } from 'config/messaging'
 
 import './index.sass'
-import useTheme from '@mui/material/styles/useTheme'
 
 const messageTranscriptSizeLimitFormatted = Intl.NumberFormat().format(
   messageTranscriptSizeLimit
