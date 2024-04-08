@@ -70,7 +70,9 @@ export const ChatTranscript = ({
       sx={{
         display: 'flex',
         flexDirection: 'column',
-        py: transcriptMinPadding,
+        flexGrow: 1,
+        overflow: 'auto',
+        pb: transcriptMinPadding,
         pt: showRoomControls ? theme.spacing(10) : theme.spacing(2),
         px: `max(${transcriptPaddingX}, ${transcriptMinPadding})`,
         transition: `padding-top ${theme.transitions.duration.short}ms ${theme.transitions.easing.easeInOut}`,
