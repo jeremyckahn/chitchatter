@@ -19,7 +19,6 @@
     "@types/react": "^18.2.66",
     "@types/react-dom": "^18.2.22",
     "buffer": "^6.0.3",
-    "classnames": "^2.3.1",
     "detectincognitojs": "^1.1.2",
     "fast-memoize": "^2.5.2",
     "file-saver": "^2.0.5",

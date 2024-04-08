@@ -1,5 +1,4 @@
 import { HTMLAttributes, useRef, useEffect, useState, useContext } from 'react'
-import cx from 'classnames'
 import Box from '@mui/material/Box'
 import useTheme from '@mui/material/styles/useTheme'
 
@@ -12,11 +11,7 @@ export interface ChatTranscriptProps extends HTMLAttributes<HTMLDivElement> {
   userId: string
 }
 
-export const ChatTranscript = ({
-  className,
-  messageLog,
-  userId,
-}: ChatTranscriptProps) => {
+export const ChatTranscript = ({ messageLog, userId }: ChatTranscriptProps) => {
   const { showRoomControls } = useContext(ShellContext)
   const theme = useTheme()
   const boxRef = useRef<HTMLDivElement>(null)
@@ -66,7 +61,7 @@ export const ChatTranscript = ({
   return (
     <Box
       ref={boxRef}
-      className={cx('ChatTranscript', className)}
+      className="ChatTranscript"
       sx={{
         display: 'flex',
         flexDirection: 'column',

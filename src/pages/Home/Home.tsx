@@ -23,7 +23,7 @@ import Logo from 'img/logo.svg?react'
 
 import { EmbedCodeDialog } from './EmbedCodeDialog'
 
-const StyledLogo = styled(Logo)()
+const StyledLogo = styled(Logo)({})
 
 interface HomeProps {
   userId: string
