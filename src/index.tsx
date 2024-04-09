@@ -2,7 +2,7 @@ import './polyfills'
 import ReactDOM from 'react-dom/client'
 import 'typeface-roboto'
 
-import './index.sass'
+import './index.css'
 
 import { ThemeProvider, createTheme } from '@mui/material/styles'
 import { PrismAsyncLight as SyntaxHighlighter } from 'react-syntax-highlighter'
