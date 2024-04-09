@@ -9,8 +9,6 @@ import {
   messageCharacterSizeLimit,
 } from 'config/messaging'
 
-import './index.sass'
-
 const messageTranscriptSizeLimitFormatted = Intl.NumberFormat().format(
   messageTranscriptSizeLimit
 )
@@ -30,7 +28,14 @@ export const About = () => {
   return (
     <Box
       className="About"
-      sx={{ p: 2, mx: 'auto', maxWidth: theme.breakpoints.values.md }}
+      sx={{
+        p: 2,
+        mx: 'auto',
+        maxWidth: theme.breakpoints.values.md,
+        '& p': {
+          mb: 2,
+        },
+      }}
     >
       <MuiMarkdown>
         {`

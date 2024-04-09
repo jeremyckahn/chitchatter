@@ -23,8 +23,6 @@ import { CopyableBlock } from 'components/CopyableBlock/CopyableBlock'
 
 import { InlineMedia } from './InlineMedia'
 
-import './Message.sass'
-
 const StyledMarkdown = styled(Markdown)({})
 
 export interface MessageProps {
@@ -106,7 +104,14 @@ export const Message = ({ message, showAuthor, userId }: MessageProps) => {
   }
 
   return (
-    <Box className="Message">
+    <Box
+      className="Message"
+      sx={{
+        '& pre': {
+          overflow: 'auto',
+        },
+      }}
+    >
       {showAuthor && (
         <Typography
           variant="caption"

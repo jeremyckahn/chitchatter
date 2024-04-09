@@ -5,8 +5,6 @@ import useTheme from '@mui/material/styles/useTheme'
 
 import { ShellContext } from 'contexts/ShellContext'
 
-import './index.sass'
-
 export const Disclaimer = () => {
   const { setTitle } = useContext(ShellContext)
   const theme = useTheme()
@@ -18,7 +16,14 @@ export const Disclaimer = () => {
   return (
     <Box
       className="Disclaimer"
-      sx={{ p: 2, mx: 'auto', maxWidth: theme.breakpoints.values.md }}
+      sx={{
+        p: 2,
+        mx: 'auto',
+        maxWidth: theme.breakpoints.values.md,
+        '& p': {
+          mb: 2,
+        },
+      }}
     >
       <MuiMarkdown>
         {`
