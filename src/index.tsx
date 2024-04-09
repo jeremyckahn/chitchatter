@@ -2,6 +2,7 @@ import './polyfills'
 import ReactDOM from 'react-dom/client'
 import 'typeface-roboto'
 
+import 'modern-normalize/modern-normalize.css'
 import './index.css'
 
 import { ThemeProvider, createTheme } from '@mui/material/styles'
