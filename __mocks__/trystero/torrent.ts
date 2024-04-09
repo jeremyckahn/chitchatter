@@ -24,3 +24,5 @@ export const joinRoom: typeof trysteroJoinRoom = (
 }
 
 export const selfId = ''
+
+export const getTrackers = () => ({})
