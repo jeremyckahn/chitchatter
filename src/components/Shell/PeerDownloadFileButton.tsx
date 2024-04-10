@@ -10,7 +10,6 @@ import { fileTransfer } from 'lib/FileTransfer'
 import { Peer } from 'models/chat'
 import { ShellContext } from 'contexts/ShellContext'
 
-import './PeerDownloadFileButton.sass'
 import { usePeerNameDisplay } from 'components/PeerNameDisplay/usePeerNameDisplay'
 
 interface PeerDownloadFileButtonProps {
@@ -65,6 +64,9 @@ export const PeerDownloadFileButton = ({
         <CircularProgress
           variant={downloadProgress === null ? 'indeterminate' : 'determinate'}
           value={downloadProgress === null ? undefined : downloadProgress}
+          sx={{
+            transition: 'none',
+          }}
         />
       ) : (
         <Tooltip

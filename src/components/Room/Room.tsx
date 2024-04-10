@@ -157,11 +157,7 @@ export function Room({
                   height: landscape ? '100%' : '40%',
                 }}
               >
-                <ChatTranscript
-                  messageLog={messageLog}
-                  userId={userId}
-                  className="grow overflow-auto"
-                />
+                <ChatTranscript messageLog={messageLog} userId={userId} />
                 <Divider />
                 <Box>
                   <MessageForm

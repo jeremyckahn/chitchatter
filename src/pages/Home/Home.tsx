@@ -10,15 +10,20 @@ import IconButton from '@mui/material/IconButton'
 import MuiLink from '@mui/material/Link'
 import GitHubIcon from '@mui/icons-material/GitHub'
 import Cached from '@mui/icons-material/Cached'
+import useTheme from '@mui/material/styles/useTheme'
+import styled from '@mui/material/styles/styled'
 
 import { v4 as uuid } from 'uuid'
 
 import { routes } from 'config/routes'
 import { ShellContext } from 'contexts/ShellContext'
 import { PeerNameDisplay } from 'components/PeerNameDisplay'
+import { Form, Main } from 'components/Elements'
 import Logo from 'img/logo.svg?react'
 
 import { EmbedCodeDialog } from './EmbedCodeDialog'
+
+const StyledLogo = styled(Logo)({})
 
 interface HomeProps {
   userId: string
@@ -26,6 +31,7 @@ interface HomeProps {
 
 export function Home({ userId }: HomeProps) {
   const { setTitle } = useContext(ShellContext)
+  const theme = useTheme()
   const [roomName, setRoomName] = useState(uuid())
   const [showEmbedCode, setShowEmbedCode] = useState(false)
   const navigate = useNavigate()
@@ -63,11 +69,29 @@ export function Home({ userId }: HomeProps) {
 
   return (
     <Box className="Home">
-      <main className="mt-6 px-4 max-w-3xl text-center mx-auto">
+      <Main
+        sx={{
+          maxWidth: theme.breakpoints.values.md,
+          mt: 3,
+          mx: 'auto',
+          px: 2,
+          textAlign: 'center',
+        }}
+      >
         <Link to={routes.ABOUT}>
-          <Logo className="px-1 pb-4 mx-auto max-w-md" />
+          <StyledLogo
+            sx={{
+              px: 0.5,
+              pb: 2,
+              mx: 'auto',
+              maxWidth: theme.breakpoints.values.sm,
+            }}
+          />
         </Link>
-        <form onSubmit={handleFormSubmit} className="max-w-xl mx-auto">
+        <Form
+          onSubmit={handleFormSubmit}
+          sx={{ maxWidth: theme.breakpoints.values.sm, mx: 'auto' }}
+        >
           <Typography sx={{ mb: 2 }}>
             Your username:{' '}
             <PeerNameDisplay paragraph={false} sx={{ fontWeight: 'bold' }}>
@@ -135,10 +159,17 @@ export function Home({ userId }: HomeProps) {
               Get embed code
             </Button>
           </Box>
-        </form>
-      </main>
+        </Form>
+      </Main>
       <Divider sx={{ my: 2 }} />
-      <Box className="max-w-3xl text-center mx-auto px-4">
+      <Box
+        sx={{
+          maxWidth: theme.breakpoints.values.sm,
+          mx: 'auto',
+          textAlign: 'center',
+          px: 2,
+        }}
+      >
         <Typography variant="body1">
           This is a free communication tool that is designed for simplicity,
           privacy, and security. All interaction between you and your online
@@ -171,7 +202,7 @@ export function Home({ userId }: HomeProps) {
           </IconButton>
         </MuiLink>
       </Box>
-      <Typography variant="body1" sx={{ textAlign: 'center' }}>
+      <Typography variant="body1" sx={{ textAlign: 'center', mb: 1 }}>
         Licensed under{' '}
         <MuiLink
           href="https://github.com/jeremyckahn/chitchatter/blob/develop/LICENSE"

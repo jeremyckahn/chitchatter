@@ -8,6 +8,8 @@ import CircularProgress from '@mui/material/CircularProgress'
 import { RoomContext } from 'contexts/RoomContext'
 import { PeerRoom } from 'lib/PeerRoom'
 
+import { Input } from 'components/Elements'
+
 import { useRoomFileShare } from './useRoomFileShare'
 import { MediaButton } from './MediaButton'
 
@@ -73,12 +75,12 @@ export function RoomFileUploadControls({
         px: 1,
       }}
     >
-      <input
+      <Input
         multiple
         ref={fileInputRef}
         type="file"
         id="file-upload"
-        className="hidden"
+        sx={{ display: 'none' }}
         onChange={handleFileSelect}
       />
       <Tooltip

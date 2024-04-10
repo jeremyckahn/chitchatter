@@ -118,7 +118,7 @@ export const Settings = ({ userId }: SettingsProps) => {
   const areNotificationsAvailable = notification.permission === 'granted'
 
   return (
-    <Box className="max-w-3xl mx-auto p-4">
+    <Box sx={{ p: 2, mx: 'auto', maxWidth: theme.breakpoints.values.md }}>
       <Typography
         variant="h2"
         sx={{
