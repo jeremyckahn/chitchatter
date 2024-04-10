@@ -42,7 +42,7 @@
     "sdp": "^3.2.0",
     "secure-file-transfer": "^0.0.8",
     "streamsaver": "^2.0.6",
-    "trystero": "^0.18.0",
+    "trystero": "^0.19.0-beta0",
     "typeface-public-sans": "^1.1.13",
     "typeface-roboto": "^1.1.13",
     "typescript": "^5.4.2",
