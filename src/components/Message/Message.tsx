@@ -5,12 +5,11 @@ import Box from '@mui/material/Box'
 import Tooltip from '@mui/material/Tooltip'
 import Typography, { TypographyProps } from '@mui/material/Typography'
 import Link, { LinkProps } from '@mui/material/Link'
+import styled from '@mui/material/styles/styled'
 import { materialDark } from 'react-syntax-highlighter/dist/esm/styles/prism'
-
 import Markdown from 'react-markdown'
 import { CodeProps } from 'react-markdown/lib/ast-to-react'
 import remarkGfm from 'remark-gfm'
-import styled from '@mui/material/styles/styled'
 
 import {
   InlineMedia as I_InlineMedia,
@@ -104,14 +103,7 @@ export const Message = ({ message, showAuthor, userId }: MessageProps) => {
   }
 
   return (
-    <Box
-      className="Message"
-      sx={{
-        '& pre': {
-          overflow: 'auto',
-        },
-      }}
-    >
+    <Box className="Message">
       {showAuthor && (
         <Typography
           variant="caption"
@@ -157,6 +149,9 @@ export const Message = ({ message, showAuthor, userId }: MessageProps) => {
               remarkPlugins={[remarkGfm]}
               linkTarget="_blank"
               sx={{
+                '& pre': {
+                  overflow: 'auto',
+                },
                 '& ol': {
                   pl: 2,
                   listStyleType: 'decimal',
