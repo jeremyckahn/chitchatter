@@ -19,7 +19,7 @@ jobs:
       - name: 'Build web app artifacts'
         run: npm run build
 
-      - uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@v4
         with:
           name: build-output
           path: dist
