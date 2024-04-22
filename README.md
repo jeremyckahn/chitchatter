@@ -156,7 +156,20 @@ As well as the following [standard `<iframe />` attributes](https://developer.mo
 - `referrerpolicy`
 - `sandbox`
 
-## Available Scripts
+## Developing Chitchatter
+
+> [!IMPORTANT]
+> Presently Chitchatter can only be developed on \*NIX systems such as Linux and macOS. If you are using Windows, you can use [WSL](https://learn.microsoft.com/en-us/windows/wsl/install) to set up a Linux environment.
+
+To make changes to Chitchatter, clone the source code from GitHub. Ensure you have [Node and NPM](https://nodejs.org) installed. Then in the project directory, run:
+
+```
+npm install
+```
+
+This will install all of the dependencies.
+
+### Available Scripts
 
 In the project directory, you can run:
 
