@@ -195,11 +195,10 @@ The build is minified and the filenames include the hashes.
 
 ### Self-hosting
 
-Chitchatter is designed to be forked and self-hosted. If you would like to change pairing or relay server configuration, or you simply prefer to control your own builds and versions, just [fork this repo](https://github.com/jeremyckahn/chitchatter/fork) and follow the steps below.
+Chitchatter is designed to be forked and self-hosted. If you would like to change pairing or relay server configuration or you prefer to control your own builds and versions, [fork this repo](https://github.com/jeremyckahn/chitchatter/fork) and follow the steps below.
 
-#### Caveats
-
-Chitchatter peer connections are bound to the instance's domain. So, a user of Chitchatter at https://chitchatter.im/ would not be able to connect to a user of a Chitchatter instance on another domain (such as a personal GitHub Pages-hosted fork).
+> [!IMPORTANT]
+> Chitchatter peer connections are bound to the instance's domain. So, a user of Chitchatter at https://chitchatter.im/ would not be able to connect to a user of a Chitchatter instance on another domain (such as a personal GitHub Pages-hosted fork).
 
 #### Necessary steps after forking
 
@@ -226,7 +225,7 @@ When hosted on GitHub Pages and the configuration above has been done, the Produ
 
 ##### On non-GitHub hosts
 
-Build the app with `npm pkg set homepage="https://your-domain-here.com" && npm run build` (with `https://your-domain-here.com` substituted for the root URL that Chitchatter will be served from), and then serve the `dist` directory. Any static file serving solution should work provided it is using a [secure context](https://developer.mozilla.org/en-US/docs/Web/Security/Secure_Contexts).
+Build the app with `npm run build`, and then serve the `dist` directory. Any static file serving solution should work provided it is using a [secure context](https://developer.mozilla.org/en-US/docs/Web/Security/Secure_Contexts).
 
 #### Runtime configuration
 
