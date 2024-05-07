@@ -253,7 +253,11 @@ Chitchatter works on iOS Safari, but browser-level bugs often prevent peers from
 
 Per [#36](https://github.com/jeremyckahn/chitchatter/issues/36), check your `about:config` settings and ensure that `media.peerconnection.enabled` is **enabled**.
 
-##### Security
+#### Offered files can't be downloaded from peers
+
+Chitchatter uses [StreamSaver.js](https://github.com/jimmywarting/StreamSaver.js) to facilitate large file transfers. Download managers such as [FDM](https://www.freedownloadmanager.org/) are [known to interfere with StreamSaver.js](https://github.com/jimmywarting/StreamSaver.js/issues/325), so it is recommended to disable such download managers when trying to receive files.
+
+### Security
 
 Chitchatter undergoes [weekly security audits](https://github.com/jeremyckahn/chitchatter/blob/develop/.github/workflows/security.yml) to identify and address potential vulnerabilities. Reports from all audits can be found in [**Issues**](https://github.com/jeremyckahn/chitchatter/issues?q=%22Security+Report+-+%22).
 
