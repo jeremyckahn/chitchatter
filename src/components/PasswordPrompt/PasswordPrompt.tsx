@@ -1,4 +1,5 @@
-import { ChangeEvent, useState, SyntheticEvent } from 'react'
+import { ChangeEvent, useState, SyntheticEvent, useMemo } from 'react'
+import { useNavigate } from 'react-router-dom'
 import Button from '@mui/material/Button'
 import TextField from '@mui/material/TextField'
 import Dialog from '@mui/material/Dialog'
@@ -6,6 +7,7 @@ import DialogActions from '@mui/material/DialogActions'
 import DialogContent from '@mui/material/DialogContent'
 import DialogContentText from '@mui/material/DialogContentText'
 import DialogTitle from '@mui/material/DialogTitle'
+import { QueryParamKeys } from 'models/shell'
 
 interface PasswordPromptProps {
   isOpen: boolean
@@ -18,6 +20,15 @@ export const PasswordPrompt = ({
 }: PasswordPromptProps) => {
   const [password, setPassword] = useState('')
 
+  const queryParams = useMemo(
+    () => new URLSearchParams(window.location.search),
+    []
+  )
+
+  const isEmbedded = queryParams.has(QueryParamKeys.IS_EMBEDDED)
+
+  const navigate = useNavigate()
+
   const handleFormSubmit = (event: SyntheticEvent<HTMLFormElement>) => {
     event.preventDefault()
     onPasswordEntered(password)
@@ -25,6 +36,10 @@ export const PasswordPrompt = ({
 
   const handlePasswordChange = (e: ChangeEvent<HTMLInputElement>) => {
     setPassword(e.target.value)
+  }
+
+  const handleGoBackClick = () => {
+    navigate(-1)
   }
 
   return (
@@ -55,6 +70,11 @@ export const PasswordPrompt = ({
           />
         </DialogContent>
         <DialogActions>
+          {!isEmbedded && (
+            <Button color="secondary" onClick={handleGoBackClick}>
+              Go back
+            </Button>
+          )}
           <Button type="submit" disabled={password.length === 0}>
             Submit
           </Button>
