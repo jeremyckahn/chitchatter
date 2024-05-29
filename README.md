@@ -21,6 +21,7 @@ Chitchatter uses [Vite](https://vitejs.dev/). The secure networking and streamin
 
 ## Status
 
+- ** ⚠️ Chitchatter currently DOES NOT have a TURN server available to enable reliable peer connections. The project needs your help! Please see [#112](https://github.com/jeremyckahn/chitchatter/issues/112#issuecomment-2136285630) for more info.**
 - [![Known Vulnerabilities](https://snyk.io/test/github/jeremyckahn/chitchatter/badge.svg?targetFile=package.json)](https://snyk.io/test/github/jeremyckahn/chitchatter?targetFile=package.json)
 
 ## How to use it
