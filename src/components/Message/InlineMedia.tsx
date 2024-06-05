@@ -1,5 +1,6 @@
 import { useContext, useEffect, useRef, useState } from 'react'
 import { TorrentFile } from 'webtorrent'
+import Box from '@mui/material/Box'
 import CircularProgress from '@mui/material/CircularProgress'
 import Typography from '@mui/material/Typography'
 
@@ -37,13 +38,13 @@ export const InlineFile = ({ file }: InlineFileProps) => {
   }, [file, containerRef, shellContext.roomId])
 
   return (
-    <div ref={containerRef}>
+    <Box ref={containerRef} sx={{ '& img': { maxWidth: '100%' } }}>
       {didRenderingMediaFail && (
         <Typography sx={{ fontStyle: 'italic' }}>
           Media failed to render
         </Typography>
       )}
-    </div>
+    </Box>
   )
 }
 
