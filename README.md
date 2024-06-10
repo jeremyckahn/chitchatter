@@ -85,7 +85,7 @@ If you don't agree with the direction of the project, you are welcome to fork Ch
 
 ### 🏗️ Support and custom development
 
-I'm willing to do paid installations and customizations of Chitchatter for your needs. If you'd like to contract me to make a version of Chitchatter that is custom built for you, please email me at jeremyckahn@gmail.com and let me know what you have in mind to get started.
+I'm willing to do paid installations and customizations of Chitchatter for your needs. If you'd like to contract me to make a version of Chitchatter that is custom built for you, please email me at me@jeremyckahn.com and let me know what you have in mind to get started.
 
 ---
 
@@ -230,6 +230,10 @@ Build the app with `npm run build`, and then serve the `dist` directory. Any sta
 #### Runtime configuration
 
 Explore the files in `src/config` to modify pairing and relay server configuration.
+
+#### Theme customization
+
+Chitchatter utilizes the [MUI component library](https://mui.com/) which is [themeable](https://mui.com/material-ui/customization/theming/). You can customize Chitchatter's look and feel by modifying [the shell theme definition](https://github.com/jeremyckahn/chitchatter/blob/dc78137702bb9d6bf1be289e469e080cd7d5dc8b/src/components/Shell/useShellTheme.ts#L11-L18).
 
 ### Troubleshooting
 
