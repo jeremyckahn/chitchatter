@@ -8,7 +8,7 @@ import {
   useState,
 } from 'react'
 import CssBaseline from '@mui/material/CssBaseline'
-import { ThemeProvider, createTheme } from '@mui/material/styles'
+import { ThemeProvider } from '@mui/material/styles'
 import Box from '@mui/material/Box'
 import Typography from '@mui/material/Typography'
 import { AlertColor } from '@mui/material/Alert'
@@ -45,6 +45,7 @@ import {
   EnvironmentUnsupportedDialog,
   isEnvironmentSupported,
 } from './EnvironmentUnsupportedDialog'
+import { useShellTheme } from './useShellTheme'
 
 export interface ShellProps extends PropsWithChildren {
   userPeerId: string
@@ -57,17 +58,7 @@ export const Shell = ({ appNeedsUpdate, children, userPeerId }: ShellProps) => {
   const { getUserSettings, updateUserSettings } = useContext(SettingsContext)
   const isEmbedded = queryParams.get(QueryParamKeys.IS_EMBEDDED) !== null
 
-  const { colorMode } = getUserSettings()
-
-  const theme = useMemo(
-    () =>
-      createTheme({
-        palette: {
-          mode: colorMode,
-        },
-      }),
-    [colorMode]
-  )
+  const theme = useShellTheme()
 
   const [windowWidth] = useWindowSize()
   const defaultSidebarsOpen = windowWidth >= theme.breakpoints.values.lg
