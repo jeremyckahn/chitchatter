@@ -1,4 +1,4 @@
-import { joinRoom, Room, BaseRoomConfig, DataPayload } from 'trystero'
+import { joinRoom, Room, BaseRoomConfig, DataPayload } from 'trystero/torrent'
 import { RelayConfig } from 'trystero/torrent'
 
 import { sleep } from 'lib/sleep'

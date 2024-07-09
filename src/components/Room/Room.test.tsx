@@ -28,7 +28,7 @@ mockTimeService.now = () => mockNowTime
 
 vi.mock('../../lib/Audio')
 
-vi.mock('trystero', () => ({
+vi.mock('trystero/torrent', () => ({
   joinRoom: () => ({
     makeAction: () => [mockMessagedSender, () => {}, () => {}],
     ping: () => Promise.resolve(0),
