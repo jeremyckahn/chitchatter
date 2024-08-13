@@ -44,7 +44,7 @@
     "trystero": "^0.20.0",
     "typeface-public-sans": "^1.1.13",
     "typeface-roboto": "^1.1.13",
-    "typescript": "^5.5.3",
+    "typescript": "^5.5.4",
     "uuid": "^8.3.2",
     "vite-plugin-babel-macros": "^1.0.6",
     "web-vitals": "^2.1.4",
