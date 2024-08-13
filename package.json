@@ -12,7 +12,7 @@
     "@mui/material": "^5.16.4",
     "@react-hook/debounce": "^4.0.0",
     "@react-hook/window-size": "^3.1.1",
-    "@testing-library/jest-dom": "^6.4.6",
+    "@testing-library/jest-dom": "^6.4.7",
     "@testing-library/react": "^15.0.7",
     "@testing-library/user-event": "^14.5.2",
     "@types/node": "^18.19.41",
