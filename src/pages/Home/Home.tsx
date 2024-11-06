@@ -101,7 +101,7 @@ export function Home({ userId }: HomeProps) {
           </Typography>
           <FormControl fullWidth>
             <TextField
-              label="Room name (generated client-side)"
+              label="Room name (generated on your device)"
               variant="outlined"
               value={roomName}
               onChange={handleRoomNameChange}
