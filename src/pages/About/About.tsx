@@ -57,10 +57,6 @@ When you connect with a peer, Chitchatter automatically attempts to use [public-
 
 All public and private keys are generated locally. Your private key is never sent to any peer or server.
 
-##### Community rooms
-
-There is [a public list of community rooms](https://github.com/jeremyckahn/chitchatter/wiki/Chitchatter-Community-Rooms) that you can join to discuss various topics.
-
 ##### Conversation backfilling
 
 Conversation transcripts are erased from local memory as soon as you close the page or navigate away from the room. Conversations are only ever held in volatile memory and never persisted to any disk by Chitchatter.
