@@ -22,6 +22,7 @@ import { Form, Main } from 'components/Elements'
 import Logo from 'img/logo.svg?react'
 
 import { EmbedCodeDialog } from './EmbedCodeDialog'
+import { CommunityRoomSelector } from './CommunityRoomSelector'
 
 const StyledLogo = styled(Logo)({})
 
@@ -161,6 +162,10 @@ export function Home({ userId }: HomeProps) {
           </Box>
         </Form>
       </Main>
+      <Divider sx={{ my: 2 }} />
+      <Box maxWidth={theme.breakpoints.values.sm} mx="auto" px={2}>
+        <CommunityRoomSelector />
+      </Box>
       <Divider sx={{ my: 2 }} />
       <Box
         sx={{
