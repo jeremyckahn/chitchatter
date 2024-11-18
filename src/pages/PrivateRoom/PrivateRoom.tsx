@@ -6,6 +6,12 @@ import { ShellContext } from 'contexts/ShellContext'
 import { notification } from 'services/Notification'
 import { PasswordPrompt } from 'components/PasswordPrompt'
 import { encryption } from 'services/Encryption'
+import { useRoom } from 'components/Room/useRoom'
+import { rtcConfig } from 'config/rtcConfig'
+import { trackerUrls } from 'config/trackerUrls'
+import { v4 } from 'uuid'
+import { time } from 'lib/Time'
+import { SettingsContext } from 'contexts/SettingsContext'
 
 interface PublicRoomProps {
   userId: string
@@ -14,6 +20,7 @@ interface PublicRoomProps {
 export function PrivateRoom({ userId }: PublicRoomProps) {
   const { roomId = '' } = useParams()
   const { setTitle } = useContext(ShellContext)
+  const settingsContext = useContext(SettingsContext)
 
   const urlParams = new URLSearchParams(window.location.hash.substring(1))
   // Clear secret from address bar
@@ -39,12 +46,32 @@ export function PrivateRoom({ userId }: PublicRoomProps) {
 
   const awaitingSecret = secret.length === 0
 
+  const { publicKey } = settingsContext.getUserSettings()
+
+  const roomProps = useRoom(
+    {
+      appId: `${encodeURI(window.location.origin)}_${process.env.VITE_NAME}`,
+      relayUrls: trackerUrls,
+      rtcConfig,
+      relayRedundancy: 4,
+      password: secret,
+    },
+    {
+      roomId,
+      userId,
+      getUuid: v4,
+      publicKey,
+      encryptionService: encryption,
+      timeService: time,
+    }
+  )
+
   return awaitingSecret ? (
     <PasswordPrompt
       isOpen={awaitingSecret}
       onPasswordEntered={handlePasswordEntered}
     />
   ) : (
-    <Room userId={userId} roomId={roomId} password={secret} />
+    <Room userId={userId} {...roomProps} />
   )
 }

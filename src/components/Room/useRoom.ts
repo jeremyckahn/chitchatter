@@ -52,6 +52,7 @@ interface UserMetadata extends Record<string, any> {
   publicKeyString: string
 }
 
+// FIXME: Private room peers are joining too early
 export function useRoom(
   { password, ...roomConfig }: BaseRoomConfig & RelayConfig,
   {
