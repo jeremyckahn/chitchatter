@@ -61,7 +61,8 @@
     "test": "vitest",
     "prepare": "husky install",
     "prettier": "prettier \"**/*.{ts,tsx}\" --write",
-    "lint": "eslint src --max-warnings=0"
+    "lint": "eslint src --max-warnings=0",
+    "check:types": "tsc && echo \"No type errors.\""
   },
   "eslintConfig": {
     "extends": [

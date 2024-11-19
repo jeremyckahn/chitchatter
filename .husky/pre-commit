@@ -5,4 +5,5 @@ set -e
 
 npx pretty-quick --staged
 npm run lint
+npm run check:types
 CI=true npm test
