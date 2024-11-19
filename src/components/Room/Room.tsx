@@ -4,11 +4,16 @@ import Zoom from '@mui/material/Zoom'
 import Box from '@mui/material/Box'
 import Divider from '@mui/material/Divider'
 import useTheme from '@mui/material/styles/useTheme'
+import { v4 as uuid } from 'uuid'
 
+import { rtcConfig } from 'config/rtcConfig'
+import { trackerUrls } from 'config/trackerUrls'
+import { time } from 'lib/Time'
 import { RoomContext } from 'contexts/RoomContext'
 import { ShellContext } from 'contexts/ShellContext'
 import { MessageForm } from 'components/MessageForm'
 import { ChatTranscript } from 'components/ChatTranscript'
+import { encryption } from 'services/Encryption'
 import { SettingsContext } from 'contexts/SettingsContext'
 
 import { useRoom } from './useRoom'
@@ -20,24 +25,55 @@ import { RoomVideoDisplay } from './RoomVideoDisplay'
 import { RoomShowMessagesControls } from './RoomShowMessagesControls'
 import { TypingStatusBar } from './TypingStatusBar'
 
-export interface RoomProps extends ReturnType<typeof useRoom> {
+export interface RoomProps {
+  appId?: string
+  getUuid?: typeof uuid
+  password?: string
+  roomId: string
   userId: string
+  encryptionService?: typeof encryption
+  timeService?: typeof time
 }
 
 export function Room({
+  appId = `${encodeURI(window.location.origin)}_${process.env.VITE_NAME}`,
+  getUuid = uuid,
+  encryptionService = encryption,
+  timeService = time,
+  roomId,
+  password,
   userId,
-  isMessageSending,
-  handleInlineMediaUpload,
-  handleMessageChange,
-  messageLog,
-  peerRoom,
-  roomContextValue,
-  sendMessage,
-  showVideoDisplay,
 }: RoomProps) {
   const theme = useTheme()
   const settingsContext = useContext(SettingsContext)
-  const { showActiveTypingStatus } = settingsContext.getUserSettings()
+  const { showActiveTypingStatus, publicKey } =
+    settingsContext.getUserSettings()
+  const {
+    isMessageSending,
+    handleInlineMediaUpload,
+    handleMessageChange,
+    messageLog,
+    peerRoom,
+    roomContextValue,
+    sendMessage,
+    showVideoDisplay,
+  } = useRoom(
+    {
+      appId,
+      relayUrls: trackerUrls,
+      rtcConfig,
+      password,
+      relayRedundancy: 4,
+    },
+    {
+      roomId,
+      userId,
+      getUuid,
+      publicKey,
+      encryptionService,
+      timeService,
+    }
+  )
 
   const handleMessageSubmit = async (message: string) => {
     await sendMessage(message)
