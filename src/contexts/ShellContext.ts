@@ -1,18 +1,23 @@
-import { createContext, Dispatch, SetStateAction } from 'react'
-
-import { AlertOptions } from 'models/shell'
 import {
-  AudioState,
-  ScreenShareState,
-  VideoState,
-  Peer,
-  AudioChannel,
-  PeerAudioChannelState,
-  AudioChannelName,
-} from 'models/chat'
-import { PeerConnectionType } from 'lib/PeerRoom'
+  createContext,
+  Dispatch,
+  MutableRefObject,
+  SetStateAction,
+} from 'react'
+
 import { ConnectionTestResults } from 'components/Shell/useConnectionTest'
 import { TrackerConnection } from 'lib/ConnectionTest'
+import { PeerConnectionType, PeerRoom } from 'lib/PeerRoom'
+import {
+  AudioChannel,
+  AudioChannelName,
+  AudioState,
+  Peer,
+  PeerAudioChannelState,
+  ScreenShareState,
+  VideoState,
+} from 'models/chat'
+import { AlertOptions } from 'models/shell'
 
 interface ShellContextProps {
   isEmbedded: boolean
@@ -47,6 +52,7 @@ interface ShellContextProps {
   setCustomUsername: Dispatch<SetStateAction<string>>
   connectionTestResults: ConnectionTestResults
   updatePeer: (peerId: string, updatedProperties: Partial<Peer>) => void
+  peerRoomRef: MutableRefObject<PeerRoom | null>
 }
 
 export const ShellContext = createContext<ShellContextProps>({
@@ -87,4 +93,5 @@ export const ShellContext = createContext<ShellContextProps>({
     trackerConnection: TrackerConnection.SEARCHING,
   },
   updatePeer: () => {},
+  peerRoomRef: { current: null },
 })

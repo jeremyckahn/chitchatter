@@ -5,6 +5,7 @@ import {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
 } from 'react'
 import CssBaseline from '@mui/material/CssBaseline'
@@ -29,7 +30,7 @@ import {
   AudioChannelName,
 } from 'models/chat'
 import { ErrorBoundary } from 'components/ErrorBoundary'
-import { PeerConnectionType } from 'lib/PeerRoom'
+import { PeerConnectionType, PeerRoom } from 'lib/PeerRoom'
 
 import { Drawer } from './Drawer'
 import { UpgradeDialog } from './UpgradeDialog'
@@ -63,6 +64,7 @@ export const Shell = ({ appNeedsUpdate, children, userPeerId }: ShellProps) => {
   const [windowWidth] = useWindowSize()
   const defaultSidebarsOpen = windowWidth >= theme.breakpoints.values.lg
 
+  const peerRoomRef = useRef<PeerRoom>(null)
   const [isAlertShowing, setIsAlertShowing] = useState(false)
   const [isDrawerOpen, setIsDrawerOpen] = useState(defaultSidebarsOpen)
   const [isQRCodeDialogOpen, setIsQRCodeDialogOpen] = useState(false)
@@ -159,6 +161,7 @@ export const Shell = ({ appNeedsUpdate, children, userPeerId }: ShellProps) => {
       setCustomUsername,
       connectionTestResults,
       updatePeer,
+      peerRoomRef,
     }),
     [
       isEmbedded,
@@ -189,6 +192,7 @@ export const Shell = ({ appNeedsUpdate, children, userPeerId }: ShellProps) => {
       setCustomUsername,
       connectionTestResults,
       updatePeer,
+      peerRoomRef,
     ]
   )
 

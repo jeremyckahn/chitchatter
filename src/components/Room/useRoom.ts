@@ -65,10 +65,6 @@ export function useRoom(
 ) {
   const isPrivate = password !== undefined
 
-  const [peerRoom] = useState(
-    () => new PeerRoom({ password: password ?? roomId, ...roomConfig }, roomId)
-  )
-
   const {
     peerList,
     setPeerList,
@@ -79,7 +75,16 @@ export function useRoom(
     setPassword,
     customUsername,
     updatePeer,
+    peerRoomRef,
   } = useContext(ShellContext)
+
+  const [peerRoom] = useState(
+    () =>
+      peerRoomRef.current ??
+      new PeerRoom({ password: password ?? roomId, ...roomConfig }, roomId)
+  )
+
+  peerRoomRef.current = peerRoom
 
   const settingsContext = useContext(SettingsContext)
   const { showActiveTypingStatus } = settingsContext.getUserSettings()
@@ -188,9 +193,10 @@ export function useRoom(
     return () => {
       sendTypingStatusChange({ isTyping: false })
       peerRoom.leaveRoom()
+      peerRoomRef.current = null
       setPeerList([])
     }
-  }, [peerRoom, setPeerList, sendTypingStatusChange])
+  }, [peerRoom, setPeerList, sendTypingStatusChange, peerRoomRef])
 
   useEffect(() => {
     setPassword(password)
