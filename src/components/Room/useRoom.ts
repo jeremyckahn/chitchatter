@@ -6,7 +6,7 @@ import { useDebounce } from '@react-hook/debounce'
 
 import { ShellContext } from 'contexts/ShellContext'
 import { SettingsContext } from 'contexts/SettingsContext'
-import { PeerActions } from 'models/network'
+import { PeerAction } from 'models/network'
 import {
   AudioState,
   Message,
@@ -175,7 +175,7 @@ export function useRoom(
   )
 
   const [sendTypingStatusChange, receiveTypingStatusChange] =
-    peerRoom.makeAction<TypingStatus>(PeerActions.TYPING_STATUS_CHANGE)
+    peerRoom.makeAction<TypingStatus>(PeerAction.TYPING_STATUS_CHANGE)
 
   const [isTyping, setIsTypingDebounced, setIsTyping] = useDebounce(
     false,
@@ -219,17 +219,17 @@ export function useRoom(
   }, [isShowingMessages, setUnreadMessages])
 
   const [sendPeerMetadata, receivePeerMetadata] =
-    peerRoom.makeAction<UserMetadata>(PeerActions.PEER_METADATA)
+    peerRoom.makeAction<UserMetadata>(PeerAction.PEER_METADATA)
 
   const [sendMessageTranscript, receiveMessageTranscript] = peerRoom.makeAction<
     Array<ReceivedMessage | ReceivedInlineMedia>
-  >(PeerActions.MESSAGE_TRANSCRIPT)
+  >(PeerAction.MESSAGE_TRANSCRIPT)
 
   const [sendPeerMessage, receivePeerMessage] =
-    peerRoom.makeAction<UnsentMessage>(PeerActions.MESSAGE)
+    peerRoom.makeAction<UnsentMessage>(PeerAction.MESSAGE)
 
   const [sendPeerInlineMedia, receivePeerInlineMedia] =
-    peerRoom.makeAction<UnsentInlineMedia>(PeerActions.MEDIA_MESSAGE)
+    peerRoom.makeAction<UnsentInlineMedia>(PeerAction.MEDIA_MESSAGE)
 
   const { privateKey } = settingsContext.getUserSettings()
 

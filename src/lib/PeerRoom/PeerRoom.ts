@@ -3,6 +3,7 @@ import { RelayConfig } from 'trystero/torrent'
 
 import { sleep } from 'lib/sleep'
 import { StreamType } from 'models/chat'
+import { PeerAction } from 'models/network'
 
 export enum PeerHookType {
   NEW_PEER = 'NEW_PEER',
@@ -168,8 +169,8 @@ export class PeerRoom {
     return peerConnections
   }
 
-  makeAction = <T extends DataPayload>(namespace: string) => {
-    return this.room.makeAction<T>(namespace)
+  makeAction = <T extends DataPayload>(peerAction: PeerAction) => {
+    return this.room.makeAction<T>(peerAction)
   }
 
   addStream = (

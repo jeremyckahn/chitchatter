@@ -1,7 +1,7 @@
 import { useContext, useEffect, useCallback, useState } from 'react'
 
 import { ShellContext } from 'contexts/ShellContext'
-import { PeerActions } from 'models/network'
+import { PeerAction } from 'models/network'
 import {
   AudioState,
   Peer,
@@ -40,7 +40,7 @@ export function useRoomAudio({ peerRoom }: UseRoomAudioConfig) {
 
   const [sendAudioChange, receiveAudioChange] = peerRoom.makeAction<
     Partial<PeerAudioChannelState>
-  >(PeerActions.AUDIO_CHANGE)
+  >(PeerAction.AUDIO_CHANGE)
 
   receiveAudioChange((peerAudioChannelState, peerId) => {
     setPeerList(peerList => {
