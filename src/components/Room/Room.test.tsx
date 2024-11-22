@@ -119,7 +119,7 @@ describe('Room', () => {
     expect(textInput).toHaveValue('')
   })
 
-  test('message is sent to peer', async () => {
+  test('message is sent to peers', async () => {
     render(
       <RouteStub>
         <RoomStub
@@ -136,11 +136,14 @@ describe('Room', () => {
     await userEvent.type(textInput, 'hello')
     await userEvent.click(sendButton)
 
-    expect(mockMessagedSender).toHaveBeenCalledWith({
-      authorId: mockUserId,
-      text: 'hello',
-      timeSent: mockNowTime,
-      id: 'abc123',
-    })
+    expect(mockMessagedSender).toHaveBeenCalledWith(
+      {
+        authorId: mockUserId,
+        text: 'hello',
+        timeSent: mockNowTime,
+        id: 'abc123',
+      },
+      null
+    )
   })
 })

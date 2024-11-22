@@ -16,11 +16,13 @@ import ListItem from '@mui/material/ListItem'
 import ListItemText from '@mui/material/ListItemText'
 import Tooltip from '@mui/material/Tooltip'
 import Typography from '@mui/material/Typography'
-import { useState } from 'react'
+import useTheme from '@mui/material/styles/useTheme'
+import { useContext, useState } from 'react'
 
 import { AudioVolume } from 'components/AudioVolume'
 import { PeerNameDisplay } from 'components/PeerNameDisplay'
 import { PublicKey } from 'components/PublicKey'
+import { Room } from 'components/Room'
 import { PeerConnectionType } from 'lib/PeerRoom'
 import {
   AudioChannel,
@@ -28,6 +30,7 @@ import {
   Peer,
   PeerVerificationState,
 } from 'models/chat'
+import { SettingsContext } from 'contexts/SettingsContext'
 
 import { PeerDownloadFileButton } from './PeerDownloadFileButton'
 
@@ -62,6 +65,9 @@ export const PeerListItem = ({
   peerConnectionTypes,
   peerAudioChannels,
 }: PeerListItemProps) => {
+  const theme = useTheme()
+  const { getUserSettings } = useContext(SettingsContext)
+  const { userId } = getUserSettings()
   const [showPeerDialog, setShowPeerDialog] = useState(false)
 
   const hasPeerConnection = peer.peerId in peerConnectionTypes
@@ -151,7 +157,7 @@ export const PeerListItem = ({
           )}
         </ListItemText>
       </ListItem>
-      <Dialog open={showPeerDialog} onClose={handleDialogClose}>
+      <Dialog open={showPeerDialog} onClose={handleDialogClose} keepMounted>
         <DialogTitle sx={{ display: 'flex', alignItems: 'center' }}>
           {verificationStateDisplayMap[peer.verificationState]}
           <Box component="span" sx={{ ml: 1 }}>
@@ -169,6 +175,15 @@ export const PeerListItem = ({
               <PublicKey publicKey={peer.publicKey} />
             </AccordionDetails>
           </Accordion>
+          <Box
+            mt={1}
+            display="flex"
+            flexDirection="column"
+            minHeight="350px"
+            bgcolor={theme.palette.background.paper}
+          >
+            <Room roomId="" userId={userId} targetPeerId={peer.peerId} />
+          </Box>
         </DialogContent>
         <DialogActions>
           <Button onClick={handleDialogClose}>Close</Button>

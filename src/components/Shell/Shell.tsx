@@ -17,7 +17,11 @@ import MuiDrawer from '@mui/material/Drawer'
 import Link from '@mui/material/Link'
 import { useWindowSize } from '@react-hook/window-size'
 
-import { ShellContext } from 'contexts/ShellContext'
+import {
+  MessageLog,
+  ShellContext,
+  ShellMessageLog,
+} from 'contexts/ShellContext'
 import { SettingsContext } from 'contexts/SettingsContext'
 import { AlertOptions, QueryParamKeys } from 'models/shell'
 import {
@@ -103,6 +107,36 @@ export const Shell = ({ appNeedsUpdate, children, userPeerId }: ShellProps) => {
     Record<string, AudioChannel>
   >({})
 
+  const [shellMessageLog, setShellMessageLog] = useState<ShellMessageLog>({
+    groupMessageLog: [],
+    directMessageLog: {},
+  })
+
+  const messageLog = shellMessageLog
+
+  const setMessageLog = useCallback(
+    (messageLog: MessageLog, targetPeerId: string | null) => {
+      setShellMessageLog(prev => {
+        const isDirectMessageLog = typeof targetPeerId === 'string'
+
+        const shellMessageLog: ShellMessageLog = {
+          groupMessageLog: isDirectMessageLog
+            ? prev.groupMessageLog
+            : messageLog,
+          directMessageLog: {
+            ...prev.directMessageLog,
+            ...(isDirectMessageLog && {
+              [targetPeerId]: messageLog,
+            }),
+          },
+        }
+
+        return shellMessageLog
+      })
+    },
+    []
+  )
+
   const showAlert = useCallback((message: string, options?: AlertOptions) => {
     setAlertText(message)
     setAlertSeverity(options?.severity ?? 'info')
@@ -162,6 +196,8 @@ export const Shell = ({ appNeedsUpdate, children, userPeerId }: ShellProps) => {
       connectionTestResults,
       updatePeer,
       peerRoomRef,
+      messageLog,
+      setMessageLog,
     }),
     [
       isEmbedded,
@@ -193,6 +229,8 @@ export const Shell = ({ appNeedsUpdate, children, userPeerId }: ShellProps) => {
       connectionTestResults,
       updatePeer,
       peerRoomRef,
+      messageLog,
+      setMessageLog,
     ]
   )
 

@@ -1,17 +1,21 @@
-import { HTMLAttributes, useRef, useEffect, useState, useContext } from 'react'
-import Box from '@mui/material/Box'
+import { useRef, useEffect, useState, useContext } from 'react'
+import Box, { BoxProps } from '@mui/material/Box'
 import useTheme from '@mui/material/styles/useTheme'
 
 import { Message as IMessage, InlineMedia } from 'models/chat'
 import { Message } from 'components/Message'
 import { ShellContext } from 'contexts/ShellContext'
 
-export interface ChatTranscriptProps extends HTMLAttributes<HTMLDivElement> {
+export interface ChatTranscriptProps extends BoxProps {
   messageLog: Array<IMessage | InlineMedia>
   userId: string
 }
 
-export const ChatTranscript = ({ messageLog, userId }: ChatTranscriptProps) => {
+export const ChatTranscript = ({
+  messageLog,
+  userId,
+  sx,
+}: ChatTranscriptProps) => {
   const { showRoomControls } = useContext(ShellContext)
   const theme = useTheme()
   const boxRef = useRef<HTMLDivElement>(null)
@@ -62,17 +66,20 @@ export const ChatTranscript = ({ messageLog, userId }: ChatTranscriptProps) => {
     <Box
       ref={boxRef}
       className="ChatTranscript"
-      sx={{
-        display: 'flex',
-        flexDirection: 'column',
-        flexGrow: 1,
-        overflow: 'auto',
-        pb: transcriptMinPadding,
-        pt: showRoomControls ? theme.spacing(10) : theme.spacing(2),
-        px: `max(${transcriptPaddingX}, ${transcriptMinPadding})`,
-        transition: `padding-top ${theme.transitions.duration.short}ms ${theme.transitions.easing.easeInOut}`,
-        width: '100%',
-      }}
+      sx={[
+        {
+          display: 'flex',
+          flexDirection: 'column',
+          flexGrow: 1,
+          overflow: 'auto',
+          pb: transcriptMinPadding,
+          pt: showRoomControls ? theme.spacing(10) : theme.spacing(2),
+          px: `max(${transcriptPaddingX}, ${transcriptMinPadding})`,
+          transition: `padding-top ${theme.transitions.duration.short}ms ${theme.transitions.easing.easeInOut}`,
+          width: '100%',
+        },
+        ...(Array.isArray(sx) ? sx : [sx]),
+      ]}
     >
       {messageLog.map((message, idx) => {
         const previousMessage = messageLog[idx - 1]

@@ -6,7 +6,11 @@ import { useDebounce } from '@react-hook/debounce'
 
 import { ShellContext } from 'contexts/ShellContext'
 import { SettingsContext } from 'contexts/SettingsContext'
-import { PeerAction } from 'models/network'
+import {
+  directMessageActionNamespace,
+  groupActionNamespace,
+  PeerAction,
+} from 'models/network'
 import {
   AudioState,
   Message,
@@ -44,6 +48,7 @@ interface UseRoomConfig {
   getUuid?: typeof uuid
   encryptionService?: typeof encryption
   timeService?: typeof time
+  targetPeerId?: string | null
 }
 
 interface UserMetadata extends Record<string, any> {
@@ -58,12 +63,15 @@ export function useRoom(
     roomId,
     userId,
     publicKey,
+    targetPeerId = null,
     getUuid = uuid,
     encryptionService = encryption,
     timeService = time,
   }: UseRoomConfig
 ) {
   const isPrivate = password !== undefined
+
+  const isDirectMessageRoom = typeof targetPeerId === 'string'
 
   const {
     peerList,
@@ -76,7 +84,13 @@ export function useRoom(
     customUsername,
     updatePeer,
     peerRoomRef,
+    messageLog: shellMessageLog,
+    setMessageLog: shellSetMessageLog,
   } = useContext(ShellContext)
+
+  const messageLog = isDirectMessageRoom
+    ? shellMessageLog.directMessageLog[targetPeerId] ?? []
+    : shellMessageLog.groupMessageLog
 
   const [peerRoom] = useState(
     () =>
@@ -89,9 +103,6 @@ export function useRoom(
   const settingsContext = useContext(SettingsContext)
   const { showActiveTypingStatus } = settingsContext.getUserSettings()
   const [isMessageSending, setIsMessageSending] = useState(false)
-  const [messageLog, _setMessageLog] = useState<Array<Message | InlineMedia>>(
-    []
-  )
   const [newMessageAudio] = useState(() => new Audio('/sounds/new-message.aac'))
 
   const { getDisplayUsername } = usePeerNameDisplay()
@@ -113,7 +124,10 @@ export function useRoom(
       }
     }
 
-    _setMessageLog(messages.slice(-messageTranscriptSizeLimit))
+    shellSetMessageLog(
+      messages.slice(-messageTranscriptSizeLimit),
+      targetPeerId
+    )
   }
 
   const [isShowingMessages, setIsShowingMessages] = useState(true)
@@ -174,8 +188,15 @@ export function useRoom(
     ]
   )
 
+  const peerActionNamespace = isDirectMessageRoom
+    ? directMessageActionNamespace
+    : groupActionNamespace
+
   const [sendTypingStatusChange, receiveTypingStatusChange] =
-    peerRoom.makeAction<TypingStatus>(PeerAction.TYPING_STATUS_CHANGE)
+    peerRoom.makeAction<TypingStatus>(
+      PeerAction.TYPING_STATUS_CHANGE,
+      peerActionNamespace
+    )
 
   const [isTyping, setIsTypingDebounced, setIsTyping] = useDebounce(
     false,
@@ -191,12 +212,23 @@ export function useRoom(
 
   useEffect(() => {
     return () => {
+      if (isDirectMessageRoom) return
+
       sendTypingStatusChange({ isTyping: false })
       peerRoom.leaveRoom()
       peerRoomRef.current = null
       setPeerList([])
+      shellSetMessageLog([], targetPeerId)
     }
-  }, [peerRoom, setPeerList, sendTypingStatusChange, peerRoomRef])
+  }, [
+    peerRoom,
+    setPeerList,
+    sendTypingStatusChange,
+    peerRoomRef,
+    isDirectMessageRoom,
+    shellSetMessageLog,
+    targetPeerId,
+  ])
 
   useEffect(() => {
     setPassword(password)
@@ -219,17 +251,23 @@ export function useRoom(
   }, [isShowingMessages, setUnreadMessages])
 
   const [sendPeerMetadata, receivePeerMetadata] =
-    peerRoom.makeAction<UserMetadata>(PeerAction.PEER_METADATA)
+    peerRoom.makeAction<UserMetadata>(
+      PeerAction.PEER_METADATA,
+      peerActionNamespace
+    )
 
   const [sendMessageTranscript, receiveMessageTranscript] = peerRoom.makeAction<
     Array<ReceivedMessage | ReceivedInlineMedia>
-  >(PeerAction.MESSAGE_TRANSCRIPT)
+  >(PeerAction.MESSAGE_TRANSCRIPT, peerActionNamespace)
 
   const [sendPeerMessage, receivePeerMessage] =
-    peerRoom.makeAction<UnsentMessage>(PeerAction.MESSAGE)
+    peerRoom.makeAction<UnsentMessage>(PeerAction.MESSAGE, peerActionNamespace)
 
   const [sendPeerInlineMedia, receivePeerInlineMedia] =
-    peerRoom.makeAction<UnsentInlineMedia>(PeerAction.MEDIA_MESSAGE)
+    peerRoom.makeAction<UnsentInlineMedia>(
+      PeerAction.MEDIA_MESSAGE,
+      peerActionNamespace
+    )
 
   const { privateKey } = settingsContext.getUserSettings()
 
@@ -252,7 +290,8 @@ export function useRoom(
     setIsTyping(false)
     setIsMessageSending(true)
     setMessageLog([...messageLog, unsentMessage])
-    await sendPeerMessage(unsentMessage)
+
+    await sendPeerMessage(unsentMessage, targetPeerId)
 
     setMessageLog([
       ...messageLog,

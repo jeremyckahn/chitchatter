@@ -12,12 +12,21 @@ import {
   AudioChannel,
   AudioChannelName,
   AudioState,
+  InlineMedia,
+  Message,
   Peer,
   PeerAudioChannelState,
   ScreenShareState,
   VideoState,
 } from 'models/chat'
 import { AlertOptions } from 'models/shell'
+
+export type MessageLog = (Message | InlineMedia)[]
+
+export interface ShellMessageLog {
+  groupMessageLog: MessageLog
+  directMessageLog: Record<string, MessageLog>
+}
 
 interface ShellContextProps {
   isEmbedded: boolean
@@ -53,6 +62,8 @@ interface ShellContextProps {
   connectionTestResults: ConnectionTestResults
   updatePeer: (peerId: string, updatedProperties: Partial<Peer>) => void
   peerRoomRef: MutableRefObject<PeerRoom | null>
+  messageLog: ShellMessageLog
+  setMessageLog: (messageLog: MessageLog, targetPeerId: string | null) => void
 }
 
 export const ShellContext = createContext<ShellContextProps>({
@@ -94,4 +105,6 @@ export const ShellContext = createContext<ShellContextProps>({
   },
   updatePeer: () => {},
   peerRoomRef: { current: null },
+  messageLog: { groupMessageLog: [], directMessageLog: {} },
+  setMessageLog: () => {},
 })

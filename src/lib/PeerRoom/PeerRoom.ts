@@ -169,8 +169,11 @@ export class PeerRoom {
     return peerConnections
   }
 
-  makeAction = <T extends DataPayload>(peerAction: PeerAction) => {
-    return this.room.makeAction<T>(peerAction)
+  makeAction = <T extends DataPayload>(
+    peerAction: PeerAction,
+    namespace: string
+  ) => {
+    return this.room.makeAction<T>(`${namespace}.${peerAction}`)
   }
 
   addStream = (

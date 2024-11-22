@@ -2,7 +2,7 @@ import { useContext, useEffect, useCallback, useState } from 'react'
 
 import { RoomContext } from 'contexts/RoomContext'
 import { ShellContext } from 'contexts/ShellContext'
-import { PeerAction } from 'models/network'
+import { groupActionNamespace, PeerAction } from 'models/network'
 import { VideoState, Peer, StreamType } from 'models/chat'
 import { PeerRoom, PeerHookType, PeerStreamType } from 'lib/PeerRoom'
 import { isRecord } from 'lib/type-guards'
@@ -69,7 +69,8 @@ export function useRoomVideo({ peerRoom }: UseRoomVideoConfig) {
   }, [peerRoom, selfVideoStream, setSelfVideoStream])
 
   const [sendVideoChange, receiveVideoChange] = peerRoom.makeAction<VideoState>(
-    PeerAction.VIDEO_CHANGE
+    PeerAction.VIDEO_CHANGE,
+    groupActionNamespace
   )
 
   receiveVideoChange((videoState, peerId) => {

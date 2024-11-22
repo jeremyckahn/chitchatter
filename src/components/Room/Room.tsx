@@ -33,6 +33,7 @@ export interface RoomProps {
   userId: string
   encryptionService?: typeof encryption
   timeService?: typeof time
+  targetPeerId?: string
 }
 
 export function Room({
@@ -43,6 +44,7 @@ export function Room({
   roomId,
   password,
   userId,
+  targetPeerId,
 }: RoomProps) {
   const theme = useTheme()
   const settingsContext = useContext(SettingsContext)
@@ -72,8 +74,11 @@ export function Room({
       publicKey,
       encryptionService,
       timeService,
+      targetPeerId,
     }
   )
+
+  const isDirectMessageRoom = typeof targetPeerId === 'string'
 
   const handleMessageSubmit = async (message: string) => {
     await sendMessage(message)
@@ -105,32 +110,34 @@ export function Room({
             overflow: 'auto',
           }}
         >
-          <Zoom in={showRoomControls}>
-            <Box
-              sx={{
-                alignItems: 'flex-start',
-                display: 'flex',
-                justifyContent: 'center',
-                overflow: 'visible',
-                height: 0,
-                position: 'relative',
-                top: theme.spacing(1),
-              }}
-            >
-              <RoomAudioControls peerRoom={peerRoom} />
-              <RoomVideoControls peerRoom={peerRoom} />
-              <RoomScreenShareControls peerRoom={peerRoom} />
-              <RoomFileUploadControls
-                peerRoom={peerRoom}
-                onInlineMediaUpload={handleInlineMediaUpload}
-              />
-              <Zoom in={showVideoDisplay} mountOnEnter unmountOnExit>
-                <span>
-                  <RoomShowMessagesControls />
-                </span>
-              </Zoom>
-            </Box>
-          </Zoom>
+          {!isDirectMessageRoom && (
+            <Zoom in={showRoomControls}>
+              <Box
+                sx={{
+                  alignItems: 'flex-start',
+                  display: 'flex',
+                  justifyContent: 'center',
+                  overflow: 'visible',
+                  height: 0,
+                  position: 'relative',
+                  top: theme.spacing(1),
+                }}
+              >
+                <RoomAudioControls peerRoom={peerRoom} />
+                <RoomVideoControls peerRoom={peerRoom} />
+                <RoomScreenShareControls peerRoom={peerRoom} />
+                <RoomFileUploadControls
+                  peerRoom={peerRoom}
+                  onInlineMediaUpload={handleInlineMediaUpload}
+                />
+                <Zoom in={showVideoDisplay} mountOnEnter unmountOnExit>
+                  <span>
+                    <RoomShowMessagesControls />
+                  </span>
+                </Zoom>
+              </Box>
+            </Zoom>
+          )}
           <Box
             sx={{
               display: 'flex',
@@ -157,7 +164,11 @@ export function Room({
                   height: landscape ? '100%' : '40%',
                 }}
               >
-                <ChatTranscript messageLog={messageLog} userId={userId} />
+                <ChatTranscript
+                  messageLog={messageLog}
+                  userId={userId}
+                  sx={{ pt: 1 }}
+                />
                 <Divider />
                 <Box>
                   <MessageForm
