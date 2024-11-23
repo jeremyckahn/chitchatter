@@ -1,9 +1,29 @@
-import { joinRoom, Room, BaseRoomConfig, DataPayload } from 'trystero/torrent'
+import {
+  joinRoom,
+  Room,
+  BaseRoomConfig,
+  DataPayload,
+  ActionSender,
+  ActionReceiver,
+} from 'trystero/torrent'
 import { RelayConfig } from 'trystero/torrent'
 
 import { sleep } from 'lib/sleep'
-import { StreamType } from 'models/chat'
+import {
+  ReceivedInlineMedia,
+  ReceivedMessage,
+  StreamType,
+  TypingStatus,
+  UnsentInlineMedia,
+  UnsentMessage,
+} from 'models/chat'
 import { PeerAction } from 'models/network'
+
+interface UserMetadata extends Record<string, any> {
+  userId: string
+  customUsername: string
+  publicKeyString: string
+}
 
 export enum PeerHookType {
   NEW_PEER = 'NEW_PEER',
@@ -62,6 +82,21 @@ export class PeerRoom {
     this.isProcessingPendingStreams = false
   }
 
+  sendPeerMetadata: ActionSender<UserMetadata>
+  receivePeerMetadata: ActionReceiver<UserMetadata>
+  sendMessageTranscript: ActionSender<
+    Array<ReceivedMessage | ReceivedInlineMedia>
+  >
+  receiveMessageTranscript: ActionReceiver<
+    Array<ReceivedMessage | ReceivedInlineMedia>
+  >
+  sendPeerMessage: ActionSender<UnsentMessage>
+  receivePeerMessage: ActionReceiver<UnsentMessage>
+  sendPeerInlineMedia: ActionSender<UnsentInlineMedia>
+  receivePeerInlineMedia: ActionReceiver<UnsentInlineMedia>
+  sendTypingStatusChange: ActionSender<TypingStatus>
+  receiveTypingStatusChange: ActionReceiver<TypingStatus>
+
   constructor(config: RelayConfig & BaseRoomConfig, roomId: string) {
     this.roomConfig = config
     this.room = joinRoom(this.roomConfig, roomId)
@@ -83,6 +118,18 @@ export class PeerRoom {
         peerStreamHandler(...args)
       }
     })
+    ;[this.sendPeerMetadata, this.receivePeerMetadata] =
+      this.makeAction<UserMetadata>(PeerAction.PEER_METADATA)
+    ;[this.sendMessageTranscript, this.receiveMessageTranscript] =
+      this.makeAction<Array<ReceivedMessage | ReceivedInlineMedia>>(
+        PeerAction.MESSAGE_TRANSCRIPT
+      )
+    ;[this.sendPeerMessage, this.receivePeerMessage] =
+      this.makeAction<UnsentMessage>(PeerAction.MESSAGE)
+    ;[this.sendPeerInlineMedia, this.receivePeerInlineMedia] =
+      this.makeAction<UnsentInlineMedia>(PeerAction.MEDIA_MESSAGE)
+    ;[this.sendTypingStatusChange, this.receiveTypingStatusChange] =
+      this.makeAction<TypingStatus>(PeerAction.TYPING_STATUS_CHANGE)
   }
 
   flush = () => {
@@ -169,11 +216,8 @@ export class PeerRoom {
     return peerConnections
   }
 
-  makeAction = <T extends DataPayload>(
-    peerAction: PeerAction,
-    namespace: string
-  ) => {
-    return this.room.makeAction<T>(`${namespace}.${peerAction}`)
+  makeAction = <T extends DataPayload>(peerAction: PeerAction) => {
+    return this.room.makeAction<T>(`${peerAction}`)
   }
 
   addStream = (

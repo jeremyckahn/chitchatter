@@ -3,7 +3,7 @@ import { useContext, useEffect, useState } from 'react'
 import { sleep } from 'lib/sleep'
 import { RoomContext } from 'contexts/RoomContext'
 import { ShellContext } from 'contexts/ShellContext'
-import { groupActionNamespace, PeerAction } from 'models/network'
+import { PeerAction } from 'models/network'
 import { FileOfferMetadata, Peer } from 'models/chat'
 import { PeerRoom, PeerHookType } from 'lib/PeerRoom'
 import { fileTransfer } from 'lib/FileTransfer'
@@ -33,10 +33,7 @@ export function useRoomFileShare({
   const { peerOfferedFileMetadata, setPeerOfferedFileMetadata } = roomContext
 
   const [sendFileOfferMetadata, receiveFileOfferMetadata] =
-    peerRoom.makeAction<FileOfferMetadata | null>(
-      PeerAction.FILE_OFFER,
-      groupActionNamespace
-    )
+    peerRoom.makeAction<FileOfferMetadata | null>(PeerAction.FILE_OFFER)
 
   receiveFileOfferMetadata((fileOfferMetadata, peerId) => {
     if (fileOfferMetadata) {

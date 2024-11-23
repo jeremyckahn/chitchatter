@@ -3,7 +3,7 @@ import { ShellContext } from 'contexts/ShellContext'
 import { Peer, PeerVerificationState } from 'models/chat'
 import { encryption } from 'services/Encryption'
 import { PeerRoom } from 'lib/PeerRoom'
-import { groupActionNamespace, PeerAction } from 'models/network'
+import { PeerAction } from 'models/network'
 import { verificationTimeout } from 'config/messaging'
 import { usePeerNameDisplay } from 'components/PeerNameDisplay'
 
@@ -23,16 +23,10 @@ export const usePeerVerification = ({
   const { getDisplayUsername } = usePeerNameDisplay()
 
   const [sendVerificationTokenEncrypted, receiveVerificationTokenEncrypted] =
-    peerRoom.makeAction<ArrayBuffer>(
-      PeerAction.VERIFICATION_TOKEN_ENCRYPTED,
-      groupActionNamespace
-    )
+    peerRoom.makeAction<ArrayBuffer>(PeerAction.VERIFICATION_TOKEN_ENCRYPTED)
 
   const [sendVerificationTokenRaw, receiveVerificationTokenRaw] =
-    peerRoom.makeAction<string>(
-      PeerAction.VERIFICATION_TOKEN_RAW,
-      groupActionNamespace
-    )
+    peerRoom.makeAction<string>(PeerAction.VERIFICATION_TOKEN_RAW)
 
   const initPeerVerification = useCallback(
     async (peer: Peer) => {
