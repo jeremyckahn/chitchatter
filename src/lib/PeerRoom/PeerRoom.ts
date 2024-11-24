@@ -1,5 +1,13 @@
-import { joinRoom, Room, BaseRoomConfig, DataPayload } from 'trystero/torrent'
-import { RelayConfig } from 'trystero/torrent'
+import {
+  joinRoom,
+  Room,
+  BaseRoomConfig,
+  DataPayload,
+  ActionProgress,
+  ActionReceiver,
+  ActionSender,
+  RelayConfig,
+} from 'trystero/torrent'
 
 import { sleep } from 'lib/sleep'
 import { StreamType } from 'models/chat'
@@ -24,7 +32,19 @@ export enum PeerConnectionType {
   RELAY = 'RELAY',
 }
 
+export enum ActionNamespace {
+  GROUP = 'g',
+  DIRECT_MESSAGE = 'dm',
+}
+
 const streamQueueAddDelay = 1000
+
+type PeerRoomAction<T extends DataPayload> = [
+  ActionSender<T>,
+  ActionReceiver<T>,
+  ActionProgress,
+  () => void,
+]
 
 export class PeerRoom {
   private room: Room
@@ -61,6 +81,8 @@ export class PeerRoom {
 
     this.isProcessingPendingStreams = false
   }
+
+  private actions: Partial<Record<string, PeerRoomAction<any>>> = {}
 
   constructor(config: RelayConfig & BaseRoomConfig, roomId: string) {
     this.roomConfig = config
@@ -172,8 +194,51 @@ export class PeerRoom {
   makeAction = <T extends DataPayload>(
     peerAction: PeerAction,
     namespace: string
-  ) => {
-    return this.room.makeAction<T>(`${namespace}.${peerAction}`)
+  ): PeerRoomAction<T> => {
+    const actionName = `${namespace ?? '_'}.${peerAction}`
+
+    if (actionName in this.actions) {
+      return this.actions[actionName] as PeerRoomAction<T>
+    }
+
+    const [sender, receiver, progress] = this.room.makeAction<T>(actionName)
+
+    const eventName = `peerRoomAction.${namespace}.${peerAction}`
+    const eventTarget = new EventTarget()
+
+    let handler: EventListenerOrEventListenerObject | null = null
+
+    const dispatchReceiver: ActionReceiver<T> = callback => {
+      handler = (event: Event): void => {
+        // @ts-expect-error
+        callback(...event.detail)
+      }
+
+      eventTarget.addEventListener(eventName, handler)
+    }
+
+    receiver((...args) => {
+      const customEvent = new CustomEvent(eventName, {
+        detail: args,
+      })
+
+      eventTarget.dispatchEvent(customEvent)
+    })
+
+    const detatchDispatchReceiver = () => {
+      eventTarget.removeEventListener(eventName, handler)
+    }
+
+    const action: PeerRoomAction<T> = [
+      sender,
+      dispatchReceiver,
+      progress,
+      detatchDispatchReceiver,
+    ]
+
+    this.actions[actionName] = action
+
+    return action
   }
 
   addStream = (

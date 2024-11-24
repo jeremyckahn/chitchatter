@@ -3,7 +3,7 @@ import { useContext, useEffect, useCallback, useState } from 'react'
 import { isRecord } from 'lib/type-guards'
 import { RoomContext } from 'contexts/RoomContext'
 import { ShellContext } from 'contexts/ShellContext'
-import { groupActionNamespace, PeerAction } from 'models/network'
+import { PeerAction } from 'models/network'
 import {
   ScreenShareState,
   Peer,
@@ -11,7 +11,13 @@ import {
   AudioChannelName,
   AudioState,
 } from 'models/chat'
-import { PeerRoom, PeerHookType, PeerStreamType } from 'lib/PeerRoom'
+import {
+  PeerRoom,
+  PeerHookType,
+  PeerStreamType,
+  ActionNamespace,
+} from 'lib/PeerRoom'
+import { usePeerAction } from 'hooks/usePeerAction'
 
 interface UseRoomScreenShareConfig {
   peerRoom: PeerRoom
@@ -37,28 +43,27 @@ export function useRoomScreenShare({ peerRoom }: UseRoomScreenShareConfig) {
     setSelfScreenStream,
   } = roomContext
 
-  const [sendScreenShare, receiveScreenShare] =
-    peerRoom.makeAction<ScreenShareState>(
-      PeerAction.SCREEN_SHARE,
-      groupActionNamespace
-    )
+  const [sendScreenShare] = usePeerAction<ScreenShareState>({
+    namespace: ActionNamespace.GROUP,
+    peerAction: PeerAction.SCREEN_SHARE,
+    peerRoom,
+    onReceive: (screenState, peerId) => {
+      const newPeerList = peerList.map(peer => {
+        const newPeer: Peer = { ...peer }
 
-  receiveScreenShare((screenState, peerId) => {
-    const newPeerList = peerList.map(peer => {
-      const newPeer: Peer = { ...peer }
+        if (peer.peerId === peerId) {
+          newPeer.screenShareState = screenState
 
-      if (peer.peerId === peerId) {
-        newPeer.screenShareState = screenState
-
-        if (screenState === ScreenShareState.NOT_SHARING) {
-          deletePeerScreen(peerId)
+          if (screenState === ScreenShareState.NOT_SHARING) {
+            deletePeerScreen(peerId)
+          }
         }
-      }
 
-      return newPeer
-    })
+        return newPeer
+      })
 
-    setPeerList(newPeerList)
+      setPeerList(newPeerList)
+    },
   })
 
   peerRoom.onPeerStream(PeerStreamType.SCREEN, (stream, peerId, metadata) => {

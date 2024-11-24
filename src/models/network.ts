@@ -1,8 +1,3 @@
-// FIXME: Change these to be an enum
-export const groupActionNamespace = 'g'
-// FIXME: Multiple peer actions are probably overwriting each other
-export const directMessageActionNamespace = 'dm'
-
 // NOTE: Action names are limited to 12 characters, otherwise Trystero breaks.
 export enum PeerAction {
   MESSAGE = 0,

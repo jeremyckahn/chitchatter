@@ -3,10 +3,11 @@ import { useContext, useEffect, useState } from 'react'
 import { sleep } from 'lib/sleep'
 import { RoomContext } from 'contexts/RoomContext'
 import { ShellContext } from 'contexts/ShellContext'
-import { groupActionNamespace, PeerAction } from 'models/network'
+import { PeerAction } from 'models/network'
 import { FileOfferMetadata, Peer } from 'models/chat'
-import { PeerRoom, PeerHookType } from 'lib/PeerRoom'
+import { PeerRoom, PeerHookType, ActionNamespace } from 'lib/PeerRoom'
 import { fileTransfer } from 'lib/FileTransfer'
+import { usePeerAction } from 'hooks/usePeerAction'
 
 interface UseRoomFileShareConfig {
   onInlineMediaUpload: (files: File[]) => void
@@ -32,44 +33,43 @@ export function useRoomFileShare({
   const { peerList, setPeerList, showAlert } = shellContext
   const { peerOfferedFileMetadata, setPeerOfferedFileMetadata } = roomContext
 
-  const [sendFileOfferMetadata, receiveFileOfferMetadata] =
-    peerRoom.makeAction<FileOfferMetadata | null>(
-      PeerAction.FILE_OFFER,
-      groupActionNamespace
-    )
+  const [sendFileOfferMetadata] = usePeerAction<FileOfferMetadata | null>({
+    namespace: ActionNamespace.GROUP,
+    peerAction: PeerAction.FILE_OFFER,
+    peerRoom,
+    onReceive: (fileOfferMetadata, peerId) => {
+      if (fileOfferMetadata) {
+        setPeerOfferedFileMetadata({ [peerId]: fileOfferMetadata })
+      } else {
+        const fileOfferMetadata = peerOfferedFileMetadata[peerId]
+        const { magnetURI, isAllInlineMedia } = fileOfferMetadata
 
-  receiveFileOfferMetadata((fileOfferMetadata, peerId) => {
-    if (fileOfferMetadata) {
-      setPeerOfferedFileMetadata({ [peerId]: fileOfferMetadata })
-    } else {
-      const fileOfferMetadata = peerOfferedFileMetadata[peerId]
-      const { magnetURI, isAllInlineMedia } = fileOfferMetadata
+        if (
+          fileOfferMetadata &&
+          fileTransfer.isOffering(magnetURI) &&
+          !isAllInlineMedia
+        ) {
+          fileTransfer.rescind(magnetURI)
+        }
 
-      if (
-        fileOfferMetadata &&
-        fileTransfer.isOffering(magnetURI) &&
-        !isAllInlineMedia
-      ) {
-        fileTransfer.rescind(magnetURI)
+        const newFileOfferMetadata = { ...peerOfferedFileMetadata }
+        delete newFileOfferMetadata[peerId]
+
+        setPeerOfferedFileMetadata(newFileOfferMetadata)
       }
 
-      const newFileOfferMetadata = { ...peerOfferedFileMetadata }
-      delete newFileOfferMetadata[peerId]
+      const newPeerList = peerList.map(peer => {
+        const newPeer: Peer = { ...peer }
 
-      setPeerOfferedFileMetadata(newFileOfferMetadata)
-    }
+        if (peer.peerId === peerId) {
+          newPeer.offeredFileId = fileOfferMetadata?.magnetURI ?? null
+        }
 
-    const newPeerList = peerList.map(peer => {
-      const newPeer: Peer = { ...peer }
+        return newPeer
+      })
 
-      if (peer.peerId === peerId) {
-        newPeer.offeredFileId = fileOfferMetadata?.magnetURI ?? null
-      }
-
-      return newPeer
-    })
-
-    setPeerList(newPeerList)
+      setPeerList(newPeerList)
+    },
   })
 
   const isEveryFileInlineMedia = (files: FileList | null) =>
