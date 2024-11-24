@@ -3,7 +3,7 @@ import { useContext, useEffect, useCallback, useState } from 'react'
 import { isRecord } from 'lib/type-guards'
 import { RoomContext } from 'contexts/RoomContext'
 import { ShellContext } from 'contexts/ShellContext'
-import { PeerAction } from 'models/network'
+import { groupActionNamespace, PeerAction } from 'models/network'
 import {
   ScreenShareState,
   Peer,
@@ -38,7 +38,10 @@ export function useRoomScreenShare({ peerRoom }: UseRoomScreenShareConfig) {
   } = roomContext
 
   const [sendScreenShare, receiveScreenShare] =
-    peerRoom.makeAction<ScreenShareState>(PeerAction.SCREEN_SHARE)
+    peerRoom.makeAction<ScreenShareState>(
+      PeerAction.SCREEN_SHARE,
+      groupActionNamespace
+    )
 
   receiveScreenShare((screenState, peerId) => {
     const newPeerList = peerList.map(peer => {
