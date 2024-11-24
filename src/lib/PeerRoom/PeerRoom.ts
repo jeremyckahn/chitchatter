@@ -3,8 +3,10 @@ import {
   Room,
   BaseRoomConfig,
   DataPayload,
-  RelayConfig,
+  ActionSender,
+  ActionReceiver,
 } from 'trystero/torrent'
+import { RelayConfig } from 'trystero/torrent'
 
 import { sleep } from 'lib/sleep'
 import {
@@ -16,7 +18,6 @@ import {
   UnsentMessage,
 } from 'models/chat'
 import { PeerAction } from 'models/network'
-import { ActionSender, ActionReceiver, ActionProgress } from 'trystero'
 
 interface UserMetadata extends Record<string, any> {
   userId: string
@@ -215,33 +216,8 @@ export class PeerRoom {
     return peerConnections
   }
 
-  // FIXME: This is subscribing duplicate handlers
-  makeAction = <T extends DataPayload>(
-    peerAction: PeerAction
-  ): [ActionSender<T>, ActionReceiver<T>, ActionProgress] => {
-    const [sender, receiver, progress] = this.room.makeAction<T>(
-      `${peerAction}`
-    )
-
-    const eventName = `peerRoomAction.${peerAction}`
-    const eventTarget = new EventTarget()
-
-    const dispatchReceiver: ActionReceiver<T> = callback => {
-      eventTarget.addEventListener(eventName, event => {
-        // @ts-expect-error
-        callback(...event.detail)
-      })
-    }
-
-    receiver((...args) => {
-      const customEvent = new CustomEvent(eventName, {
-        detail: args,
-      })
-
-      eventTarget.dispatchEvent(customEvent)
-    })
-
-    return [sender, dispatchReceiver, progress]
+  makeAction = <T extends DataPayload>(peerAction: PeerAction) => {
+    return this.room.makeAction<T>(`${peerAction}`)
   }
 
   addStream = (
