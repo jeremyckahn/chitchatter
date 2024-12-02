@@ -538,6 +538,7 @@ export function useRoom(
   }, [peerList, peerRoom, setPeerConnectionTypes])
 
   return {
+    isDirectMessageRoom,
     isPrivate,
     handleInlineMediaUpload,
     handleMessageChange,

@@ -51,6 +51,7 @@ export function Room({
   const { showActiveTypingStatus, publicKey } =
     settingsContext.getUserSettings()
   const {
+    isDirectMessageRoom,
     isMessageSending,
     handleInlineMediaUpload,
     handleMessageChange,
@@ -77,8 +78,6 @@ export function Room({
       targetPeerId,
     }
   )
-
-  const isDirectMessageRoom = typeof targetPeerId === 'string'
 
   const handleMessageSubmit = async (message: string) => {
     await sendMessage(message)
@@ -167,7 +166,7 @@ export function Room({
                 <ChatTranscript
                   messageLog={messageLog}
                   userId={userId}
-                  sx={{ pt: 1 }}
+                  sx={{ ...(isDirectMessageRoom && { pt: 1 }) }}
                 />
                 <Divider />
                 <Box>
