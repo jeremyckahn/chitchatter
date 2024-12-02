@@ -157,7 +157,14 @@ export const PeerListItem = ({
           )}
         </ListItemText>
       </ListItem>
-      <Dialog open={showPeerDialog} onClose={handleDialogClose} keepMounted>
+      <Dialog
+        open={showPeerDialog}
+        onClose={handleDialogClose}
+        keepMounted
+        PaperProps={{
+          sx: { minHeight: `calc(100% - ${theme.spacing(8)})` },
+        }}
+      >
         <DialogTitle sx={{ display: 'flex', alignItems: 'center' }}>
           {verificationStateDisplayMap[peer.verificationState]}
           <Box component="span" sx={{ ml: 1 }}>
@@ -166,7 +173,7 @@ export const PeerListItem = ({
             </PeerNameDisplay>
           </Box>
         </DialogTitle>
-        <DialogContent>
+        <DialogContent sx={{ display: 'flex', flexDirection: 'column' }}>
           <Accordion>
             <AccordionSummary>
               <Typography>Their public key</Typography>
@@ -176,11 +183,12 @@ export const PeerListItem = ({
             </AccordionDetails>
           </Accordion>
           <Box
-            mt={1}
+            bgcolor={theme.palette.background.paper}
             display="flex"
             flexDirection="column"
-            minHeight="350px"
-            bgcolor={theme.palette.background.paper}
+            flexGrow={1}
+            mt={1}
+            overflow="auto"
           >
             <Room roomId="" userId={userId} targetPeerId={peer.peerId} />
           </Box>
