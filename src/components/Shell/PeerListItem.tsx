@@ -17,6 +17,7 @@ import ListItemText from '@mui/material/ListItemText'
 import Tooltip from '@mui/material/Tooltip'
 import Typography from '@mui/material/Typography'
 import useTheme from '@mui/material/styles/useTheme'
+import { useMediaQuery } from '@mui/material'
 import { useContext, useState } from 'react'
 
 import { AudioVolume } from 'components/AudioVolume'
@@ -69,6 +70,7 @@ export const PeerListItem = ({
   const { getUserSettings } = useContext(SettingsContext)
   const { userId } = getUserSettings()
   const [showPeerDialog, setShowPeerDialog] = useState(false)
+  const isSmallViewport = useMediaQuery(theme.breakpoints.down('sm'))
 
   const hasPeerConnection = peer.peerId in peerConnectionTypes
 
@@ -160,6 +162,8 @@ export const PeerListItem = ({
       <Dialog
         open={showPeerDialog}
         onClose={handleDialogClose}
+        fullScreen={isSmallViewport}
+        maxWidth="md"
         keepMounted
         PaperProps={{
           sx: { minHeight: `calc(100% - ${theme.spacing(8)})` },
