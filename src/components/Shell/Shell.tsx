@@ -417,7 +417,7 @@ export const Shell = ({ appNeedsUpdate, children, userPeerId }: ShellProps) => {
               </RouteContent>
               <MuiDrawer
                 sx={{
-                  flexShrink: 0,
+                  flexShrink: { xs: 1, sm: 0 },
                   pointerEvents: 'none',
                   width: peerListWidth,
                   '& .MuiDrawer-paper': {
