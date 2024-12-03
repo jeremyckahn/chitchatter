@@ -378,6 +378,7 @@ export const Shell = ({ appNeedsUpdate, children, userPeerId }: ShellProps) => {
               sx={{
                 height: '100vh',
                 display: 'flex',
+                overflow: 'hidden',
               }}
             >
               <NotificationArea
