@@ -19,17 +19,17 @@ export const usePeerAction = <T extends DataPayload>({
   onReceive: Parameters<ActionReceiver<T>>[0]
   namespace: string
 }): [ActionSender<T>, ActionProgress] => {
-  const [[sender, dispatchReceiver, progress, detatchReceiver]] = useState(() =>
-    peerRoom.makeAction<T>(peerAction, namespace)
+  const [[sender, connectReceiver, progress, disconnectReceiver]] = useState(
+    () => peerRoom.makeAction<T>(peerAction, namespace)
   )
 
   useEffect(() => {
-    dispatchReceiver(onReceive)
+    connectReceiver(onReceive)
 
     return () => {
-      detatchReceiver()
+      disconnectReceiver()
     }
-  }, [detatchReceiver, onReceive, dispatchReceiver])
+  }, [disconnectReceiver, onReceive, connectReceiver])
 
   return [sender, progress]
 }

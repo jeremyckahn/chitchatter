@@ -195,7 +195,7 @@ export class PeerRoom {
     peerAction: PeerAction,
     namespace: string
   ): PeerRoomAction<T> => {
-    const actionName = `${namespace ?? '_'}.${peerAction}`
+    const actionName = `${namespace}.${peerAction}`
 
     if (actionName in this.actions) {
       return this.actions[actionName] as PeerRoomAction<T>
@@ -208,7 +208,7 @@ export class PeerRoom {
 
     let handler: EventListenerOrEventListenerObject | null = null
 
-    const dispatchReceiver: ActionReceiver<T> = callback => {
+    const connectReceiver: ActionReceiver<T> = callback => {
       handler = (event: Event): void => {
         // @ts-expect-error
         callback(...event.detail)
@@ -231,7 +231,7 @@ export class PeerRoom {
 
     const action: PeerRoomAction<T> = [
       sender,
-      dispatchReceiver,
+      connectReceiver,
       progress,
       detatchDispatchReceiver,
     ]

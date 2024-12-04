@@ -33,6 +33,7 @@ Open https://chitchatter.im/ and join a room to start chatting with anyone else 
 - Public and private rooms.
 - Video and audio chatting.
 - Screen sharing.
+- Direct messaging.
 - File sharing:
   - Unlimited file size transfers.
   - Files are encrypted prior to sending and decrypted by the receiver (the key is the room name).
