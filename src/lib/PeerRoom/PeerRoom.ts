@@ -206,12 +206,19 @@ export class PeerRoom {
     const eventName = `peerRoomAction.${namespace}.${peerAction}`
     const eventTarget = new EventTarget()
 
-    let handler: EventListenerOrEventListenerObject | null = null
+    type ActionParameters = Parameters<Parameters<ActionReceiver<T>>[0]>
+    let handler: ((event: CustomEventInit<ActionParameters>) => void) | null =
+      null
 
     const connectReceiver: ActionReceiver<T> = callback => {
-      handler = (event: Event): void => {
-        // @ts-expect-error
-        callback(...event.detail)
+      handler = (event: CustomEventInit<ActionParameters>) => {
+        const { detail: receiverArguments } = event
+
+        if (typeof receiverArguments === 'undefined') {
+          throw new TypeError('Invalid receiver arguments')
+        }
+
+        callback(...receiverArguments)
       }
 
       eventTarget.addEventListener(eventName, handler)
