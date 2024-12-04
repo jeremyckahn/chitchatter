@@ -66,7 +66,8 @@ export interface Peer {
   videoState: VideoState
   screenShareState: ScreenShareState
   offeredFileId: string | null
-  isTyping: boolean
+  isTypingGroupMessage: boolean
+  isTypingDirectMessage: boolean
   verificationToken: string
   encryptedVerificationToken: ArrayBuffer
   verificationState: PeerVerificationState

@@ -194,7 +194,11 @@ export function useRoom(
     peerRoom,
     onReceive: (typingStatus, peerId) => {
       const { isTyping } = typingStatus
-      updatePeer(peerId, { isTyping })
+
+      updatePeer(peerId, {
+        isTypingGroupMessage: isTyping && !isDirectMessageRoom,
+        isTypingDirectMessage: isTyping && isDirectMessageRoom,
+      })
     },
   })
 
@@ -207,14 +211,20 @@ export function useRoom(
   useEffect(() => {
     if (!showActiveTypingStatus) return
 
-    sendTypingStatusChange({ isTyping })
-  }, [isTyping, sendTypingStatusChange, showActiveTypingStatus])
+    sendTypingStatusChange({ isTyping }, targetPeerId)
+  }, [
+    isDirectMessageRoom,
+    isTyping,
+    sendTypingStatusChange,
+    showActiveTypingStatus,
+    targetPeerId,
+  ])
 
   useEffect(() => {
     return () => {
       if (isDirectMessageRoom) return
 
-      sendTypingStatusChange({ isTyping: false })
+      sendTypingStatusChange({ isTyping: false }, targetPeerId)
       peerRoom.leaveRoom()
       peerRoomRef.current = null
       setPeerList([])
@@ -278,7 +288,8 @@ export function useRoom(
           videoState: VideoState.STOPPED,
           screenShareState: ScreenShareState.NOT_SHARING,
           offeredFileId: null,
-          isTyping: false,
+          isTypingGroupMessage: false,
+          isTypingDirectMessage: false,
           verificationToken: getUuid(),
           encryptedVerificationToken: new ArrayBuffer(0),
           verificationState: PeerVerificationState.VERIFYING,
@@ -349,7 +360,7 @@ export function useRoom(
         ...messageLog,
         { ...message, timeReceived: timeService.now() },
       ])
-      updatePeer(peerId, { isTyping: false })
+      updatePeer(peerId, { isTypingGroupMessage: false })
     },
   })
 

@@ -175,7 +175,11 @@ export function Room({
                     isMessageSending={isMessageSending}
                     onMessageChange={handleMessageChange}
                   />
-                  {showActiveTypingStatus ? <TypingStatusBar /> : null}
+                  {showActiveTypingStatus ? (
+                    <TypingStatusBar
+                      isDirectMessageRoom={isDirectMessageRoom}
+                    />
+                  ) : null}
                 </Box>
               </Box>
             )}
