@@ -134,6 +134,7 @@ export const usePeerVerification = ({
   // getDisplayUsername).
   const [scheduledPeerToVerify, setScheduledPeerToVerify] =
     useState<Peer | null>(null)
+
   useEffect(() => {
     if (scheduledPeerToVerify === null || isDirectMessageRoom) return
 
@@ -143,6 +144,8 @@ export const usePeerVerification = ({
   // NOTE: END HACKY WORKAROUND
 
   const verifyPeer = (peer: Peer) => {
+    if (isDirectMessageRoom) return
+
     setScheduledPeerToVerify(peer)
   }
 

@@ -296,7 +296,7 @@ export function useRoom(
           verificationTimer: null,
         }
 
-        setPeerList([...peerList, newPeer])
+        setPeerList(prev => [...prev, newPeer])
         sendTypingStatusChange({ isTyping }, peerId)
         verifyPeer(newPeer)
       } else {
@@ -304,10 +304,13 @@ export function useRoom(
           peerList[peerIndex].customUsername || getPeerName(userId)
         const newUsername = customUsername || getPeerName(userId)
 
-        const newPeerList = [...peerList]
-        const newPeer = { ...newPeerList[peerIndex], userId, customUsername }
-        newPeerList[peerIndex] = newPeer
-        setPeerList(newPeerList)
+        setPeerList(prev => {
+          const newPeerList = [...prev]
+          const newPeer = { ...newPeerList[peerIndex], userId, customUsername }
+          newPeerList[peerIndex] = newPeer
+
+          return newPeerList
+        })
 
         if (oldUsername !== newUsername) {
           showAlert(`${oldUsername} is now ${newUsername}`)
@@ -471,9 +474,12 @@ export function useRoom(
       )
 
       if (doesPeerExist) {
-        const peerListClone = [...peerList]
-        peerListClone.splice(peerIndex, 1)
-        setPeerList(peerListClone)
+        setPeerList(prev => {
+          const peerListClone = [...prev]
+          peerListClone.splice(peerIndex, 1)
+
+          return peerListClone
+        })
       }
     })
   }
