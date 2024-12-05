@@ -38,7 +38,7 @@ export function Home({ userId }: HomeProps) {
   const navigate = useNavigate()
 
   useEffect(() => {
-    setTitle('Chitchatter')
+    setTitle('PopChat')
   }, [setTitle])
 
   const handleRoomNameChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -79,7 +79,7 @@ export function Home({ userId }: HomeProps) {
           textAlign: 'center',
         }}
       >
-        <Link to={routes.ABOUT}>
+        <Link to={routes.ROOT}>
           <StyledLogo
             sx={{
               px: 0.5,
@@ -191,7 +191,7 @@ export function Home({ userId }: HomeProps) {
         }}
       >
         <MuiLink
-          href="https://github.com/jeremyckahn/chitchatter"
+          href="https://github.com/ShubhamNair/PopChat"
           target="_blank"
           sx={theme => ({
             color: theme.palette.text.primary,

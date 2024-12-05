@@ -28,7 +28,7 @@ import { ColorMode } from 'models/settings'
 
 const { commit } = GitInfo()
 
-export const drawerWidth = 240
+export const drawerWidth = 56
 
 export interface DrawerProps extends PropsWithChildren {
   isDrawerOpen: boolean
@@ -86,7 +86,6 @@ export const Drawer = ({ isDrawerOpen, onDrawerClose, theme }: DrawerProps) => {
               <ListItemIcon>
                 <Home />
               </ListItemIcon>
-              <ListItemText primary="Home" />
             </ListItemButton>
           </ListItem>
         </Link>
@@ -96,11 +95,10 @@ export const Drawer = ({ isDrawerOpen, onDrawerClose, theme }: DrawerProps) => {
               <ListItemIcon>
                 <SettingsApplications />
               </ListItemIcon>
-              <ListItemText primary="Settings" />
             </ListItemButton>
           </ListItem>
         </Link>
-        <Link to={routes.ABOUT}>
+        {/* <Link to={routes.ABOUT}>
           <ListItem disablePadding>
             <ListItemButton>
               <ListItemIcon>
@@ -109,8 +107,8 @@ export const Drawer = ({ isDrawerOpen, onDrawerClose, theme }: DrawerProps) => {
               <ListItemText primary="About" />
             </ListItemButton>
           </ListItem>
-        </Link>
-        <Link to={routes.DISCLAIMER}>
+        </Link> */}
+        {/* <Link to={routes.DISCLAIMER}>
           <ListItem disablePadding>
             <ListItemButton>
               <ListItemIcon>
@@ -119,7 +117,7 @@ export const Drawer = ({ isDrawerOpen, onDrawerClose, theme }: DrawerProps) => {
               <ListItemText primary="Disclaimer" />
             </ListItemButton>
           </ListItem>
-        </Link>
+        </Link> */}
         <ListItem disablePadding>
           <ListItemButton onClick={handleColorModeToggleClick}>
             <ListItemIcon>
@@ -129,11 +127,10 @@ export const Drawer = ({ isDrawerOpen, onDrawerClose, theme }: DrawerProps) => {
                 <Brightness4Icon />
               )}
             </ListItemIcon>
-            <ListItemText primary="Change theme" />
           </ListItemButton>
         </ListItem>
         <Divider />
-        <ListItem>
+        {/* <ListItem>
           <Typography variant="subtitle2">
             Build signature:{' '}
             <Typography
@@ -153,7 +150,7 @@ export const Drawer = ({ isDrawerOpen, onDrawerClose, theme }: DrawerProps) => {
               </MuiLink>
             </Typography>
           </Typography>
-        </ListItem>
+        </ListItem> */}
       </List>
     </MuiDrawer>
   )
