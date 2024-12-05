@@ -39,6 +39,7 @@ interface PeerListItemProps {
   peer: Peer
   peerConnectionTypes: Record<string, PeerConnectionType>
   peerAudioChannels: Record<string, AudioChannel>
+  roomId: string
 }
 
 const verificationStateDisplayMap = {
@@ -65,6 +66,7 @@ export const PeerListItem = ({
   peer,
   peerConnectionTypes,
   peerAudioChannels,
+  roomId,
 }: PeerListItemProps) => {
   const theme = useTheme()
   const { getUserSettings } = useContext(SettingsContext)
@@ -194,7 +196,7 @@ export const PeerListItem = ({
             mt={1}
             overflow="auto"
           >
-            <Room roomId="" userId={userId} targetPeerId={peer.peerId} />
+            <Room roomId={roomId} userId={userId} targetPeerId={peer.peerId} />
           </Box>
         </DialogContent>
         <DialogActions>

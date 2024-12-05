@@ -118,8 +118,8 @@ export function useRoomFileShare({
     setSharedFiles(files)
     setIsFileSharingEnabled(false)
 
-    if (typeof shellContext.roomId !== 'string') {
-      throw new Error('shellContext.roomId is not a string')
+    if (!shellContext.roomId) {
+      throw new Error('shellContext.roomId is not a non-empty string')
     }
 
     const alertText =
