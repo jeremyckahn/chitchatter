@@ -1,8 +1,17 @@
-import { joinRoom, Room, BaseRoomConfig, DataPayload } from 'trystero/torrent'
-import { RelayConfig } from 'trystero/torrent'
+import {
+  joinRoom,
+  Room,
+  BaseRoomConfig,
+  DataPayload,
+  ActionProgress,
+  ActionReceiver,
+  ActionSender,
+  RelayConfig,
+} from 'trystero/torrent'
 
 import { sleep } from 'lib/sleep'
 import { StreamType } from 'models/chat'
+import { PeerAction } from 'models/network'
 
 export enum PeerHookType {
   NEW_PEER = 'NEW_PEER',
@@ -23,7 +32,19 @@ export enum PeerConnectionType {
   RELAY = 'RELAY',
 }
 
+export enum ActionNamespace {
+  GROUP = 'g',
+  DIRECT_MESSAGE = 'dm',
+}
+
 const streamQueueAddDelay = 1000
+
+type PeerRoomAction<T extends DataPayload> = [
+  ActionSender<T>,
+  ActionReceiver<T>,
+  ActionProgress,
+  () => void,
+]
 
 export class PeerRoom {
   private room: Room
@@ -60,6 +81,8 @@ export class PeerRoom {
 
     this.isProcessingPendingStreams = false
   }
+
+  private actions: Partial<Record<string, PeerRoomAction<any>>> = {}
 
   constructor(config: RelayConfig & BaseRoomConfig, roomId: string) {
     this.roomConfig = config
@@ -168,8 +191,61 @@ export class PeerRoom {
     return peerConnections
   }
 
-  makeAction = <T extends DataPayload>(namespace: string) => {
-    return this.room.makeAction<T>(namespace)
+  makeAction = <T extends DataPayload>(
+    peerAction: PeerAction,
+    namespace: string
+  ): PeerRoomAction<T> => {
+    const actionName = `${namespace}.${peerAction}`
+
+    if (actionName in this.actions) {
+      return this.actions[actionName] as PeerRoomAction<T>
+    }
+
+    const [sender, receiver, progress] = this.room.makeAction<T>(actionName)
+
+    const eventName = `peerRoomAction.${namespace}.${peerAction}`
+    const eventTarget = new EventTarget()
+
+    type ActionParameters = Parameters<Parameters<ActionReceiver<T>>[0]>
+    let handler: ((event: CustomEventInit<ActionParameters>) => void) | null =
+      null
+
+    const connectReceiver: ActionReceiver<T> = callback => {
+      handler = (event: CustomEventInit<ActionParameters>) => {
+        const { detail: receiverArguments } = event
+
+        if (typeof receiverArguments === 'undefined') {
+          throw new TypeError('Invalid receiver arguments')
+        }
+
+        callback(...receiverArguments)
+      }
+
+      eventTarget.addEventListener(eventName, handler)
+    }
+
+    receiver((...args) => {
+      const customEvent = new CustomEvent(eventName, {
+        detail: args,
+      })
+
+      eventTarget.dispatchEvent(customEvent)
+    })
+
+    const detatchDispatchReceiver = () => {
+      eventTarget.removeEventListener(eventName, handler)
+    }
+
+    const action: PeerRoomAction<T> = [
+      sender,
+      connectReceiver,
+      progress,
+      detatchDispatchReceiver,
+    ]
+
+    this.actions[actionName] = action
+
+    return action
   }
 
   addStream = (

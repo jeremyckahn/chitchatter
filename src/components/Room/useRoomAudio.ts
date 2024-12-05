@@ -1,7 +1,7 @@
 import { useContext, useEffect, useCallback, useState } from 'react'
 
 import { ShellContext } from 'contexts/ShellContext'
-import { PeerActions } from 'models/network'
+import { PeerAction } from 'models/network'
 import {
   AudioState,
   Peer,
@@ -9,7 +9,13 @@ import {
   PeerAudioChannelState,
   StreamType,
 } from 'models/chat'
-import { PeerRoom, PeerHookType, PeerStreamType } from 'lib/PeerRoom'
+import {
+  PeerRoom,
+  PeerHookType,
+  PeerStreamType,
+  ActionNamespace,
+} from 'lib/PeerRoom'
+import { usePeerAction } from 'hooks/usePeerAction'
 
 interface UseRoomAudioConfig {
   peerRoom: PeerRoom
@@ -38,34 +44,35 @@ export function useRoomAudio({ peerRoom }: UseRoomAudioConfig) {
     })()
   }, [audioStream])
 
-  const [sendAudioChange, receiveAudioChange] = peerRoom.makeAction<
-    Partial<PeerAudioChannelState>
-  >(PeerActions.AUDIO_CHANGE)
+  const [sendAudioChange] = usePeerAction<Partial<PeerAudioChannelState>>({
+    namespace: ActionNamespace.GROUP,
+    peerAction: PeerAction.AUDIO_CHANGE,
+    peerRoom,
+    onReceive: (peerAudioChannelState, peerId) => {
+      setPeerList(peerList => {
+        return peerList.map(peer => {
+          const newPeer: Peer = { ...peer }
 
-  receiveAudioChange((peerAudioChannelState, peerId) => {
-    setPeerList(peerList => {
-      return peerList.map(peer => {
-        const newPeer: Peer = { ...peer }
+          const microphoneAudioChannel =
+            peerAudioChannelState[AudioChannelName.MICROPHONE]
 
-        const microphoneAudioChannel =
-          peerAudioChannelState[AudioChannelName.MICROPHONE]
+          if (microphoneAudioChannel) {
+            if (peer.peerId === peerId) {
+              newPeer.audioChannelState = {
+                ...newPeer.audioChannelState,
+                ...peerAudioChannelState,
+              }
 
-        if (microphoneAudioChannel) {
-          if (peer.peerId === peerId) {
-            newPeer.audioChannelState = {
-              ...newPeer.audioChannelState,
-              ...peerAudioChannelState,
-            }
-
-            if (microphoneAudioChannel === AudioState.STOPPED) {
-              deletePeerAudio(peerId)
+              if (microphoneAudioChannel === AudioState.STOPPED) {
+                deletePeerAudio(peerId)
+              }
             }
           }
-        }
 
-        return newPeer
+          return newPeer
+        })
       })
-    })
+    },
   })
 
   peerRoom.onPeerStream(PeerStreamType.AUDIO, (stream, peerId, metadata) => {

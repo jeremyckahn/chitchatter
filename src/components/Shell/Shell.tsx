@@ -5,6 +5,7 @@ import {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
 } from 'react'
 import CssBaseline from '@mui/material/CssBaseline'
@@ -16,7 +17,11 @@ import MuiDrawer from '@mui/material/Drawer'
 import Link from '@mui/material/Link'
 import { useWindowSize } from '@react-hook/window-size'
 
-import { ShellContext } from 'contexts/ShellContext'
+import {
+  MessageLog,
+  ShellContext,
+  ShellMessageLog,
+} from 'contexts/ShellContext'
 import { SettingsContext } from 'contexts/SettingsContext'
 import { AlertOptions, QueryParamKeys } from 'models/shell'
 import {
@@ -29,7 +34,7 @@ import {
   AudioChannelName,
 } from 'models/chat'
 import { ErrorBoundary } from 'components/ErrorBoundary'
-import { PeerConnectionType } from 'lib/PeerRoom'
+import { PeerConnectionType, PeerRoom } from 'lib/PeerRoom'
 
 import { Drawer } from './Drawer'
 import { UpgradeDialog } from './UpgradeDialog'
@@ -63,6 +68,7 @@ export const Shell = ({ appNeedsUpdate, children, userPeerId }: ShellProps) => {
   const [windowWidth] = useWindowSize()
   const defaultSidebarsOpen = windowWidth >= theme.breakpoints.values.lg
 
+  const peerRoomRef = useRef<PeerRoom>(null)
   const [isAlertShowing, setIsAlertShowing] = useState(false)
   const [isDrawerOpen, setIsDrawerOpen] = useState(defaultSidebarsOpen)
   const [isQRCodeDialogOpen, setIsQRCodeDialogOpen] = useState(false)
@@ -100,6 +106,36 @@ export const Shell = ({ appNeedsUpdate, children, userPeerId }: ShellProps) => {
   const [peerAudioChannels, setPeerAudioChannels] = useState<
     Record<string, AudioChannel>
   >({})
+
+  const [shellMessageLog, setShellMessageLog] = useState<ShellMessageLog>({
+    groupMessageLog: [],
+    directMessageLog: {},
+  })
+
+  const messageLog = shellMessageLog
+
+  const setMessageLog = useCallback(
+    (messageLog: MessageLog, targetPeerId: string | null) => {
+      setShellMessageLog(prev => {
+        const isDirectMessageLog = typeof targetPeerId === 'string'
+
+        const shellMessageLog: ShellMessageLog = {
+          groupMessageLog: isDirectMessageLog
+            ? prev.groupMessageLog
+            : messageLog,
+          directMessageLog: {
+            ...prev.directMessageLog,
+            ...(isDirectMessageLog && {
+              [targetPeerId]: messageLog,
+            }),
+          },
+        }
+
+        return shellMessageLog
+      })
+    },
+    []
+  )
 
   const showAlert = useCallback((message: string, options?: AlertOptions) => {
     setAlertText(message)
@@ -159,6 +195,9 @@ export const Shell = ({ appNeedsUpdate, children, userPeerId }: ShellProps) => {
       setCustomUsername,
       connectionTestResults,
       updatePeer,
+      peerRoomRef,
+      messageLog,
+      setMessageLog,
     }),
     [
       isEmbedded,
@@ -189,6 +228,9 @@ export const Shell = ({ appNeedsUpdate, children, userPeerId }: ShellProps) => {
       setCustomUsername,
       connectionTestResults,
       updatePeer,
+      peerRoomRef,
+      messageLog,
+      setMessageLog,
     ]
   )
 
@@ -336,6 +378,7 @@ export const Shell = ({ appNeedsUpdate, children, userPeerId }: ShellProps) => {
               sx={{
                 height: '100vh',
                 display: 'flex',
+                overflow: 'hidden',
               }}
             >
               <NotificationArea
@@ -375,7 +418,7 @@ export const Shell = ({ appNeedsUpdate, children, userPeerId }: ShellProps) => {
               </RouteContent>
               <MuiDrawer
                 sx={{
-                  flexShrink: 0,
+                  flexShrink: { xs: 1, sm: 0 },
                   pointerEvents: 'none',
                   width: peerListWidth,
                   '& .MuiDrawer-paper': {

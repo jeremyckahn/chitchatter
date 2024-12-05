@@ -7,9 +7,16 @@ import {
   PeerNameDisplayProps,
 } from 'components/PeerNameDisplay/PeerNameDisplay'
 
-export const TypingStatusBar = () => {
+export const TypingStatusBar = ({
+  isDirectMessageRoom,
+}: {
+  isDirectMessageRoom: boolean
+}) => {
   const { peerList } = useContext(ShellContext)
-  const typingPeers = peerList.filter(({ isTyping }) => isTyping)
+  const typingPeers = peerList.filter(
+    ({ isTypingGroupMessage, isTypingDirectMessage }) =>
+      isDirectMessageRoom ? isTypingDirectMessage : isTypingGroupMessage
+  )
 
   const peerNameDisplayProps: Partial<PeerNameDisplayProps> = {
     variant: 'caption',

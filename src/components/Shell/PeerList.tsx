@@ -71,6 +71,7 @@ export const PeerList = ({
             peer={peer}
             peerConnectionTypes={peerConnectionTypes}
             peerAudioChannels={peerAudioChannels}
+            roomId={roomId ?? ''}
           />
         ))}
         {peerList.length === 0 &&

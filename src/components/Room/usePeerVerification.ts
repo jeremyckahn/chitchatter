@@ -3,30 +3,89 @@ import { ShellContext } from 'contexts/ShellContext'
 import { Peer, PeerVerificationState } from 'models/chat'
 import { encryption } from 'services/Encryption'
 import { PeerRoom } from 'lib/PeerRoom'
-import { PeerActions } from 'models/network'
+import { PeerAction } from 'models/network'
 import { verificationTimeout } from 'config/messaging'
 import { usePeerNameDisplay } from 'components/PeerNameDisplay'
+import { usePeerAction } from 'hooks/usePeerAction'
 
 interface UserPeerVerificationProps {
   peerRoom: PeerRoom
   privateKey: CryptoKey
+  isDirectMessageRoom: boolean
   encryptionService?: typeof encryption
 }
 
 export const usePeerVerification = ({
   peerRoom,
   privateKey,
+  isDirectMessageRoom,
   encryptionService = encryption,
 }: UserPeerVerificationProps) => {
   const { updatePeer, peerList, showAlert } = useContext(ShellContext)
+  const namespace = isDirectMessageRoom ? 'dm' : 'g'
 
   const { getDisplayUsername } = usePeerNameDisplay()
 
-  const [sendVerificationTokenEncrypted, receiveVerificationTokenEncrypted] =
-    peerRoom.makeAction<ArrayBuffer>(PeerActions.VERIFICATION_TOKEN_ENCRYPTED)
+  const [sendVerificationTokenEncrypted] = usePeerAction<ArrayBuffer>({
+    peerAction: PeerAction.VERIFICATION_TOKEN_ENCRYPTED,
+    peerRoom,
+    namespace,
+    onReceive: async (encryptedVerificationToken, peerId) => {
+      try {
+        const decryptedVerificationToken =
+          await encryptionService.decryptString(
+            privateKey,
+            encryptedVerificationToken
+          )
 
-  const [sendVerificationTokenRaw, receiveVerificationTokenRaw] =
-    peerRoom.makeAction<string>(PeerActions.VERIFICATION_TOKEN_RAW)
+        await sendVerificationTokenRaw(decryptedVerificationToken, [peerId])
+      } catch (e) {
+        console.error(e)
+      }
+    },
+  })
+
+  const [sendVerificationTokenRaw] = usePeerAction<string>({
+    peerAction: PeerAction.VERIFICATION_TOKEN_RAW,
+    peerRoom,
+    namespace,
+    onReceive: (decryptedVerificationToken, peerId) => {
+      const matchingPeer = peerList.find(peer => peer.peerId === peerId)
+
+      if (!matchingPeer) {
+        throw new Error(`peerId not found: ${peerId}`)
+      }
+
+      const { verificationToken, verificationTimer } = matchingPeer
+
+      if (decryptedVerificationToken !== verificationToken) {
+        updatePeer(peerId, {
+          verificationState: PeerVerificationState.UNVERIFIED,
+          verificationTimer: null,
+        })
+
+        showAlert(
+          `Verification for ${getDisplayUsername(matchingPeer.userId)} failed`,
+          {
+            severity: 'error',
+          }
+        )
+
+        throw new Error(
+          `Verification token for peerId ${peerId} does not match. [expected: ${verificationToken}] [received: ${decryptedVerificationToken}]`
+        )
+      }
+
+      if (verificationTimer) {
+        clearTimeout(verificationTimer)
+      }
+
+      updatePeer(peerId, {
+        verificationState: PeerVerificationState.VERIFIED,
+        verificationTimer: null,
+      })
+    },
+  })
 
   const initPeerVerification = useCallback(
     async (peer: Peer) => {
@@ -75,70 +134,20 @@ export const usePeerVerification = ({
   // getDisplayUsername).
   const [scheduledPeerToVerify, setScheduledPeerToVerify] =
     useState<Peer | null>(null)
+
   useEffect(() => {
-    if (scheduledPeerToVerify === null) return
+    if (scheduledPeerToVerify === null || isDirectMessageRoom) return
 
     initPeerVerification(scheduledPeerToVerify)
     setScheduledPeerToVerify(null)
-  }, [scheduledPeerToVerify, initPeerVerification])
+  }, [scheduledPeerToVerify, initPeerVerification, isDirectMessageRoom])
   // NOTE: END HACKY WORKAROUND
 
   const verifyPeer = (peer: Peer) => {
+    if (isDirectMessageRoom) return
+
     setScheduledPeerToVerify(peer)
   }
-
-  receiveVerificationTokenEncrypted(
-    async (encryptedVerificationToken, peerId) => {
-      try {
-        const decryptedVerificationToken =
-          await encryptionService.decryptString(
-            privateKey,
-            encryptedVerificationToken
-          )
-
-        await sendVerificationTokenRaw(decryptedVerificationToken, [peerId])
-      } catch (e) {
-        console.error(e)
-      }
-    }
-  )
-
-  receiveVerificationTokenRaw((decryptedVerificationToken, peerId) => {
-    const matchingPeer = peerList.find(peer => peer.peerId === peerId)
-
-    if (!matchingPeer) {
-      throw new Error(`peerId not found: ${peerId}`)
-    }
-
-    const { verificationToken, verificationTimer } = matchingPeer
-
-    if (decryptedVerificationToken !== verificationToken) {
-      updatePeer(peerId, {
-        verificationState: PeerVerificationState.UNVERIFIED,
-        verificationTimer: null,
-      })
-
-      showAlert(
-        `Verification for ${getDisplayUsername(matchingPeer.userId)} failed`,
-        {
-          severity: 'error',
-        }
-      )
-
-      throw new Error(
-        `Verification token for peerId ${peerId} does not match. [expected: ${verificationToken}] [received: ${decryptedVerificationToken}]`
-      )
-    }
-
-    if (verificationTimer) {
-      clearTimeout(verificationTimer)
-    }
-
-    updatePeer(peerId, {
-      verificationState: PeerVerificationState.VERIFIED,
-      verificationTimer: null,
-    })
-  })
 
   return { verifyPeer }
 }

@@ -2,10 +2,16 @@ import { useContext, useEffect, useCallback, useState } from 'react'
 
 import { RoomContext } from 'contexts/RoomContext'
 import { ShellContext } from 'contexts/ShellContext'
-import { PeerActions } from 'models/network'
+import { PeerAction } from 'models/network'
 import { VideoState, Peer, StreamType } from 'models/chat'
-import { PeerRoom, PeerHookType, PeerStreamType } from 'lib/PeerRoom'
+import {
+  PeerRoom,
+  PeerHookType,
+  PeerStreamType,
+  ActionNamespace,
+} from 'lib/PeerRoom'
 import { isRecord } from 'lib/type-guards'
+import { usePeerAction } from 'hooks/usePeerAction'
 
 interface UseRoomVideoConfig {
   peerRoom: PeerRoom
@@ -68,26 +74,27 @@ export function useRoomVideo({ peerRoom }: UseRoomVideoConfig) {
     })()
   }, [peerRoom, selfVideoStream, setSelfVideoStream])
 
-  const [sendVideoChange, receiveVideoChange] = peerRoom.makeAction<VideoState>(
-    PeerActions.VIDEO_CHANGE
-  )
+  const [sendVideoChange] = usePeerAction<VideoState>({
+    namespace: ActionNamespace.GROUP,
+    peerAction: PeerAction.VIDEO_CHANGE,
+    peerRoom,
+    onReceive: (videoState, peerId) => {
+      const newPeerList = peerList.map(peer => {
+        const newPeer: Peer = { ...peer }
 
-  receiveVideoChange((videoState, peerId) => {
-    const newPeerList = peerList.map(peer => {
-      const newPeer: Peer = { ...peer }
+        if (peer.peerId === peerId) {
+          newPeer.videoState = videoState
 
-      if (peer.peerId === peerId) {
-        newPeer.videoState = videoState
-
-        if (videoState === VideoState.STOPPED) {
-          deletePeerVideo(peerId)
+          if (videoState === VideoState.STOPPED) {
+            deletePeerVideo(peerId)
+          }
         }
-      }
 
-      return newPeer
-    })
+        return newPeer
+      })
 
-    setPeerList(newPeerList)
+      setPeerList(newPeerList)
+    },
   })
 
   peerRoom.onPeerStream(PeerStreamType.VIDEO, (stream, peerId, metadata) => {

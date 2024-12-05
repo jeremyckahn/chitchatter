@@ -14,6 +14,7 @@ import { manifest } from './manifest'
 
 const srcPaths = [
   'components',
+  'hooks',
   'config',
   'contexts',
   'lib',
