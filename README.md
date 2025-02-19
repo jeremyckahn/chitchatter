@@ -25,7 +25,7 @@ Chitchatter uses [Vite](https://vitejs.dev/). The secure networking and streamin
 
 ## How to use it
 
-Open https://chitchatter.im/ and join a room to start chatting with anyone else who is in the room. By default, room names are random [UUID](https://en.wikipedia.org/wiki/Universally_unique_identifier)s that are generated client-side. To privately communicate with someone, it is recommended to join one of these randomly-generated rooms and share the URL (via the "🔗" button at the top of the page) to whomever you wish to communicate with via a secure medium of your choosing (such as [Burner Note](https://burnernote.com/) or [Yopass](https://yopass.se/)). Your user name will be presented to you, and it would be good to share that with who you will be chatting with beforehand so they know they're talking to you.
+Open <https://chitchatter.im/> and join a room to start chatting with anyone else who is in the room. By default, room names are random [UUID](https://en.wikipedia.org/wiki/Universally_unique_identifier)s that are generated client-side. To privately communicate with someone, it is recommended to join one of these randomly-generated rooms and share the URL (via the "🔗" button at the top of the page) to whomever you wish to communicate with via a secure medium of your choosing (such as [Burner Note](https://burnernote.com/) or [Yopass](https://yopass.se/)). Your user name will be presented to you, and it would be good to share that with who you will be chatting with beforehand so they know they're talking to you.
 
 ## Features
 
@@ -86,7 +86,7 @@ If you don't agree with the direction of the project, you are welcome to fork Ch
 
 ### 🏗️ Support and custom development
 
-I'm willing to do paid installations and customizations of Chitchatter for your needs. If you'd like to contract me to make a version of Chitchatter that is custom built for you, please email me at me@jeremyckahn.com and let me know what you have in mind to get started.
+I'm willing to do paid installations and customizations of Chitchatter for your needs. If you'd like to contract me to make a version of Chitchatter that is custom built for you, please email me at <me@jeremyckahn.com> and let me know what you have in mind to get started.
 
 ---
 
@@ -94,7 +94,7 @@ I'm willing to do paid installations and customizations of Chitchatter for your 
 
 The core of Chitchatter's security model is the fact that it is fully open source. You are free (and encouraged) to fully audit the project source code and infrastructure. Not only is the source code available under the terms of the [GPL](./LICENSE), but [all build logs are publicly accessible](https://github.com/jeremyckahn/chitchatter/actions/workflows/pages/pages-build-deployment) as well.
 
-If you would like to verify that the app hosted at https://chitchatter.im/ is the one that is hosted on GitHub, you can use `dig`:
+If you would like to verify that the app hosted at <https://chitchatter.im/> is the one that is hosted on GitHub, you can use `dig`:
 
 ```
 $ dig chitchatter.im
@@ -126,9 +126,9 @@ See the full ticket backlog [here](https://github.com/users/jeremyckahn/projects
 
 ## Environments
 
-- Production environment: https://chitchatter.im/
-  - Mirror: https://chitchatter.vercel.app/ (note that peers cannot connect across domains)
-- Staging: https://chitchatter-git-develop-jeremyckahn.vercel.app/
+- Production environment: <https://chitchatter.im/>
+  - Mirror: <https://chitchatter.vercel.app/> (note that peers cannot connect across domains)
+- Staging: <https://chitchatter-git-develop-jeremyckahn.vercel.app/>
 
 ## SDK
 
@@ -199,7 +199,7 @@ The build is minified and the filenames include the hashes.
 Chitchatter is designed to be forked and self-hosted. If you would like to change pairing or relay server configuration or you prefer to control your own builds and versions, [fork this repo](https://github.com/jeremyckahn/chitchatter/fork) and follow the steps below.
 
 > [!IMPORTANT]
-> Chitchatter peer connections are bound to the instance's domain. So, a user of Chitchatter at https://chitchatter.im/ would not be able to connect to a user of a Chitchatter instance on another domain (such as a personal GitHub Pages-hosted fork).
+> Chitchatter peer connections are bound to the instance's domain. So, a user of Chitchatter at <https://chitchatter.im/> would not be able to connect to a user of a Chitchatter instance on another domain (such as a personal GitHub Pages-hosted fork).
 
 #### Necessary steps after forking
 
@@ -214,7 +214,7 @@ const config = () => {
    return defineConfig({
       base: '/chitchatter/',
       build: {
-       ...
+      // ...
 }
 ```
 
@@ -240,7 +240,7 @@ Chitchatter utilizes the [MUI component library](https://mui.com/) which is [the
 
 If you run into any issues with a custom Chitchatter installation, first ensure that you are using [the latest version of the code](https://github.com/jeremyckahn/chitchatter/tree/main). If you are hosting your installation with GitHub Pages, sync your `main` branch and _not_ your `gh-pages` branch. Updating your `main` branch will trigger a proper rebuild of your `gh-pages` branch.
 
-- https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/working-with-forks/syncing-a-fork
+- <https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/working-with-forks/syncing-a-fork>
 
 #### Peers won't connect
 
@@ -261,10 +261,6 @@ Per [#36](https://github.com/jeremyckahn/chitchatter/issues/36), check your `abo
 #### Offered files can't be downloaded from peers
 
 Chitchatter uses [StreamSaver.js](https://github.com/jimmywarting/StreamSaver.js) to facilitate large file transfers. Download managers such as [FDM](https://www.freedownloadmanager.org/) are [known to interfere with StreamSaver.js](https://github.com/jimmywarting/StreamSaver.js/issues/325), so it is recommended to disable such download managers when trying to receive files.
-
-### Security
-
-Chitchatter undergoes [weekly security audits](https://github.com/jeremyckahn/chitchatter/blob/develop/.github/workflows/security.yml) to identify and address potential vulnerabilities. Reports from all audits can be found in [**Issues**](https://github.com/jeremyckahn/chitchatter/issues?q=%22Security+Report+-+%22).
 
 ### Contributors
 
