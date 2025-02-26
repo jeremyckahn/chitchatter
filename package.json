@@ -34,7 +34,7 @@
     "react-router-dom": "^6.28.2",
     "react-syntax-highlighter": "^15.6.1",
     "react-youtube": "^10.1.0",
-    "readable-web-to-node-stream": "^3.0.2",
+    "readable-web-to-node-stream": "^3.0.3",
     "remark-gfm": "^3.0.1",
     "sdp": "^3.2.0",
     "secure-file-transfer": "^0.0.8",
