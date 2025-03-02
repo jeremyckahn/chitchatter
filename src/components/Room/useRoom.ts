@@ -249,12 +249,16 @@ export function useRoom(
   }, [password, setPassword])
 
   useEffect(() => {
+    if (isDirectMessageRoom) {
+      return
+    }
+
     setRoomId(roomId)
 
     return () => {
       setRoomId(undefined)
     }
-  }, [roomId, setRoomId])
+  }, [roomId, setRoomId, isDirectMessageRoom])
 
   useEffect(() => {
     if (isShowingMessages) setUnreadMessages(0)
