@@ -40,7 +40,11 @@ export function useRoomFileShare({
     onReceive: (fileOfferMetadata, peerId) => {
       if (fileOfferMetadata) {
         setPeerOfferedFileMetadata({ [peerId]: fileOfferMetadata })
-      } else {
+      }
+      // NOTE: Sometimes the peerOfferedFileMetadata reference is stale, so
+      // this branch only uses it if it has a reference to the target peer's
+      // metadata.
+      else if (peerOfferedFileMetadata?.[peerId]) {
         const fileOfferMetadata = peerOfferedFileMetadata[peerId]
         const { magnetURI, isAllInlineMedia } = fileOfferMetadata
 
