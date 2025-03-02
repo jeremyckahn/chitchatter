@@ -15,5 +15,9 @@ export const rtcConfig: RTCConfiguration = {
       username: 'efQUQ79N77B5BNVVKF',
       credential: 'N4EAUgpjMzPLrxSS',
     },
+    // Free Google STUN server for basic NAT traversal.
+    {
+      urls: 'stun:stun.l.google.com:19302',
+    },
   ],
 }
