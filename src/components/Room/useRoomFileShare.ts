@@ -30,7 +30,7 @@ export function useRoomFileShare({
   >(null)
   const [isFileSharingEnabled, setIsFileSharingEnabled] = useState(true)
 
-  const { peerList, setPeerList, showAlert } = shellContext
+  const { setPeerList, showAlert } = shellContext
   const { peerOfferedFileMetadata, setPeerOfferedFileMetadata } = roomContext
 
   const [sendFileOfferMetadata] = usePeerAction<FileOfferMetadata | null>({
@@ -62,17 +62,19 @@ export function useRoomFileShare({
         setPeerOfferedFileMetadata(newFileOfferMetadata)
       }
 
-      const newPeerList = peerList.map(peer => {
-        const newPeer: Peer = { ...peer }
+      setPeerList(prev => {
+        const newPeerList = prev.map(peer => {
+          const newPeer: Peer = { ...peer }
 
-        if (peer.peerId === peerId) {
-          newPeer.offeredFileId = fileOfferMetadata?.magnetURI ?? null
-        }
+          if (peer.peerId === peerId) {
+            newPeer.offeredFileId = fileOfferMetadata?.magnetURI ?? null
+          }
 
-        return newPeer
+          return newPeer
+        })
+
+        return newPeerList
       })
-
-      setPeerList(newPeerList)
     },
   })
 

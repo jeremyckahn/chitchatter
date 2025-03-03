@@ -29,7 +29,6 @@ export function useRoomScreenShare({ peerRoom }: UseRoomScreenShareConfig) {
   const [isSharingScreen, setIsSharingScreen] = useState(false)
 
   const {
-    peerList,
     setPeerList,
     setScreenState,
     setAudioChannelState,
@@ -48,21 +47,23 @@ export function useRoomScreenShare({ peerRoom }: UseRoomScreenShareConfig) {
     peerAction: PeerAction.SCREEN_SHARE,
     peerRoom,
     onReceive: (screenState, peerId) => {
-      const newPeerList = peerList.map(peer => {
-        const newPeer: Peer = { ...peer }
+      setPeerList(peerList => {
+        const newPeerList = peerList.map(peer => {
+          const newPeer: Peer = { ...peer }
 
-        if (peer.peerId === peerId) {
-          newPeer.screenShareState = screenState
+          if (peer.peerId === peerId) {
+            newPeer.screenShareState = screenState
 
-          if (screenState === ScreenShareState.NOT_SHARING) {
-            deletePeerScreen(peerId)
+            if (screenState === ScreenShareState.NOT_SHARING) {
+              deletePeerScreen(peerId)
+            }
           }
-        }
 
-        return newPeer
+          return newPeer
+        })
+
+        return newPeerList
       })
-
-      setPeerList(newPeerList)
     },
   })
 
