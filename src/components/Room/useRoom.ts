@@ -269,10 +269,14 @@ export function useRoom(
     peerAction: PeerAction.PEER_METADATA,
     peerRoom,
     onReceive: async (
-      { userId, customUsername, publicKeyString },
+      {
+        userId: peerUserId,
+        customUsername: peerCustomUsername,
+        publicKeyString,
+      },
       peerId: string
     ) => {
-      const publicKey = await encryptionService.parseCryptoKeyString(
+      const parsedPublicKey = await encryptionService.parseCryptoKeyString(
         publicKeyString,
         AllowedKeyType.PUBLIC
       )
@@ -282,9 +286,9 @@ export function useRoom(
       if (peerIndex === -1) {
         const newPeer: Peer = {
           peerId,
-          userId,
-          publicKey,
-          customUsername,
+          userId: peerUserId,
+          publicKey: parsedPublicKey,
+          customUsername: peerCustomUsername,
           audioChannelState: {
             [AudioChannelName.MICROPHONE]: AudioState.STOPPED,
             [AudioChannelName.SCREEN_SHARE]: AudioState.STOPPED,
@@ -305,12 +309,16 @@ export function useRoom(
         verifyPeer(newPeer)
       } else {
         const oldUsername =
-          peerList[peerIndex].customUsername || getPeerName(userId)
-        const newUsername = customUsername || getPeerName(userId)
+          peerList[peerIndex].customUsername || getPeerName(peerUserId)
+        const newUsername = peerCustomUsername || getPeerName(peerUserId)
 
         setPeerList(prev => {
           const newPeerList = [...prev]
-          const newPeer = { ...newPeerList[peerIndex], userId, customUsername }
+          const newPeer = {
+            ...newPeerList[peerIndex],
+            userId: peerUserId,
+            customUsername: peerCustomUsername,
+          }
           newPeerList[peerIndex] = newPeer
 
           return newPeerList

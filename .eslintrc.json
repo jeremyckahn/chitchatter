@@ -5,6 +5,7 @@
     "import/order": [
       "error",
       { "newlines-between": "always-and-inside-groups" }
-    ]
+    ],
+    "@typescript-eslint/no-shadow": "error"
   }
 }

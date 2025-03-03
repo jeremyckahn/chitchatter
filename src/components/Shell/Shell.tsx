@@ -115,23 +115,23 @@ export const Shell = ({ appNeedsUpdate, children, userPeerId }: ShellProps) => {
   const messageLog = shellMessageLog
 
   const setMessageLog = useCallback(
-    (messageLog: MessageLog, targetPeerId: string | null) => {
+    (newMessageLog: MessageLog, targetPeerId: string | null) => {
       setShellMessageLog(prev => {
         const isDirectMessageLog = typeof targetPeerId === 'string'
 
-        const shellMessageLog: ShellMessageLog = {
+        const newShellMessageLog: ShellMessageLog = {
           groupMessageLog: isDirectMessageLog
             ? prev.groupMessageLog
-            : messageLog,
+            : newMessageLog,
           directMessageLog: {
             ...prev.directMessageLog,
             ...(isDirectMessageLog && {
-              [targetPeerId]: messageLog,
+              [targetPeerId]: newMessageLog,
             }),
           },
         }
 
-        return shellMessageLog
+        return newShellMessageLog
       })
     },
     []
@@ -147,14 +147,14 @@ export const Shell = ({ appNeedsUpdate, children, userPeerId }: ShellProps) => {
 
   const updatePeer = useCallback(
     (peerId: string, updatedProperties: Partial<Peer>) => {
-      setPeerList(peerList => {
-        const peerIndex = peerList.findIndex(peer => peer.peerId === peerId)
+      setPeerList(prev => {
+        const peerIndex = prev.findIndex(peer => peer.peerId === peerId)
         const doesPeerExist = peerIndex !== -1
 
-        if (!doesPeerExist) return peerList
+        if (!doesPeerExist) return prev
 
-        const peerListClone = [...peerList]
-        const peer = peerList[peerIndex]
+        const peerListClone = [...prev]
+        const peer = prev[peerIndex]
         peerListClone[peerIndex] = { ...peer, ...updatedProperties }
         return peerListClone
       })
@@ -406,7 +406,6 @@ export const Shell = ({ appNeedsUpdate, children, userPeerId }: ShellProps) => {
                 <Drawer
                   isDrawerOpen={isDrawerOpen}
                   onDrawerClose={handleDrawerClose}
-                  theme={theme}
                 />
               )}
               <RouteContent

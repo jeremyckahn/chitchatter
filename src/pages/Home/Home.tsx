@@ -193,7 +193,7 @@ export function Home({ userId }: HomeProps) {
         <MuiLink
           href="https://github.com/jeremyckahn/chitchatter"
           target="_blank"
-          sx={theme => ({
+          sx={() => ({
             color: theme.palette.text.primary,
           })}
         >

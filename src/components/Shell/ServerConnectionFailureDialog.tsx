@@ -32,7 +32,7 @@ export const ServerConnectionFailureDialog = () => {
         <Box sx={{ display: 'flex', alignItems: 'center' }}>
           <ReportIcon
             fontSize="medium"
-            sx={theme => ({
+            sx={() => ({
               color: theme.palette.error.main,
               mr: theme.spacing(1),
             })}

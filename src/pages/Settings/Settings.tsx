@@ -59,23 +59,25 @@ export const Settings = ({ userId }: SettingsProps) => {
 
   const handlePlaySoundOnNewMessageChange = (
     _event: ChangeEvent,
-    playSoundOnNewMessage: boolean
+    newPlaySoundOnNewMessage: boolean
   ) => {
-    updateUserSettings({ playSoundOnNewMessage })
+    updateUserSettings({ playSoundOnNewMessage: newPlaySoundOnNewMessage })
   }
 
   const handleShowNotificationOnNewMessageChange = (
     _event: ChangeEvent,
-    showNotificationOnNewMessage: boolean
+    newShowNotificationOnNewMessage: boolean
   ) => {
-    updateUserSettings({ showNotificationOnNewMessage })
+    updateUserSettings({
+      showNotificationOnNewMessage: newShowNotificationOnNewMessage,
+    })
   }
 
   const handleShowActiveTypingStatusChange = (
     _event: ChangeEvent,
-    showActiveTypingStatus: boolean
+    newShowActiveTypingStatus: boolean
   ) => {
-    updateUserSettings({ showActiveTypingStatus })
+    updateUserSettings({ showActiveTypingStatus: newShowActiveTypingStatus })
   }
 
   const handleDeleteSettingsClick = () => {

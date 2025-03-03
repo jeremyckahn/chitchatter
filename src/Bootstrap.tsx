@@ -173,9 +173,9 @@ const Bootstrap = ({
   ])
 
   useEffect(() => {
-    const queryParams = new URLSearchParams(window.location.search)
+    const freshQueryParams = new URLSearchParams(window.location.search)
 
-    if (!queryParams.has(QueryParamKeys.IS_EMBEDDED)) return
+    if (!freshQueryParams.has(QueryParamKeys.IS_EMBEDDED)) return
 
     const handleConfigMessage = (event: MessageEvent) => {
       if (!hasLoadedSettings) return
