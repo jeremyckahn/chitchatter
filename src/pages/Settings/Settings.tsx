@@ -17,9 +17,9 @@ import { StorageContext } from 'contexts/StorageContext'
 import { SettingsContext } from 'contexts/SettingsContext'
 import { PeerNameDisplay } from 'components/PeerNameDisplay'
 import { ConfirmDialog } from 'components/ConfirmDialog'
+import SoundSelector from 'components/SoundSelector/SoundSelector'
 
 import { isErrorWithMessage } from '../../lib/type-guards'
-import SoundSelector from 'components/SoundSelector/SoundSelector'
 
 interface SettingsProps {
   userId: string
