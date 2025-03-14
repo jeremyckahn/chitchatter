@@ -59,6 +59,7 @@ test('updates persisted user settings', async () => {
       showActiveTypingStatus: true,
       publicKey: mockSerializedPublicKey,
       privateKey: mockSerializedPrivateKey,
+      selectedSound: '/sounds/new-message.aac',
     }
   )
 })

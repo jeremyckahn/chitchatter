@@ -42,6 +42,7 @@ const Init = ({ getUuid = uuid, ...props }: InitProps) => {
           showActiveTypingStatus: true,
           publicKey,
           privateKey,
+          selectedSound: '/sounds/new-message.aac',
         })
       } catch (e) {
         console.error(e)

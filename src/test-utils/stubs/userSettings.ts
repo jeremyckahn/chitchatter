@@ -13,6 +13,7 @@ export const userSettingsStubFactory = (
     showActiveTypingStatus: true,
     publicKey: encryption.cryptoKeyStub,
     privateKey: encryption.cryptoKeyStub,
+    selectedSound: '/sounds/new-message.aac',
     ...overrides,
   }
 }

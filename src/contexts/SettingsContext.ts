@@ -19,5 +19,6 @@ export const SettingsContext = createContext<SettingsContextProps>({
     showActiveTypingStatus: true,
     publicKey: encryption.cryptoKeyStub,
     privateKey: encryption.cryptoKeyStub,
+    selectedSound: '/sounds/new-message.aac',
   }),
 })

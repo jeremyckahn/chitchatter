@@ -1,21 +1,43 @@
-import React, { useState } from 'react'
+import React from 'react'
 import { Autocomplete, TextField } from '@mui/material'
-import { soundNames } from 'config/soundNames'
+import { useContext } from 'react'
+import { soundOptions } from 'config/soundNames'
+import { SettingsContext } from 'contexts/SettingsContext'
 
 function SoundSelector() {
-  const [selectedSound, setSelectedSound] = useState('')
+  const { getUserSettings, updateUserSettings } = useContext(SettingsContext)
+  const { selectedSound } = getUserSettings()
 
-  const handleChange = (event: any, newValue: string | null) => {
-    setSelectedSound(newValue || '') // Handle selection or empty selection
+  const handleChange = async (
+    event: any,
+    newValue: { label: string; value: string } | null
+  ) => {
+    const newSound = newValue?.value || soundOptions[0].value
+
+    console.log('Playing sound:', newSound)
+
+    // Play the selected sound immediately
+    if (newSound) {
+      const audio = new Audio(newSound)
+      audio.play().catch(error => console.error('Error playing sound:', error))
+    }
+
+    // Update user settings
+    await updateUserSettings({ selectedSound: newSound })
   }
 
   return (
     <Autocomplete
       disablePortal
-      options={soundNames}
+      options={soundOptions}
       sx={{ width: 300, mt: 2 }}
-      value={selectedSound}
+      value={
+        soundOptions.find(option => option.value === selectedSound) ||
+        soundOptions[0]
+      }
       onChange={handleChange}
+      getOptionLabel={option => option.label}
+      isOptionEqualToValue={(option, value) => option.value === value.value}
       renderInput={params => <TextField {...params} label="Sound" />}
     />
   )
