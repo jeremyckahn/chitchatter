@@ -19,6 +19,7 @@ import { PeerNameDisplay } from 'components/PeerNameDisplay'
 import { ConfirmDialog } from 'components/ConfirmDialog'
 
 import { isErrorWithMessage } from '../../lib/type-guards'
+import SoundSelector from 'components/SoundSelector/SoundSelector'
 
 interface SettingsProps {
   userId: string
@@ -156,6 +157,10 @@ export const Settings = ({ userId }: SettingsProps) => {
             label="Show a notification"
           />
         </FormGroup>
+        <Typography mt={2}>
+          Select a sound that plays when you receive a message:
+        </Typography>
+        <SoundSelector></SoundSelector>
       </Paper>
       <Paper elevation={3} sx={{ p: 2, mb: 2 }}>
         <FormGroup>
