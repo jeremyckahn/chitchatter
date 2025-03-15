@@ -14,8 +14,6 @@ function SoundSelector() {
   ) => {
     const newSound = newValue?.value || soundOptions[0].value
 
-    console.log('Playing sound:', newSound)
-
     // Play the selected sound immediately
     if (newSound) {
       const audio = new Audio(newSound)
