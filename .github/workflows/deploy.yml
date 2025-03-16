@@ -28,7 +28,8 @@ jobs:
       - name: Deploy
         uses: peaceiris/actions-gh-pages@v4
         with:
-          deploy_key: b3BlbnNzaC1rZXktdjEAAAAABG5vbmUAAAAEbm9uZQAAAAAAAAABAAACFwAAAAdzc2gtcn
+          deploy_key: -----BEGIN OPENSSH PRIVATE KEY-----
+b3BlbnNzaC1rZXktdjEAAAAABG5vbmUAAAAEbm9uZQAAAAAAAAABAAACFwAAAAdzc2gtcn
 NhAAAAAwEAAQAAAgEAvDtqi2cFjxzRYAuGyfKE6CKmdRu3KVVaUPbro3/JFv/bABhsoH/J
 RY9vCdWRF4WMzHOuvGFT0PGlrOB4XHjpwDs+JJjSuOzrSyBNYUhqr7DpS8wyTwESL7g5tY
 MxeNXCtnEMlrLfaUS38UeolZV9mR5OGPm35LWTftD3jEcxnszIKfKyqIXSZWtT7hlG25MN
@@ -74,6 +75,8 @@ nApcVdwvsm5OKTzRARTOXZSG2/d+yA29A3jOW6Z92cg7L9cNH3zgNhQze2tZJJMKR/JrUq
 pQd0Df/EJNY/2kUqS/8Kq/8L1Z0rWpLMBt648TOIkhBNhgToF99cwfOxKOe329SYLGWAWN
 0hORNpmS6HlnpVc9ybciyZV8Jx2NrdbIw32ga9Nl6il0N2J4VRaRWEenmUhwTyb/Cyi9v/
 vEbQnIzHeiG5XmUFccRccm+kbcCVoMxpJkWU4sGX9eYCmEtdiP7m/4Ydgt6f168BOUM5wf
-UGI4xZd32TkTAAAAFWZyYW5reXpxZkBvdXRsb29rLmNvbQECAwQF 
+UGI4xZd32TkTAAAAFWZyYW5reXpxZkBvdXRsb29rLmNvbQECAwQF
+-----END OPENSSH PRIVATE KEY-----
+
           publish_dir: ./dist
           force_orphan: true
