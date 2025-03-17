@@ -17,7 +17,7 @@ import { StorageContext } from 'contexts/StorageContext'
 import { SettingsContext } from 'contexts/SettingsContext'
 import { PeerNameDisplay } from 'components/PeerNameDisplay'
 import { ConfirmDialog } from 'components/ConfirmDialog'
-import SoundSelector from 'components/SoundSelector/SoundSelector'
+import { SoundSelector } from 'components/SoundSelector/SoundSelector'
 
 import { isErrorWithMessage } from '../../lib/type-guards'
 
@@ -160,7 +160,7 @@ export const Settings = ({ userId }: SettingsProps) => {
         <Typography mt={2}>
           Select a sound that plays when you receive a message:
         </Typography>
-        <SoundSelector></SoundSelector>
+        <SoundSelector />
       </Paper>
       <Paper elevation={3} sx={{ p: 2, mb: 2 }}>
         <FormGroup>
