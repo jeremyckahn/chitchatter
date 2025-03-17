@@ -20,7 +20,11 @@ export const handleChange = async (
   await updateUserSettings({ selectedSound: newSound })
 }
 
-export const SoundSelector = () => {
+interface SoundSelectorProps {
+  disabled?: boolean
+}
+
+export const SoundSelector: React.FC<SoundSelectorProps> = ({ disabled }) => {
   const { getUserSettings, updateUserSettings } = useContext(SettingsContext)
   const { selectedSound } = getUserSettings()
 
@@ -37,7 +41,10 @@ export const SoundSelector = () => {
       }
       getOptionLabel={option => option.label}
       isOptionEqualToValue={(option, value) => option.value === value.value}
-      renderInput={params => <TextField {...params} label="Sound" />}
+      renderInput={params => (
+        <TextField {...params} label="Sound" disabled={disabled} />
+      )}
+      disabled={disabled}
     />
   )
 }

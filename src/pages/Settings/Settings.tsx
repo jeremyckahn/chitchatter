@@ -160,7 +160,7 @@ export const Settings = ({ userId }: SettingsProps) => {
         <Typography mt={2}>
           Select a sound that plays when you receive a message:
         </Typography>
-        <SoundSelector />
+        <SoundSelector disabled={!playSoundOnNewMessage} />
       </Paper>
       <Paper elevation={3} sx={{ p: 2, mb: 2 }}>
         <FormGroup>
