@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import Box from '@mui/material/Box'
 import RecordVoiceOver from '@mui/icons-material/RecordVoiceOver'
 import VoiceOverOff from '@mui/icons-material/VoiceOverOff'
@@ -29,56 +29,6 @@ export function RoomAudioControls({ peerRoom }: RoomAudioControlsProps) {
   const [audioAnchorEl, setAudioAnchorEl] = useState<null | HTMLElement>(null)
   const isAudioDeviceSelectOpen = Boolean(audioAnchorEl)
   const [selectedAudioDeviceIdx, setSelectedAudioDeviceIdx] = useState(0)
-
-  const [keysPressed, setKeysPressed] = useState({
-    ctrl: false,
-    shift: false,
-    s: false,
-  })
-
-  useEffect(() => {
-    // Handle microphone activation when the hotkey(Ctrl + Shift + S) is pressed
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Control') {
-        setKeysPressed(prev => ({ ...prev, ctrl: true }))
-      }
-      if (event.key === 'Shift') {
-        setKeysPressed(prev => ({ ...prev, shift: true }))
-      }
-      if (event.key === 'S') {
-        setKeysPressed(prev => ({ ...prev, s: true }))
-      }
-
-      if (keysPressed.ctrl && keysPressed.shift && keysPressed.s) {
-        setIsSpeakingToRoom(true)
-      }
-    }
-
-    // Handle microphone activation when the hotkey(Ctrl + Shift + S) is released
-    const handleKeyUp = (event: KeyboardEvent) => {
-      if (event.key === 'Control') {
-        setKeysPressed(prev => ({ ...prev, ctrl: false }))
-      }
-      if (event.key === 'Shift') {
-        setKeysPressed(prev => ({ ...prev, shift: false }))
-      }
-      if (event.key === 'S') {
-        setKeysPressed(prev => ({ ...prev, s: false }))
-      }
-
-      if (!keysPressed.ctrl || !keysPressed.shift || !keysPressed.s) {
-        setIsSpeakingToRoom(false)
-      }
-    }
-
-    window.addEventListener('keydown', handleKeyDown)
-    window.addEventListener('keyup', handleKeyUp)
-
-    return () => {
-      window.removeEventListener('keydown', handleKeyDown)
-      window.removeEventListener('keyup', handleKeyUp)
-    }
-  }, [keysPressed, setIsSpeakingToRoom])
 
   const handleVoiceCallClick = () => {
     setIsSpeakingToRoom(!isSpeakingToRoom)
@@ -116,8 +66,8 @@ export function RoomAudioControls({ peerRoom }: RoomAudioControlsProps) {
       <Tooltip
         title={
           isSpeakingToRoom
-            ? 'Turn off microphone [Press Ctrl + Shift + S]'
-            : 'Turn on microphone and speak to room [Hold Ctrl + Shift + S]'
+            ? 'Turn off microphone'
+            : 'Turn on microphone and speak to room'
         }
       >
         <MediaButton
