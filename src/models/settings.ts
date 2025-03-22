@@ -18,4 +18,5 @@ export interface UserSettings {
   showActiveTypingStatus: boolean
   publicKey: CryptoKeyPair['publicKey']
   privateKey: CryptoKeyPair['privateKey']
+  selectedSound: string
 }

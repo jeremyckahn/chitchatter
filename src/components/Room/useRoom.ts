@@ -103,7 +103,9 @@ export function useRoom(
   const settingsContext = useContext(SettingsContext)
   const { showActiveTypingStatus } = settingsContext.getUserSettings()
   const [isMessageSending, setIsMessageSending] = useState(false)
-  const [newMessageAudio] = useState(() => new Audio('/sounds/new-message.aac'))
+
+  const { selectedSound } = settingsContext.getUserSettings()
+  const [newMessageAudio] = useState(() => new Audio(selectedSound))
 
   const { getDisplayUsername } = usePeerNameDisplay()
 

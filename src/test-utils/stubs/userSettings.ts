@@ -1,6 +1,8 @@
 import { ColorMode, UserSettings } from 'models/settings'
 import { encryption } from 'services/Encryption'
 
+import { DEFAULT_SOUND } from 'config/soundNames'
+
 export const userSettingsStubFactory = (
   overrides: Partial<UserSettings> = {}
 ): UserSettings => {
@@ -13,6 +15,7 @@ export const userSettingsStubFactory = (
     showActiveTypingStatus: true,
     publicKey: encryption.cryptoKeyStub,
     privateKey: encryption.cryptoKeyStub,
+    selectedSound: DEFAULT_SOUND,
     ...overrides,
   }
 }
