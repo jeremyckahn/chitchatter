@@ -32,13 +32,13 @@ export function RoomAudioControls({ peerRoom }: RoomAudioControlsProps) {
   const [selectedAudioDeviceIdx, setSelectedAudioDeviceIdx] = useState(0)
 
   // When keys are pressed, turn on the mic
-  useHotkeys('ctrl+d', () => {
+  useHotkeys('ctrl+`', () => {
     setIsSpeakingToRoom(true)
   })
 
   // When keys are released, mic is turned off
   useHotkeys(
-    'ctrl+d',
+    'ctrl+`',
     () => {
       setIsSpeakingToRoom(false)
     },
@@ -82,7 +82,7 @@ export function RoomAudioControls({ peerRoom }: RoomAudioControlsProps) {
         title={
           isSpeakingToRoom
             ? 'Turn off microphone'
-            : 'Turn on microphone and speak to room [Hold Ctrl + D to speak]'
+            : 'Turn on microphone and speak to room (hold ctrl + ` to speak)'
         }
       >
         <MediaButton
