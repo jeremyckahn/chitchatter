@@ -121,7 +121,7 @@
     "serve": "^14.1.2",
     "url": "^0.11.0",
     "util": "^0.12.5",
-    "vite": "^6.2.3",
+    "vite": "^6.2.4",
     "vite-plugin-node-polyfills": "^0.23.0",
     "vite-plugin-pwa": "^0.21.2",
     "vite-plugin-svgr": "^4.3.0",
