@@ -30,6 +30,10 @@ interface HomeProps {
   userId: string
 }
 
+const roomTypePrefixes = ['public', 'private']
+const roomTypePrefixesDelimitedForRegExp = roomTypePrefixes.join('|')
+const rRoomNameAppPrefix = `^${window.location.origin}/(${roomTypePrefixesDelimitedForRegExp})/`
+
 export function Home({ userId }: HomeProps) {
   const { setTitle } = useContext(ShellContext)
   const theme = useTheme()
@@ -43,7 +47,10 @@ export function Home({ userId }: HomeProps) {
 
   const handleRoomNameChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const { value } = event.target
-    setRoomName(value)
+
+    const baseRoomName = value.replace(new RegExp(rRoomNameAppPrefix), '')
+
+    setRoomName(baseRoomName)
   }
 
   const handleFormSubmit = (event: React.SyntheticEvent<HTMLFormElement>) => {
