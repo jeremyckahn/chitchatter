@@ -28,7 +28,7 @@ export interface ShellMessageLog {
   directMessageLog: Record<string, MessageLog>
 }
 
-interface ShellContextProps {
+export interface ShellContextProps {
   isEmbedded: boolean
   tabHasFocus: boolean
   showRoomControls: boolean

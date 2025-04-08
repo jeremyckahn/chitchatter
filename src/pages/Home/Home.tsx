@@ -1,28 +1,26 @@
-import React, { useEffect, useContext, useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
-import Button from '@mui/material/Button'
+import Cached from '@mui/icons-material/Cached'
+import GitHubIcon from '@mui/icons-material/GitHub'
 import Box from '@mui/material/Box'
-import FormControl from '@mui/material/FormControl'
-import Typography from '@mui/material/Typography'
-import TextField from '@mui/material/TextField'
+import Button from '@mui/material/Button'
 import Divider from '@mui/material/Divider'
+import FormControl from '@mui/material/FormControl'
 import IconButton from '@mui/material/IconButton'
 import MuiLink from '@mui/material/Link'
-import GitHubIcon from '@mui/icons-material/GitHub'
-import Cached from '@mui/icons-material/Cached'
-import useTheme from '@mui/material/styles/useTheme'
 import styled from '@mui/material/styles/styled'
-
+import useTheme from '@mui/material/styles/useTheme'
+import TextField from '@mui/material/TextField'
+import Typography from '@mui/material/Typography'
+import { Link } from 'react-router-dom'
 import { v4 as uuid } from 'uuid'
 
-import { routes } from 'config/routes'
-import { ShellContext } from 'contexts/ShellContext'
-import { PeerNameDisplay } from 'components/PeerNameDisplay'
 import { Form, Main } from 'components/Elements'
+import { PeerNameDisplay } from 'components/PeerNameDisplay'
+import { routes } from 'config/routes'
 import Logo from 'img/logo.svg?react'
 
-import { EmbedCodeDialog } from './EmbedCodeDialog'
 import { CommunityRoomSelector } from './CommunityRoomSelector'
+import { EmbedCodeDialog } from './EmbedCodeDialog'
+import { useHome } from './useHome'
 
 const StyledLogo = styled(Logo)({})
 
@@ -30,50 +28,21 @@ interface HomeProps {
   userId: string
 }
 
-const roomTypePrefixes = ['public', 'private']
-const roomTypePrefixesDelimitedForRegExp = roomTypePrefixes.join('|')
-const rRoomNameAppPrefix = `^${window.location.origin}/(${roomTypePrefixesDelimitedForRegExp})/`
-
 export function Home({ userId }: HomeProps) {
-  const { setTitle } = useContext(ShellContext)
   const theme = useTheme()
-  const [roomName, setRoomName] = useState(uuid())
-  const [showEmbedCode, setShowEmbedCode] = useState(false)
-  const navigate = useNavigate()
 
-  useEffect(() => {
-    setTitle('Chitchatter')
-  }, [setTitle])
-
-  const handleRoomNameChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const { value } = event.target
-
-    const baseRoomName = value.replace(new RegExp(rRoomNameAppPrefix), '')
-
-    setRoomName(baseRoomName)
-  }
-
-  const handleFormSubmit = (event: React.SyntheticEvent<HTMLFormElement>) => {
-    event.preventDefault()
-  }
-
-  const handleJoinPublicRoomClick = () => {
-    navigate(`/public/${roomName}`)
-  }
-
-  const handleJoinPrivateRoomClick = () => {
-    navigate(`/private/${roomName}`)
-  }
-
-  const handleGetEmbedCodeClick = () => {
-    setShowEmbedCode(true)
-  }
-
-  const handleEmbedCodeWindowClose = () => {
-    setShowEmbedCode(false)
-  }
-
-  const isRoomNameValid = roomName.length > 0
+  const {
+    roomName,
+    setRoomName,
+    showEmbedCode,
+    handleRoomNameChange,
+    handleFormSubmit,
+    handleJoinPublicRoomClick,
+    handleJoinPrivateRoomClick,
+    handleGetEmbedCodeClick,
+    handleEmbedCodeWindowClose,
+    isRoomNameValid,
+  } = useHome()
 
   return (
     <Box className="Home">
