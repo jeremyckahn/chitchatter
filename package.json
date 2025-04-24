@@ -32,7 +32,7 @@
     "react-hotkeys-hook": "^4.6.1",
     "react-markdown": "^8.0.3",
     "react-qrcode-logo": "^2.10.0",
-    "react-router-dom": "^6.30.0",
+    "react-router-dom": "^7.5.2",
     "react-syntax-highlighter": "^15.6.1",
     "react-youtube": "^10.1.0",
     "readable-web-to-node-stream": "^3.0.2",
