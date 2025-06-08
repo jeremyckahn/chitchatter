@@ -21,8 +21,11 @@ interface EmbedCodeDialogProps {
   roomName: string
 }
 
-const packageHomepage =
-  import.meta.env.VITE_HOMEPAGE ?? `${window.location.origin}/`
+const basePackageHomepage =
+  import.meta.env.VITE_HOMEPAGE ?? window.location.origin
+const packageHomepage = basePackageHomepage.endsWith('/')
+  ? basePackageHomepage
+  : `${basePackageHomepage}/`
 
 export const EmbedCodeDialog = ({
   showEmbedCode,
