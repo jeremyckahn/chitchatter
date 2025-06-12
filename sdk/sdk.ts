@@ -9,7 +9,7 @@ import { isColorMode, UserSettings } from '../src/models/settings'
 import { iframeFeatureAllowList } from '../src/config/iframeFeatureAllowList'
 
 export const defaultRoot =
-  import.meta.env.VITE_HOMEPAGE ?? 'https://chitchatter.im/'
+  process.env.VITE_HOMEPAGE ?? 'https://chitchatter.im/'
 
 // NOTE: This is a subset of standard iframe attributes:
 // https://developer.mozilla.org/en-US/docs/Web/HTML/Element/iframe#attributes
