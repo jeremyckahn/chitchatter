@@ -9,6 +9,11 @@ import FormGroup from '@mui/material/FormGroup'
 import FormControlLabel from '@mui/material/FormControlLabel'
 import Paper from '@mui/material/Paper'
 import useTheme from '@mui/material/styles/useTheme'
+import Select, { SelectChangeEvent } from '@mui/material/Select';
+import MenuItem from '@mui/material/MenuItem';
+import FormControl from '@mui/material/FormControl';
+import InputLabel from '@mui/material/InputLabel';
+import { useTranslation } from 'react-i18next';
 
 import { settings } from 'services/Settings'
 import { notification } from 'services/Notification'
@@ -26,6 +31,7 @@ interface SettingsProps {
 }
 
 export const Settings = ({ userId }: SettingsProps) => {
+  const { t, i18n } = useTranslation();
   const theme = useTheme()
 
   const { setTitle, showAlert } = useContext(ShellContext)
@@ -55,8 +61,8 @@ export const Settings = ({ userId }: SettingsProps) => {
   }, [])
 
   useEffect(() => {
-    setTitle('Settings')
-  }, [setTitle])
+    setTitle(t('settings.title'))
+  }, [setTitle, t])
 
   const handlePlaySoundOnNewMessageChange = (
     _event: ChangeEvent,
@@ -80,6 +86,10 @@ export const Settings = ({ userId }: SettingsProps) => {
   ) => {
     updateUserSettings({ showActiveTypingStatus: newShowActiveTypingStatus })
   }
+
+  const handleLanguageChange = (event: SelectChangeEvent<string>) => {
+    i18n.changeLanguage(event.target.value);
+  };
 
   const handleDeleteSettingsClick = () => {
     setIsDeleteSettingsConfirmDiaglogOpen(true)
@@ -130,10 +140,35 @@ export const Settings = ({ userId }: SettingsProps) => {
           mb: 2,
         }}
       >
-        Chat
+        {t('settings.languageTitle')}
       </Typography>
       <Paper elevation={3} sx={{ p: 2, mb: 2 }}>
-        <Typography>When a message is received in the background:</Typography>
+        <FormControl fullWidth>
+          <InputLabel id="language-select-label">{t('settings.languageLabel')}</InputLabel>
+          <Select
+            labelId="language-select-label"
+            value={i18n.language}
+            label={t('settings.languageLabel')}
+            onChange={handleLanguageChange}
+          >
+            <MenuItem value="en">English</MenuItem>
+            <MenuItem value="zh">中文</MenuItem>
+          </Select>
+        </FormControl>
+      </Paper>
+      <Divider sx={{ my: 2 }} />
+      <Typography
+        variant="h2"
+        sx={{
+          fontSize: theme.typography.h3.fontSize,
+          fontWeight: theme.typography.fontWeightMedium,
+          mb: 2,
+        }}
+      >
+        {t('settings.chatTitle')}
+      </Typography>
+      <Paper elevation={3} sx={{ p: 2, mb: 2 }}>
+        <Typography>{t('settings.whenMessageReceived')}</Typography>
         <FormGroup>
           <FormControlLabel
             control={
@@ -142,7 +177,7 @@ export const Settings = ({ userId }: SettingsProps) => {
                 onChange={handlePlaySoundOnNewMessageChange}
               />
             }
-            label="Play a sound"
+            label={t('settings.playSound')}
           />
           <FormControlLabel
             control={
@@ -154,11 +189,11 @@ export const Settings = ({ userId }: SettingsProps) => {
                 disabled={!areNotificationsAvailable}
               />
             }
-            label="Show a notification"
+            label={t('settings.showNotification')}
           />
         </FormGroup>
         <Typography mt={2}>
-          Select a sound that plays when you receive a message:
+          {t('settings.selectSound')}
         </Typography>
         <SoundSelector disabled={!playSoundOnNewMessage} />
       </Paper>
@@ -171,11 +206,11 @@ export const Settings = ({ userId }: SettingsProps) => {
                 onChange={handleShowActiveTypingStatusChange}
               />
             }
-            label="Show active typing indicators"
+            label={t('settings.showTypingIndicators')}
           />
         </FormGroup>
         <Typography variant="subtitle2">
-          Disabling this will also hide your active typing status from others.
+          {t('settings.typingIndicatorsSubtitle')}
         </Typography>
       </Paper>
       <Divider sx={{ my: 2 }} />

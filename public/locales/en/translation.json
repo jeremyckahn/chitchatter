@@ -1,0 +1,27 @@
+{
+  "shellAppBar": {
+    "openMenu": "Open menu",
+    "copyUrl": "Copy current URL",
+    "showQrCode": "Show QR Code",
+    "hideRoomControls": "Hide Room Controls",
+    "showRoomControls": "Show Room Controls",
+    "exitFullscreen": "Exit fullscreen",
+    "enterFullscreen": "Enter fullscreen",
+    "fullscreen": "Toggle fullscreen",
+    "showPeerList": "Click to show peer list",
+    "peerList": "Peer list",
+    "showRoomControlsTooltip": "Show room controls"
+  },
+  "settings": {
+    "title": "Settings",
+    "languageTitle": "Language",
+    "languageLabel": "Select Language",
+    "chatTitle": "Chat",
+    "whenMessageReceived": "When a message is received in the background:",
+    "playSound": "Play a sound",
+    "showNotification": "Show a notification",
+    "selectSound": "Select a sound that plays when you receive a message:",
+    "showTypingIndicators": "Show active typing indicators",
+    "typingIndicatorsSubtitle": "Disabling this will also hide your active typing status from others."
+  }
+}

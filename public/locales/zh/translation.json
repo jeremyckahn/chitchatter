@@ -1,0 +1,27 @@
+{
+  "shellAppBar": {
+    "openMenu": "打开菜单",
+    "copyUrl": "复制当前网址",
+    "showQrCode": "显示二维码",
+    "hideRoomControls": "隐藏房间控制",
+    "showRoomControls": "显示房间控制",
+    "exitFullscreen": "退出全屏",
+    "enterFullscreen": "进入全屏",
+    "fullscreen": "切换全屏",
+    "showPeerList": "点击显示用户列表",
+    "peerList": "用户列表",
+    "showRoomControlsTooltip": "显示房间控制"
+  },
+  "settings": {
+    "title": "设置",
+    "languageTitle": "语言",
+    "languageLabel": "选择语言",
+    "chatTitle": "聊天",
+    "whenMessageReceived": "当在后台收到消息时：",
+    "playSound": "播放声音",
+    "showNotification": "显示通知",
+    "selectSound": "选择收到消息时播放的声音：",
+    "showTypingIndicators": "显示正在输入状态",
+    "typingIndicatorsSubtitle": "禁用此选项也会向他人隐藏您的正在输入状态。"
+  }
+}

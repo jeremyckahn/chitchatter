@@ -4,6 +4,9 @@ import 'typeface-roboto'
 
 import 'modern-normalize/modern-normalize.css'
 import './index.css'
+import './i18n'; // Import i18n configuration
+import { I18nextProvider } from 'react-i18next';
+import i18n from './i18n';
 
 import { ThemeProvider, createTheme } from '@mui/material/styles'
 import { PrismAsyncLight as SyntaxHighlighter } from 'react-syntax-highlighter'
@@ -26,7 +29,11 @@ ReactDOM.createRoot(document.createElement('div')).render(
 )
 
 const root = ReactDOM.createRoot(document.getElementById('root') as HTMLElement)
-root.render(<Init />)
+root.render(
+  <I18nextProvider i18n={i18n}>
+    <Init />
+  </I18nextProvider>
+);
 
 // If you want to start measuring performance in your app, pass a function
 // to log results (for example: reportWebVitals(console.log))
