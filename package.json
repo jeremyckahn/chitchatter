@@ -37,7 +37,7 @@
     "react-youtube": "^10.1.0",
     "readable-web-to-node-stream": "^3.0.2",
     "remark-gfm": "^3.0.1",
-    "sdp": "^3.2.0",
+    "sdp": "^3.2.1",
     "secure-file-transfer": "^0.0.8",
     "streamsaver": "^2.0.6",
     "trystero": "^0.21.5",
