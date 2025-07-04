@@ -180,6 +180,207 @@ describe('useRtcConfig', () => {
     expect(result.current.rtcConfig).toEqual(expectedRtcConfig)
   })
 
+  test('uses fallback TURN server when API returns invalid RTCIceServer object (not an object)', async () => {
+    const queryClient = createTestQueryClient()
+    const wrapper = createWrapper(queryClient)
+
+    global.fetch = vi.fn().mockResolvedValue({
+      ok: true,
+      headers: {
+        get: vi.fn().mockReturnValue('application/json'),
+      },
+      json: vi.fn().mockResolvedValue(null),
+    })
+
+    const { result } = renderHook(() => useRtcConfig(), { wrapper })
+
+    await waitFor(
+      () => {
+        expect(result.current.isLoading).toBe(false)
+      },
+      { timeout: 3000 }
+    )
+
+    expect(result.current.isError).toBe(true)
+    expect(result.current.rtcConfig).toEqual(expectedRtcConfig)
+  })
+
+  test('uses fallback TURN server when API returns invalid RTCIceServer object (missing urls)', async () => {
+    const queryClient = createTestQueryClient()
+    const wrapper = createWrapper(queryClient)
+
+    global.fetch = vi.fn().mockResolvedValue({
+      ok: true,
+      headers: {
+        get: vi.fn().mockReturnValue('application/json'),
+      },
+      json: vi.fn().mockResolvedValue({
+        username: 'testuser',
+        credential: 'testpass',
+      }),
+    })
+
+    const { result } = renderHook(() => useRtcConfig(), { wrapper })
+
+    await waitFor(
+      () => {
+        expect(result.current.isLoading).toBe(false)
+      },
+      { timeout: 3000 }
+    )
+
+    expect(result.current.isError).toBe(true)
+    expect(result.current.rtcConfig).toEqual(expectedRtcConfig)
+  })
+
+  test('uses fallback TURN server when API returns invalid RTCIceServer object (invalid urls type)', async () => {
+    const queryClient = createTestQueryClient()
+    const wrapper = createWrapper(queryClient)
+
+    global.fetch = vi.fn().mockResolvedValue({
+      ok: true,
+      headers: {
+        get: vi.fn().mockReturnValue('application/json'),
+      },
+      json: vi.fn().mockResolvedValue({
+        urls: 12345,
+        username: 'testuser',
+        credential: 'testpass',
+      }),
+    })
+
+    const { result } = renderHook(() => useRtcConfig(), { wrapper })
+
+    await waitFor(
+      () => {
+        expect(result.current.isLoading).toBe(false)
+      },
+      { timeout: 3000 }
+    )
+
+    expect(result.current.isError).toBe(true)
+    expect(result.current.rtcConfig).toEqual(expectedRtcConfig)
+  })
+
+  test('uses fallback TURN server when API returns invalid RTCIceServer object (invalid username type)', async () => {
+    const queryClient = createTestQueryClient()
+    const wrapper = createWrapper(queryClient)
+
+    global.fetch = vi.fn().mockResolvedValue({
+      ok: true,
+      headers: {
+        get: vi.fn().mockReturnValue('application/json'),
+      },
+      json: vi.fn().mockResolvedValue({
+        urls: 'turn:relay1.expressturn.com:3478',
+        username: 12345,
+        credential: 'testpass',
+      }),
+    })
+
+    const { result } = renderHook(() => useRtcConfig(), { wrapper })
+
+    await waitFor(
+      () => {
+        expect(result.current.isLoading).toBe(false)
+      },
+      { timeout: 3000 }
+    )
+
+    expect(result.current.isError).toBe(true)
+    expect(result.current.rtcConfig).toEqual(expectedRtcConfig)
+  })
+
+  test('uses fallback TURN server when API returns invalid RTCIceServer object (invalid credential type)', async () => {
+    const queryClient = createTestQueryClient()
+    const wrapper = createWrapper(queryClient)
+
+    global.fetch = vi.fn().mockResolvedValue({
+      ok: true,
+      headers: {
+        get: vi.fn().mockReturnValue('application/json'),
+      },
+      json: vi.fn().mockResolvedValue({
+        urls: 'turn:relay1.expressturn.com:3478',
+        username: 'testuser',
+        credential: 12345,
+      }),
+    })
+
+    const { result } = renderHook(() => useRtcConfig(), { wrapper })
+
+    await waitFor(
+      () => {
+        expect(result.current.isLoading).toBe(false)
+      },
+      { timeout: 3000 }
+    )
+
+    expect(result.current.isError).toBe(true)
+    expect(result.current.rtcConfig).toEqual(expectedRtcConfig)
+  })
+
+  test('accepts valid RTCIceServer object with urls as array', async () => {
+    const queryClient = createTestQueryClient()
+    const wrapper = createWrapper(queryClient)
+
+    const validTurnServerWithArray = {
+      urls: [
+        'turn:relay1.expressturn.com:3478',
+        'turn:relay2.expressturn.com:3478',
+      ],
+      username: 'testuser',
+      credential: 'testpass',
+    }
+
+    global.fetch = vi.fn().mockResolvedValue({
+      ok: true,
+      headers: {
+        get: vi.fn().mockReturnValue('application/json'),
+      },
+      json: vi.fn().mockResolvedValue(validTurnServerWithArray),
+    })
+
+    const { result } = renderHook(() => useRtcConfig(), { wrapper })
+
+    await waitFor(() => {
+      expect(result.current.isLoading).toBe(false)
+    })
+
+    expect(result.current.isError).toBe(false)
+    expect(result.current.rtcConfig.iceServers).toBeDefined()
+    expect(result.current.rtcConfig.iceServers![0]).toEqual(
+      validTurnServerWithArray
+    )
+  })
+
+  test('accepts valid RTCIceServer object with minimal properties (only urls)', async () => {
+    const queryClient = createTestQueryClient()
+    const wrapper = createWrapper(queryClient)
+
+    const minimalTurnServer = {
+      urls: 'turn:relay1.expressturn.com:3478',
+    }
+
+    global.fetch = vi.fn().mockResolvedValue({
+      ok: true,
+      headers: {
+        get: vi.fn().mockReturnValue('application/json'),
+      },
+      json: vi.fn().mockResolvedValue(minimalTurnServer),
+    })
+
+    const { result } = renderHook(() => useRtcConfig(), { wrapper })
+
+    await waitFor(() => {
+      expect(result.current.isLoading).toBe(false)
+    })
+
+    expect(result.current.isError).toBe(false)
+    expect(result.current.rtcConfig.iceServers).toBeDefined()
+    expect(result.current.rtcConfig.iceServers![0]).toEqual(minimalTurnServer)
+  })
+
   test('calls API with correct endpoint', async () => {
     const queryClient = createTestQueryClient()
     const wrapper = createWrapper(queryClient)

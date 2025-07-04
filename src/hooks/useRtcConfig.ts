@@ -56,6 +56,32 @@ const isValidStunUrl = (url: string): boolean => {
 }
 
 /**
+ * Type guard to validate if an object is a valid RTCIceServer
+ *
+ * @param obj - Object to validate
+ * @returns true if object is a valid RTCIceServer, false otherwise
+ */
+const isRTCIceServer = (obj: any): obj is RTCIceServer => {
+  if (!obj || typeof obj !== 'object') {
+    return false
+  }
+
+  if (typeof obj.urls !== 'string' && !Array.isArray(obj.urls)) {
+    return false
+  }
+
+  if (obj.username && typeof obj.username !== 'string') {
+    return false
+  }
+
+  if (obj.credential && typeof obj.credential !== 'string') {
+    return false
+  }
+
+  return true
+}
+
+/**
  * Gets STUN servers from environment variable or fallback
  *
  * @returns Array of STUN server configurations
@@ -186,13 +212,11 @@ const fetchTurnServer = async (): Promise<RTCIceServer> => {
 
     const data = await response.json()
 
-    // Validate the response structure
-    if (!data || typeof data !== 'object') {
-      throw new Error('Invalid TURN server response: not an object')
-    }
-
-    if (!data.urls) {
-      throw new Error('Invalid TURN server response: missing urls property')
+    // Validate the response structure using type guard
+    if (!isRTCIceServer(data)) {
+      throw new Error(
+        'Invalid TURN server response: malformed RTCIceServer object'
+      )
     }
 
     return data
