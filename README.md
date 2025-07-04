@@ -265,6 +265,8 @@ If you prefer to use the simple API server instead of Vercel dev:
 
 #### RTC Configuration Helper Script
 
+**🔒 Security Note**: Never commit real TURN server credentials to version control! Always generate your own configuration with your own TURN server credentials.
+
 To simplify the process of creating the base64-encoded `RTC_CONFIG` environment variable, use the included helper script:
 
 ```bash
@@ -280,7 +282,7 @@ This interactive script will:
 
 **Quick start with presets:**
 
-- **Option 1**: Google STUN + ExpressTurn (free TURN service) - Ready to use
+- **Option 1**: Google STUN + Custom TURN server - Configure with your own TURN credentials
 - **Option 2**: Google STUN only - Requires separate TURN server setup
 - **Option 3**: Custom configuration - Full control over all servers
 
@@ -303,22 +305,24 @@ npm run generate-rtc-config -- --example
 # Decode and verify the generated base64 string
 echo "eyJpY2VTZXJ2ZXJzIjpb..." | base64 -d | jq .
 
-# Example output:
+# Example output (with your own credentials):
 # {
 #   "iceServers": [
 #     {
 #       "urls": "stun:stun.l.google.com:19302"
 #     },
 #     {
-#       "urls": "turn:relay1.expressturn.com:3478",
-#       "username": "efQUQ79N77B5BNVVKF",
-#       "credential": "N4EAUgpjMzPLrxSS"
+#       "urls": "turn:your-turn-server.com:3478",
+#       "username": "your-username",
+#       "credential": "your-credential"
 #     }
 #   ]
 # }
 ```
 
 #### Production Environment
+
+**🔒 Security Important**: Never commit real TURN server credentials to version control! Always use GitHub repository secrets or environment variables for sensitive configuration.
 
 In production (GitHub Pages deployment), configure both server-side and client-side components:
 
@@ -329,10 +333,10 @@ In production (GitHub Pages deployment), configure both server-side and client-s
 npm run generate-rtc-config
 
 # Method 2: Manual creation (advanced users)
-echo '{"iceServers":[{"urls":"turn:your-turn-server.com:3478","username":"user","credential":"pass"},{"urls":"stun:stun.l.google.com:19302"}]}' | base64 -w 0
+echo '{"iceServers":[{"urls":"turn:your-turn-server.com:3478","username":"your-username","credential":"your-password"},{"urls":"stun:stun.l.google.com:19302"}]}' | base64 -w 0
 
-# Set in GitHub repository environment variables or secrets
-RTC_CONFIG=eyJpY2VTZXJ2ZXJzIjpbeyJ1cmxzIjoidHVybjp5b3VyLXR1cm4tc2VydmVyLmNvbTozNDc4IiwidXNlcm5hbWUiOiJ1c2VyIiwiY3JlZGVudGlhbCI6InBhc3MifSx7InVybHMiOiJzdHVuOnN0dW4ubC5nb29nbGUuY29tOjE5MzAyIn1dfQ==
+# Set in GitHub repository environment variables or secrets (replace with your actual config)
+RTC_CONFIG=<your-base64-encoded-rtc-config-here>
 ```
 
 **Client-side (STUN servers)**: Set the `VITE_STUN_SERVERS` environment variable with comma-separated STUN server URLs:

@@ -41,6 +41,9 @@ import type { VercelRequest, VercelResponse } from '@vercel/node'
  */
 
 // Fallback TURN server configuration in case environment variable is missing or invalid
+// 🔒 SECURITY NOTE: These are example credentials for demonstration purposes only.
+// In production, you should replace these with your own TURN server credentials
+// or ensure that RTC_CONFIG environment variable is properly configured.
 const fallbackTurnServer: RTCIceServer = {
   urls: 'turn:relay1.expressturn.com:3478',
   username: 'efQUQ79N77B5BNVVKF',

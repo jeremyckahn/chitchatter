@@ -109,7 +109,7 @@ async function getServerInput(type) {
 
 async function usePresetConfig() {
   console.log(colorize('\n🎯 Available presets:', 'blue'))
-  console.log('1. Google STUN + ExpressTurn (free TURN service)')
+  console.log('1. Google STUN + Custom TURN server (you provide credentials)')
   console.log('2. Google STUN only')
   console.log('3. Custom configuration')
 
@@ -117,14 +117,35 @@ async function usePresetConfig() {
 
   switch (choice) {
     case '1':
+      console.log(
+        colorize(
+          '\n🔒 Security Note: Never use example credentials in production!',
+          'red'
+        )
+      )
+      console.log('You need to provide your own TURN server credentials.\n')
+
+      const turnUrl = await question(
+        'Enter your TURN server URL (e.g., turn:your-server.com:3478): '
+      )
+      const turnUsername = await question('Enter your TURN server username: ')
+      const turnCredential = await question(
+        'Enter your TURN server credential: '
+      )
+
+      if (!validateUrl(turnUrl)) {
+        console.log(colorize('Invalid TURN server URL format', 'red'))
+        return null
+      }
+
       return {
         iceServers: [
           { urls: 'stun:stun.l.google.com:19302' },
           { urls: 'stun:stun1.l.google.com:19302' },
           {
-            urls: 'turn:relay1.expressturn.com:3478',
-            username: 'efQUQ79N77B5BNVVKF',
-            credential: 'N4EAUgpjMzPLrxSS',
+            urls: turnUrl,
+            username: turnUsername,
+            credential: turnCredential,
           },
         ],
       }
