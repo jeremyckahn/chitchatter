@@ -22,8 +22,7 @@
  * 3. Fallback: Hardcoded TURN and STUN servers if API sources are unavailable or disabled
  *
  * CACHING:
- * - Cached for 10 minutes (staleTime)
- * - Garbage collected after 30 minutes
+ * - Cached for entire session (staleTime)
  * - Retries once on failure (except for 4xx client errors)
  */
 import { useMemo } from 'react'
@@ -268,8 +267,8 @@ export const useRtcConfig = (
     queryKey: [QueryKey.TURN_SERVER],
     queryFn: fetchTurnServer,
     enabled: enableApiRequest && isEnhancedConnectivityAvailable,
-    staleTime: 10 * 60 * 1000, // 10 minutes
-    gcTime: 30 * 60 * 1000, // 30 minutes
+    staleTime: Infinity,
+    gcTime: Infinity,
     retry: (failureCount, retryError) => {
       // Don't retry for client errors (4xx) or timeout errors
       if (
