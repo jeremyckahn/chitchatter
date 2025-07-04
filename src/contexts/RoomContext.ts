@@ -1,7 +1,8 @@
-import { createContext, Dispatch, SetStateAction } from 'react'
 import { FileOfferMetadata } from 'models/chat'
+import { createContext, Dispatch, SetStateAction } from 'react'
+import { FileTransferService } from 'services/FileTransfer'
 
-interface RoomContextProps {
+export interface RoomContextProps {
   isPrivate: boolean
   isMessageSending: boolean
   isShowingMessages: boolean
@@ -19,6 +20,7 @@ interface RoomContextProps {
   setPeerOfferedFileMetadata: Dispatch<
     SetStateAction<Record<string, FileOfferMetadata>>
   >
+  fileTransferService: FileTransferService
 }
 
 export const RoomContext = createContext<RoomContextProps>({
@@ -37,4 +39,5 @@ export const RoomContext = createContext<RoomContextProps>({
   setPeerScreenStreams: () => {},
   peerOfferedFileMetadata: {},
   setPeerOfferedFileMetadata: () => {},
+  fileTransferService: new FileTransferService({}),
 })

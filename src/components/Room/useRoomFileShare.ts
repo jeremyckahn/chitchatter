@@ -6,7 +6,6 @@ import { ShellContext } from 'contexts/ShellContext'
 import { PeerAction } from 'models/network'
 import { FileOfferMetadata, Peer } from 'models/chat'
 import { PeerRoom, PeerHookType, ActionNamespace } from 'lib/PeerRoom'
-import { fileTransfer } from 'lib/FileTransfer'
 import { usePeerAction } from 'hooks/usePeerAction'
 
 interface UseRoomFileShareConfig {
@@ -31,7 +30,11 @@ export function useRoomFileShare({
   const [isFileSharingEnabled, setIsFileSharingEnabled] = useState(true)
 
   const { setPeerList, showAlert } = shellContext
-  const { peerOfferedFileMetadata, setPeerOfferedFileMetadata } = roomContext
+  const {
+    peerOfferedFileMetadata,
+    setPeerOfferedFileMetadata,
+    fileTransferService: { fileTransfer },
+  } = roomContext
 
   const [sendFileOfferMetadata] = usePeerAction<FileOfferMetadata | null>({
     namespace: ActionNamespace.GROUP,
@@ -164,7 +167,7 @@ export function useRoomFileShare({
     return () => {
       fileTransfer.rescindAll()
     }
-  }, [])
+  }, [fileTransfer])
 
   const isSharingFile = Boolean(selfFileOfferMagnetUri)
 

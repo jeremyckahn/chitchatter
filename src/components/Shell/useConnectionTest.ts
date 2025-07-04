@@ -10,7 +10,7 @@ import {
 
 export interface ConnectionTestResults {
   hasHost: boolean
-  hasRelay: boolean
+  hasTURNServer: boolean
   trackerConnection: TrackerConnection
 }
 
@@ -19,7 +19,7 @@ const trackerPollInterval = 5 * 1000
 
 export const useConnectionTest = () => {
   const [hasHost, setHasHost] = useState(false)
-  const [hasRelay, setHasRelay] = useState(false)
+  const [hasTURNServer, setHasTURNServer] = useState(false)
   const [trackerConnection, setTrackerConnection] = useState(
     TrackerConnection.SEARCHING
   )
@@ -43,7 +43,7 @@ export const useConnectionTest = () => {
       )
 
       const handleHasRelayChanged = ((event: ConnectionTestEvent) => {
-        setHasRelay(event.detail.hasRelay)
+        setHasTURNServer(event.detail.hasTURNServer)
 
         connectionTest.removeEventListener(
           ConnectionTestEvents.HAS_RELAY_CHANGED,
@@ -71,7 +71,7 @@ export const useConnectionTest = () => {
         await connectionTest.initRtcPeerConnectionTest()
       } catch (e) {
         setHasHost(false)
-        setHasRelay(false)
+        setHasTURNServer(false)
         console.error(e)
       }
 
@@ -93,7 +93,7 @@ export const useConnectionTest = () => {
             connectionTest.testTrackerConnection()
 
           setTrackerConnection(trackerConnectionTestResult)
-        } catch (e) {
+        } catch (_e) {
           setTrackerConnection(TrackerConnection.FAILED)
         }
 
@@ -103,6 +103,6 @@ export const useConnectionTest = () => {
   }, [])
 
   return {
-    connectionTestResults: { hasHost, hasRelay, trackerConnection },
+    connectionTestResults: { hasHost, hasTURNServer, trackerConnection },
   }
 }

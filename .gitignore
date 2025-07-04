@@ -26,3 +26,4 @@ yarn-error.log*
 
 # Editors
 Session.vim
+.vercel

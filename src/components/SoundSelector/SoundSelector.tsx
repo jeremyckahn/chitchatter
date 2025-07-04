@@ -4,7 +4,7 @@ import { soundOptions } from 'config/soundNames'
 import { SettingsContext } from 'contexts/SettingsContext'
 
 export const handleChange = async (
-  event: React.SyntheticEvent<Element, Event>,
+  _event: React.SyntheticEvent<Element, Event>,
   newValue: { label: string; value: string } | null,
   updateUserSettings: Function
 ) => {

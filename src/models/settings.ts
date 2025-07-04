@@ -16,6 +16,7 @@ export interface UserSettings {
   playSoundOnNewMessage: boolean
   showNotificationOnNewMessage: boolean
   showActiveTypingStatus: boolean
+  isEnhancedConnectivityEnabled: boolean
   publicKey: CryptoKeyPair['publicKey']
   privateKey: CryptoKeyPair['privateKey']
   selectedSound: string

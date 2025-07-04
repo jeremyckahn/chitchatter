@@ -1,32 +1,34 @@
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import localforage from 'localforage'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import {
+  Navigate,
+  Route,
   BrowserRouter as Router,
   Routes,
-  Route,
-  Navigate,
 } from 'react-router-dom'
-import localforage from 'localforage'
 import { useRegisterSW } from 'virtual:pwa-register/react'
 
-import { StorageContext } from 'contexts/StorageContext'
-import { SettingsContext } from 'contexts/SettingsContext'
-import { homepageUrl, routes } from 'config/routes'
-import { Home } from 'pages/Home'
-import { About } from 'pages/About'
-import { Disclaimer } from 'pages/Disclaimer'
-import { Settings } from 'pages/Settings'
-import { PublicRoom } from 'pages/PublicRoom'
-import { PrivateRoom } from 'pages/PrivateRoom'
-import { UserSettings } from 'models/settings'
-import { PersistedStorageKeys } from 'models/storage'
-import { QueryParamKeys } from 'models/shell'
-import { Shell } from 'components/Shell'
 import { WholePageLoading } from 'components/Loading/Loading'
+import { Shell } from 'components/Shell'
+import { isEnhancedConnectivityAvailable } from 'config/enhancedConnectivity'
+import { homepageUrl, routes } from 'config/routes'
+import { SettingsContext } from 'contexts/SettingsContext'
+import { StorageContext } from 'contexts/StorageContext'
 import {
   isConfigMessageEvent,
   PostMessageEvent,
   PostMessageEventName,
 } from 'models/sdk'
+import { UserSettings } from 'models/settings'
+import { QueryParamKeys } from 'models/shell'
+import { PersistedStorageKeys } from 'models/storage'
+import { About } from 'pages/About'
+import { Disclaimer } from 'pages/Disclaimer'
+import { Home } from 'pages/Home'
+import { PrivateRoom } from 'pages/PrivateRoom'
+import { PublicRoom } from 'pages/PublicRoom'
+import { Settings } from 'pages/Settings'
 import { serialization, SerializedUserSettings } from 'services/Serialization'
 
 export interface BootstrapProps {
@@ -36,6 +38,17 @@ export interface BootstrapProps {
 }
 
 const configListenerTimeout = 3000
+
+// Create QueryClient instance for React Query
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      retry: 3,
+      staleTime: 10 * 60 * 1000, // 10 minutes
+      gcTime: 30 * 60 * 1000, // 30 minutes
+    },
+  },
+})
 
 const getConfigFromSdk = () => {
   const queryParams = new URLSearchParams(window.location.search)
@@ -142,7 +155,7 @@ const Bootstrap = ({
               ...persistedUserSettings,
               ...configFromSdk,
             }
-          } catch (e) {
+          } catch (_e) {
             console.error(
               'Chitchatter configuration from parent frame could not be loaded'
             )
@@ -207,7 +220,15 @@ const Bootstrap = ({
 
       setUserSettings(newSettings)
     },
-    getUserSettings: () => ({ ...userSettings }),
+    getUserSettings: () => {
+      return {
+        ...userSettings,
+        // If enhanced connectivity is not available, always return false
+        isEnhancedConnectivityEnabled: isEnhancedConnectivityAvailable
+          ? userSettings.isEnhancedConnectivityEnabled
+          : false,
+      }
+    },
   }
 
   const storageContextValue = {
@@ -215,45 +236,47 @@ const Bootstrap = ({
   }
 
   return (
-    <Router basename={homepageUrl.pathname}>
-      <StorageContext.Provider value={storageContextValue}>
-        <SettingsContext.Provider value={settingsContextValue}>
-          {hasLoadedSettings ? (
-            <Shell appNeedsUpdate={appNeedsUpdate} userPeerId={userId}>
-              <Routes>
-                {[routes.ROOT, routes.INDEX_HTML].map(path => (
+    <QueryClientProvider client={queryClient}>
+      <Router basename={homepageUrl.pathname}>
+        <StorageContext.Provider value={storageContextValue}>
+          <SettingsContext.Provider value={settingsContextValue}>
+            {hasLoadedSettings ? (
+              <Shell appNeedsUpdate={appNeedsUpdate} userPeerId={userId}>
+                <Routes>
+                  {[routes.ROOT, routes.INDEX_HTML].map(path => (
+                    <Route
+                      key={path}
+                      path={path}
+                      element={<Home userId={userId} />}
+                    />
+                  ))}
+                  <Route path={routes.ABOUT} element={<About />} />
+                  <Route path={routes.DISCLAIMER} element={<Disclaimer />} />
                   <Route
-                    key={path}
-                    path={path}
-                    element={<Home userId={userId} />}
+                    path={routes.SETTINGS}
+                    element={<Settings userId={userId} />}
                   />
-                ))}
-                <Route path={routes.ABOUT} element={<About />} />
-                <Route path={routes.DISCLAIMER} element={<Disclaimer />} />
-                <Route
-                  path={routes.SETTINGS}
-                  element={<Settings userId={userId} />}
-                />
-                <Route
-                  path={routes.PUBLIC_ROOM}
-                  element={<PublicRoom userId={userId} />}
-                />
-                <Route
-                  path={routes.PRIVATE_ROOM}
-                  element={<PrivateRoom userId={userId} />}
-                />
-                <Route
-                  path="*"
-                  element={<Navigate to={routes.ROOT} replace />}
-                />
-              </Routes>
-            </Shell>
-          ) : (
-            <WholePageLoading />
-          )}
-        </SettingsContext.Provider>
-      </StorageContext.Provider>
-    </Router>
+                  <Route
+                    path={routes.PUBLIC_ROOM}
+                    element={<PublicRoom userId={userId} />}
+                  />
+                  <Route
+                    path={routes.PRIVATE_ROOM}
+                    element={<PrivateRoom userId={userId} />}
+                  />
+                  <Route
+                    path="*"
+                    element={<Navigate to={routes.ROOT} replace />}
+                  />
+                </Routes>
+              </Shell>
+            ) : (
+              <WholePageLoading />
+            )}
+          </SettingsContext.Provider>
+        </StorageContext.Provider>
+      </Router>
+    </QueryClientProvider>
   )
 }
 

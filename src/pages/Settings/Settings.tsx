@@ -1,23 +1,25 @@
-import { ChangeEvent, useContext, useEffect, useState } from 'react'
-import FileReaderInput, { Result } from 'react-file-reader-input'
 import Box from '@mui/material/Box'
 import Button from '@mui/material/Button'
-import Typography from '@mui/material/Typography'
 import Divider from '@mui/material/Divider'
-import Switch from '@mui/material/Switch'
-import FormGroup from '@mui/material/FormGroup'
 import FormControlLabel from '@mui/material/FormControlLabel'
+import FormGroup from '@mui/material/FormGroup'
 import Paper from '@mui/material/Paper'
 import useTheme from '@mui/material/styles/useTheme'
+import Switch from '@mui/material/Switch'
+import Typography from '@mui/material/Typography'
+import { ChangeEvent, useContext, useEffect, useState } from 'react'
+import FileReaderInput, { Result } from 'react-file-reader-input'
 
-import { settings } from 'services/Settings'
-import { notification } from 'services/Notification'
+import { ConfirmDialog } from 'components/ConfirmDialog'
+import { EnhancedConnectivityControl } from 'components/EnhancedConnectivityControl'
+import { PeerNameDisplay } from 'components/PeerNameDisplay'
+import { SoundSelector } from 'components/SoundSelector/SoundSelector'
+import { isEnhancedConnectivityAvailable } from 'config/enhancedConnectivity'
+import { SettingsContext } from 'contexts/SettingsContext'
 import { ShellContext } from 'contexts/ShellContext'
 import { StorageContext } from 'contexts/StorageContext'
-import { SettingsContext } from 'contexts/SettingsContext'
-import { PeerNameDisplay } from 'components/PeerNameDisplay'
-import { ConfirmDialog } from 'components/ConfirmDialog'
-import { SoundSelector } from 'components/SoundSelector/SoundSelector'
+import { notification } from 'services/Notification'
+import { settings } from 'services/Settings'
 
 import { isErrorWithMessage } from '../../lib/type-guards'
 
@@ -40,6 +42,7 @@ export const Settings = ({ userId }: SettingsProps) => {
     playSoundOnNewMessage,
     showNotificationOnNewMessage,
     showActiveTypingStatus,
+    isEnhancedConnectivityEnabled,
   } = getUserSettings()
 
   const persistedStorage = getPersistedStorage()
@@ -79,6 +82,18 @@ export const Settings = ({ userId }: SettingsProps) => {
     newShowActiveTypingStatus: boolean
   ) => {
     updateUserSettings({ showActiveTypingStatus: newShowActiveTypingStatus })
+  }
+
+  const handleIsEnhancedConnectivityEnabledChange = (
+    _event: ChangeEvent,
+    newIsEnhancedConnectivityEnabled: boolean
+  ) => {
+    // Only update if enhanced connectivity is available
+    if (isEnhancedConnectivityAvailable) {
+      updateUserSettings({
+        isEnhancedConnectivityEnabled: newIsEnhancedConnectivityEnabled,
+      })
+    }
   }
 
   const handleDeleteSettingsClick = () => {
@@ -179,6 +194,26 @@ export const Settings = ({ userId }: SettingsProps) => {
         </Typography>
       </Paper>
       <Divider sx={{ my: 2 }} />
+      {isEnhancedConnectivityAvailable && (
+        <>
+          <Typography
+            variant="h2"
+            sx={{
+              fontSize: theme.typography.h3.fontSize,
+              fontWeight: theme.typography.fontWeightMedium,
+              mb: 2,
+            }}
+          >
+            Networking
+          </Typography>
+          <EnhancedConnectivityControl
+            isEnabled={isEnhancedConnectivityEnabled}
+            onChange={handleIsEnhancedConnectivityEnabledChange}
+            variant="subtitle2"
+          />
+          <Divider sx={{ my: 2 }} />
+        </>
+      )}
       <Typography
         variant="h2"
         sx={{
