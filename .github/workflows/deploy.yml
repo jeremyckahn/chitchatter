@@ -21,6 +21,8 @@ jobs:
           cache: 'npm'
 
       - name: Build
+        env:
+          VITE_RTC_CONFIG_ENDPOINT: ${{ vars.VITE_RTC_CONFIG_ENDPOINT }}
         run: |
           npm ci
           npm run build
