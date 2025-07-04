@@ -100,7 +100,7 @@ export const ShellContext = createContext<ShellContextProps>({
   setCustomUsername: () => {},
   connectionTestResults: {
     hasHost: false,
-    hasRelay: false,
+    hasTURNServer: false,
     trackerConnection: TrackerConnection.SEARCHING,
   },
   updatePeer: () => {},

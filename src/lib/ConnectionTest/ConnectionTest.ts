@@ -21,7 +21,7 @@ const checkExperationTime = 10 * 1000
 export class ConnectionTest extends EventTarget {
   trackerConnection = TrackerConnection.SEARCHING
   hasHost = false
-  hasRelay = false
+  hasTURNServer = false
   hasPeerReflexive = false
   hasServerReflexive = false
 
@@ -46,8 +46,8 @@ export class ConnectionTest extends EventTarget {
       )
     }, checkExperationTime)
 
-    const hasRelayCheckTimeout = setTimeout(() => {
-      this.hasRelay = false
+    const hasTURNServerCheckTimeout = setTimeout(() => {
+      this.hasTURNServer = false
 
       this.dispatchEvent(
         new CustomEvent(ConnectionTestEvents.HAS_RELAY_CHANGED, {
@@ -69,8 +69,8 @@ export class ConnectionTest extends EventTarget {
             break
 
           case 'relay':
-            clearTimeout(hasRelayCheckTimeout)
-            this.hasRelay = window.navigator.onLine
+            clearTimeout(hasTURNServerCheckTimeout)
+            this.hasTURNServer = window.navigator.onLine
             eventType = ConnectionTestEvents.HAS_RELAY_CHANGED
             break
         }
@@ -96,7 +96,7 @@ export class ConnectionTest extends EventTarget {
       })
 
       this.rtcPeerConnection.setLocalDescription(rtcSessionDescription)
-    } catch (e) {}
+    } catch (_e) {}
   }
 
   destroyRtcPeerConnectionTest() {
@@ -134,5 +134,3 @@ export class ConnectionTest extends EventTarget {
     return this.trackerConnection
   }
 }
-
-export const connectionTest = new ConnectionTest()

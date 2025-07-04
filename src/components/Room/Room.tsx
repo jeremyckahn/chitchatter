@@ -6,13 +6,14 @@ import Divider from '@mui/material/Divider'
 import useTheme from '@mui/material/styles/useTheme'
 import { v4 as uuid } from 'uuid'
 
-import { rtcConfig } from 'config/rtcConfig'
+import { useRtcConfig } from 'hooks/useRtcConfig'
 import { trackerUrls } from 'config/trackerUrls'
 import { time } from 'lib/Time'
 import { RoomContext } from 'contexts/RoomContext'
 import { ShellContext } from 'contexts/ShellContext'
 import { MessageForm } from 'components/MessageForm'
 import { ChatTranscript } from 'components/ChatTranscript'
+import { WholePageLoading } from 'components/Loading'
 import { encryption } from 'services/Encryption'
 import { SettingsContext } from 'contexts/SettingsContext'
 
@@ -48,13 +49,19 @@ export function Room({
 }: RoomProps) {
   const theme = useTheme()
   const settingsContext = useContext(SettingsContext)
-  const { showActiveTypingStatus, publicKey } =
+  const { showActiveTypingStatus, publicKey, isEnhancedConnectivityEnabled } =
     settingsContext.getUserSettings()
+
+  // Fetch rtcConfig from server
+  const { rtcConfig, isLoading: isConfigLoading } = useRtcConfig(
+    isEnhancedConnectivityEnabled
+  )
+
   const {
     isDirectMessageRoom,
-    isMessageSending,
     handleInlineMediaUpload,
     handleMessageChange,
+    isMessageSending,
     messageLog,
     peerRoom,
     roomContextValue,
@@ -79,16 +86,22 @@ export function Room({
     }
   )
 
+  const { showRoomControls } = useContext(ShellContext)
+  const [windowWidth, windowHeight] = useWindowSize()
+  const landscape = windowWidth > windowHeight
+
   const handleMessageSubmit = async (message: string) => {
     await sendMessage(message)
   }
 
   const showMessages = roomContextValue.isShowingMessages
 
-  const { showRoomControls } = useContext(ShellContext)
+  if (isConfigLoading) {
+    return <WholePageLoading />
+  }
 
-  const [windowWidth, windowHeight] = useWindowSize()
-  const landscape = windowWidth > windowHeight
+  // NOTE: If rtcConfig fails to load, the useRtcConfig hook provides a
+  // fallback so the room will continue to work with default settings
 
   return (
     <RoomContext.Provider value={roomContextValue}>

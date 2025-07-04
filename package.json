@@ -12,6 +12,7 @@
     "@mui/material": "^5.17.1",
     "@react-hook/debounce": "^4.0.0",
     "@react-hook/window-size": "^3.1.1",
+    "@tanstack/react-query": "^5.81.2",
     "@testing-library/jest-dom": "^6.6.3",
     "@testing-library/react": "^15.0.7",
     "@testing-library/user-event": "^14.6.1",
@@ -53,7 +54,8 @@
     "start": "cross-env VITE_HOMEPAGE=$(npm pkg get homepage) vite --port 3000",
     "start:tracker": "bittorrent-tracker",
     "start:streamsaver": "serve -p 3015 node_modules/streamsaver",
-    "dev": "mprocs \"npx cross-env VITE_TRACKER_URL=\"ws://localhost:8000\" VITE_STREAMSAVER_URL=\"http://localhost:3015/mitm.html\" npm run start\" \"npm run start:tracker\" \"npm run start:streamsaver\"",
+    "start:api": "VERCEL_TOKEN=\"$(jq .token ~/.local/share/com.vercel.cli/auth.json)\" npx vercel dev --token=\"$VERCEL_TOKEN\" --listen=127.0.0.1:3001 --yes",
+    "dev": "mprocs \"npx cross-env VITE_TRACKER_URL=\"ws://localhost:8000\" VITE_STREAMSAVER_URL=\"http://localhost:3015/mitm.html\" npm run start\" \"npm run start:tracker\" \"npm run start:streamsaver\" \"npm run start:api\"",
     "build": "npm run build:app && npm run build:sdk",
     "build:app": "cross-env VITE_HOMEPAGE=$(npm pkg get homepage) vite build",
     "build:sdk": "cross-env VITE_HOMEPAGE=$(npm pkg get homepage) parcel build sdk/sdk.ts --no-content-hash",
@@ -62,7 +64,8 @@
     "prepare": "husky install",
     "prettier": "prettier \"**/*.{ts,tsx}\" --write",
     "lint": "eslint src --max-warnings=0",
-    "check:types": "tsc && echo \"No type errors.\""
+    "check:types": "tsc && echo \"No type errors.\"",
+    "generate-rtc-config": "node scripts/generate-rtc-config.cjs"
   },
   "eslintConfig": {
     "extends": [
@@ -96,8 +99,9 @@
     "@types/streamsaver": "^2.0.1",
     "@types/uuid": "^8.3.4",
     "@types/webtorrent": "^0.109.3",
-    "@typescript-eslint/eslint-plugin": "^5.33.0",
-    "@typescript-eslint/parser": "^5.33.0",
+    "@typescript-eslint/eslint-plugin": "^8.35.1",
+    "@typescript-eslint/parser": "^8.35.1",
+    "@vercel/node": "^5.3.0",
     "@vitejs/plugin-react": "^4.3.4",
     "autoprefixer": "^10.4.8",
     "bittorrent-tracker": "^9.19.0",
@@ -121,6 +125,7 @@
     "serve": "^14.1.2",
     "url": "^0.11.0",
     "util": "^0.12.5",
+    "vercel": "^43.3.0",
     "vite": "^6.3.4",
     "vite-plugin-node-polyfills": "^0.23.0",
     "vite-plugin-pwa": "^0.21.2",
@@ -138,6 +143,13 @@
     },
     "resolve-url-loader": {
       "postcss": "8.4.31"
+    },
+    "secure-file-transfer": {
+      "readable-web-to-node-stream": "3.0.2"
+    },
+    "eslint-config-react-app": {
+      "@typescript-eslint/eslint-plugin": "^8.35.1",
+      "@typescript-eslint/parser": "^8.35.1"
     }
   }
 }

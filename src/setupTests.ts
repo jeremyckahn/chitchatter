@@ -5,8 +5,20 @@
 import '@testing-library/jest-dom'
 import { vi } from 'vitest'
 
+// Mock console methods to silence log noise during tests
+const silenceConsole = () => {
+  vi.spyOn(console, 'log').mockImplementation(() => {})
+  vi.spyOn(console, 'error').mockImplementation(() => {})
+  vi.spyOn(console, 'warn').mockImplementation(() => {})
+}
+
+// Apply console silencing initially
+silenceConsole()
+
 afterEach(() => {
   vi.restoreAllMocks()
+  // Re-apply console mocks to keep them silenced after restoration
+  silenceConsole()
 })
 
 vi.mock('trystero')

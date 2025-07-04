@@ -1,38 +1,39 @@
+import { useDebounce } from '@react-hook/debounce'
 import { useContext, useEffect, useMemo, useState } from 'react'
 import { BaseRoomConfig } from 'trystero'
 import { RelayConfig } from 'trystero/torrent'
 import { v4 as uuid } from 'uuid'
-import { useDebounce } from '@react-hook/debounce'
 
-import { ShellContext } from 'contexts/ShellContext'
+import { getPeerName, usePeerNameDisplay } from 'components/PeerNameDisplay'
+import { RoomContextProps } from 'contexts/RoomContext'
 import { SettingsContext } from 'contexts/SettingsContext'
-import { PeerAction } from 'models/network'
+import { ShellContext } from 'contexts/ShellContext'
+import { usePeerAction } from 'hooks/usePeerAction'
+import { Audio } from 'lib/Audio'
+import { ActionNamespace, PeerHookType, PeerRoom } from 'lib/PeerRoom'
+import { time } from 'lib/Time'
 import {
+  AudioChannelName,
   AudioState,
-  Message,
-  ReceivedMessage,
-  UnsentMessage,
-  InlineMedia,
-  ReceivedInlineMedia,
-  UnsentInlineMedia,
-  VideoState,
-  ScreenShareState,
-  isMessageReceived,
-  isInlineMedia,
   FileOfferMetadata,
-  TypingStatus,
+  InlineMedia,
+  isInlineMedia,
+  isMessageReceived,
+  Message,
   Peer,
   PeerVerificationState,
-  AudioChannelName,
+  ReceivedInlineMedia,
+  ReceivedMessage,
+  ScreenShareState,
+  TypingStatus,
+  UnsentInlineMedia,
+  UnsentMessage,
+  VideoState,
 } from 'models/chat'
-import { getPeerName, usePeerNameDisplay } from 'components/PeerNameDisplay'
-import { Audio } from 'lib/Audio'
-import { time } from 'lib/Time'
-import { PeerRoom, PeerHookType, ActionNamespace } from 'lib/PeerRoom'
-import { notification } from 'services/Notification'
-import { fileTransfer } from 'lib/FileTransfer'
+import { PeerAction } from 'models/network'
 import { AllowedKeyType, encryption } from 'services/Encryption'
-import { usePeerAction } from 'hooks/usePeerAction'
+import { FileTransferService } from 'services/FileTransfer'
+import { notification } from 'services/Notification'
 
 import { messageTranscriptSizeLimit } from 'config/messaging'
 
@@ -89,7 +90,7 @@ export function useRoom(
   } = useContext(ShellContext)
 
   const messageLog = isDirectMessageRoom
-    ? shellMessageLog.directMessageLog[targetPeerId] ?? []
+    ? (shellMessageLog.directMessageLog[targetPeerId] ?? [])
     : shellMessageLog.groupMessageLog
 
   const [peerRoom] = useState(
@@ -109,6 +110,11 @@ export function useRoom(
 
   const { getDisplayUsername } = usePeerNameDisplay()
 
+  const fileTransferService = useMemo(
+    () => new FileTransferService(roomConfig.rtcConfig!),
+    [roomConfig.rtcConfig]
+  )
+
   const setMessageLog = (messages: Array<Message | InlineMedia>) => {
     if (messages.length > messageTranscriptSizeLimit) {
       const evictedMessages = messages.slice(
@@ -119,9 +125,9 @@ export function useRoom(
       for (const message of evictedMessages) {
         if (
           isInlineMedia(message) &&
-          fileTransfer.isOffering(message.magnetURI)
+          fileTransferService.fileTransfer.isOffering(message.magnetURI)
         ) {
-          fileTransfer.rescind(message.magnetURI)
+          fileTransferService.fileTransfer.rescind(message.magnetURI)
         }
       }
     }
@@ -153,7 +159,7 @@ export function useRoom(
     Record<string, FileOfferMetadata>
   >({})
 
-  const roomContextValue = useMemo(
+  const roomContextValue: RoomContextProps = useMemo(
     () => ({
       isPrivate,
       isMessageSending,
@@ -170,6 +176,7 @@ export function useRoom(
       setPeerScreenStreams,
       peerOfferedFileMetadata,
       setPeerOfferedFileMetadata,
+      fileTransferService,
     }),
     [
       isPrivate,
@@ -187,6 +194,7 @@ export function useRoom(
       setPeerScreenStreams,
       peerOfferedFileMetadata,
       setPeerOfferedFileMetadata,
+      fileTransferService,
     ]
   )
 
@@ -507,7 +515,10 @@ export function useRoom(
   if (!showVideoDisplay && !isShowingMessages) setIsShowingMessages(true)
 
   const handleInlineMediaUpload = async (files: File[]) => {
-    const fileOfferId = await fileTransfer.offer(files, roomId)
+    const fileOfferId = await fileTransferService.fileTransfer.offer(
+      files,
+      roomId
+    )
 
     const unsentInlineMedia: UnsentInlineMedia = {
       authorId: userId,

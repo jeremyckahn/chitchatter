@@ -63,7 +63,7 @@ export class SettingsService {
           }
 
           resolve(deserializedUserSettings)
-        } catch (e) {
+        } catch (_e) {
           const err = new InvalidFileError()
           console.error(err)
           reject(err)

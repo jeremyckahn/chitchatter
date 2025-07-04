@@ -268,7 +268,7 @@ export const Shell = ({ appNeedsUpdate, children, userPeerId }: ShellProps) => {
       } else if (body.msRequestFullscreen) {
         await body.msRequestFullscreen()
       }
-    } catch (e) {
+    } catch (_e) {
       // Silence harmless errors
     }
   }
@@ -285,7 +285,7 @@ export const Shell = ({ appNeedsUpdate, children, userPeerId }: ShellProps) => {
       } else if (document.msExitFullScreen) {
         await document.msExitFullScreen()
       }
-    } catch (e) {
+    } catch (_e) {
       // Silence harmless errors
     }
   }

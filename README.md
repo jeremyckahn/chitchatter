@@ -194,6 +194,162 @@ Builds the app for production to the `dist` folder. It correctly bundles React i
 
 The build is minified and the filenames include the hashes.
 
+### API Configuration
+
+Chitchatter uses a hybrid approach for WebRTC configuration:
+
+- **TURN servers**: Fetched from the API endpoint (configurable via `VITE_RTC_CONFIG_ENDPOINT`, defaults to `/api/get-config`) with data configured via `RTC_CONFIG` environment variable
+- **STUN servers**: Configured via the `VITE_STUN_SERVERS` environment variable in the frontend
+- **Final configuration**: The frontend merges both sources to create the complete RTCConfiguration
+
+This separation allows for flexible configuration where TURN servers (which often require credentials and may change) are managed server-side, while STUN servers (which are typically public and stable) are configured client-side.
+
+#### Enhanced Connectivity Feature
+
+The Enhanced Connectivity feature in Chitchatter allows users to toggle the use of external TURN servers for improved connection reliability. This feature is **conditionally available** based on your deployment configuration:
+
+- **Available**: When `VITE_RTC_CONFIG_ENDPOINT` environment variable is set
+- **Unavailable**: When `VITE_RTC_CONFIG_ENDPOINT` is not set or empty
+
+**When Enhanced Connectivity is available:**
+
+- Users see a "Networking" section in Settings with a toggle for "Enhanced connectivity"
+- When enabled, the app fetches TURN server configuration from the API endpoint
+- When disabled, the app uses fallback TURN servers only
+
+**When Enhanced Connectivity is unavailable:**
+
+- The "Networking" section is hidden from the Settings page
+- The feature is treated as permanently disabled (uses fallback TURN servers)
+- A console warning is shown to help self-hosters understand how to enable the feature
+
+This conditional behavior ensures that self-hosters who don't configure external TURN servers don't see confusing UI options that won't work for their setup.
+
+> [!NOTE]
+> All environment variables and their configuration options are documented in the `.env` file with detailed explanations and examples. Refer to that file for comprehensive configuration guidance.
+
+#### Development Environment
+
+When running `npm run dev`, the development stack includes:
+
+- **Frontend**: Vite dev server on port 3000
+- **API**: Vercel dev server on port 3001 (proxied through Vite)
+- **Tracker**: WebTorrent tracker on port 8000
+- **StreamSaver**: File download service on port 3015
+
+The Vite development server automatically proxies `/api/*` requests to the Vercel dev server running on port 3001.
+
+#### Alternative Development Setup
+
+If you prefer to use the simple API server instead of Vercel dev:
+
+1. **Start the simple API server**:
+
+   ```bash
+   node simple-api-server.js
+   ```
+
+   This runs on port 3003 by default.
+
+2. **Configure environment variables**:
+   Edit `.env` and uncomment:
+
+   ```bash
+   VITE_API_BASE_URL=http://localhost:3003
+   ```
+
+3. **Start the frontend**:
+   ```bash
+   npm start
+   ```
+
+#### RTC Configuration Helper Script
+
+**🔒 Security Note**: Never commit real TURN server credentials to version control! Always generate your own configuration with your own TURN server credentials.
+
+To simplify the process of creating the base64-encoded `RTC_CONFIG` environment variable, use the included helper script:
+
+```bash
+npm run generate-rtc-config
+```
+
+This interactive script will:
+
+- Guide you through adding STUN and TURN servers
+- Provide preset configurations for common setups
+- Generate the properly formatted base64-encoded string
+- Show usage instructions for different deployment platforms
+
+**Quick start with presets:**
+
+- **Option 1**: Google STUN + Custom TURN server - Configure with your own TURN credentials
+- **Option 2**: Google STUN only - Requires separate TURN server setup
+- **Option 3**: Custom configuration - Full control over all servers
+
+**Script options:**
+
+```bash
+# Interactive configuration generator
+npm run generate-rtc-config
+
+# Show help
+npm run generate-rtc-config -- --help
+
+# Show example configurations
+npm run generate-rtc-config -- --example
+```
+
+**Verifying your configuration:**
+
+```bash
+# Decode and verify the generated base64 string
+echo "eyJpY2VTZXJ2ZXJzIjpb..." | base64 -d | jq .
+
+# Example output (with your own credentials):
+# {
+#   "iceServers": [
+#     {
+#       "urls": "stun:stun.l.google.com:19302"
+#     },
+#     {
+#       "urls": "turn:your-turn-server.com:3478",
+#       "username": "your-username",
+#       "credential": "your-credential"
+#     }
+#   ]
+# }
+```
+
+#### Production Environment
+
+**🔒 Security Important**: Never commit real TURN server credentials to version control! Always use GitHub repository secrets or environment variables for sensitive configuration.
+
+In production (GitHub Pages deployment), configure both server-side and client-side components:
+
+**Server-side (TURN servers)**: Set the `RTC_CONFIG` environment variable with a base64-encoded JSON string containing your full RTCConfiguration. The API will extract and return only the TURN server:
+
+```bash
+# Method 1: Use the helper script (recommended)
+npm run generate-rtc-config
+
+# Method 2: Manual creation (advanced users)
+echo '{"iceServers":[{"urls":"turn:your-turn-server.com:3478","username":"your-username","credential":"your-password"},{"urls":"stun:stun.l.google.com:19302"}]}' | base64 -w 0
+
+# Set in GitHub repository environment variables or secrets (replace with your actual config)
+RTC_CONFIG=<your-base64-encoded-rtc-config-here>
+```
+
+**Client-side (STUN servers)**: Set the `VITE_STUN_SERVERS` environment variable with comma-separated STUN server URLs:
+
+```bash
+# Set in GitHub repository environment variables or secrets
+VITE_STUN_SERVERS=stun:stun.l.google.com:19302,stun:stun1.l.google.com:19302
+```
+
+If `RTC_CONFIG` is not set, the API will fall back to a default TURN server. If `VITE_STUN_SERVERS` is not set, the frontend will use default STUN servers.
+
+**For self-hosters**: If you don't set `VITE_RTC_CONFIG_ENDPOINT`, the Enhanced Connectivity feature will be automatically disabled and hidden from users. This prevents confusion when external TURN server configuration is not available. To enable Enhanced Connectivity, set `VITE_RTC_CONFIG_ENDPOINT` to your API endpoint (defaults to `/api/get-config` if you set it to any truthy value).
+
 ### Self-hosting
 
 Chitchatter is designed to be forked and self-hosted. If you would like to change pairing or relay server configuration or you prefer to control your own builds and versions, [fork this repo](https://github.com/jeremyckahn/chitchatter/fork) and follow the steps below.

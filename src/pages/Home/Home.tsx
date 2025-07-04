@@ -10,13 +10,18 @@ import styled from '@mui/material/styles/styled'
 import useTheme from '@mui/material/styles/useTheme'
 import TextField from '@mui/material/TextField'
 import Typography from '@mui/material/Typography'
+import { ChangeEvent, useContext } from 'react'
 import { Link } from 'react-router-dom'
 import { v4 as uuid } from 'uuid'
 
 import { Form, Main } from 'components/Elements'
 import { PeerNameDisplay } from 'components/PeerNameDisplay'
+import { EnhancedConnectivityControl } from 'components/EnhancedConnectivityControl'
 import { routes } from 'config/routes'
+import { SettingsContext } from 'contexts/SettingsContext'
 import Logo from 'img/logo.svg?react'
+
+import { isEnhancedConnectivityAvailable } from '../../config/enhancedConnectivity'
 
 import { CommunityRoomSelector } from './CommunityRoomSelector'
 import { EmbedCodeDialog } from './EmbedCodeDialog'
@@ -30,6 +35,8 @@ interface HomeProps {
 
 export function Home({ userId }: HomeProps) {
   const theme = useTheme()
+  const { updateUserSettings, getUserSettings } = useContext(SettingsContext)
+  const { isEnhancedConnectivityEnabled } = getUserSettings()
 
   const {
     roomName,
@@ -43,6 +50,15 @@ export function Home({ userId }: HomeProps) {
     handleEmbedCodeWindowClose,
     isRoomNameValid,
   } = useHome()
+
+  const handleIsEnhancedConnectivityEnabledChange = (
+    _event: ChangeEvent,
+    newIsEnhancedConnectivityEnabled: boolean
+  ) => {
+    updateUserSettings({
+      isEnhancedConnectivityEnabled: newIsEnhancedConnectivityEnabled,
+    })
+  }
 
   return (
     <Box className="Home">
@@ -142,6 +158,18 @@ export function Home({ userId }: HomeProps) {
       <Box maxWidth={theme.breakpoints.values.sm} mx="auto" px={2}>
         <CommunityRoomSelector />
       </Box>
+      {isEnhancedConnectivityAvailable && (
+        <>
+          <Divider sx={{ my: 2 }} />
+          <Box maxWidth={theme.breakpoints.values.sm} mx="auto" px={2}>
+            <EnhancedConnectivityControl
+              isEnabled={isEnhancedConnectivityEnabled}
+              onChange={handleIsEnhancedConnectivityEnabledChange}
+              showSecondaryColor={true}
+            />
+          </Box>
+        </>
+      )}
       <Divider sx={{ my: 2 }} />
       <Box
         sx={{

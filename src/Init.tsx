@@ -42,6 +42,7 @@ const Init = ({ getUuid = uuid, ...props }: InitProps) => {
           playSoundOnNewMessage: true,
           showNotificationOnNewMessage: true,
           showActiveTypingStatus: true,
+          isEnhancedConnectivityEnabled: true,
           publicKey,
           privateKey,
           selectedSound: DEFAULT_SOUND,
