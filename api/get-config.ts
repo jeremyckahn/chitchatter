@@ -198,12 +198,6 @@ const getTurnServer = (): RTCIceServer => {
         error.message,
         'Using fallback TURN server.'
       )
-    } else if (error instanceof TypeError) {
-      console.error(
-        'RTC_CONFIG environment variable contains invalid base64:',
-        error.message,
-        'Using fallback TURN server.'
-      )
     } else {
       console.error(
         'Unexpected error processing RTC_CONFIG environment variable:',
