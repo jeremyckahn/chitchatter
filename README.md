@@ -13,7 +13,7 @@ Chitchatter is a free (as in both price and freedom) communication tool. Designe
 - Ephemeral
   - Message content is never persisted to disk on either the client or server
 - Decentralized
-  - There is no API server. All that's required for Chitchatter to function is availability of GitHub for static assets, and public WebTorrent and STUN/TURN relay servers for establishing peer-to-peer communication.
+  - **No API server required**. Chitchatter works completely without an API server - all that's required for basic functionality is availability of GitHub for static assets, and public WebTorrent and STUN/TURN relay servers for establishing peer-to-peer communication. An optional API server is available to provide enhanced connectivity features, but users can always choose to use Chitchatter without it.
 - Embeddable
 - [Self-hostable](#self-hosting)
 
@@ -26,6 +26,8 @@ Chitchatter uses [Vite](https://vitejs.dev/). The secure networking and streamin
 ## How to use it
 
 Open <https://chitchatter.im/> and join a room to start chatting with anyone else who is in the room. By default, room names are random [UUID](https://en.wikipedia.org/wiki/Universally_unique_identifier)s that are generated client-side. To privately communicate with someone, it is recommended to join one of these randomly-generated rooms and share the URL (via the "🔗" button at the top of the page) to whomever you wish to communicate with via a secure medium of your choosing (such as [Burner Note](https://burnernote.com/) or [Yopass](https://yopass.se/)). Your user name will be presented to you, and it would be good to share that with who you will be chatting with beforehand so they know they're talking to you.
+
+**No API server required**: Chitchatter works completely without any API server or backend infrastructure. All communication happens directly between your browser and other users' browsers. While an optional API server is available for enhanced connectivity features, you can always use Chitchatter without it.
 
 ## Features
 
@@ -196,6 +198,8 @@ The build is minified and the filenames include the hashes.
 
 ### API Configuration
 
+**Note: The API server is completely optional.** Chitchatter works without any API server - users can connect and communicate using only public STUN servers and fallback TURN servers. The API configuration described below is available for deployments that want to provide enhanced connectivity features.
+
 Chitchatter uses a hybrid approach for WebRTC configuration:
 
 - **TURN servers**: Fetched from the API endpoint (configurable via `VITE_RTC_CONFIG_ENDPOINT`, defaults to `/api/get-config`) with data configured via `RTC_CONFIG` environment variable
@@ -206,7 +210,7 @@ This separation allows for flexible configuration where TURN servers (which ofte
 
 #### Enhanced Connectivity Feature
 
-The Enhanced Connectivity feature in Chitchatter allows users to toggle the use of external TURN servers for improved connection reliability. This feature is **conditionally available** based on your deployment configuration:
+The Enhanced Connectivity feature is an **optional enhancement** that allows users to toggle the use of external TURN servers for improved connection reliability. **Chitchatter works perfectly without this feature** - it's simply an additional option for deployments that want to provide enhanced connectivity. This feature is **conditionally available** based on your deployment configuration:
 
 - **Available**: When `VITE_RTC_CONFIG_ENDPOINT` environment variable is set
 - **Unavailable**: When `VITE_RTC_CONFIG_ENDPOINT` is not set or empty
