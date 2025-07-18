@@ -14,7 +14,9 @@ class InvalidFileError extends Error {
 const encryptionTestTarget = 'chitchatter'
 
 export class SettingsService {
+  // Hàm để xuất cài đặt người dùng
   exportSettings = async (userSettings: UserSettings) => {
+    // Serialize thông tin người dùng (bao gồm ID người dùng và chatType)
     const serializedUserSettings =
       await serialization.serializeUserSettings(userSettings)
 
@@ -22,9 +24,11 @@ export class SettingsService {
       type: 'application/json;charset=utf-8',
     })
 
+    // Lưu file dưới dạng JSON
     saveAs(blob, `chitchatter-profile-${userSettings.userId}.json`)
   }
 
+  // Hàm để nhập cài đặt người dùng từ file
   importSettings = async (file: File) => {
     const fileReader = new FileReader()
 
@@ -37,12 +41,14 @@ export class SettingsService {
             throw new Error()
           }
 
+          // Parse nội dung file JSON
           const parsedFileResult = JSON.parse(fileReaderResult)
 
           if (!isSerializedUserSettings(parsedFileResult)) {
             throw new Error()
           }
 
+          // Deserialize dữ liệu người dùng (bao gồm ID người dùng và chatType)
           const deserializedUserSettings =
             await serialization.deserializeUserSettings(parsedFileResult)
 
@@ -56,8 +62,7 @@ export class SettingsService {
             encryptedString
           )
 
-          // NOTE: This determines whether the public and private keys match
-          // and are compatible with Chitchatter.
+          // Kiểm tra nếu publicKey và privateKey khớp và tương thích với Chitchatter
           if (decryptedString !== encryptionTestTarget) {
             throw new Error()
           }
@@ -70,6 +75,7 @@ export class SettingsService {
         }
       })
 
+      // Đọc file dưới dạng text
       fileReader.readAsText(file.slice())
     })
 
