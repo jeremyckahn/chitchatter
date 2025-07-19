@@ -1,7 +1,7 @@
 import { ShellContext } from 'contexts/ShellContext'
 import React, { useContext, useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { v4 as uuid } from 'uuid'
+import { RoomNameGenerator, RoomNameType } from 'lib/RoomNameGenerator'
 
 const roomTypePrefixes = ['public', 'private']
 const roomTypePrefixesDelimitedForRegExp = roomTypePrefixes.join('|')
@@ -9,7 +9,12 @@ const rRoomNameAppPrefix = `^${window.location.origin}/(${roomTypePrefixesDelimi
 
 export const useHome = () => {
   const { setTitle } = useContext(ShellContext)
-  const [roomName, setRoomName] = useState(uuid())
+  const [roomNameType, setRoomNameType] = useState<RoomNameType>(
+    RoomNameType.UUID
+  )
+  const [roomName, setRoomName] = useState(
+    RoomNameGenerator.generate(roomNameType)
+  )
   const [showEmbedCode, setShowEmbedCode] = useState(false)
   const navigate = useNavigate()
 
@@ -19,10 +24,22 @@ export const useHome = () => {
 
   const handleRoomNameChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const { value } = event.target
-
     const baseRoomName = value.replace(new RegExp(rRoomNameAppPrefix), '')
-
     setRoomName(baseRoomName)
+  }
+
+  const handleRoomNameTypeChange = (
+    _event: React.MouseEvent<HTMLElement>,
+    newType: RoomNameType | null
+  ) => {
+    if (newType !== null) {
+      setRoomNameType(newType)
+      setRoomName(RoomNameGenerator.generate(newType))
+    }
+  }
+
+  const regenerateRoomName = () => {
+    setRoomName(RoomNameGenerator.generate(roomNameType))
   }
 
   const handleFormSubmit = (event: React.SyntheticEvent<HTMLFormElement>) => {
@@ -49,9 +66,12 @@ export const useHome = () => {
 
   return {
     roomName,
+    roomNameType,
     setRoomName,
     showEmbedCode,
     handleRoomNameChange,
+    handleRoomNameTypeChange,
+    regenerateRoomName,
     handleFormSubmit,
     handleJoinPublicRoomClick,
     handleJoinPrivateRoomClick,
