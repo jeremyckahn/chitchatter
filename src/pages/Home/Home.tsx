@@ -101,25 +101,6 @@ export function Home({ userId }: HomeProps) {
               {userId}
             </PeerNameDisplay>
           </Typography>
-          <Box sx={{ mb: 2 }}>
-            <ToggleButtonGroup
-              value={roomNameType}
-              exclusive
-              onChange={handleRoomNameTypeChange}
-              aria-label="room name type"
-              size="small"
-            >
-              <ToggleButton value={RoomNameType.UUID} aria-label="UUID">
-                UUID
-              </ToggleButton>
-              <ToggleButton
-                value={RoomNameType.PASSPHRASE}
-                aria-label="Passphrase"
-              >
-                Passphrase
-              </ToggleButton>
-            </ToggleButtonGroup>
-          </Box>
           <FormControl fullWidth>
             <TextField
               label="Room name (generated on your device)"
@@ -141,6 +122,25 @@ export function Home({ userId }: HomeProps) {
               size="medium"
             />
           </FormControl>
+          <Box sx={{ mt: 2, mb: 2 }}>
+            <ToggleButtonGroup
+              value={roomNameType}
+              exclusive
+              onChange={handleRoomNameTypeChange}
+              aria-label="room name type"
+              size="small"
+            >
+              <ToggleButton value={RoomNameType.UUID} aria-label="UUID">
+                UUID
+              </ToggleButton>
+              <ToggleButton
+                value={RoomNameType.PASSPHRASE}
+                aria-label="Passphrase"
+              >
+                Passphrase
+              </ToggleButton>
+            </ToggleButtonGroup>
+          </Box>
           <Box
             sx={{
               display: 'flex',
