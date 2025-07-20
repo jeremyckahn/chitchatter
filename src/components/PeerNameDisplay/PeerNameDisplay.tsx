@@ -1,5 +1,5 @@
 import Typography, { TypographyProps } from '@mui/material/Typography'
-
+import Box from '@mui/material/Box'
 import { useState } from 'react'
 
 import { usePeerNameDisplay } from './usePeerNameDisplay'
@@ -13,62 +13,65 @@ export const PeerNameDisplay = ({
   children: userId,
   ...rest
 }: PeerNameDisplayProps) => {
-  const [isFullIdVisible, setIsFullIdVisible] = useState(false) // State để quản lý việc hiển thị ID đầy đủ
+  const [isFullIdVisible, setIsFullIdVisible] = useState(false)
 
   const { getCustomUsername, getFriendlyName, getShortenedUserId } =
     usePeerNameDisplay()
 
   const friendlyName = getFriendlyName(userId)
   const customUsername = getCustomUsername(userId)
-
-  // Lấy ID người dùng rút gọn
   const shortUserId = getShortenedUserId(userId)
 
-  // Hàm chuyển đổi giữa ID đầy đủ và ID rút gọn khi nhấp vào
-  const toggleFullIdVisibility = () => {
-    setIsFullIdVisible(!isFullIdVisible)
+  const displayName =
+    customUsername === friendlyName ? friendlyName : getPeerName(userId)
+
+  const isShortId = userId.length <= 12
+
+  const toggleUserId = () => {
+    if (!isShortId) {
+      setIsFullIdVisible(prev => !prev)
+    }
   }
 
+  const displayUserId = isShortId
+    ? userId
+    : isFullIdVisible
+      ? userId
+      : shortUserId
+
   return (
-    <div>
-      {/* Hiển thị tên người dùng */}
+    <Box
+      component="span"
+      sx={{
+        display: 'inline-flex',
+        alignItems: 'center',
+        fontSize: '0.875rem',
+      }}
+    >
+      {/* Username */}
       <Typography
         component="span"
+        variant="body2"
+        sx={{ fontSize: 'inherit', fontWeight: 500 }}
         {...rest}
-        style={{ fontSize: '1.2rem', fontWeight: 'bold' }}
       >
-        {customUsername === friendlyName ? friendlyName : getPeerName(userId)}
+        {displayName}
       </Typography>
 
-      {/* Hiển thị "User ID" */}
+      {/* User ID */}
       <Typography
+        component="span"
         variant="caption"
-        {...rest}
-        style={{
-          display: 'block',
-          fontSize: '1rem',
-          marginTop: '8px',
-          fontWeight: 'normal',
+        onClick={toggleUserId}
+        sx={{
+          fontSize: 'inherit',
+          cursor: isShortId ? 'default' : 'pointer',
+          userSelect: 'none',
         }}
-      >
-        User ID:
-      </Typography>
-
-      {/* Hiển thị ID người dùng */}
-      <Typography
-        variant="caption"
         {...rest}
-        style={{
-          display: 'block',
-          cursor: 'pointer',
-          fontSize: '1.2rem',
-          fontWeight: 'bold',
-        }}
-        onClick={toggleFullIdVisibility}
       >
-        {/* Hiển thị ID rút gọn hoặc đầy đủ tùy vào trạng thái */}
-        {isFullIdVisible ? userId : shortUserId}
+        {'\u00A0'}({displayUserId})
       </Typography>
-    </div>
+    </Box>
   )
 }

@@ -43,8 +43,11 @@ export const usePeerNameDisplay = () => {
     return displayUsername
   }
 
-  // Hàm mới để rút gọn ID người dùng
-  const getShortenedUserId = (userId: string) => {
+  // Returns a shortened version of the user ID for display.
+  const getShortenedUserId = (userId: string): string => {
+    if (userId.length <= 12) {
+      return userId
+    }
     return `${userId.slice(0, 6)}...${userId.slice(-3)}`
   }
 
