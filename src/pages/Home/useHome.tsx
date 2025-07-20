@@ -12,7 +12,7 @@ export const useHome = () => {
   const [roomNameType, setRoomNameType] = useState<RoomNameType>(
     RoomNameType.UUID
   )
-  const [roomName, setRoomName] = useState(
+  const [roomName, setRoomName] = useState(() =>
     RoomNameGenerator.generate(roomNameType)
   )
   const [showEmbedCode, setShowEmbedCode] = useState(false)
