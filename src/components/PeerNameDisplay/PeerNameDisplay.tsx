@@ -1,77 +1,45 @@
+import React, { useState } from 'react'
 import Typography, { TypographyProps } from '@mui/material/Typography'
-import Box from '@mui/material/Box'
-import { useState } from 'react'
 
 import { usePeerNameDisplay } from './usePeerNameDisplay'
-import { getPeerName } from './getPeerName'
 
 export interface PeerNameDisplayProps extends TypographyProps {
   children: string // userId
+  showUserId?: boolean // Only show full/shortened user ID on Home page
 }
 
 export const PeerNameDisplay = ({
   children: userId,
+  showUserId = false,
   ...rest
 }: PeerNameDisplayProps) => {
-  const [isFullIdVisible, setIsFullIdVisible] = useState(false)
+  const { getFriendlyName } = usePeerNameDisplay()
+  const [isFullIdVisible, setIsFullIdVisible] = useState(false) // State for toggling full/shortened userId
 
-  const { getCustomUsername, getFriendlyName, getShortenedUserId } =
-    usePeerNameDisplay()
+  // Shortened version of userId
+  const shortId = (id: string) => `${id.slice(0, 4)}...${id.slice(-3)}`
 
-  const friendlyName = getFriendlyName(userId)
-  const customUsername = getCustomUsername(userId)
-  const shortUserId = getShortenedUserId(userId)
-
-  const displayName =
-    customUsername === friendlyName ? friendlyName : getPeerName(userId)
-
-  const isShortId = userId.length <= 12
-
-  const toggleUserId = () => {
-    if (!isShortId) {
-      setIsFullIdVisible(prev => !prev)
-    }
+  // Toggle full/shortened userId
+  const handleToggleUserId = () => {
+    setIsFullIdVisible(prev => !prev)
   }
 
-  const displayUserId = isShortId
-    ? userId
-    : isFullIdVisible
-      ? userId
-      : shortUserId
+  // If custom username is the same as the friendly name, display the friendly name
 
   return (
-    <Box
+    <Typography
       component="span"
-      sx={{
-        display: 'inline-flex',
-        alignItems: 'center',
-        fontSize: '0.875rem',
-      }}
+      {...rest}
+      onClick={handleToggleUserId}
+      style={{ cursor: 'pointer' }}
     >
-      {/* Username */}
-      <Typography
-        component="span"
-        variant="body2"
-        sx={{ fontSize: 'inherit', fontWeight: 500 }}
-        {...rest}
-      >
-        {displayName}
-      </Typography>
-
-      {/* User ID */}
-      <Typography
-        component="span"
-        variant="caption"
-        onClick={toggleUserId}
-        sx={{
-          fontSize: 'inherit',
-          cursor: isShortId ? 'default' : 'pointer',
-          userSelect: 'none',
-        }}
-        {...rest}
-      >
-        {'\u00A0'}({displayUserId})
-      </Typography>
-    </Box>
+      {getFriendlyName(userId)}
+      {showUserId && (
+        <Typography variant="caption" component="span" {...rest}>
+          {' '}
+          ({isFullIdVisible ? userId : shortId(userId)})
+        </Typography>
+      )}
+    </Typography>
   )
 }

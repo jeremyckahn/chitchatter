@@ -4,6 +4,20 @@ import { ShellContext } from 'contexts/ShellContext'
 
 import { getPeerName } from './getPeerName'
 
+// Constants to avoid magic numbers
+export const SHORT_ID_MAX_LENGTH = 12
+export const SHORT_ID_PREFIX_LENGTH = 6
+export const SHORT_ID_SUFFIX_LENGTH = 3
+
+// Utility to shorten userId if too long
+export const getShortenedUserId = (userId: string): string => {
+  if (userId.length <= SHORT_ID_MAX_LENGTH) return userId
+
+  const prefix = userId.slice(0, SHORT_ID_PREFIX_LENGTH)
+  const suffix = userId.slice(-SHORT_ID_SUFFIX_LENGTH)
+  return `${prefix}...${suffix}`
+}
+
 export const usePeerNameDisplay = () => {
   const { getUserSettings } = useContext(SettingsContext)
   const { peerList, customUsername: selfCustomUsername } =
@@ -11,44 +25,30 @@ export const usePeerNameDisplay = () => {
 
   const { userId: selfUserId } = getUserSettings()
 
-  const isPeerSelf = (userId: string) => selfUserId === userId
+  const isPeerSelf = (userId: string): boolean => selfUserId === userId
 
   const getPeer = (userId: string) =>
     peerList.find(peer => peer.userId === userId)
 
-  const getCustomUsername = (userId: string) =>
+  const getCustomUsername = (userId: string): string =>
     isPeerSelf(userId)
       ? selfCustomUsername
-      : (getPeer(userId)?.customUsername ?? '')
+      : getPeer(userId)?.customUsername || ''
 
-  const getFriendlyName = (userId: string) => {
+  const getFriendlyName = (userId: string): string => {
     const customUsername = getCustomUsername(userId)
-    const friendlyName = customUsername || getPeerName(userId)
-
-    return friendlyName
+    return customUsername || getPeerName(userId)
   }
 
-  const getDisplayUsername = (userId: string) => {
+  const getDisplayUsername = (userId: string): string => {
     const friendlyName = getFriendlyName(userId)
     const customUsername = getCustomUsername(userId)
 
-    let displayUsername: string
-
     if (customUsername === friendlyName) {
-      displayUsername = `${friendlyName} (${getPeerName(userId)})`
-    } else {
-      displayUsername = getPeerName(userId)
+      return `${friendlyName} (${getPeerName(userId)})`
     }
 
-    return displayUsername
-  }
-
-  // Returns a shortened version of the user ID for display.
-  const getShortenedUserId = (userId: string): string => {
-    if (userId.length <= 12) {
-      return userId
-    }
-    return `${userId.slice(0, 6)}...${userId.slice(-3)}`
+    return getPeerName(userId)
   }
 
   return {
