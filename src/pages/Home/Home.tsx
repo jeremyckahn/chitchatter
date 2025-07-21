@@ -1,35 +1,39 @@
-import Cached from '@mui/icons-material/Cached'
-import GitHubIcon from '@mui/icons-material/GitHub'
+import { useContext } from 'react'
+import { Link } from 'react-router-dom'
+
 import Box from '@mui/material/Box'
 import Button from '@mui/material/Button'
-import Divider from '@mui/material/Divider'
 import FormControl from '@mui/material/FormControl'
 import IconButton from '@mui/material/IconButton'
-import MuiLink from '@mui/material/Link'
-import styled from '@mui/material/styles/styled'
-import useTheme from '@mui/material/styles/useTheme'
 import TextField from '@mui/material/TextField'
 import Typography from '@mui/material/Typography'
-import { ChangeEvent, useContext } from 'react'
-import { Link } from 'react-router-dom'
-import { v4 as uuid } from 'uuid'
+import useTheme from '@mui/material/styles/useTheme'
+import { Cached } from '@mui/icons-material'
+import ToggleButton from '@mui/material/ToggleButton'
+import ToggleButtonGroup from '@mui/material/ToggleButtonGroup'
+import styled from '@mui/material/styles/styled'
+import GitHubIcon from '@mui/icons-material/GitHub'
+import MuiLink from '@mui/material/Link'
+import Divider from '@mui/material/Divider'
+
+import Logo from 'img/logo.svg?react'
 
 import { Form, Main } from 'components/Elements'
 import { PeerNameDisplay } from 'components/PeerNameDisplay'
 import { EnhancedConnectivityControl } from 'components/EnhancedConnectivityControl'
-import { routes } from 'config/routes'
 import { SettingsContext } from 'contexts/SettingsContext'
-import Logo from 'img/logo.svg?react'
+import { routes } from 'config/routes'
+import { RoomNameType } from 'lib/RoomNameGenerator'
 
 import { isEnhancedConnectivityAvailable } from '../../config/enhancedConnectivity'
 
-import { CommunityRoomSelector } from './CommunityRoomSelector'
-import { EmbedCodeDialog } from './EmbedCodeDialog'
 import { useHome } from './useHome'
+import { EmbedCodeDialog } from './EmbedCodeDialog'
+import { CommunityRoomSelector } from './CommunityRoomSelector'
 
 const StyledLogo = styled(Logo)({})
 
-interface HomeProps {
+export interface HomeProps {
   userId: string
 }
 
@@ -37,12 +41,13 @@ export function Home({ userId }: HomeProps) {
   const theme = useTheme()
   const { updateUserSettings, getUserSettings } = useContext(SettingsContext)
   const { isEnhancedConnectivityEnabled } = getUserSettings()
-
   const {
     roomName,
-    setRoomName,
+    roomNameType,
     showEmbedCode,
     handleRoomNameChange,
+    handleRoomNameTypeChange,
+    regenerateRoomName,
     handleFormSubmit,
     handleJoinPublicRoomClick,
     handleJoinPrivateRoomClick,
@@ -52,7 +57,7 @@ export function Home({ userId }: HomeProps) {
   } = useHome()
 
   const handleIsEnhancedConnectivityEnabledChange = (
-    _event: ChangeEvent,
+    _event: React.ChangeEvent<{}>,
     newIsEnhancedConnectivityEnabled: boolean
   ) => {
     updateUserSettings({
@@ -62,6 +67,11 @@ export function Home({ userId }: HomeProps) {
 
   return (
     <Box className="Home">
+      <EmbedCodeDialog
+        showEmbedCode={showEmbedCode}
+        handleEmbedCodeWindowClose={handleEmbedCodeWindowClose}
+        roomName={roomName}
+      />
       <Main
         sx={{
           maxWidth: theme.breakpoints.values.md,
@@ -101,7 +111,7 @@ export function Home({ userId }: HomeProps) {
                 endAdornment: (
                   <IconButton
                     aria-label="Regenerate room id"
-                    onClick={() => setRoomName(uuid())}
+                    onClick={regenerateRoomName}
                     size="small"
                   >
                     <Cached />
@@ -112,10 +122,31 @@ export function Home({ userId }: HomeProps) {
               size="medium"
             />
           </FormControl>
+          <Box sx={{ mt: 2, mb: 2 }}>
+            <ToggleButtonGroup
+              value={roomNameType}
+              exclusive
+              onChange={handleRoomNameTypeChange}
+              aria-label="room name type"
+              size="small"
+            >
+              <ToggleButton value={RoomNameType.UUID} aria-label="UUID">
+                UUID
+              </ToggleButton>
+              <ToggleButton
+                value={RoomNameType.PASSPHRASE}
+                aria-label="Passphrase"
+              >
+                Passphrase
+              </ToggleButton>
+            </ToggleButtonGroup>
+          </Box>
           <Box
             sx={{
               display: 'flex',
               justifyContent: 'center',
+              gap: 1,
+              mt: 2,
             }}
           >
             <Button
@@ -228,11 +259,6 @@ export function Home({ userId }: HomeProps) {
         </MuiLink>
         .
       </Typography>
-      <EmbedCodeDialog
-        showEmbedCode={showEmbedCode}
-        handleEmbedCodeWindowClose={handleEmbedCodeWindowClose}
-        roomName={roomName}
-      />
     </Box>
   )
 }
