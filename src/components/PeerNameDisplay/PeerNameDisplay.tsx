@@ -13,11 +13,8 @@ export const PeerNameDisplay = ({
   showUserId = false,
   ...rest
 }: PeerNameDisplayProps) => {
-  const { getFriendlyName } = usePeerNameDisplay()
+  const { getFriendlyName, getShortenedUserId } = usePeerNameDisplay()
   const [isFullIdVisible, setIsFullIdVisible] = useState(false) // State for toggling full/shortened userId
-
-  // Shortened version of userId
-  const shortId = (id: string) => `${id.slice(0, 4)}...${id.slice(-3)}`
 
   // Toggle full/shortened userId
   const handleToggleUserId = () => {
@@ -30,14 +27,14 @@ export const PeerNameDisplay = ({
     <Typography
       component="span"
       {...rest}
-      onClick={handleToggleUserId}
-      style={{ cursor: 'pointer' }}
+      onClick={showUserId ? handleToggleUserId : undefined}
+      style={{ cursor: showUserId ? 'pointer' : 'inherit' }}
     >
       {getFriendlyName(userId)}
       {showUserId && (
         <Typography variant="caption" component="span" {...rest}>
           {' '}
-          ({isFullIdVisible ? userId : shortId(userId)})
+          ({isFullIdVisible ? userId : getShortenedUserId(userId)})
         </Typography>
       )}
     </Typography>

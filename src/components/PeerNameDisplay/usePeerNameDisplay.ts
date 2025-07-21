@@ -6,7 +6,7 @@ import { getPeerName } from './getPeerName'
 
 // Constants to avoid magic numbers
 export const SHORT_ID_MAX_LENGTH = 12
-export const SHORT_ID_PREFIX_LENGTH = 6
+export const SHORT_ID_PREFIX_LENGTH = 4
 export const SHORT_ID_SUFFIX_LENGTH = 3
 
 // Utility to shorten userId if too long
