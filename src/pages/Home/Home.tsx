@@ -97,7 +97,11 @@ export function Home({ userId }: HomeProps) {
         >
           <Typography sx={{ mb: 2 }}>
             Your username:{' '}
-            <PeerNameDisplay paragraph={false} sx={{ fontWeight: 'bold' }}>
+            <PeerNameDisplay
+              showUserId={true}
+              paragraph={false}
+              sx={{ fontWeight: 'bold' }}
+            >
               {userId}
             </PeerNameDisplay>
           </Typography>
