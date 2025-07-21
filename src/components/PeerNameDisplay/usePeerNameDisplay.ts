@@ -33,22 +33,26 @@ export const usePeerNameDisplay = () => {
   const getCustomUsername = (userId: string): string =>
     isPeerSelf(userId)
       ? selfCustomUsername
-      : getPeer(userId)?.customUsername || ''
+      : (getPeer(userId)?.customUsername ?? '')
 
   const getFriendlyName = (userId: string): string => {
     const customUsername = getCustomUsername(userId)
     return customUsername || getPeerName(userId)
   }
 
-  const getDisplayUsername = (userId: string): string => {
+  const getDisplayUsername = (userId: string) => {
     const friendlyName = getFriendlyName(userId)
     const customUsername = getCustomUsername(userId)
 
+    let displayUsername: string
+
     if (customUsername === friendlyName) {
-      return `${friendlyName} (${getPeerName(userId)})`
+      displayUsername = `${friendlyName} (${getPeerName(userId)})`
+    } else {
+      displayUsername = getPeerName(userId)
     }
 
-    return getPeerName(userId)
+    return displayUsername
   }
 
   return {
