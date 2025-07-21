@@ -10,7 +10,7 @@ export interface PeerNameDisplayProps extends TypographyProps {
 
 export const PeerNameDisplay = ({
   children: userId,
-  showUserId = false,
+  showUserId = true,
   ...rest
 }: PeerNameDisplayProps) => {
   const { getFriendlyName, getShortenedUserId } = usePeerNameDisplay()
