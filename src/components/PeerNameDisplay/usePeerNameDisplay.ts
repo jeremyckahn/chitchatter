@@ -43,10 +43,19 @@ export const usePeerNameDisplay = () => {
     return displayUsername
   }
 
+  // Returns a shortened version of the user ID for display.
+  const getShortenedUserId = (userId: string): string => {
+    if (userId.length <= 12) {
+      return userId
+    }
+    return `${userId.slice(0, 6)}...${userId.slice(-3)}`
+  }
+
   return {
     getCustomUsername,
     isPeerSelf,
     getFriendlyName,
     getDisplayUsername,
+    getShortenedUserId,
   }
 }

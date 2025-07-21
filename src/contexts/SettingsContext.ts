@@ -23,5 +23,6 @@ export const SettingsContext = createContext<SettingsContextProps>({
     publicKey: encryption.cryptoKeyStub,
     privateKey: encryption.cryptoKeyStub,
     selectedSound: DEFAULT_SOUND,
+    chatType: 'TEXT', // <-- Added this missing field
   }),
 })
