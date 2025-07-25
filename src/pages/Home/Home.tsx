@@ -101,6 +101,7 @@ export function Home({ userId }: HomeProps) {
               {userId}
             </PeerNameDisplay>
           </Typography>
+
           <FormControl fullWidth>
             <TextField
               label="Room name (generated on your device)"

@@ -1,36 +1,42 @@
+import React, { useState } from 'react'
 import Typography, { TypographyProps } from '@mui/material/Typography'
 
 import { usePeerNameDisplay } from './usePeerNameDisplay'
-import { getPeerName } from './getPeerName'
 
 export interface PeerNameDisplayProps extends TypographyProps {
-  children: string
+  children: string // userId
+  showUserId?: boolean // Only show full/shortened user ID on Home page
 }
 
 export const PeerNameDisplay = ({
   children: userId,
+  showUserId = true,
   ...rest
 }: PeerNameDisplayProps) => {
-  const { getCustomUsername, getFriendlyName } = usePeerNameDisplay()
+  const { getFriendlyName, getShortenedUserId } = usePeerNameDisplay()
+  const [isFullIdVisible, setIsFullIdVisible] = useState(false) // State for toggling full/shortened userId
 
-  const friendlyName = getFriendlyName(userId)
-  const customUsername = getCustomUsername(userId)
-
-  if (customUsername === friendlyName) {
-    return (
-      <Typography component="span" {...rest}>
-        {friendlyName}
-        <Typography variant="caption" {...rest}>
-          {' '}
-          ({getPeerName(userId)})
-        </Typography>
-      </Typography>
-    )
-  } else {
-    return (
-      <Typography component="span" {...rest}>
-        {getPeerName(userId)}
-      </Typography>
-    )
+  // Toggle full/shortened userId
+  const handleToggleUserId = () => {
+    setIsFullIdVisible(prev => !prev)
   }
+
+  // If custom username is the same as the friendly name, display the friendly name
+
+  return (
+    <Typography
+      component="span"
+      {...rest}
+      onClick={showUserId ? handleToggleUserId : undefined}
+      style={{ cursor: showUserId ? 'pointer' : 'inherit' }}
+    >
+      {getFriendlyName(userId)}
+      {showUserId && (
+        <Typography variant="caption" component="span" {...rest}>
+          {' '}
+          ({isFullIdVisible ? userId : getShortenedUserId(userId)})
+        </Typography>
+      )}
+    </Typography>
+  )
 }
