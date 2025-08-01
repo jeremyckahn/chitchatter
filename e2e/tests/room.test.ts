@@ -149,8 +149,8 @@ test.describe('Multi-user Room Interaction', () => {
     await page2.waitForLoadState('networkidle')
 
     // Wait for both users to be connected
-    await page1.waitForTimeout(3000)
-    await page2.waitForTimeout(3000)
+    await expect(page1.getByPlaceholder('Your message')).toBeVisible()
+    await expect(page2.getByPlaceholder('Your message')).toBeVisible()
 
     // User 1 sends a message
     const chatInput1 = page1.getByPlaceholder('Your message').first()
@@ -162,7 +162,7 @@ test.describe('Multi-user Room Interaction', () => {
     await expect(page1.getByText(message1)).toBeVisible()
 
     // Wait for P2P connection and message propagation
-    await page2.waitForTimeout(2000)
+    await page2.waitForSelector(`text=${message1}`)
 
     // User 2 sends a message
     const chatInput2 = page2.getByPlaceholder('Your message').first()

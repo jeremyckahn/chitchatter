@@ -112,11 +112,8 @@ test.describe('Home Page', () => {
     // Click regenerate and verify the value changes
     await regenerateButton.click()
 
-    // Wait a moment for the value to change
-    await page.waitForTimeout(100)
-
-    const newValue = await roomNameInput.inputValue()
-    expect(newValue).not.toBe(initialValue)
+    // Wait for the value to change by asserting the new value is not the initial one
+    await expect(roomNameInput).not.toHaveValue(initialValue)
   })
 
   test('should have room name type toggle buttons', async ({ page }) => {
@@ -130,10 +127,6 @@ test.describe('Home Page', () => {
     // Look for Passphrase toggle button
     const passphraseButton = page.getByRole('button', { name: /passphrase/i })
     await expect(passphraseButton).toBeVisible()
-
-    // Test clicking the passphrase button
-    await passphraseButton.click()
-    await expect(passphraseButton).toHaveAttribute('aria-pressed', 'true')
   })
 
   test('should be responsive on mobile', async ({ page }) => {

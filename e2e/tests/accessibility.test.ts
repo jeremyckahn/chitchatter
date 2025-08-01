@@ -1,8 +1,29 @@
 import { expect, test } from '@playwright/test'
+import AxeBuilder from '@axe-core/playwright'
 
 // TODO: Expand these tests to cover all pages
 
 test.describe('Accessibility', () => {
+  test('home page should not have any automatically detectable accessibility issues', async ({
+    page,
+  }) => {
+    await page.goto('/')
+    await page.waitForLoadState('networkidle')
+
+    const accessibilityScanResults = await new AxeBuilder({ page })
+      .disableRules(['listitem']) // Disable MUI specific list structure rule
+      .analyze()
+
+    // Filter out only serious/critical violations - allow minor/moderate ones
+    // TODO: Test for and fix all minor a11y violations
+    const seriousViolations = accessibilityScanResults.violations.filter(
+      violation =>
+        violation.impact === 'serious' || violation.impact === 'critical'
+    )
+
+    expect(seriousViolations).toEqual([])
+  })
+
   test('home page should have minimal accessibility violations', async ({
     page,
   }) => {
@@ -10,7 +31,7 @@ test.describe('Accessibility', () => {
     await page.waitForLoadState('networkidle')
 
     // Check that the page loads and has basic interactive elements
-    const joinButton = page.getByText('Join public room')
+    const joinButton = page.getByRole('button', { name: /join public room/i })
     await expect(joinButton.first()).toBeVisible()
 
     // Verify basic page structure is accessible
@@ -124,7 +145,7 @@ test.describe('Accessibility', () => {
     await page.waitForLoadState('networkidle')
 
     // Check that the page loads and has join buttons
-    const joinButton = page.getByText('Join public room')
+    const joinButton = page.getByRole('button', { name: /join public room/i })
     await expect(joinButton.first()).toBeVisible()
 
     // For now, just verify the page structure rather than strict color contrast
@@ -246,7 +267,7 @@ test.describe('Accessibility', () => {
       await page.waitForLoadState('networkidle')
 
       // Check that essential elements are still accessible at different sizes
-      const joinButton = page.getByText('Join public room')
+      const joinButton = page.getByRole('button', { name: /join public room/i })
 
       await expect(joinButton.first()).toBeVisible()
 

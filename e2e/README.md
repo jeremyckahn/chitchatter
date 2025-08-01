@@ -48,31 +48,30 @@ npm run test:e2e:report
 e2e/
 ├── helpers/
 │   └── test-helpers.ts      # Common utility functions
-├── accessibility.spec.ts     # Accessibility tests
-├── file-sharing.spec.ts     # File upload/download tests
-├── home.spec.ts             # Home page tests
-├── room.spec.ts             # Room functionality tests
-├── settings.spec.ts         # Settings and preferences tests
+├── accessibility.test.ts     # Accessibility tests
+├── home.test.ts             # Home page tests
+├── room.test.ts             # Room functionality tests
+├── settings.test.ts         # Settings and preferences tests
 └── README.md                # This file
 ```
 
 ## Test Categories
 
-### Home Page Tests (`home.spec.ts`)
+### Home Page Tests (`home.test.ts`)
 
 - Page loading and basic UI elements
 - Room creation functionality
 - Room joining functionality
 - Responsive design verification
 
-### Room Tests (`room.spec.ts`)
+### Room Tests (`room.test.ts`)
 
 - Chat messaging functionality
 - User presence indicators
 - Multi-user interactions
 - Room persistence and reconnection
 
-### Settings Tests (`settings.spec.ts`)
+### Settings Tests (`settings.test.ts`)
 
 - Theme preferences
 - User profile settings
@@ -80,7 +79,7 @@ e2e/
 - Settings persistence
 - Import/export functionality
 
-### Accessibility Tests (`accessibility.spec.ts`)
+### Accessibility Tests (`accessibility.test.ts`)
 
 - WCAG compliance checks
 - Keyboard navigation
@@ -141,9 +140,8 @@ When adding new tests, follow these patterns:
 2. **Use the helper functions**:
 
    ```typescript
-   import { createRoom, sendMessage } from './helpers/test-helpers'
+   import { sendMessage } from './helpers/test-helpers'
 
-   const roomUrl = await createRoom(page)
    await sendMessage(page, 'Hello world')
    ```
 
