@@ -24,7 +24,7 @@ export const WholePageLoading = ({
       ]}
       {...props}
     >
-      <CircularProgress />
+      <CircularProgress aria-label="Loading" />
     </Box>
   )
 }

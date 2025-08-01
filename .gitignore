@@ -27,3 +27,9 @@ yarn-error.log*
 # Editors
 Session.vim
 .vercel
+
+# Playwright
+/test-results/
+/playwright-report/
+/playwright/.cache/
+/e2e/screenshots/

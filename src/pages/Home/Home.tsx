@@ -18,7 +18,7 @@ import Divider from '@mui/material/Divider'
 
 import Logo from 'img/logo.svg?react'
 
-import { Form, Main } from 'components/Elements'
+import { Form } from 'components/Elements'
 import { PeerNameDisplay } from 'components/PeerNameDisplay'
 import { EnhancedConnectivityControl } from 'components/EnhancedConnectivityControl'
 import { SettingsContext } from 'contexts/SettingsContext'
@@ -72,7 +72,7 @@ export function Home({ userId }: HomeProps) {
         handleEmbedCodeWindowClose={handleEmbedCodeWindowClose}
         roomName={roomName}
       />
-      <Main
+      <Box
         sx={{
           maxWidth: theme.breakpoints.values.md,
           mt: 3,
@@ -81,7 +81,7 @@ export function Home({ userId }: HomeProps) {
           textAlign: 'center',
         }}
       >
-        <Link to={routes.ABOUT}>
+        <Link to={routes.ABOUT} aria-label="Go to About page">
           <StyledLogo
             sx={{
               px: 0.5,
@@ -184,81 +184,84 @@ export function Home({ userId }: HomeProps) {
             </Button>
           </Box>
         </Form>
-      </Main>
-      <Divider sx={{ my: 2 }} />
-      <Box maxWidth={theme.breakpoints.values.sm} mx="auto" px={2}>
-        <CommunityRoomSelector />
       </Box>
-      {isEnhancedConnectivityAvailable && (
-        <>
-          <Divider sx={{ my: 2 }} />
-          <Box maxWidth={theme.breakpoints.values.sm} mx="auto" px={2}>
-            <EnhancedConnectivityControl
-              isEnabled={isEnhancedConnectivityEnabled}
-              onChange={handleIsEnhancedConnectivityEnabledChange}
-              showSecondaryColor={true}
-            />
-          </Box>
-        </>
-      )}
-      <Divider sx={{ my: 2 }} />
-      <Box
-        sx={{
-          maxWidth: theme.breakpoints.values.sm,
-          mx: 'auto',
-          textAlign: 'center',
-          px: 2,
-        }}
-      >
-        <Typography variant="body1">
-          This is a free communication tool that is designed for simplicity,
-          privacy, and security. All interaction between you and your online
-          peers is encrypted. There is no record of your conversation once you
-          all leave.
-        </Typography>
-      </Box>
-      <Box
-        sx={{
-          mx: 'auto',
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-        }}
-      >
-        <MuiLink
-          href="https://github.com/jeremyckahn/chitchatter"
-          target="_blank"
-          sx={() => ({
-            color: theme.palette.text.primary,
-          })}
+      <Box component="section" aria-label="Additional options and information">
+        <Divider sx={{ my: 2 }} />
+        <Box maxWidth={theme.breakpoints.values.sm} mx="auto" px={2}>
+          <CommunityRoomSelector />
+        </Box>
+        {isEnhancedConnectivityAvailable && (
+          <>
+            <Divider sx={{ my: 2 }} />
+            <Box maxWidth={theme.breakpoints.values.sm} mx="auto" px={2}>
+              <EnhancedConnectivityControl
+                isEnabled={isEnhancedConnectivityEnabled}
+                onChange={handleIsEnhancedConnectivityEnabledChange}
+                showSecondaryColor={true}
+              />
+            </Box>
+          </>
+        )}
+        <Divider sx={{ my: 2 }} />
+        <Box
+          sx={{
+            maxWidth: theme.breakpoints.values.sm,
+            mx: 'auto',
+            textAlign: 'center',
+            px: 2,
+          }}
         >
-          <IconButton
-            size="large"
-            edge="start"
-            color="inherit"
-            aria-label="Open menu"
+          <Typography variant="body1">
+            This is a free communication tool that is designed for simplicity,
+            privacy, and security. All interaction between you and your online
+            peers is encrypted. There is no record of your conversation once you
+            all leave.
+          </Typography>
+        </Box>
+        <Box
+          component="footer"
+          sx={{
+            mx: 'auto',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+          }}
+        >
+          <MuiLink
+            href="https://github.com/jeremyckahn/chitchatter"
+            target="_blank"
+            sx={() => ({
+              color: theme.palette.text.primary,
+            })}
           >
-            <GitHubIcon sx={{ fontSize: '2em' }} />
-          </IconButton>
-        </MuiLink>
+            <IconButton
+              size="large"
+              edge="start"
+              color="inherit"
+              aria-label="View source code on GitHub"
+            >
+              <GitHubIcon sx={{ fontSize: '2em' }} />
+            </IconButton>
+          </MuiLink>
+          <Typography variant="body1" sx={{ textAlign: 'center', mb: 1 }}>
+            Licensed under{' '}
+            <MuiLink
+              href="https://github.com/jeremyckahn/chitchatter/blob/develop/LICENSE"
+              target="_blank"
+            >
+              GPL v2
+            </MuiLink>
+            . Please{' '}
+            <MuiLink
+              href="https://github.com/jeremyckahn/chitchatter/blob/develop/README.md"
+              target="_blank"
+            >
+              read the docs
+            </MuiLink>
+            .
+          </Typography>
+        </Box>
       </Box>
-      <Typography variant="body1" sx={{ textAlign: 'center', mb: 1 }}>
-        Licensed under{' '}
-        <MuiLink
-          href="https://github.com/jeremyckahn/chitchatter/blob/develop/LICENSE"
-          target="_blank"
-        >
-          GPL v2
-        </MuiLink>
-        . Please{' '}
-        <MuiLink
-          href="https://github.com/jeremyckahn/chitchatter/blob/develop/README.md"
-          target="_blank"
-        >
-          read the docs
-        </MuiLink>
-        .
-      </Typography>
     </Box>
   )
 }

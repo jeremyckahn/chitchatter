@@ -56,6 +56,7 @@
     "start:tracker": "bittorrent-tracker",
     "start:streamsaver": "serve -p 3015 node_modules/streamsaver",
     "start:api": "VERCEL_TOKEN=\"$(jq .token ~/.local/share/com.vercel.cli/auth.json)\" npx vercel dev --token=\"$VERCEL_TOKEN\" --listen=127.0.0.1:3001 --yes",
+    "start:e2e": "cross-env VITE_HOMEPAGE=$(npm pkg get homepage) VITE_RTC_CONFIG_ENDPOINT=/api/get-config vite --port 3000 --logLevel error",
     "dev": "mprocs \"npx cross-env VITE_TRACKER_URL=\"ws://localhost:8000\" VITE_STREAMSAVER_URL=\"http://localhost:3015/mitm.html\" npm run start\" \"npm run start:tracker\" \"npm run start:streamsaver\" \"npm run start:api\"",
     "build": "npm run build:app && npm run build:sdk",
     "build:app": "cross-env VITE_HOMEPAGE=$(npm pkg get homepage) vite build",
@@ -64,9 +65,16 @@
     "test": "vitest",
     "prepare": "husky install",
     "prettier": "prettier \"**/*.{ts,tsx}\" --write",
-    "lint": "eslint src --max-warnings=0",
+    "lint": "eslint src e2e --max-warnings=0 --fix",
     "check:types": "tsc && echo \"No type errors.\"",
-    "generate-rtc-config": "node scripts/generate-rtc-config.cjs"
+    "generate-rtc-config": "node scripts/generate-rtc-config.cjs",
+    "test:e2e": "playwright test --reporter=list",
+    "test:e2e:report": "playwright show-report",
+    "test:e2e:ui": "playwright test --ui",
+    "test:e2e:debug": "playwright test --debug",
+    "test:e2e:headed": "playwright test --headed",
+    "test:e2e:codegen": "playwright codegen localhost:3000",
+    "playwright:install": "playwright install --with-deps"
   },
   "eslintConfig": {
     "extends": [
@@ -90,7 +98,9 @@
     ]
   },
   "devDependencies": {
+    "@axe-core/playwright": "^4.10.2",
     "@babel/plugin-proposal-private-property-in-object": "^7.21.11",
+    "@playwright/test": "^1.54.1",
     "@types/file-saver": "^2.0.7",
     "@types/node": "^18.19.71",
     "@types/react": "^18.2.72",
@@ -105,6 +115,7 @@
     "@vercel/node": "^5.3.0",
     "@vitejs/plugin-react": "^4.3.4",
     "autoprefixer": "^10.4.8",
+    "axe-playwright": "^2.1.0",
     "bittorrent-tracker": "^9.19.0",
     "cross-env": "^7.0.3",
     "eslint": "^8.21.0",
@@ -120,6 +131,7 @@
     "mprocs": "^0.6.4",
     "nodemon": "^3.0.1",
     "parcel": "^2.10.0",
+    "playwright": "^1.54.1",
     "prettier": "^3.2.5",
     "pretty-quick": "^4.0.0",
     "process": "^0.11.10",

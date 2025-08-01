@@ -90,6 +90,7 @@ const getStunServers = (): RTCIceServer[] => {
 
   if (!stunServersEnv) {
     console.log('VITE_STUN_SERVERS not set, using fallback STUN servers')
+
     return FALLBACK_STUN_SERVERS
   }
 
