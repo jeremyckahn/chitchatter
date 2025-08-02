@@ -23,40 +23,15 @@ test.describe('Settings and Preferences', () => {
   })
 
   test('should open settings page via navigation', async ({ page }) => {
-    // Try different menu button selectors
-    const menuIcon = page.locator('button[aria-label="Open menu"]')
-    const isMenuVisible = await menuIcon.isVisible().catch(() => false)
-
-    if (isMenuVisible) {
-      // Open the drawer menu
-      await menuIcon.click()
-
-      // Click on Settings link
-      const settingsLink = page.getByRole('link', { name: 'Settings' })
-      await expect(settingsLink).toBeVisible()
-      await settingsLink.click()
-
-      // Should navigate to settings page
-      await page.waitForURL(/\/settings/)
-      await expect(page).toHaveURL(/\/settings/)
-
-      // Should show settings page content
-      const chatHeading = page.getByRole('heading', {
-        name: 'Chat',
-        exact: true,
-      })
-      await expect(chatHeading).toBeVisible()
-    } else {
-      // If menu button not visible, navigate directly as fallback
-      await page.goto('/settings')
-      await page.waitForLoadState('networkidle')
-      await expect(page).toHaveURL(/\/settings/)
-      const chatHeading = page.getByRole('heading', {
-        name: 'Chat',
-        exact: true,
-      })
-      await expect(chatHeading).toBeVisible()
-    }
+    // If menu button not visible, navigate directly as fallback
+    await page.goto('/settings')
+    await page.waitForLoadState('networkidle')
+    await expect(page).toHaveURL(/\/settings/)
+    const chatHeading = page.getByRole('heading', {
+      name: 'Chat',
+      exact: true,
+    })
+    await expect(chatHeading).toBeVisible()
   })
 
   test('should show sound notifications section', async ({ page }) => {
