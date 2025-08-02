@@ -162,7 +162,7 @@ test.describe('Multi-user Room Interaction', () => {
     await expect(page1.getByText(message1)).toBeVisible()
 
     // Wait for P2P connection and message propagation
-    await page2.waitForSelector(`text=${message1}`)
+    await expect(page2.getByText(message1)).toBeVisible()
 
     // User 2 sends a message
     const chatInput2 = page2.getByPlaceholder('Your message').first()
