@@ -48,30 +48,31 @@ npm run test:e2e:report
 e2e/
 ├── helpers/
 │   └── test-helpers.ts      # Common utility functions
-├── accessibility.test.ts     # Accessibility tests
-├── home.test.ts             # Home page tests
-├── room.test.ts             # Room functionality tests
-├── settings.test.ts         # Settings and preferences tests
+├── tests/
+│   ├── accessibility.test.ts # Accessibility tests
+│   ├── home.test.ts         # Home page tests
+│   ├── room.test.ts         # Room functionality tests
+│   └── settings.test.ts     # Settings and preferences tests
 └── README.md                # This file
 ```
 
 ## Test Categories
 
-### Home Page Tests (`home.test.ts`)
+### Home Page Tests (`tests/home.test.ts`)
 
 - Page loading and basic UI elements
 - Room creation functionality
 - Room joining functionality
 - Responsive design verification
 
-### Room Tests (`room.test.ts`)
+### Room Tests (`tests/room.test.ts`)
 
 - Chat messaging functionality
 - User presence indicators
 - Multi-user interactions
 - Room persistence and reconnection
 
-### Settings Tests (`settings.test.ts`)
+### Settings Tests (`tests/settings.test.ts`)
 
 - Theme preferences
 - User profile settings
@@ -79,7 +80,7 @@ e2e/
 - Settings persistence
 - Import/export functionality
 
-### Accessibility Tests (`accessibility.test.ts`)
+### Accessibility Tests (`tests/accessibility.test.ts`)
 
 - WCAG compliance checks
 - Keyboard navigation
@@ -177,11 +178,11 @@ The CI workflow:
 Test configuration is in `playwright.config.ts`:
 
 - Base URL: `http://localhost:3000`
-- Browsers: Chromium (others can be enabled, see `playwright.config.ts`)
-- Mobile viewports, if enabled: Pixel 5, iPhone 12
+- Browsers: Chromium (others can be enabled in `playwright.config.ts`)
+- Mobile viewports: Currently disabled (can be enabled in config)
 - Headless mode enabled by default
 - Automatic retries on CI (2 retries)
-- Parallel execution enabled locally
+- Parallel execution enabled (1 worker on CI, unlimited locally)
 
 ## Best Practices
 
