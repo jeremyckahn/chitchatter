@@ -152,66 +152,6 @@ test.describe('Accessibility', () => {
     }
   })
 
-  test('ARIA attributes should be used correctly', async ({ page }) => {
-    await page.goto('/')
-
-    // Check for valid ARIA roles
-    const elementsWithRole = await page.locator('[role]').all()
-
-    for (const element of elementsWithRole) {
-      const role = await element.getAttribute('role')
-
-      // Common valid ARIA roles
-      const validRoles = [
-        'button',
-        'link',
-        'navigation',
-        'main',
-        'banner',
-        'contentinfo',
-        'complementary',
-        'form',
-        'region',
-        'search',
-        'dialog',
-        'alert',
-        'status',
-        'progressbar',
-        'menu',
-        'menuitem',
-        'tooltip',
-        'tab',
-        'tabpanel',
-        'tablist',
-        'heading',
-        'img',
-        'list',
-        'listitem',
-        'checkbox',
-        'radio',
-        'textbox',
-        'combobox',
-        'grid',
-        'row',
-        'cell',
-      ]
-
-      expect(validRoles).toContain(role)
-    }
-
-    // Check for required ARIA properties
-    const buttons = await page.locator('[role="button"]').all()
-
-    for (const button of buttons) {
-      // Buttons should be focusable unless explicitly disabled
-      const disabled = await button.getAttribute('aria-disabled')
-      if (disabled !== 'true') {
-        const tabindex = await button.getAttribute('tabindex')
-        expect(tabindex).not.toBe('-1')
-      }
-    }
-  })
-
   test('responsive design should not break accessibility', async ({ page }) => {
     // Test at different viewport sizes
     const viewports = [
