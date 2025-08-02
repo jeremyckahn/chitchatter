@@ -8,7 +8,7 @@ test.describe('Accessibility', () => {
     page,
   }) => {
     await page.goto('/')
-    await page.waitForLoadState('networkidle')
+    await expect(page.getByText('Chitchatter')).toBeVisible()
 
     const accessibilityScanResults = await new AxeBuilder({ page })
       .disableRules(['listitem']) // Disable MUI specific list structure rule
@@ -28,7 +28,7 @@ test.describe('Accessibility', () => {
     page,
   }) => {
     await page.goto('/')
-    await page.waitForLoadState('networkidle')
+    await expect(page.getByText('Chitchatter')).toBeVisible()
 
     // Check that the page loads and has basic interactive elements
     const joinButton = page.getByRole('button', { name: /join public room/i })
@@ -52,7 +52,7 @@ test.describe('Accessibility', () => {
   }) => {
     // Navigate to home and join a public room
     await page.goto('/')
-    await page.waitForLoadState('networkidle')
+    await expect(page.getByText('Chitchatter')).toBeVisible()
 
     // Click join public room button
     const joinPublicRoomButton = page.getByRole('button', {
@@ -125,7 +125,7 @@ test.describe('Accessibility', () => {
 
   test('page should have proper heading hierarchy', async ({ page }) => {
     await page.goto('/')
-    await page.waitForLoadState('networkidle')
+    await expect(page.getByText('Chitchatter')).toBeVisible()
 
     const headings = await page.locator('h1, h2, h3, h4, h5, h6').all()
 
@@ -163,7 +163,7 @@ test.describe('Accessibility', () => {
     for (const viewport of viewports) {
       await page.setViewportSize(viewport)
       await page.goto('/')
-      await page.waitForLoadState('networkidle')
+      await expect(page.getByText('Chitchatter')).toBeAttached()
 
       // Check that essential elements are still accessible at different sizes
       const joinButton = page.getByRole('button', { name: /join public room/i })
