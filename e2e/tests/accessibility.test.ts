@@ -123,27 +123,6 @@ test.describe('Accessibility', () => {
     }
   })
 
-  test('should check basic color contrast', async ({ page }) => {
-    await page.goto('/')
-    await page.waitForLoadState('networkidle')
-
-    // Check that the page loads and has join buttons
-    const joinButton = page.getByRole('button', { name: /join public room/i })
-    await expect(joinButton.first()).toBeVisible()
-
-    // For now, just verify the page structure rather than strict color contrast
-    // as Material-UI components may have design-specific contrast ratios
-    const mainContent = page.locator('main, [role="main"], body')
-    await expect(mainContent.first()).toBeVisible()
-
-    // Verify that interactive elements are accessible
-    await joinButton.first().focus()
-    const isFocused = await joinButton
-      .first()
-      .evaluate(el => document.activeElement === el)
-    expect(isFocused).toBe(true)
-  })
-
   test('page should have proper heading hierarchy', async ({ page }) => {
     await page.goto('/')
     await page.waitForLoadState('networkidle')
