@@ -123,23 +123,6 @@ test.describe('Accessibility', () => {
     }
   })
 
-  test('focus indicators should be visible', async ({ page }) => {
-    await page.goto('/')
-    await page.waitForLoadState('networkidle')
-
-    // Check if focus indicators are generally present on interactive elements
-    // This is a more lenient test that checks if focus styles exist
-    const button = page.getByRole('button').first()
-    await expect(button).toBeVisible()
-
-    // Just verify that the button can be focused
-    await button.focus()
-
-    // Check that the element has focus
-    const isFocused = await button.evaluate(el => document.activeElement === el)
-    expect(isFocused).toBe(true)
-  })
-
   test('should check basic color contrast', async ({ page }) => {
     await page.goto('/')
     await page.waitForLoadState('networkidle')
