@@ -150,9 +150,6 @@ test.describe('Accessibility', () => {
         }
       }
     }
-
-    // Pass the test even if no traditional headings are found (SVG logo case)
-    expect(true).toBe(true)
   })
 
   test('ARIA attributes should be used correctly', async ({ page }) => {
