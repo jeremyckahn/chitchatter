@@ -18,7 +18,7 @@ import Divider from '@mui/material/Divider'
 
 import Logo from 'img/logo.svg?react'
 
-import { Form } from 'components/Elements'
+import { Form, Main } from 'components/Elements'
 import { PeerNameDisplay } from 'components/PeerNameDisplay'
 import { EnhancedConnectivityControl } from 'components/EnhancedConnectivityControl'
 import { SettingsContext } from 'contexts/SettingsContext'
@@ -72,7 +72,7 @@ export function Home({ userId }: HomeProps) {
         handleEmbedCodeWindowClose={handleEmbedCodeWindowClose}
         roomName={roomName}
       />
-      <Box
+      <Main
         sx={{
           maxWidth: theme.breakpoints.values.md,
           mt: 3,
@@ -184,7 +184,7 @@ export function Home({ userId }: HomeProps) {
             </Button>
           </Box>
         </Form>
-      </Box>
+      </Main>
       <Box component="section" aria-label="Additional options and information">
         <Divider sx={{ my: 2 }} />
         <Box maxWidth={theme.breakpoints.values.sm} mx="auto" px={2}>
