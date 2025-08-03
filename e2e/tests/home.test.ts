@@ -11,7 +11,7 @@ test.describe('Home Page', () => {
     await expect(page).toHaveTitle(/Chitchatter/i)
 
     // Check that the main content loaded (verify logo area exists)
-    const mainContent = page.locator('main, [role="main"], .Home')
+    const mainContent = page.locator('main, [role="main"]')
     await expect(mainContent.first()).toBeVisible()
 
     // Check for username display
