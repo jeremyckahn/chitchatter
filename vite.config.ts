@@ -68,6 +68,8 @@ const config = () => {
       }),
       VitePWA({
         manifest,
+        // TODO: Remove after 8/4/2026: https://github.com/jeremyckahn/chitchatter/pull/481#discussion_r2251503905
+        selfDestroying: true,
       }),
     ],
     resolve: {
