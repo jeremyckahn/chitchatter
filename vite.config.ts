@@ -74,6 +74,7 @@ const config = () => {
         injectRegister: 'auto',
         filename: 'service-worker.js',
         manifest,
+        selfDestroying: true,
       }),
     ],
     resolve: {
