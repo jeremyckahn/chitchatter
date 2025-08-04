@@ -16,11 +16,7 @@ const ShellStub = (shellProps: Partial<ShellProps> = {}) => {
   return (
     <Router>
       <SettingsContext.Provider value={userSettingsStub}>
-        <Shell
-          appNeedsUpdate={false}
-          userPeerId={mockUserPeerId}
-          {...shellProps}
-        />
+        <Shell userPeerId={mockUserPeerId} {...shellProps} />
       </SettingsContext.Provider>
     </Router>
   )
