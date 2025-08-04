@@ -67,12 +67,6 @@ const config = () => {
         protocolImports: true,
       }),
       VitePWA({
-        registerType: 'prompt',
-        devOptions: {
-          enabled: false,
-        },
-        injectRegister: 'auto',
-        filename: 'service-worker.js',
         manifest,
       }),
     ],
