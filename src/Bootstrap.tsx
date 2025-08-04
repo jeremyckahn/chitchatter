@@ -7,6 +7,7 @@ import {
   BrowserRouter as Router,
   Routes,
 } from 'react-router-dom'
+import { useRegisterSW } from 'virtual:pwa-register/react'
 
 import { WholePageLoading } from 'components/Loading/Loading'
 import { Shell } from 'components/Shell'
@@ -120,6 +121,10 @@ const Bootstrap = ({
     },
     [persistedStorageProp, queryParams, serializationService, userSettings]
   )
+
+  const {
+    needRefresh: [appNeedsUpdate],
+  } = useRegisterSW()
 
   useEffect(() => {
     ;(async () => {
@@ -236,7 +241,7 @@ const Bootstrap = ({
         <StorageContext.Provider value={storageContextValue}>
           <SettingsContext.Provider value={settingsContextValue}>
             {hasLoadedSettings ? (
-              <Shell userPeerId={userId}>
+              <Shell appNeedsUpdate={appNeedsUpdate} userPeerId={userId}>
                 <Routes>
                   {[routes.ROOT, routes.INDEX_HTML].map(path => (
                     <Route

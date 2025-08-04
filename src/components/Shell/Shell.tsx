@@ -37,6 +37,7 @@ import { ErrorBoundary } from 'components/ErrorBoundary'
 import { PeerConnectionType, PeerRoom } from 'lib/PeerRoom'
 
 import { Drawer } from './Drawer'
+import { UpgradeDialog } from './UpgradeDialog'
 import { ShellAppBar } from './ShellAppBar'
 import { NotificationArea } from './NotificationArea'
 import { RouteContent } from './RouteContent'
@@ -53,11 +54,12 @@ import { useShellTheme } from './useShellTheme'
 
 export interface ShellProps extends PropsWithChildren {
   userPeerId: string
+  appNeedsUpdate: boolean
 }
 
 const queryParams = new URLSearchParams(window.location.search)
 
-export const Shell = ({ children, userPeerId }: ShellProps) => {
+export const Shell = ({ appNeedsUpdate, children, userPeerId }: ShellProps) => {
   const { getUserSettings, updateUserSettings } = useContext(SettingsContext)
   const isEmbedded = queryParams.get(QueryParamKeys.IS_EMBEDDED) !== null
 
@@ -370,6 +372,7 @@ export const Shell = ({ children, userPeerId }: ShellProps) => {
         <CssBaseline />
         {isEnvironmentSupported ? (
           <>
+            <UpgradeDialog appNeedsUpdate={appNeedsUpdate} />
             <Box
               className="Chitchatter"
               sx={{
