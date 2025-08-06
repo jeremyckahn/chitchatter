@@ -98,6 +98,9 @@ const config = () => {
         reporter: ['text', 'html'],
         exclude: ['node_modules/', 'src/setupTests.ts'],
       },
+      env: {
+        VITE_ROUTER_TYPE: 'hash',
+      },
     },
   })
 }

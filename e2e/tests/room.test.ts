@@ -86,8 +86,10 @@ test.describe('Room Functionality', () => {
       return await navigator.clipboard.readText()
     })
 
-    // The clipboard should contain the current room URL
-    expect(clipboardText).toBe(currentUrl)
+    // The clipboard should contain the current room URL without the hash
+    const expectedUrl = new URL(currentUrl)
+    expectedUrl.hash = ''
+    expect(clipboardText).toBe(expectedUrl.toString())
   })
 
   test('should handle empty message submission', async ({ page }) => {

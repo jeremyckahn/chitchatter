@@ -48,17 +48,19 @@ export function RoomShareDialog(props: RoomShareDialogProps) {
     if (!isUnderstood) setPassword('')
   }, [isUnderstood])
 
-  const url = window.location.href.split('#')[0]
+  const url = new URL(window.location.href)
+  url.searchParams.delete('secret')
+  url.hash = ''
 
   const copyWithPass = async () => {
     const encoded = await encryption.encodePassword(props.roomId, password)
 
     if (encoded === props.password) {
-      const params = new URLSearchParams()
-      params.set('secret', props.password)
+      const urlWithSecret = new URL(url.toString())
+      urlWithSecret.searchParams.set('secret', props.password)
 
       await props.copyToClipboard(
-        `${url}#${params}`,
+        urlWithSecret.toString(),
         'Private room URL with password copied to clipboard',
         'warning'
       )
@@ -78,7 +80,7 @@ export function RoomShareDialog(props: RoomShareDialogProps) {
 
   const copyWithoutPass = async () => {
     await props.copyToClipboard(
-      url,
+      url.toString(),
       isAdvanced
         ? 'Private room URL without password copied to clipboard'
         : 'Current URL copied to clipboard',
