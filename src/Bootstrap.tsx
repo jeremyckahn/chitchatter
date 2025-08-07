@@ -4,7 +4,8 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import {
   Navigate,
   Route,
-  BrowserRouter as Router,
+  BrowserRouter,
+  HashRouter,
   Routes,
 } from 'react-router-dom'
 import { useRegisterSW } from 'virtual:pwa-register/react'
@@ -94,6 +95,8 @@ const Bootstrap = ({
   initialUserSettings,
   serializationService = serialization,
 }: BootstrapProps) => {
+  const Router =
+    import.meta.env.VITE_ROUTER_TYPE === 'hash' ? HashRouter : BrowserRouter
   const queryParams = useMemo(
     () => new URLSearchParams(window.location.search),
     []
@@ -235,9 +238,12 @@ const Bootstrap = ({
     getPersistedStorage: () => persistedStorage,
   }
 
+  const routerProps =
+    Router === BrowserRouter ? { basename: homepageUrl.pathname } : {}
+
   return (
     <QueryClientProvider client={queryClient}>
-      <Router basename={homepageUrl.pathname}>
+      <Router {...routerProps}>
         <StorageContext.Provider value={storageContextValue}>
           <SettingsContext.Provider value={settingsContextValue}>
             {hasLoadedSettings ? (

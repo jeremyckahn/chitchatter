@@ -15,11 +15,15 @@ export function PrivateRoom({ userId }: PublicRoomProps) {
   const { roomId = '' } = useParams()
   const { setTitle } = useContext(ShellContext)
 
-  const urlParams = new URLSearchParams(window.location.hash.substring(1))
-  // Clear secret from address bar
-  if (window.location.hash.length > 0)
-    window.history.replaceState(window.history.state, '', '#')
+  const urlParams = new URLSearchParams(window.location.search)
   const [secret, setSecret] = useState(urlParams.get('secret') ?? '')
+
+  // Clear secret from address bar
+  if (urlParams.has('secret')) {
+    const newUrl = new URL(window.location.href)
+    newUrl.searchParams.delete('secret')
+    window.history.replaceState(window.history.state, '', newUrl.toString())
+  }
 
   useEffect(() => {
     notification.requestPermission()

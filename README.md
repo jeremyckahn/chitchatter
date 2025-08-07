@@ -172,6 +172,18 @@ npm install
 
 This will install all of the dependencies.
 
+#### Hash-based routing
+
+By default, Chitchatter uses [`BrowserRouter`](httpshttps://reactrouter.com/en/main/router-components/browser-router) for handling routing. If you need to support environments where server-side routing configuration is not possible (like some static site hosts), you can enable hash-based routing.
+
+To enable hash-based routing, set the following environment variable in your `.env` file:
+
+```
+VITE_ROUTER_TYPE=hash
+```
+
+When this is set, the app will use [`HashRouter`](https://reactrouter.com/en/main/router-components/hash-router), and all routes will be prefixed with a `#` (e.g., `https://chitchatter.im/#/public/some-room`).
+
 ### Available Scripts
 
 In the project directory, you can run:
