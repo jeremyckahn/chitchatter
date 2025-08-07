@@ -1,9 +1,9 @@
 import { Mock } from 'vitest'
-import { ShellContext, ShellContextProps } from 'contexts/ShellContext'
 import { renderHook, act } from '@testing-library/react'
 import { useNavigate } from 'react-router-dom'
-
-import { useHome } from './useHome'
+import type { FC, ReactNode } from 'react'
+import type { ShellContextProps } from 'contexts/ShellContext'
+import { RouterType } from 'models/router'
 
 vi.mock('react-router-dom', () => ({
   useNavigate: vi.fn(),
@@ -11,21 +11,30 @@ vi.mock('react-router-dom', () => ({
 
 const mockSetTitle = vi.fn()
 
-const MockShellContextProvider: React.FC<{ children: React.ReactNode }> = ({
-  children,
-}) => {
-  return (
-    <ShellContext.Provider
-      // NOTE: Only properties necessary for the tests are mocked
-      value={{ setTitle: mockSetTitle } as unknown as ShellContextProps}
-    >
-      {children}
-    </ShellContext.Provider>
-  )
-}
-
 describe('useHome Hook', () => {
-  beforeEach(() => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  let useHome: any
+  let MockShellContextProvider: FC<{ children: ReactNode }>
+
+  beforeEach(async () => {
+    vi.resetModules()
+    vi.stubEnv('VITE_ROUTER_TYPE', RouterType.BROWSER)
+
+    const { ShellContext } = await import('contexts/ShellContext')
+    const { useHome: useHomeModule } = await import('./useHome')
+    useHome = useHomeModule
+
+    MockShellContextProvider = ({ children }) => {
+      return (
+        // NOTE: Only properties necessary for the tests are mocked
+        <ShellContext.Provider
+          value={{ setTitle: mockSetTitle } as unknown as ShellContextProps}
+        >
+          {children}
+        </ShellContext.Provider>
+      )
+    }
+
     vi.clearAllMocks()
 
     Object.defineProperty(window, 'location', {
@@ -34,6 +43,10 @@ describe('useHome Hook', () => {
         origin: 'http://localhost:3000',
       },
     })
+  })
+
+  afterEach(() => {
+    vi.unstubAllEnvs()
   })
 
   it('should initialize with a UUID roomName and correct initial state', () => {

@@ -11,6 +11,7 @@ import macrosPlugin from 'vite-plugin-babel-macros'
 import { VitePWA } from 'vite-plugin-pwa'
 
 import { manifest } from './manifest'
+import { RouterType } from './src/models/router'
 
 const srcPaths = [
   'components',
@@ -97,6 +98,9 @@ const config = () => {
       coverage: {
         reporter: ['text', 'html'],
         exclude: ['node_modules/', 'src/setupTests.ts'],
+      },
+      env: {
+        VITE_ROUTER_TYPE: RouterType.BROWSER,
       },
     },
   })
