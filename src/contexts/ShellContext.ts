@@ -28,7 +28,7 @@ export interface ShellMessageLog {
   directMessageLog: Record<string, MessageLog>
 }
 
-interface ShellContextProps {
+export interface ShellContextProps {
   isEmbedded: boolean
   tabHasFocus: boolean
   showRoomControls: boolean
@@ -100,7 +100,7 @@ export const ShellContext = createContext<ShellContextProps>({
   setCustomUsername: () => {},
   connectionTestResults: {
     hasHost: false,
-    hasRelay: false,
+    hasTURNServer: false,
     trackerConnection: TrackerConnection.SEARCHING,
   },
   updatePeer: () => {},

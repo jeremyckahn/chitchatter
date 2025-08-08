@@ -26,7 +26,7 @@ export function useRoomVideo({ peerRoom }: UseRoomVideoConfig) {
     string | null
   >(null)
 
-  const { peerList, setPeerList, setVideoState } = shellContext
+  const { setPeerList, setVideoState } = shellContext
 
   const {
     peerVideoStreams,
@@ -79,21 +79,23 @@ export function useRoomVideo({ peerRoom }: UseRoomVideoConfig) {
     peerAction: PeerAction.VIDEO_CHANGE,
     peerRoom,
     onReceive: (videoState, peerId) => {
-      const newPeerList = peerList.map(peer => {
-        const newPeer: Peer = { ...peer }
+      setPeerList(peerList => {
+        const newPeerList = peerList.map(peer => {
+          const newPeer: Peer = { ...peer }
 
-        if (peer.peerId === peerId) {
-          newPeer.videoState = videoState
+          if (peer.peerId === peerId) {
+            newPeer.videoState = videoState
 
-          if (videoState === VideoState.STOPPED) {
-            deletePeerVideo(peerId)
+            if (videoState === VideoState.STOPPED) {
+              deletePeerVideo(peerId)
+            }
           }
-        }
 
-        return newPeer
+          return newPeer
+        })
+
+        return newPeerList
       })
-
-      setPeerList(newPeerList)
     },
   })
 

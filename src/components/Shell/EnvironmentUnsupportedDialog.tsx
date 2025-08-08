@@ -27,7 +27,7 @@ export const EnvironmentUnsupportedDialog = () => {
         <Box sx={{ display: 'flex', alignItems: 'center' }}>
           <ErrorIcon
             fontSize="medium"
-            sx={theme => ({
+            sx={() => ({
               color: theme.palette.error.main,
               mr: theme.spacing(1),
             })}

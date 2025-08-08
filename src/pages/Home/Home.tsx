@@ -1,75 +1,77 @@
-import React, { useEffect, useContext, useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
-import Button from '@mui/material/Button'
+import { useContext } from 'react'
+import { Link } from 'react-router-dom'
+
 import Box from '@mui/material/Box'
+import Button from '@mui/material/Button'
 import FormControl from '@mui/material/FormControl'
-import Typography from '@mui/material/Typography'
-import TextField from '@mui/material/TextField'
-import Divider from '@mui/material/Divider'
 import IconButton from '@mui/material/IconButton'
-import MuiLink from '@mui/material/Link'
-import GitHubIcon from '@mui/icons-material/GitHub'
-import Cached from '@mui/icons-material/Cached'
+import TextField from '@mui/material/TextField'
+import Typography from '@mui/material/Typography'
 import useTheme from '@mui/material/styles/useTheme'
+import { Cached } from '@mui/icons-material'
+import ToggleButton from '@mui/material/ToggleButton'
+import ToggleButtonGroup from '@mui/material/ToggleButtonGroup'
 import styled from '@mui/material/styles/styled'
+import GitHubIcon from '@mui/icons-material/GitHub'
+import MuiLink from '@mui/material/Link'
+import Divider from '@mui/material/Divider'
 
-import { v4 as uuid } from 'uuid'
-
-import { routes } from 'config/routes'
-import { ShellContext } from 'contexts/ShellContext'
-import { PeerNameDisplay } from 'components/PeerNameDisplay'
-import { Form, Main } from 'components/Elements'
 import Logo from 'img/logo.svg?react'
 
+import { Form, Main } from 'components/Elements'
+import { PeerNameDisplay } from 'components/PeerNameDisplay'
+import { EnhancedConnectivityControl } from 'components/EnhancedConnectivityControl'
+import { SettingsContext } from 'contexts/SettingsContext'
+import { routes } from 'config/routes'
+import { RoomNameType } from 'lib/RoomNameGenerator'
+
+import { isEnhancedConnectivityAvailable } from '../../config/enhancedConnectivity'
+
+import { useHome } from './useHome'
 import { EmbedCodeDialog } from './EmbedCodeDialog'
 import { CommunityRoomSelector } from './CommunityRoomSelector'
 
 const StyledLogo = styled(Logo)({})
 
-interface HomeProps {
+export interface HomeProps {
   userId: string
 }
 
 export function Home({ userId }: HomeProps) {
-  const { setTitle } = useContext(ShellContext)
   const theme = useTheme()
-  const [roomName, setRoomName] = useState(uuid())
-  const [showEmbedCode, setShowEmbedCode] = useState(false)
-  const navigate = useNavigate()
+  const { updateUserSettings, getUserSettings } = useContext(SettingsContext)
+  const { isEnhancedConnectivityEnabled } = getUserSettings()
+  const {
+    roomName,
+    roomNameType,
+    showEmbedCode,
+    handleRoomNameChange,
+    handleRoomNameTypeChange,
+    regenerateRoomName,
+    handleFormSubmit,
+    handleJoinPublicRoomClick,
+    handleJoinPrivateRoomClick,
+    handleGetEmbedCodeClick,
+    handleEmbedCodeWindowClose,
+    isRoomNameValid,
+  } = useHome()
 
-  useEffect(() => {
-    setTitle('Chitchatter')
-  }, [setTitle])
-
-  const handleRoomNameChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const { value } = event.target
-    setRoomName(value)
+  const handleIsEnhancedConnectivityEnabledChange = (
+    _event: React.ChangeEvent<{}>,
+    newIsEnhancedConnectivityEnabled: boolean
+  ) => {
+    updateUserSettings({
+      isEnhancedConnectivityEnabled: newIsEnhancedConnectivityEnabled,
+    })
   }
-
-  const handleFormSubmit = (event: React.SyntheticEvent<HTMLFormElement>) => {
-    event.preventDefault()
-  }
-
-  const handleJoinPublicRoomClick = () => {
-    navigate(`/public/${roomName}`)
-  }
-
-  const handleJoinPrivateRoomClick = () => {
-    navigate(`/private/${roomName}`)
-  }
-
-  const handleGetEmbedCodeClick = () => {
-    setShowEmbedCode(true)
-  }
-
-  const handleEmbedCodeWindowClose = () => {
-    setShowEmbedCode(false)
-  }
-
-  const isRoomNameValid = roomName.length > 0
 
   return (
     <Box className="Home">
+      <EmbedCodeDialog
+        showEmbedCode={showEmbedCode}
+        handleEmbedCodeWindowClose={handleEmbedCodeWindowClose}
+        roomName={roomName}
+      />
       <Main
         sx={{
           maxWidth: theme.breakpoints.values.md,
@@ -79,7 +81,7 @@ export function Home({ userId }: HomeProps) {
           textAlign: 'center',
         }}
       >
-        <Link to={routes.ABOUT}>
+        <Link to={routes.ABOUT} aria-label="Go to About page">
           <StyledLogo
             sx={{
               px: 0.5,
@@ -109,7 +111,7 @@ export function Home({ userId }: HomeProps) {
                 endAdornment: (
                   <IconButton
                     aria-label="Regenerate room id"
-                    onClick={() => setRoomName(uuid())}
+                    onClick={regenerateRoomName}
                     size="small"
                   >
                     <Cached />
@@ -120,10 +122,31 @@ export function Home({ userId }: HomeProps) {
               size="medium"
             />
           </FormControl>
+          <Box sx={{ mt: 2, mb: 2 }}>
+            <ToggleButtonGroup
+              value={roomNameType}
+              exclusive
+              onChange={handleRoomNameTypeChange}
+              aria-label="room name type"
+              size="small"
+            >
+              <ToggleButton value={RoomNameType.UUID} aria-label="UUID">
+                UUID
+              </ToggleButton>
+              <ToggleButton
+                value={RoomNameType.PASSPHRASE}
+                aria-label="Passphrase"
+              >
+                Passphrase
+              </ToggleButton>
+            </ToggleButtonGroup>
+          </Box>
           <Box
             sx={{
               display: 'flex',
               justifyContent: 'center',
+              gap: 1,
+              mt: 2,
             }}
           >
             <Button
@@ -162,73 +185,83 @@ export function Home({ userId }: HomeProps) {
           </Box>
         </Form>
       </Main>
-      <Divider sx={{ my: 2 }} />
-      <Box maxWidth={theme.breakpoints.values.sm} mx="auto" px={2}>
-        <CommunityRoomSelector />
-      </Box>
-      <Divider sx={{ my: 2 }} />
-      <Box
-        sx={{
-          maxWidth: theme.breakpoints.values.sm,
-          mx: 'auto',
-          textAlign: 'center',
-          px: 2,
-        }}
-      >
-        <Typography variant="body1">
-          This is a free communication tool that is designed for simplicity,
-          privacy, and security. All interaction between you and your online
-          peers is encrypted. There is no record of your conversation once you
-          all leave.
-        </Typography>
-      </Box>
-      <Box
-        sx={{
-          mx: 'auto',
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-        }}
-      >
-        <MuiLink
-          href="https://github.com/jeremyckahn/chitchatter"
-          target="_blank"
-          sx={theme => ({
-            color: theme.palette.text.primary,
-          })}
+      <Box component="section" aria-label="Additional options and information">
+        <Divider sx={{ my: 2 }} />
+        <Box maxWidth={theme.breakpoints.values.sm} mx="auto" px={2}>
+          <CommunityRoomSelector />
+        </Box>
+        {isEnhancedConnectivityAvailable && (
+          <>
+            <Divider sx={{ my: 2 }} />
+            <Box maxWidth={theme.breakpoints.values.sm} mx="auto" px={2}>
+              <EnhancedConnectivityControl
+                isEnabled={isEnhancedConnectivityEnabled}
+                onChange={handleIsEnhancedConnectivityEnabledChange}
+                showSecondaryColor={true}
+              />
+            </Box>
+          </>
+        )}
+        <Divider sx={{ my: 2 }} />
+        <Box
+          sx={{
+            maxWidth: theme.breakpoints.values.sm,
+            mx: 'auto',
+            textAlign: 'center',
+            px: 2,
+          }}
         >
-          <IconButton
-            size="large"
-            edge="start"
-            color="inherit"
-            aria-label="Open menu"
+          <Typography variant="body1">
+            This is a free communication tool that is designed for simplicity,
+            privacy, and security. All interaction between you and your online
+            peers is encrypted. There is no record of your conversation once you
+            all leave.
+          </Typography>
+        </Box>
+        <Box
+          component="footer"
+          sx={{
+            mx: 'auto',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+          }}
+        >
+          <MuiLink
+            href="https://github.com/jeremyckahn/chitchatter"
+            target="_blank"
+            sx={() => ({
+              color: theme.palette.text.primary,
+            })}
           >
-            <GitHubIcon sx={{ fontSize: '2em' }} />
-          </IconButton>
-        </MuiLink>
+            <IconButton
+              size="large"
+              edge="start"
+              color="inherit"
+              aria-label="View source code on GitHub"
+            >
+              <GitHubIcon sx={{ fontSize: '2em' }} />
+            </IconButton>
+          </MuiLink>
+          <Typography variant="body1" sx={{ textAlign: 'center', mb: 1 }}>
+            Licensed under{' '}
+            <MuiLink
+              href="https://github.com/jeremyckahn/chitchatter/blob/develop/LICENSE"
+              target="_blank"
+            >
+              GPL v2
+            </MuiLink>
+            . Please{' '}
+            <MuiLink
+              href="https://github.com/jeremyckahn/chitchatter/blob/develop/README.md"
+              target="_blank"
+            >
+              read the docs
+            </MuiLink>
+            .
+          </Typography>
+        </Box>
       </Box>
-      <Typography variant="body1" sx={{ textAlign: 'center', mb: 1 }}>
-        Licensed under{' '}
-        <MuiLink
-          href="https://github.com/jeremyckahn/chitchatter/blob/develop/LICENSE"
-          target="_blank"
-        >
-          GPL v2
-        </MuiLink>
-        . Please{' '}
-        <MuiLink
-          href="https://github.com/jeremyckahn/chitchatter/blob/develop/README.md"
-          target="_blank"
-        >
-          read the docs
-        </MuiLink>
-        .
-      </Typography>
-      <EmbedCodeDialog
-        showEmbedCode={showEmbedCode}
-        handleEmbedCodeWindowClose={handleEmbedCodeWindowClose}
-        roomName={roomName}
-      />
     </Box>
   )
 }

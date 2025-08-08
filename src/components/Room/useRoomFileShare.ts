@@ -6,7 +6,6 @@ import { ShellContext } from 'contexts/ShellContext'
 import { PeerAction } from 'models/network'
 import { FileOfferMetadata, Peer } from 'models/chat'
 import { PeerRoom, PeerHookType, ActionNamespace } from 'lib/PeerRoom'
-import { fileTransfer } from 'lib/FileTransfer'
 import { usePeerAction } from 'hooks/usePeerAction'
 
 interface UseRoomFileShareConfig {
@@ -30,8 +29,12 @@ export function useRoomFileShare({
   >(null)
   const [isFileSharingEnabled, setIsFileSharingEnabled] = useState(true)
 
-  const { peerList, setPeerList, showAlert } = shellContext
-  const { peerOfferedFileMetadata, setPeerOfferedFileMetadata } = roomContext
+  const { setPeerList, showAlert } = shellContext
+  const {
+    peerOfferedFileMetadata,
+    setPeerOfferedFileMetadata,
+    fileTransferService: { fileTransfer },
+  } = roomContext
 
   const [sendFileOfferMetadata] = usePeerAction<FileOfferMetadata | null>({
     namespace: ActionNamespace.GROUP,
@@ -41,7 +44,7 @@ export function useRoomFileShare({
       if (fileOfferMetadata) {
         setPeerOfferedFileMetadata({ [peerId]: fileOfferMetadata })
       } else {
-        const fileOfferMetadata = peerOfferedFileMetadata[peerId]
+        fileOfferMetadata = peerOfferedFileMetadata[peerId]
         const { magnetURI, isAllInlineMedia } = fileOfferMetadata
 
         if (
@@ -58,17 +61,19 @@ export function useRoomFileShare({
         setPeerOfferedFileMetadata(newFileOfferMetadata)
       }
 
-      const newPeerList = peerList.map(peer => {
-        const newPeer: Peer = { ...peer }
+      setPeerList(prev => {
+        const newPeerList = prev.map(peer => {
+          const newPeer: Peer = { ...peer }
 
-        if (peer.peerId === peerId) {
-          newPeer.offeredFileId = fileOfferMetadata?.magnetURI ?? null
-        }
+          if (peer.peerId === peerId) {
+            newPeer.offeredFileId = fileOfferMetadata?.magnetURI ?? null
+          }
 
-        return newPeer
+          return newPeer
+        })
+
+        return newPeerList
       })
-
-      setPeerList(newPeerList)
     },
   })
 
@@ -161,9 +166,8 @@ export function useRoomFileShare({
   useEffect(() => {
     return () => {
       fileTransfer.rescindAll()
-      sendFileOfferMetadata(null)
     }
-  }, [sendFileOfferMetadata])
+  }, [fileTransfer])
 
   const isSharingFile = Boolean(selfFileOfferMagnetUri)
 

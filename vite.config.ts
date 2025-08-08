@@ -37,6 +37,15 @@ const config = () => {
     // without a custom domain. If you renamed the repo to something other than
     // "chitchatter", then use that instead of "chitchatter" here.
     // base: '/chitchatter/',
+    server: {
+      proxy: {
+        '/api': {
+          target: 'http://localhost:3001',
+          changeOrigin: true,
+          secure: false,
+        },
+      },
+    },
     build: {
       // NOTE: This isn't really working. At the very least, it's still useful
       // for exposing source code to users.
@@ -65,6 +74,7 @@ const config = () => {
         injectRegister: 'auto',
         filename: 'service-worker.js',
         manifest,
+        selfDestroying: true,
       }),
     ],
     resolve: {
@@ -79,9 +89,11 @@ const config = () => {
       },
     },
     test: {
+      watch: false,
       globals: true,
       environment: 'jsdom',
       setupFiles: './src/setupTests.ts',
+      exclude: ['**/e2e/**', '**/node_modules/**'],
       coverage: {
         reporter: ['text', 'html'],
         exclude: ['node_modules/', 'src/setupTests.ts'],

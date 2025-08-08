@@ -10,6 +10,8 @@ import {
 } from 'test-utils/mocks/mockSerializationService'
 import { userSettingsStubFactory } from 'test-utils/stubs/userSettings'
 
+import { DEFAULT_SOUND } from 'config/soundNames'
+
 import Bootstrap, { BootstrapProps } from './Bootstrap'
 
 vi.mock('localforage')
@@ -57,8 +59,10 @@ test('updates persisted user settings', async () => {
       playSoundOnNewMessage: true,
       showNotificationOnNewMessage: true,
       showActiveTypingStatus: true,
+      isEnhancedConnectivityEnabled: true,
       publicKey: mockSerializedPublicKey,
       privateKey: mockSerializedPrivateKey,
+      selectedSound: DEFAULT_SOUND,
     }
   )
 })

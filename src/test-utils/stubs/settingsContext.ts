@@ -2,6 +2,8 @@ import { SettingsContextProps } from 'contexts/SettingsContext'
 import { ColorMode, UserSettings } from 'models/settings'
 import { encryption } from 'services/Encryption'
 
+import { DEFAULT_SOUND } from 'config/soundNames'
+
 export const userSettingsContextStubFactory = (
   userSettingsOverrides: Partial<UserSettings> = {}
 ) => {
@@ -14,8 +16,10 @@ export const userSettingsContextStubFactory = (
       playSoundOnNewMessage: true,
       showNotificationOnNewMessage: true,
       showActiveTypingStatus: true,
+      isEnhancedConnectivityEnabled: true,
       publicKey: encryption.cryptoKeyStub,
       privateKey: encryption.cryptoKeyStub,
+      selectedSound: DEFAULT_SOUND,
       ...userSettingsOverrides,
     }),
   }

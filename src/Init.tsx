@@ -11,6 +11,8 @@ import {
 import { WholePageLoading } from 'components/Loading/Loading'
 import { ColorMode, UserSettings } from 'models/settings'
 
+import { DEFAULT_SOUND } from 'config/soundNames'
+
 import type { BootstrapProps } from './Bootstrap'
 
 const Bootstrap = lazy(() => import('./Bootstrap'))
@@ -40,8 +42,10 @@ const Init = ({ getUuid = uuid, ...props }: InitProps) => {
           playSoundOnNewMessage: true,
           showNotificationOnNewMessage: true,
           showActiveTypingStatus: true,
+          isEnhancedConnectivityEnabled: true,
           publicKey,
           privateKey,
+          selectedSound: DEFAULT_SOUND,
         })
       } catch (e) {
         console.error(e)

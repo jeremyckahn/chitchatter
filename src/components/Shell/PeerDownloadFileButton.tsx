@@ -1,16 +1,16 @@
-import { useContext, useState } from 'react'
+import Download from '@mui/icons-material/Download'
 import Box from '@mui/material/Box'
+import CircularProgress from '@mui/material/CircularProgress'
 import Fab from '@mui/material/Fab'
 import Tooltip from '@mui/material/Tooltip'
-import Download from '@mui/icons-material/Download'
-import CircularProgress from '@mui/material/CircularProgress'
+import { useContext, useState } from 'react'
 
-import { isError } from 'lib/type-guards'
-import { fileTransfer } from 'lib/FileTransfer'
-import { Peer } from 'models/chat'
 import { ShellContext } from 'contexts/ShellContext'
+import { isError } from 'lib/type-guards'
+import { Peer } from 'models/chat'
 
 import { usePeerNameDisplay } from 'components/PeerNameDisplay/usePeerNameDisplay'
+import { RoomContext } from 'contexts/RoomContext'
 
 interface PeerDownloadFileButtonProps {
   peer: Peer
@@ -22,6 +22,9 @@ export const PeerDownloadFileButton = ({
   const [isDownloading, setIsDownloading] = useState(false)
   const [downloadProgress, setDownloadProgress] = useState<number | null>(null)
   const shellContext = useContext(ShellContext)
+  const {
+    fileTransferService: { fileTransfer },
+  } = useContext(RoomContext)
   const { getDisplayUsername } = usePeerNameDisplay()
   const { offeredFileId } = peer
 

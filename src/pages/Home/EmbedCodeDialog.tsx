@@ -21,22 +21,29 @@ interface EmbedCodeDialogProps {
   roomName: string
 }
 
+const basePackageHomepage =
+  import.meta.env.VITE_HOMEPAGE ?? window.location.origin
+const packageHomepage = basePackageHomepage.endsWith('/')
+  ? basePackageHomepage
+  : `${basePackageHomepage}/`
+
 export const EmbedCodeDialog = ({
   showEmbedCode,
   handleEmbedCodeWindowClose,
   roomName,
 }: EmbedCodeDialogProps) => {
-  const iframeSrc = new URL(`${window.location.origin}/public/${roomName}`)
+  const iframeSrc = new URL(`${packageHomepage}public/${roomName}`)
   iframeSrc.search = new URLSearchParams({ embed: '1' }).toString()
 
-  const needsRootUrlAttribute = window.location.origin !== homepageUrl.origin
+  const needsRootUrlAttribute =
+    new URL(packageHomepage).origin !== homepageUrl.origin
 
   const chatRoomAttributes = {
     width: '800',
     height: '800',
     [ChatEmbedAttributes.ROOM_NAME]: roomName,
     ...(needsRootUrlAttribute && {
-      [ChatEmbedAttributes.ROOT_URL]: `${window.location.origin}/`,
+      [ChatEmbedAttributes.ROOT_URL]: packageHomepage,
     }),
   }
 
@@ -45,7 +52,7 @@ export const EmbedCodeDialog = ({
     .join(' ')
 
   // NOTE: The script src is inaccurate in the local development environment.
-  const sdkEmbedCode = `<script src="${window.location.origin}/sdk.js"></script>
+  const sdkEmbedCode = `<script src="${packageHomepage}sdk.js"></script>
 
 <chat-room ${attributesString} />`
 

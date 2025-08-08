@@ -25,6 +25,8 @@ export const isSerializedUserSettings = (
     typeof data.showNotificationOnNewMessage === 'boolean' &&
     'showActiveTypingStatus' in data &&
     typeof data.showActiveTypingStatus === 'boolean' &&
+    'isEnhancedConnectivityEnabled' in data &&
+    typeof data.isEnhancedConnectivityEnabled === 'boolean' &&
     'publicKey' in data &&
     typeof data.publicKey === 'string' &&
     'privateKey' in data &&

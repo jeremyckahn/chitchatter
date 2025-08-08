@@ -39,8 +39,11 @@ export function useRoomAudio({ peerRoom }: UseRoomAudioConfig) {
       if (!audioStream) return
 
       const devices = await window.navigator.mediaDevices.enumerateDevices()
-      const audioDevices = devices.filter(({ kind }) => kind === 'audioinput')
-      setAudioDevices(audioDevices)
+      const newAudioDevices = devices.filter(
+        ({ kind }) => kind === 'audioinput'
+      )
+
+      setAudioDevices(newAudioDevices)
     })()
   }, [audioStream])
 

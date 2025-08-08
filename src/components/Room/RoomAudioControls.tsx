@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useHotkeys } from 'react-hotkeys-hook'
 import Box from '@mui/material/Box'
 import RecordVoiceOver from '@mui/icons-material/RecordVoiceOver'
 import VoiceOverOff from '@mui/icons-material/VoiceOverOff'
@@ -29,6 +30,20 @@ export function RoomAudioControls({ peerRoom }: RoomAudioControlsProps) {
   const [audioAnchorEl, setAudioAnchorEl] = useState<null | HTMLElement>(null)
   const isAudioDeviceSelectOpen = Boolean(audioAnchorEl)
   const [selectedAudioDeviceIdx, setSelectedAudioDeviceIdx] = useState(0)
+
+  // When keys are pressed, turn on the mic
+  useHotkeys('ctrl+`', () => {
+    setIsSpeakingToRoom(true)
+  })
+
+  // When keys are released, mic is turned off
+  useHotkeys(
+    'ctrl+`',
+    () => {
+      setIsSpeakingToRoom(false)
+    },
+    { keyup: true }
+  )
 
   const handleVoiceCallClick = () => {
     setIsSpeakingToRoom(!isSpeakingToRoom)
@@ -67,7 +82,7 @@ export function RoomAudioControls({ peerRoom }: RoomAudioControlsProps) {
         title={
           isSpeakingToRoom
             ? 'Turn off microphone'
-            : 'Turn on microphone and speak to room'
+            : 'Turn on microphone and speak to room (hold ctrl + ` to speak)'
         }
       >
         <MediaButton

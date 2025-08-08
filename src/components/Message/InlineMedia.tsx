@@ -1,13 +1,13 @@
-import { useContext, useEffect, useRef, useState } from 'react'
-import { TorrentFile } from 'webtorrent'
 import Box from '@mui/material/Box'
 import CircularProgress from '@mui/material/CircularProgress'
 import Typography from '@mui/material/Typography'
+import { useContext, useEffect, useRef, useState } from 'react'
+import { TorrentFile } from 'webtorrent'
 
-import { fileTransfer } from 'lib/FileTransfer'
+import { RoomContext } from 'contexts/RoomContext'
 import { ShellContext } from 'contexts/ShellContext'
 
-type TorrentFiles = Awaited<ReturnType<typeof fileTransfer.download>>
+type TorrentFiles = TorrentFile[]
 
 interface InlineMediaProps {
   magnetURI: string
@@ -83,6 +83,9 @@ export const InlineMedia = ({ magnetURI }: InlineMediaProps) => {
   const [hasDownloadInitiated, setHasDownloadInitiated] = useState(false)
   const [downloadedFiles, setDownloadedFiles] = useState<TorrentFiles>([])
   const shellContext = useContext(ShellContext)
+  const {
+    fileTransferService: { fileTransfer },
+  } = useContext(RoomContext)
 
   useEffect(() => {
     ;(async () => {
@@ -95,7 +98,7 @@ export const InlineMedia = ({ magnetURI }: InlineMediaProps) => {
       const files = await fileTransfer.download(magnetURI, shellContext.roomId)
       setDownloadedFiles(files)
     })()
-  }, [hasDownloadInitiated, magnetURI, shellContext.roomId])
+  }, [fileTransfer, hasDownloadInitiated, magnetURI, shellContext.roomId])
 
   return (
     <>

@@ -34,9 +34,11 @@ export const PeerListHeader = ({
     <ListItem>
       <Routes>
         {/*
-        This stub route is needed to silence spurious warnings in the tests.
+        These stub routes are needed to silence spurious warnings in the console.
         */}
-        <Route path={routes.ROOT} element={<></>}></Route>
+        {[routes.ROOT, routes.SETTINGS].map(route => (
+          <Route key={route} path={route} element={<></>} />
+        ))}
 
         {[routes.PUBLIC_ROOM, routes.PRIVATE_ROOM].map(route => (
           <Route

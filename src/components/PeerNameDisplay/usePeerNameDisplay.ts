@@ -19,7 +19,7 @@ export const usePeerNameDisplay = () => {
   const getCustomUsername = (userId: string) =>
     isPeerSelf(userId)
       ? selfCustomUsername
-      : getPeer(userId)?.customUsername ?? ''
+      : (getPeer(userId)?.customUsername ?? '')
 
   const getFriendlyName = (userId: string) => {
     const customUsername = getCustomUsername(userId)

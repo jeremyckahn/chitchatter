@@ -13,7 +13,7 @@ Chitchatter is a free (as in both price and freedom) communication tool. Designe
 - Ephemeral
   - Message content is never persisted to disk on either the client or server
 - Decentralized
-  - There is no API server. All that's required for Chitchatter to function is availability of GitHub for static assets, and public WebTorrent and STUN/TURN relay servers for establishing peer-to-peer communication.
+  - **No API server required**. Chitchatter works completely without an API server - all that's required for basic functionality is availability of GitHub for static assets, and public WebTorrent and STUN/TURN relay servers for establishing peer-to-peer communication. An optional API server is available to provide enhanced connectivity features, but users can always choose to use Chitchatter without it.
 - Embeddable
 - [Self-hostable](#self-hosting)
 
@@ -26,6 +26,8 @@ Chitchatter uses [Vite](https://vitejs.dev/). The secure networking and streamin
 ## How to use it
 
 Open <https://chitchatter.im/> and join a room to start chatting with anyone else who is in the room. By default, room names are random [UUID](https://en.wikipedia.org/wiki/Universally_unique_identifier)s that are generated client-side. To privately communicate with someone, it is recommended to join one of these randomly-generated rooms and share the URL (via the "🔗" button at the top of the page) to whomever you wish to communicate with via a secure medium of your choosing (such as [Burner Note](https://burnernote.com/) or [Yopass](https://yopass.se/)). Your user name will be presented to you, and it would be good to share that with who you will be chatting with beforehand so they know they're talking to you.
+
+**No API server required**: Chitchatter works completely without any API server or backend infrastructure. All communication happens directly between your browser and other users' browsers. While an optional API server is available for enhanced connectivity features, you can always use Chitchatter without it.
 
 ## Features
 
@@ -194,6 +196,164 @@ Builds the app for production to the `dist` folder. It correctly bundles React i
 
 The build is minified and the filenames include the hashes.
 
+### API Configuration
+
+**Note: The API server is completely optional.** Chitchatter works without any API server - users can connect and communicate using only public STUN servers and fallback TURN servers. The API configuration described below is available for deployments that want to provide enhanced connectivity features.
+
+Chitchatter uses a hybrid approach for WebRTC configuration:
+
+- **TURN servers**: Fetched from the API endpoint (configurable via `VITE_RTC_CONFIG_ENDPOINT`, defaults to `/api/get-config`) with data configured via `RTC_CONFIG` environment variable
+- **STUN servers**: Configured via the `VITE_STUN_SERVERS` environment variable in the frontend
+- **Final configuration**: The frontend merges both sources to create the complete RTCConfiguration
+
+This separation allows for flexible configuration where TURN servers (which often require credentials and may change) are managed server-side, while STUN servers (which are typically public and stable) are configured client-side.
+
+#### Enhanced Connectivity Feature
+
+The Enhanced Connectivity feature is an **optional enhancement** that allows users to toggle the use of external TURN servers for improved connection reliability. **Chitchatter works perfectly without this feature** - it's simply an additional option for deployments that want to provide enhanced connectivity. This feature is **conditionally available** based on your deployment configuration:
+
+- **Available**: When `VITE_RTC_CONFIG_ENDPOINT` environment variable is set
+- **Unavailable**: When `VITE_RTC_CONFIG_ENDPOINT` is not set or empty
+
+**When Enhanced Connectivity is available:**
+
+- Users see a "Networking" section in Settings with a toggle for "Enhanced connectivity"
+- When enabled, the app fetches TURN server configuration from the API endpoint
+- When disabled, the app uses fallback TURN servers only
+
+**When Enhanced Connectivity is unavailable:**
+
+- The "Networking" section is hidden from the Settings page
+- The feature is treated as permanently disabled (uses fallback TURN servers)
+- A console warning is shown to help self-hosters understand how to enable the feature
+
+This conditional behavior ensures that self-hosters who don't configure external TURN servers don't see confusing UI options that won't work for their setup.
+
+> [!NOTE]
+> All environment variables and their configuration options are documented in the `.env` file with detailed explanations and examples. Refer to that file for comprehensive configuration guidance.
+
+#### Development Environment
+
+When running `npm run dev`, the development stack includes:
+
+- **Frontend**: Vite dev server on port 3000
+- **API**: Vercel dev server on port 3001 (proxied through Vite)
+- **Tracker**: WebTorrent tracker on port 8000
+- **StreamSaver**: File download service on port 3015
+
+The Vite development server automatically proxies `/api/*` requests to the Vercel dev server running on port 3001.
+
+#### Alternative Development Setup
+
+If you prefer to use the simple API server instead of Vercel dev:
+
+1. **Start the simple API server**:
+
+   ```bash
+   node simple-api-server.js
+   ```
+
+   This runs on port 3003 by default.
+
+2. **Configure environment variables**:
+   Edit `.env` and uncomment:
+
+   ```bash
+   VITE_API_BASE_URL=http://localhost:3003
+   ```
+
+3. **Start the frontend**:
+   ```bash
+   npm start
+   ```
+
+#### RTC Configuration Helper Script
+
+**🔒 Security Note**: Never commit real TURN server credentials to version control! Always generate your own configuration with your own TURN server credentials.
+
+To simplify the process of creating the base64-encoded `RTC_CONFIG` environment variable, use the included helper script:
+
+```bash
+npm run generate-rtc-config
+```
+
+This interactive script will:
+
+- Guide you through adding STUN and TURN servers
+- Provide preset configurations for common setups
+- Generate the properly formatted base64-encoded string
+- Show usage instructions for different deployment platforms
+
+**Quick start with presets:**
+
+- **Option 1**: Google STUN + Custom TURN server - Configure with your own TURN credentials
+- **Option 2**: Google STUN only - Requires separate TURN server setup
+- **Option 3**: Custom configuration - Full control over all servers
+
+**Script options:**
+
+```bash
+# Interactive configuration generator
+npm run generate-rtc-config
+
+# Show help
+npm run generate-rtc-config -- --help
+
+# Show example configurations
+npm run generate-rtc-config -- --example
+```
+
+**Verifying your configuration:**
+
+```bash
+# Decode and verify the generated base64 string
+echo "eyJpY2VTZXJ2ZXJzIjpb..." | base64 -d | jq .
+
+# Example output (with your own credentials):
+# {
+#   "iceServers": [
+#     {
+#       "urls": "stun:stun.l.google.com:19302"
+#     },
+#     {
+#       "urls": "turn:your-turn-server.com:3478",
+#       "username": "your-username",
+#       "credential": "your-credential"
+#     }
+#   ]
+# }
+```
+
+#### Production Environment
+
+**🔒 Security Important**: Never commit real TURN server credentials to version control! Always use GitHub repository secrets or environment variables for sensitive configuration.
+
+In production (GitHub Pages deployment), configure both server-side and client-side components:
+
+**Server-side (TURN servers)**: Set the `RTC_CONFIG` environment variable with a base64-encoded JSON string containing your full RTCConfiguration. The API will extract and return only the TURN server:
+
+```bash
+# Method 1: Use the helper script (recommended)
+npm run generate-rtc-config
+
+# Method 2: Manual creation (advanced users)
+echo '{"iceServers":[{"urls":"turn:your-turn-server.com:3478","username":"your-username","credential":"your-password"},{"urls":"stun:stun.l.google.com:19302"}]}' | base64 -w 0
+
+# Set in GitHub repository environment variables or secrets (replace with your actual config)
+RTC_CONFIG=<your-base64-encoded-rtc-config-here>
+```
+
+**Client-side (STUN servers)**: Set the `VITE_STUN_SERVERS` environment variable with comma-separated STUN server URLs:
+
+```bash
+# Set in GitHub repository environment variables or secrets
+VITE_STUN_SERVERS=stun:stun.l.google.com:19302,stun:stun1.l.google.com:19302
+```
+
+If `RTC_CONFIG` is not set, the API will fall back to a default TURN server. If `VITE_STUN_SERVERS` is not set, the frontend will use default STUN servers.
+
+**For self-hosters**: If you don't set `VITE_RTC_CONFIG_ENDPOINT`, the Enhanced Connectivity feature will be automatically disabled and hidden from users. This prevents confusion when external TURN server configuration is not available. To enable Enhanced Connectivity, set `VITE_RTC_CONFIG_ENDPOINT` to your API endpoint (defaults to `/api/get-config` if you set it to any truthy value).
+
 ### Self-hosting
 
 Chitchatter is designed to be forked and self-hosted. If you would like to change pairing or relay server configuration or you prefer to control your own builds and versions, [fork this repo](https://github.com/jeremyckahn/chitchatter/fork) and follow the steps below.
@@ -205,9 +365,10 @@ Chitchatter is designed to be forked and self-hosted. If you would like to chang
 
 Assuming you are hosting Chitchatter on [GitHub Pages](https://pages.github.com/):
 
-1. Change the [`homepage` property in `package.json`](https://github.com/jeremyckahn/chitchatter/blob/1ea67e2c3a45115e054ebfe3457f2c3572c6213b/package.json#L4) to whatever URL your Chitchatter instance will be hosted from. This will be something like `https://github_user_or_org_name.github.io/chitchatter/`.
+1. Change the [`homepage` property in `package.json`](https://github.com/jeremyckahn/chitchatter/blob/1ea67e2c3a45115e054ebfe3457f2c3572c6213b/package.json#L4) to whatever URL your Chitchatter instance will be hosted from. This will be something like `https://github_user_or_org_name.github.io/chitchatter/`. **This string must contain a trailing slash**.
 2. Define a [`DEPLOY_KEY` GitHub Action secret](https://github.com/jeremyckahn/chitchatter/blob/e2bac732cf1288f7b5d0bec151098f18e8b1d0d6/.github/workflows/deploy.yml#L28-L31) (at `https://github.com/github_user_or_org_name/chitchatter/settings/secrets/actions`). See the docs for [`peaceiris/actions-gh-pages`](https://github.com/peaceiris/actions-gh-pages#%EF%B8%8F-set-ssh-private-key-deploy_key) for more information.
-3. If you're using GitHub Pages [without a custom domain](https://github.com/sitek94/vite-deploy-demo?tab=readme-ov-file#fix-assets-links), you'll need to define the repo name as the `base` property [in `vite.config.ts`](https://github.com/jeremyckahn/chitchatter/blob/df6d10868e12ad13036a44f959796f4da35adc28/vite.config.ts#L35-L38). Here's an example of how that might look:
+3. In the Pages section of your fork's Settings tab, ensure that "Deploy from a branch" is selected for Source, and that the branch source is `gh-pages` with `/ (root)`.
+4. If you're using GitHub Pages [without a custom domain](https://github.com/sitek94/vite-deploy-demo?tab=readme-ov-file#fix-assets-links), you'll need to define the repo name as the `base` property [in `vite.config.ts`](https://github.com/jeremyckahn/chitchatter/blob/df6d10868e12ad13036a44f959796f4da35adc28/vite.config.ts#L35-L38). Here's an example of how that might look:
 
 ```js
 const config = () => {

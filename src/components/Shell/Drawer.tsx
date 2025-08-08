@@ -1,6 +1,6 @@
 import { PropsWithChildren, useContext } from 'react'
 import { Link } from 'react-router-dom'
-import { Theme } from '@mui/material/styles'
+import useTheme from '@mui/material/styles/useTheme'
 import Box from '@mui/material/Box'
 import MuiDrawer from '@mui/material/Drawer'
 import List from '@mui/material/List'
@@ -33,10 +33,10 @@ export const drawerWidth = 240
 export interface DrawerProps extends PropsWithChildren {
   isDrawerOpen: boolean
   onDrawerClose: () => void
-  theme: Theme
 }
 
-export const Drawer = ({ isDrawerOpen, onDrawerClose, theme }: DrawerProps) => {
+export const Drawer = ({ isDrawerOpen, onDrawerClose }: DrawerProps) => {
+  const theme = useTheme()
   const settingsContext = useContext(SettingsContext)
   const colorMode = settingsContext.getUserSettings().colorMode
 
@@ -61,7 +61,7 @@ export const Drawer = ({ isDrawerOpen, onDrawerClose, theme }: DrawerProps) => {
       open={isDrawerOpen}
     >
       <Box
-        sx={theme => ({
+        sx={() => ({
           display: 'flex',
           alignItems: 'center',
           padding: theme.spacing(0, 1),
@@ -79,61 +79,55 @@ export const Drawer = ({ isDrawerOpen, onDrawerClose, theme }: DrawerProps) => {
         </IconButton>
       </Box>
       <Divider />
-      <List role="navigation" aria-label="Navigation menu">
-        <Link to={routes.ROOT}>
+      <Box component="nav" aria-label="Navigation menu">
+        <List>
           <ListItem disablePadding>
-            <ListItemButton>
+            <ListItemButton component={Link} to={routes.ROOT}>
               <ListItemIcon>
                 <Home />
               </ListItemIcon>
               <ListItemText primary="Home" />
             </ListItemButton>
           </ListItem>
-        </Link>
-        <Link to={routes.SETTINGS}>
           <ListItem disablePadding>
-            <ListItemButton>
+            <ListItemButton component={Link} to={routes.SETTINGS}>
               <ListItemIcon>
                 <SettingsApplications />
               </ListItemIcon>
               <ListItemText primary="Settings" />
             </ListItemButton>
           </ListItem>
-        </Link>
-        <Link to={routes.ABOUT}>
           <ListItem disablePadding>
-            <ListItemButton>
+            <ListItemButton component={Link} to={routes.ABOUT}>
               <ListItemIcon>
                 <QuestionMark />
               </ListItemIcon>
               <ListItemText primary="About" />
             </ListItemButton>
           </ListItem>
-        </Link>
-        <Link to={routes.DISCLAIMER}>
           <ListItem disablePadding>
-            <ListItemButton>
+            <ListItemButton component={Link} to={routes.DISCLAIMER}>
               <ListItemIcon>
                 <ReportIcon />
               </ListItemIcon>
               <ListItemText primary="Disclaimer" />
             </ListItemButton>
           </ListItem>
-        </Link>
-        <ListItem disablePadding>
-          <ListItemButton onClick={handleColorModeToggleClick}>
-            <ListItemIcon>
-              {theme.palette.mode === 'dark' ? (
-                <Brightness7Icon />
-              ) : (
-                <Brightness4Icon />
-              )}
-            </ListItemIcon>
-            <ListItemText primary="Change theme" />
-          </ListItemButton>
-        </ListItem>
+          <ListItem disablePadding>
+            <ListItemButton onClick={handleColorModeToggleClick}>
+              <ListItemIcon>
+                {theme.palette.mode === 'dark' ? (
+                  <Brightness7Icon />
+                ) : (
+                  <Brightness4Icon />
+                )}
+              </ListItemIcon>
+              <ListItemText primary="Change theme" />
+            </ListItemButton>
+          </ListItem>
+        </List>
         <Divider />
-        <ListItem>
+        <Box sx={{ padding: 2 }}>
           <Typography variant="subtitle2">
             Build signature:{' '}
             <Typography
@@ -153,8 +147,8 @@ export const Drawer = ({ isDrawerOpen, onDrawerClose, theme }: DrawerProps) => {
               </MuiLink>
             </Typography>
           </Typography>
-        </ListItem>
-      </List>
+        </Box>
+      </Box>
     </MuiDrawer>
   )
 }
