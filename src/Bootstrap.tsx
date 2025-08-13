@@ -4,7 +4,8 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import {
   Navigate,
   Route,
-  BrowserRouter as Router,
+  BrowserRouter,
+  HashRouter,
   Routes,
 } from 'react-router-dom'
 import { useRegisterSW } from 'virtual:pwa-register/react'
@@ -20,6 +21,7 @@ import {
   PostMessageEvent,
   PostMessageEventName,
 } from 'models/sdk'
+import { RouterType } from 'models/router'
 import { UserSettings } from 'models/settings'
 import { QueryParamKeys } from 'models/shell'
 import { PersistedStorageKeys } from 'models/storage'
@@ -30,6 +32,7 @@ import { PrivateRoom } from 'pages/PrivateRoom'
 import { PublicRoom } from 'pages/PublicRoom'
 import { Settings } from 'pages/Settings'
 import { serialization, SerializedUserSettings } from 'services/Serialization'
+import { routerType } from 'config/router'
 
 export interface BootstrapProps {
   persistedStorage?: typeof localforage
@@ -94,6 +97,7 @@ const Bootstrap = ({
   initialUserSettings,
   serializationService = serialization,
 }: BootstrapProps) => {
+  const Router = routerType === RouterType.HASH ? HashRouter : BrowserRouter
   const queryParams = useMemo(
     () => new URLSearchParams(window.location.search),
     []
@@ -235,9 +239,12 @@ const Bootstrap = ({
     getPersistedStorage: () => persistedStorage,
   }
 
+  const routerProps =
+    Router === BrowserRouter ? { basename: homepageUrl.pathname } : {}
+
   return (
     <QueryClientProvider client={queryClient}>
-      <Router basename={homepageUrl.pathname}>
+      <Router {...routerProps}>
         <StorageContext.Provider value={storageContextValue}>
           <SettingsContext.Provider value={settingsContextValue}>
             {hasLoadedSettings ? (

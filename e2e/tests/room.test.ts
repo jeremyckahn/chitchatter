@@ -86,7 +86,7 @@ test.describe('Room Functionality', () => {
       return await navigator.clipboard.readText()
     })
 
-    // The clipboard should contain the current room URL
+    // The clipboard should contain the current room URL including the hash
     expect(clipboardText).toBe(currentUrl)
   })
 

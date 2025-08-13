@@ -2,10 +2,15 @@ import { ShellContext } from 'contexts/ShellContext'
 import React, { useContext, useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { RoomNameGenerator, RoomNameType } from 'lib/RoomNameGenerator'
+import { routerType } from 'config/router'
+import { RouterType } from 'models/router'
 
 const roomTypePrefixes = ['public', 'private']
 const roomTypePrefixesDelimitedForRegExp = roomTypePrefixes.join('|')
-const rRoomNameAppPrefix = `^${window.location.origin}/(${roomTypePrefixesDelimitedForRegExp})/`
+const rRoomNameAppPrefix =
+  routerType === RouterType.HASH
+    ? `^${window.location.origin}/#/(${roomTypePrefixesDelimitedForRegExp})/`
+    : `^${window.location.origin}/(${roomTypePrefixesDelimitedForRegExp})/`
 
 export const useHome = () => {
   const { setTitle } = useContext(ShellContext)
