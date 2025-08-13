@@ -1,12 +1,18 @@
 import { RouterType } from '../models/router'
 
-let { VITE_ROUTER_TYPE } = import.meta.env
+const rawViteRouterType = import.meta.env.VITE_ROUTER_TYPE
 
-if (VITE_ROUTER_TYPE && !Object.values(RouterType).includes(VITE_ROUTER_TYPE)) {
-  console.warn(`Invalid VITE_ROUTER_TYPE value: ${VITE_ROUTER_TYPE}`)
+let effectiveRouterType: RouterType | undefined =
+  rawViteRouterType as RouterType
 
-  VITE_ROUTER_TYPE = RouterType.BROWSER
+if (
+  rawViteRouterType &&
+  !Object.values(RouterType).includes(rawViteRouterType as RouterType)
+) {
+  console.warn(
+    `Invalid VITE_ROUTER_TYPE value: "${rawViteRouterType}". Defaulting to "${RouterType.BROWSER}".`
+  )
+  effectiveRouterType = RouterType.BROWSER
 }
 
-export const routerType: RouterType =
-  (VITE_ROUTER_TYPE as RouterType) || RouterType.BROWSER
+export const routerType: RouterType = effectiveRouterType || RouterType.BROWSER
