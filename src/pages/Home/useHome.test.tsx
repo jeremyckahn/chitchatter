@@ -3,38 +3,35 @@ import { renderHook, act } from '@testing-library/react'
 import { useNavigate } from 'react-router-dom'
 import type { FC, ReactNode } from 'react'
 import type { ShellContextProps } from 'contexts/ShellContext'
-import { RouterType } from 'models/router'
+import { ShellContext } from 'contexts/ShellContext'
+
+import { useHome } from './useHome'
 
 vi.mock('react-router-dom', () => ({
   useNavigate: vi.fn(),
 }))
 
+vi.mock('config/router', () => ({
+  routerType: 'browser',
+}))
+
 const mockSetTitle = vi.fn()
 
+const MockShellContextProvider: FC<{ children: ReactNode }> = ({
+  children,
+}) => {
+  return (
+    // NOTE: Only properties necessary for the tests are mocked
+    <ShellContext.Provider
+      value={{ setTitle: mockSetTitle } as unknown as ShellContextProps}
+    >
+      {children}
+    </ShellContext.Provider>
+  )
+}
+
 describe('useHome Hook', () => {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  let useHome: any
-  let MockShellContextProvider: FC<{ children: ReactNode }>
-
-  beforeEach(async () => {
-    vi.resetModules()
-    vi.stubEnv('VITE_ROUTER_TYPE', RouterType.BROWSER)
-
-    const { ShellContext } = await import('contexts/ShellContext')
-    const { useHome: useHomeModule } = await import('./useHome')
-    useHome = useHomeModule
-
-    MockShellContextProvider = ({ children }) => {
-      return (
-        // NOTE: Only properties necessary for the tests are mocked
-        <ShellContext.Provider
-          value={{ setTitle: mockSetTitle } as unknown as ShellContextProps}
-        >
-          {children}
-        </ShellContext.Provider>
-      )
-    }
-
+  beforeEach(() => {
     vi.clearAllMocks()
 
     Object.defineProperty(window, 'location', {
@@ -43,10 +40,6 @@ describe('useHome Hook', () => {
         origin: 'http://localhost:3000',
       },
     })
-  })
-
-  afterEach(() => {
-    vi.unstubAllEnvs()
   })
 
   it('should initialize with a UUID roomName and correct initial state', () => {
@@ -83,6 +76,7 @@ describe('useHome Hook', () => {
     const { result } = renderHook(() => useHome(), {
       wrapper: MockShellContextProvider,
     })
+
     const event = {
       target: { value: 'http://localhost:3000/public/prefixedRoomName' },
     } as React.ChangeEvent<HTMLInputElement>
@@ -178,5 +172,21 @@ describe('useHome Hook', () => {
       result.current.setRoomName('validRoomName')
     })
     expect(result.current.isRoomNameValid).toBe(true)
+  })
+
+  it('should handle room names without any prefix', () => {
+    const { result } = renderHook(() => useHome(), {
+      wrapper: MockShellContextProvider,
+    })
+
+    const event = {
+      target: { value: 'plainRoomName' },
+    } as React.ChangeEvent<HTMLInputElement>
+
+    act(() => {
+      result.current.handleRoomNameChange(event)
+    })
+
+    expect(result.current.roomName).toBe('plainRoomName')
   })
 })
