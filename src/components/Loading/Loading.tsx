@@ -9,6 +9,7 @@ export const WholePageLoading = ({
 }: WholePageLoadingProps) => {
   return (
     <Box
+      data-testid="loading-spinner"
       sx={[
         {
           display: 'flex',
