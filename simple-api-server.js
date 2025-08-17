@@ -104,9 +104,12 @@ function getRtcConfig() {
   const rtcConfigEnv = process.env.RTC_CONFIG
 
   if (!rtcConfigEnv) {
-    console.error(
-      'RTC_CONFIG environment variable is not set. Using fallback configuration.'
-    )
+    if (!process.env.IS_E2E_TEST) {
+      console.error(
+        'RTC_CONFIG environment variable is not set. Using fallback configuration.'
+      )
+    }
+
     return fallbackRtcConfig
   }
 
