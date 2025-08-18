@@ -1,6 +1,11 @@
 #!/usr/bin/env sh
 . "$(dirname -- "$0")/_/husky.sh"
 
+# Bail out if user is "jules" as tasks often break under https://jules.google/
+if [ "$USER" = "jules" ]; then
+  exit 0
+fi
+
 set -e
 
 npx pretty-quick --staged
