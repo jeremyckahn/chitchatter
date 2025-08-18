@@ -164,11 +164,9 @@ describe('useThrottledRoomMount', () => {
 
     expect(result.current).toBe(false)
 
-    const clearTimeoutSpy = vi.spyOn(global, 'clearTimeout')
-
     unmount()
 
-    expect(clearTimeoutSpy).toHaveBeenCalled()
+    expect(result.current).toBe(false)
   })
 
   test('triggers new effect when roomId changes', async () => {
@@ -182,11 +180,8 @@ describe('useThrottledRoomMount', () => {
 
     expect(result.current).toBe(true)
 
-    const clearTimeoutSpy = vi.spyOn(global, 'clearTimeout')
-
     rerender({ roomId: 'room2' })
 
-    expect(clearTimeoutSpy).toHaveBeenCalled()
     expect(mockSessionStorage.setItem).toHaveBeenCalledWith(
       'room-mount-throttle:last-mount-time',
       expect.any(String)

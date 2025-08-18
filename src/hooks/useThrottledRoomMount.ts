@@ -1,4 +1,5 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect } from 'react'
+import { useTimeout } from 'usehooks-ts'
 
 const LAST_MOUNT_TIME_KEY = 'room-mount-throttle:last-mount-time'
 const BACKOFF_KEY = 'room-mount-throttle:backoff'
@@ -14,7 +15,17 @@ const backoffMultiplier = 2
 
 export function useThrottledRoomMount(roomId: string) {
   const [canMount, setCanMount] = useState(false)
-  const timeoutRef = useRef<NodeJS.Timeout | null>(null)
+  const [backoffDelay, setBackoffDelay] = useState<number | null>(null)
+  const [resetDelay, setResetDelay] = useState<number | null>(null)
+
+  useTimeout(() => {
+    setCanMount(true)
+    setResetDelay(backoffResetPeriod)
+  }, backoffDelay)
+
+  useTimeout(() => {
+    sessionStorage.setItem(BACKOFF_KEY, '0')
+  }, resetDelay)
 
   useEffect(() => {
     const now = Date.now()
@@ -35,24 +46,11 @@ export function useThrottledRoomMount(roomId: string) {
 
     sessionStorage.setItem(BACKOFF_KEY, backoff.toString())
 
-    const mount = () => {
-      setCanMount(true)
-
-      timeoutRef.current = setTimeout(() => {
-        sessionStorage.setItem(BACKOFF_KEY, '0')
-      }, backoffResetPeriod)
-    }
-
     if (backoff > 0) {
-      timeoutRef.current = setTimeout(mount, backoff)
+      setBackoffDelay(backoff)
     } else {
-      mount()
-    }
-
-    return () => {
-      if (timeoutRef.current) {
-        clearTimeout(timeoutRef.current)
-      }
+      setCanMount(true)
+      setResetDelay(backoffResetPeriod)
     }
   }, [roomId])
 
