@@ -46,18 +46,16 @@ export function PrivateRoom({ userId }: PublicRoomProps) {
 
   const awaitingSecret = secret.length === 0
 
-  if (awaitingSecret) {
-    return (
-      <PasswordPrompt
-        isOpen={awaitingSecret}
-        onPasswordEntered={handlePasswordEntered}
-      />
-    )
+  if (!canMount) {
+    return <WholePageLoading />
   }
 
-  return canMount ? (
-    <Room userId={userId} roomId={roomId} password={secret} />
+  return awaitingSecret ? (
+    <PasswordPrompt
+      isOpen={awaitingSecret}
+      onPasswordEntered={handlePasswordEntered}
+    />
   ) : (
-    <WholePageLoading />
+    <Room userId={userId} roomId={roomId} password={secret} />
   )
 }
