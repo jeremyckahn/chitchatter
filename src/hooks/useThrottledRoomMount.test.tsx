@@ -1,7 +1,12 @@
-import { vi, beforeEach, afterEach, describe, test, expect } from 'vitest'
-import { renderHook, act } from '@testing-library/react'
+import { act, renderHook } from '@testing-library/react'
+import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 
-import { useThrottledRoomMount } from './useThrottledRoomMount'
+import {
+  backoffMultiplier,
+  backoffResetPeriod,
+  baseBackoff,
+  useThrottledRoomMount,
+} from './useThrottledRoomMount'
 
 const mockSessionStorage = (() => {
   let store: Record<string, string> = {}
@@ -59,11 +64,11 @@ describe('useThrottledRoomMount', () => {
     expect(result.current).toBe(false)
     expect(mockSessionStorage.setItem).toHaveBeenCalledWith(
       'room-mount-throttle:backoff',
-      '2000'
+      String(baseBackoff)
     )
 
     act(() => {
-      vi.advanceTimersByTime(2000)
+      vi.advanceTimersByTime(baseBackoff)
     })
 
     expect(result.current).toBe(true)
@@ -74,8 +79,8 @@ describe('useThrottledRoomMount', () => {
     vi.setSystemTime(baseTime)
 
     mockSessionStorage.getItem
-      .mockReturnValueOnce((baseTime - 6000).toString())
-      .mockReturnValueOnce('4000')
+      .mockReturnValueOnce((baseTime - baseBackoff * 3).toString())
+      .mockReturnValueOnce(String(baseBackoff))
 
     const { result } = renderHook(() => useThrottledRoomMount('room1'))
 
@@ -91,19 +96,21 @@ describe('useThrottledRoomMount', () => {
     vi.setSystemTime(baseTime)
 
     mockSessionStorage.getItem
-      .mockReturnValueOnce((baseTime - 1000).toString())
-      .mockReturnValueOnce('2000')
+      .mockReturnValueOnce(
+        (baseTime - baseBackoff / backoffMultiplier).toString()
+      )
+      .mockReturnValueOnce(String(baseBackoff))
 
     const { result } = renderHook(() => useThrottledRoomMount('room1'))
 
     expect(result.current).toBe(false)
     expect(mockSessionStorage.setItem).toHaveBeenCalledWith(
       'room-mount-throttle:backoff',
-      '4000'
+      String(baseBackoff * backoffMultiplier)
     )
 
     act(() => {
-      vi.advanceTimersByTime(4000)
+      vi.advanceTimersByTime(baseBackoff * backoffMultiplier)
     })
 
     expect(result.current).toBe(true)
@@ -114,15 +121,17 @@ describe('useThrottledRoomMount', () => {
     vi.setSystemTime(baseTime)
 
     mockSessionStorage.getItem
-      .mockReturnValueOnce((baseTime - 1000).toString())
-      .mockReturnValueOnce('4000')
+      .mockReturnValueOnce(
+        (baseTime - baseBackoff / backoffMultiplier).toString()
+      )
+      .mockReturnValueOnce(String(baseBackoff * backoffMultiplier))
 
     const { result } = renderHook(() => useThrottledRoomMount('room1'))
 
     expect(result.current).toBe(false)
     expect(mockSessionStorage.setItem).toHaveBeenCalledWith(
       'room-mount-throttle:backoff',
-      '8000'
+      String(baseBackoff * 4)
     )
   })
 
@@ -157,7 +166,9 @@ describe('useThrottledRoomMount', () => {
     vi.setSystemTime(baseTime)
 
     mockSessionStorage.getItem
-      .mockReturnValueOnce((baseTime - 1000).toString())
+      .mockReturnValueOnce(
+        (baseTime - baseBackoff / backoffMultiplier).toString()
+      )
       .mockReturnValueOnce('0')
 
     const { result, unmount } = renderHook(() => useThrottledRoomMount('room1'))
@@ -194,7 +205,7 @@ describe('useThrottledRoomMount', () => {
     expect(result.current).toBe(true)
 
     act(() => {
-      vi.advanceTimersByTime(5000)
+      vi.advanceTimersByTime(backoffResetPeriod)
     })
 
     expect(mockSessionStorage.setItem).toHaveBeenCalledWith(
@@ -241,10 +252,11 @@ describe('useThrottledRoomMount', () => {
 
   test('handles concurrent timeout and cleanup properly', () => {
     const baseTime = 1000000
+    const timePassed = 1000
     vi.setSystemTime(baseTime)
 
     mockSessionStorage.getItem
-      .mockReturnValueOnce((baseTime - 1000).toString())
+      .mockReturnValueOnce((baseTime - timePassed).toString())
       .mockReturnValueOnce('0')
 
     const { result, unmount } = renderHook(() => useThrottledRoomMount('room1'))
@@ -252,13 +264,13 @@ describe('useThrottledRoomMount', () => {
     expect(result.current).toBe(false)
 
     act(() => {
-      vi.advanceTimersByTime(1000)
+      vi.advanceTimersByTime(timePassed)
     })
 
     unmount()
 
     act(() => {
-      vi.advanceTimersByTime(1000)
+      vi.advanceTimersByTime(timePassed)
     })
 
     expect(result.current).toBe(false)

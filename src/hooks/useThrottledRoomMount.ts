@@ -5,9 +5,9 @@ import { useTimeout } from 'usehooks-ts'
 const LAST_MOUNT_TIME_KEY = 'room-mount-throttle:last-mount-time'
 const BACKOFF_KEY = 'room-mount-throttle:backoff'
 
-const backoffResetPeriod = 5000
-const baseBackoff = 2000
-const backoffMultiplier = 2
+export const backoffResetPeriod = 5000
+export const baseBackoff = 2000
+export const backoffMultiplier = 2
 
 // This hook prevents users from rapidly rejoining rooms, which can cause
 // WebRTC and peer connections to get into a broken state when leaving and
