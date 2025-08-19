@@ -18,13 +18,21 @@ const mockTurnServer = {
   credential: 'N4EAUgpjMzPLrxSS',
 }
 
-const expectedRtcConfig = {
+const expectedRtcConfigWithTurnAndStun = {
   iceServers: [
     {
       urls: 'turn:relay1.expressturn.com:3478',
       username: 'efQUQ79N77B5BNVVKF',
       credential: 'N4EAUgpjMzPLrxSS',
     },
+    {
+      urls: 'stun:stun.l.google.com:19302',
+    },
+  ],
+}
+
+const expectedRtcConfigWithOnlyStun = {
+  iceServers: [
     {
       urls: 'stun:stun.l.google.com:19302',
     },
@@ -83,7 +91,7 @@ describe('useRtcConfig', () => {
     })
 
     expect(result.current.isError).toBe(false)
-    expect(result.current.rtcConfig).toEqual(expectedRtcConfig)
+    expect(result.current.rtcConfig).toEqual(expectedRtcConfigWithTurnAndStun)
     expect(global.fetch).toHaveBeenCalledWith('/api/get-config', {
       signal: expect.any(AbortSignal),
       headers: {
@@ -92,7 +100,7 @@ describe('useRtcConfig', () => {
     })
   })
 
-  test('always provides merged config immediately with fallback TURN server', () => {
+  test('always provides config immediately with only STUN servers before API resolves', () => {
     const queryClient = createTestQueryClient()
     const wrapper = createWrapper(queryClient)
 
@@ -106,11 +114,11 @@ describe('useRtcConfig', () => {
 
     const { result } = renderHook(() => useRtcConfig(), { wrapper })
 
-    // Should always have merged config available immediately (fallback TURN + env STUN)
-    expect(result.current.rtcConfig).toEqual(expectedRtcConfig)
+    // Should always have config available immediately (only STUN servers before API resolves)
+    expect(result.current.rtcConfig).toEqual(expectedRtcConfigWithOnlyStun)
   })
 
-  test('uses fallback TURN server when API fails', async () => {
+  test('uses only STUN servers when API fails', async () => {
     const queryClient = createTestQueryClient()
     const wrapper = createWrapper(queryClient)
 
@@ -126,10 +134,10 @@ describe('useRtcConfig', () => {
     )
 
     expect(result.current.isError).toBe(true)
-    expect(result.current.rtcConfig).toEqual(expectedRtcConfig)
+    expect(result.current.rtcConfig).toEqual(expectedRtcConfigWithOnlyStun)
   })
 
-  test('uses fallback TURN server when API returns non-200 status', async () => {
+  test('uses only STUN servers when API returns non-200 status', async () => {
     const queryClient = createTestQueryClient()
     const wrapper = createWrapper(queryClient)
 
@@ -152,10 +160,10 @@ describe('useRtcConfig', () => {
     )
 
     expect(result.current.isError).toBe(true)
-    expect(result.current.rtcConfig).toEqual(expectedRtcConfig)
+    expect(result.current.rtcConfig).toEqual(expectedRtcConfigWithOnlyStun)
   })
 
-  test('uses fallback TURN server when API returns non-JSON content', async () => {
+  test('uses only STUN servers when API returns non-JSON content', async () => {
     const queryClient = createTestQueryClient()
     const wrapper = createWrapper(queryClient)
 
@@ -177,10 +185,10 @@ describe('useRtcConfig', () => {
     )
 
     expect(result.current.isError).toBe(true)
-    expect(result.current.rtcConfig).toEqual(expectedRtcConfig)
+    expect(result.current.rtcConfig).toEqual(expectedRtcConfigWithOnlyStun)
   })
 
-  test('uses fallback TURN server when API returns invalid RTCIceServer object (not an object)', async () => {
+  test('uses only STUN servers when API returns invalid RTCIceServer object (not an object)', async () => {
     const queryClient = createTestQueryClient()
     const wrapper = createWrapper(queryClient)
 
@@ -202,10 +210,10 @@ describe('useRtcConfig', () => {
     )
 
     expect(result.current.isError).toBe(true)
-    expect(result.current.rtcConfig).toEqual(expectedRtcConfig)
+    expect(result.current.rtcConfig).toEqual(expectedRtcConfigWithOnlyStun)
   })
 
-  test('uses fallback TURN server when API returns invalid RTCIceServer object (missing urls)', async () => {
+  test('uses only STUN servers when API returns invalid RTCIceServer object (missing urls)', async () => {
     const queryClient = createTestQueryClient()
     const wrapper = createWrapper(queryClient)
 
@@ -230,10 +238,10 @@ describe('useRtcConfig', () => {
     )
 
     expect(result.current.isError).toBe(true)
-    expect(result.current.rtcConfig).toEqual(expectedRtcConfig)
+    expect(result.current.rtcConfig).toEqual(expectedRtcConfigWithOnlyStun)
   })
 
-  test('uses fallback TURN server when API returns invalid RTCIceServer object (invalid urls type)', async () => {
+  test('uses only STUN servers when API returns invalid RTCIceServer object (invalid urls type)', async () => {
     const queryClient = createTestQueryClient()
     const wrapper = createWrapper(queryClient)
 
@@ -259,10 +267,10 @@ describe('useRtcConfig', () => {
     )
 
     expect(result.current.isError).toBe(true)
-    expect(result.current.rtcConfig).toEqual(expectedRtcConfig)
+    expect(result.current.rtcConfig).toEqual(expectedRtcConfigWithOnlyStun)
   })
 
-  test('uses fallback TURN server when API returns invalid RTCIceServer object (invalid username type)', async () => {
+  test('uses only STUN servers when API returns invalid RTCIceServer object (invalid username type)', async () => {
     const queryClient = createTestQueryClient()
     const wrapper = createWrapper(queryClient)
 
@@ -288,10 +296,10 @@ describe('useRtcConfig', () => {
     )
 
     expect(result.current.isError).toBe(true)
-    expect(result.current.rtcConfig).toEqual(expectedRtcConfig)
+    expect(result.current.rtcConfig).toEqual(expectedRtcConfigWithOnlyStun)
   })
 
-  test('uses fallback TURN server when API returns invalid RTCIceServer object (invalid credential type)', async () => {
+  test('uses only STUN servers when API returns invalid RTCIceServer object (invalid credential type)', async () => {
     const queryClient = createTestQueryClient()
     const wrapper = createWrapper(queryClient)
 
@@ -317,7 +325,7 @@ describe('useRtcConfig', () => {
     )
 
     expect(result.current.isError).toBe(true)
-    expect(result.current.rtcConfig).toEqual(expectedRtcConfig)
+    expect(result.current.rtcConfig).toEqual(expectedRtcConfigWithOnlyStun)
   })
 
   test('accepts valid RTCIceServer object with urls as array', async () => {
@@ -405,7 +413,7 @@ describe('useRtcConfig', () => {
         Accept: 'application/json',
       },
     })
-    expect(result.current.rtcConfig).toEqual(expectedRtcConfig)
+    expect(result.current.rtcConfig).toEqual(expectedRtcConfigWithTurnAndStun)
   })
 
   test('uses custom RTC config endpoint from environment variable', async () => {
@@ -437,7 +445,7 @@ describe('useRtcConfig', () => {
         Accept: 'application/json',
       },
     })
-    expect(result.current.rtcConfig).toEqual(expectedRtcConfig)
+    expect(result.current.rtcConfig).toEqual(expectedRtcConfigWithTurnAndStun)
   })
 
   test('uses absolute URL RTC config endpoint from environment variable', async () => {
@@ -472,10 +480,10 @@ describe('useRtcConfig', () => {
         },
       }
     )
-    expect(result.current.rtcConfig).toEqual(expectedRtcConfig)
+    expect(result.current.rtcConfig).toEqual(expectedRtcConfigWithTurnAndStun)
   })
 
-  test('uses custom STUN servers from environment variable', () => {
+  test('uses custom STUN servers from environment variable', async () => {
     vi.stubEnv(
       'VITE_STUN_SERVERS',
       'stun:custom.stun.com:19302,stun:another.stun.com:3478'
@@ -494,6 +502,10 @@ describe('useRtcConfig', () => {
 
     const { result } = renderHook(() => useRtcConfig(), { wrapper })
 
+    await waitFor(() => {
+      expect(result.current.isLoading).toBe(false)
+    })
+
     const expectedConfigWithCustomStun = {
       iceServers: [
         mockTurnServer,
@@ -505,7 +517,7 @@ describe('useRtcConfig', () => {
     expect(result.current.rtcConfig).toEqual(expectedConfigWithCustomStun)
   })
 
-  test('uses fallback STUN servers when environment variable is not set', () => {
+  test('uses no STUN servers when environment variable is not set', async () => {
     vi.stubEnv('VITE_STUN_SERVERS', undefined)
 
     const queryClient = createTestQueryClient()
@@ -521,10 +533,18 @@ describe('useRtcConfig', () => {
 
     const { result } = renderHook(() => useRtcConfig(), { wrapper })
 
-    expect(result.current.rtcConfig).toEqual(expectedRtcConfig)
+    await waitFor(() => {
+      expect(result.current.isLoading).toBe(false)
+    })
+
+    const expectedConfigWithTurnOnly = {
+      iceServers: [mockTurnServer],
+    }
+
+    expect(result.current.rtcConfig).toEqual(expectedConfigWithTurnOnly)
   })
 
-  test('skips API request when enableApiRequest is false', () => {
+  test('skips API request when enableApiRequest is false and uses only STUN servers', () => {
     const queryClient = createTestQueryClient()
     const wrapper = createWrapper(queryClient)
 
@@ -541,10 +561,10 @@ describe('useRtcConfig', () => {
     // Should not make API request
     expect(global.fetch).not.toHaveBeenCalled()
 
-    // Should immediately provide config with fallback TURN server
+    // Should immediately provide config with only STUN servers
     expect(result.current.isLoading).toBe(false)
     expect(result.current.isError).toBe(false)
-    expect(result.current.rtcConfig).toEqual(expectedRtcConfig)
+    expect(result.current.rtcConfig).toEqual(expectedRtcConfigWithOnlyStun)
   })
 
   test('enhanced connectivity is not available when VITE_RTC_CONFIG_ENDPOINT is not set', () => {
@@ -570,9 +590,9 @@ describe('useRtcConfig', () => {
     // Should not make API request
     expect(global.fetch).not.toHaveBeenCalled()
 
-    // Should immediately provide config with fallback TURN server
+    // Should immediately provide config with only STUN servers
     expect(result.current.isLoading).toBe(false)
     expect(result.current.isError).toBe(false)
-    expect(result.current.rtcConfig).toEqual(expectedRtcConfig)
+    expect(result.current.rtcConfig).toEqual(expectedRtcConfigWithOnlyStun)
   })
 })

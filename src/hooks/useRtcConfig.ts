@@ -19,7 +19,7 @@
  * CONFIGURATION SOURCES:
  * 1. TURN servers: API endpoint (configurable via VITE_RTC_CONFIG_ENDPOINT, defaults to /api/get-config) - OPTIONAL
  * 2. STUN servers: VITE_STUN_SERVERS environment variable (comma-separated URLs)
- * 3. Fallback: Hardcoded TURN and STUN servers if API sources are unavailable or disabled
+ * 3. No fallback servers - only configured servers are used
  *
  * CACHING:
  * - Cached for entire session (staleTime)
@@ -34,18 +34,6 @@ import {
 } from 'config/enhancedConnectivity'
 
 import { QueryKey } from './types'
-
-const FALLBACK_TURN_SERVER: RTCIceServer = {
-  urls: 'turn:relay1.expressturn.com:3478',
-  username: 'efQUQ79N77B5BNVVKF',
-  credential: 'N4EAUgpjMzPLrxSS',
-}
-
-const FALLBACK_STUN_SERVERS: RTCIceServer[] = [
-  {
-    urls: 'stun:stun.l.google.com:19302',
-  },
-]
 
 /**
  * Validates if a URL is a valid STUN server URL
@@ -89,22 +77,20 @@ const getStunServers = (): RTCIceServer[] => {
   const stunServersEnv = import.meta.env.VITE_STUN_SERVERS
 
   if (!stunServersEnv) {
-    console.log('VITE_STUN_SERVERS not set, using fallback STUN servers')
+    console.log('VITE_STUN_SERVERS not set')
 
-    return FALLBACK_STUN_SERVERS
+    return []
   }
 
   if (typeof stunServersEnv !== 'string') {
-    console.error(
-      'VITE_STUN_SERVERS must be a string, using fallback STUN servers'
-    )
-    return FALLBACK_STUN_SERVERS
+    console.error('VITE_STUN_SERVERS must be a string')
+    return []
   }
 
   const trimmedEnv = stunServersEnv.trim()
   if (!trimmedEnv) {
-    console.error('VITE_STUN_SERVERS is empty, using fallback STUN servers')
-    return FALLBACK_STUN_SERVERS
+    console.error('VITE_STUN_SERVERS is empty')
+    return []
   }
 
   const stunUrls = trimmedEnv
@@ -123,10 +109,8 @@ const getStunServers = (): RTCIceServer[] => {
     })
 
   if (stunUrls.length === 0) {
-    console.error(
-      'No valid STUN servers found in VITE_STUN_SERVERS, using fallback STUN servers'
-    )
-    return FALLBACK_STUN_SERVERS
+    console.error('No valid STUN servers found in VITE_STUN_SERVERS')
+    return []
   }
 
   const stunServers = stunUrls.map((url: string) => ({ urls: url }))
@@ -289,16 +273,20 @@ export const useRtcConfig = (
   // Get STUN servers from environment
   const stunServers = useMemo(() => getStunServers(), [])
 
-  // Merge TURN server (from API or fallback) with STUN servers
+  // Merge TURN server (from API only) with STUN servers
   const rtcConfig = useMemo((): RTCConfiguration => {
-    // If enhanced connectivity is not available or not enabled, use fallback
-    const effectiveTurnServer =
-      isEnhancedConnectivityAvailable && enableApiRequest
-        ? turnServer || FALLBACK_TURN_SERVER
-        : FALLBACK_TURN_SERVER
+    const iceServers: RTCIceServer[] = []
+
+    // Only include TURN server if we have one from API
+    if (isEnhancedConnectivityAvailable && enableApiRequest && turnServer) {
+      iceServers.push(turnServer)
+    }
+
+    // Add STUN servers
+    iceServers.push(...stunServers)
 
     return {
-      iceServers: [effectiveTurnServer, ...stunServers],
+      iceServers,
     }
   }, [turnServer, stunServers, enableApiRequest])
 
