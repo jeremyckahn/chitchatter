@@ -2,9 +2,11 @@ import { act, renderHook } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 
 import {
+  BACKOFF_KEY,
   backoffMultiplier,
   backoffResetPeriod,
   baseBackoff,
+  LAST_MOUNT_TIME_KEY,
   useThrottledRoomMount,
 } from './useThrottledRoomMount'
 
@@ -45,10 +47,7 @@ describe('useThrottledRoomMount', () => {
       'room-mount-throttle:last-mount-time',
       expect.any(String)
     )
-    expect(mockSessionStorage.setItem).toHaveBeenCalledWith(
-      'room-mount-throttle:backoff',
-      '0'
-    )
+    expect(mockSessionStorage.setItem).toHaveBeenCalledWith(BACKOFF_KEY, '0')
   })
 
   test('applies throttling when mounting within backoff reset period', () => {
@@ -63,7 +62,7 @@ describe('useThrottledRoomMount', () => {
 
     expect(result.current).toBe(false)
     expect(mockSessionStorage.setItem).toHaveBeenCalledWith(
-      'room-mount-throttle:backoff',
+      BACKOFF_KEY,
       String(baseBackoff)
     )
 
@@ -85,10 +84,7 @@ describe('useThrottledRoomMount', () => {
     const { result } = renderHook(() => useThrottledRoomMount('room1'))
 
     expect(result.current).toBe(true)
-    expect(mockSessionStorage.setItem).toHaveBeenCalledWith(
-      'room-mount-throttle:backoff',
-      '0'
-    )
+    expect(mockSessionStorage.setItem).toHaveBeenCalledWith(BACKOFF_KEY, '0')
   })
 
   test('multiplies backoff when mounting repeatedly within reset period', () => {
@@ -105,7 +101,7 @@ describe('useThrottledRoomMount', () => {
 
     expect(result.current).toBe(false)
     expect(mockSessionStorage.setItem).toHaveBeenCalledWith(
-      'room-mount-throttle:backoff',
+      BACKOFF_KEY,
       String(baseBackoff * backoffMultiplier)
     )
 
@@ -130,7 +126,7 @@ describe('useThrottledRoomMount', () => {
 
     expect(result.current).toBe(false)
     expect(mockSessionStorage.setItem).toHaveBeenCalledWith(
-      'room-mount-throttle:backoff',
+      BACKOFF_KEY,
       String(baseBackoff * 4)
     )
   })
@@ -143,10 +139,7 @@ describe('useThrottledRoomMount', () => {
     const { result } = renderHook(() => useThrottledRoomMount('room1'))
 
     expect(result.current).toBe(true)
-    expect(mockSessionStorage.setItem).toHaveBeenCalledWith(
-      'room-mount-throttle:backoff',
-      '0'
-    )
+    expect(mockSessionStorage.setItem).toHaveBeenCalledWith(BACKOFF_KEY, '0')
   })
 
   test('handles null sessionStorage values gracefully', () => {
@@ -155,10 +148,7 @@ describe('useThrottledRoomMount', () => {
     const { result } = renderHook(() => useThrottledRoomMount('room1'))
 
     expect(result.current).toBe(true)
-    expect(mockSessionStorage.setItem).toHaveBeenCalledWith(
-      'room-mount-throttle:backoff',
-      '0'
-    )
+    expect(mockSessionStorage.setItem).toHaveBeenCalledWith(BACKOFF_KEY, '0')
   })
 
   test('cleans up timeout on unmount', () => {
@@ -194,7 +184,7 @@ describe('useThrottledRoomMount', () => {
     rerender({ roomId: 'room2' })
 
     expect(mockSessionStorage.setItem).toHaveBeenCalledWith(
-      'room-mount-throttle:last-mount-time',
+      LAST_MOUNT_TIME_KEY,
       expect.any(String)
     )
   })
@@ -208,10 +198,7 @@ describe('useThrottledRoomMount', () => {
       vi.advanceTimersByTime(backoffResetPeriod)
     })
 
-    expect(mockSessionStorage.setItem).toHaveBeenCalledWith(
-      'room-mount-throttle:backoff',
-      '0'
-    )
+    expect(mockSessionStorage.setItem).toHaveBeenCalledWith(BACKOFF_KEY, '0')
   })
 
   test('uses correct sessionStorage keys', () => {
@@ -220,15 +207,13 @@ describe('useThrottledRoomMount', () => {
     expect(mockSessionStorage.getItem).toHaveBeenCalledWith(
       'room-mount-throttle:last-mount-time'
     )
-    expect(mockSessionStorage.getItem).toHaveBeenCalledWith(
-      'room-mount-throttle:backoff'
-    )
+    expect(mockSessionStorage.getItem).toHaveBeenCalledWith(BACKOFF_KEY)
     expect(mockSessionStorage.setItem).toHaveBeenCalledWith(
       'room-mount-throttle:last-mount-time',
       expect.any(String)
     )
     expect(mockSessionStorage.setItem).toHaveBeenCalledWith(
-      'room-mount-throttle:backoff',
+      BACKOFF_KEY,
       expect.any(String)
     )
   })

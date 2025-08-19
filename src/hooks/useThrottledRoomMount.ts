@@ -2,8 +2,8 @@ import { useState, useEffect } from 'react'
 import { useTimeout } from 'usehooks-ts'
 
 // Session storage keys for persisting throttling state
-const LAST_MOUNT_TIME_KEY = 'room-mount-throttle:last-mount-time'
-const BACKOFF_KEY = 'room-mount-throttle:backoff'
+export const LAST_MOUNT_TIME_KEY = 'room-mount-throttle:last-mount-time'
+export const BACKOFF_KEY = 'room-mount-throttle:backoff'
 
 export const backoffResetPeriod = 5000
 export const baseBackoff = 2000
