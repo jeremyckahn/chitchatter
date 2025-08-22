@@ -1,30 +1,30 @@
-import { useContext } from 'react'
-import { useWindowSize } from '@react-hook/window-size'
-import Zoom from '@mui/material/Zoom'
 import Box from '@mui/material/Box'
 import Divider from '@mui/material/Divider'
 import useTheme from '@mui/material/styles/useTheme'
+import Zoom from '@mui/material/Zoom'
+import { useWindowSize } from '@react-hook/window-size'
+import { useContext } from 'react'
 import { v4 as uuid } from 'uuid'
 
-import { useRtcConfig } from 'hooks/useRtcConfig'
-import { trackerUrls } from 'config/trackerUrls'
-import { time } from 'lib/Time'
-import { RoomContext } from 'contexts/RoomContext'
-import { ShellContext } from 'contexts/ShellContext'
-import { MessageForm } from 'components/MessageForm'
 import { ChatTranscript } from 'components/ChatTranscript'
 import { WholePageLoading } from 'components/Loading'
-import { encryption } from 'services/Encryption'
+import { MessageForm } from 'components/MessageForm'
+import { trackerUrls } from 'config/trackerUrls'
+import { RoomContext } from 'contexts/RoomContext'
 import { SettingsContext } from 'contexts/SettingsContext'
+import { ShellContext } from 'contexts/ShellContext'
+import { useTurnConfig } from 'hooks/useTurnConfig'
+import { time } from 'lib/Time'
+import { encryption } from 'services/Encryption'
 
-import { useRoom } from './useRoom'
 import { RoomAudioControls } from './RoomAudioControls'
-import { RoomVideoControls } from './RoomVideoControls'
-import { RoomScreenShareControls } from './RoomScreenShareControls'
 import { RoomFileUploadControls } from './RoomFileUploadControls'
-import { RoomVideoDisplay } from './RoomVideoDisplay'
+import { RoomScreenShareControls } from './RoomScreenShareControls'
 import { RoomShowMessagesControls } from './RoomShowMessagesControls'
+import { RoomVideoControls } from './RoomVideoControls'
+import { RoomVideoDisplay } from './RoomVideoDisplay'
 import { TypingStatusBar } from './TypingStatusBar'
+import { useRoom } from './useRoom'
 
 export interface RoomProps {
   appId?: string
@@ -37,7 +37,11 @@ export interface RoomProps {
   targetPeerId?: string
 }
 
-export function Room({
+interface RoomInnerProps extends RoomProps {
+  turnConfig: RTCConfiguration
+}
+
+const RoomCore = ({
   appId = `${encodeURI(window.location.origin)}_${process.env.VITE_NAME}`,
   getUuid = uuid,
   encryptionService = encryption,
@@ -46,16 +50,12 @@ export function Room({
   password,
   userId,
   targetPeerId,
-}: RoomProps) {
+  turnConfig,
+}: RoomInnerProps) => {
   const theme = useTheme()
   const settingsContext = useContext(SettingsContext)
-  const { showActiveTypingStatus, publicKey, isEnhancedConnectivityEnabled } =
+  const { showActiveTypingStatus, publicKey } =
     settingsContext.getUserSettings()
-
-  // Fetch rtcConfig from server
-  const { rtcConfig, isLoading: isConfigLoading } = useRtcConfig(
-    isEnhancedConnectivityEnabled
-  )
 
   const {
     isDirectMessageRoom,
@@ -71,9 +71,16 @@ export function Room({
     {
       appId,
       relayUrls: trackerUrls,
-      rtcConfig,
       password,
       relayRedundancy: 4,
+      turnConfig: turnConfig.iceServers,
+      // NOTE: Avoid using STUN severs in the E2E tests in order to make them
+      // run faster
+      ...(import.meta.env.VITE_IS_E2E_TEST && {
+        rtcConfig: {
+          iceServers: [],
+        },
+      }),
     },
     {
       roomId,
@@ -95,10 +102,6 @@ export function Room({
   }
 
   const showMessages = roomContextValue.isShowingMessages
-
-  if (isConfigLoading) {
-    return <WholePageLoading />
-  }
 
   // NOTE: If rtcConfig fails to load, the useRtcConfig hook provides a
   // fallback so the room will continue to work with default settings
@@ -201,4 +204,20 @@ export function Room({
       </Box>
     </RoomContext.Provider>
   )
+}
+
+export const Room = (props: RoomProps) => {
+  const { isEnhancedConnectivityEnabled } =
+    useContext(SettingsContext).getUserSettings()
+
+  // Fetch rtcConfig from server
+  const { turnConfig, isLoading: isConfigLoading } = useTurnConfig(
+    isEnhancedConnectivityEnabled
+  )
+
+  if (isConfigLoading) {
+    return <WholePageLoading />
+  }
+
+  return <RoomCore {...props} turnConfig={turnConfig} />
 }

@@ -1,12 +1,14 @@
-import { useEffect, useState } from 'react'
+import { useContext, useEffect, useState } from 'react'
 
-import { sleep } from 'lib/sleep'
+import { SettingsContext } from 'contexts/SettingsContext'
+import { useTurnConfig } from 'hooks/useTurnConfig'
 import {
   ConnectionTest,
   ConnectionTestEvent,
   ConnectionTestEvents,
   TrackerConnection,
 } from 'lib/ConnectionTest'
+import { sleep } from 'lib/sleep'
 
 export interface ConnectionTestResults {
   hasHost: boolean
@@ -18,6 +20,13 @@ const rtcPollInterval = 20 * 1000
 const trackerPollInterval = 5 * 1000
 
 export const useConnectionTest = () => {
+  const settingsContext = useContext(SettingsContext)
+  const { isEnhancedConnectivityEnabled } = settingsContext.getUserSettings()
+
+  const { turnConfig, isLoading: isConfigLoading } = useTurnConfig(
+    isEnhancedConnectivityEnabled
+  )
+
   const [hasHost, setHasHost] = useState(false)
   const [hasTURNServer, setHasTURNServer] = useState(false)
   const [trackerConnection, setTrackerConnection] = useState(
@@ -25,8 +34,13 @@ export const useConnectionTest = () => {
   )
 
   useEffect(() => {
+    // Don't start connection tests until rtcConfig is loaded
+    if (isConfigLoading) {
+      return
+    }
+
     const checkRtcConnection = async () => {
-      const connectionTest = new ConnectionTest()
+      const connectionTest = new ConnectionTest(turnConfig)
 
       const handleHasHostChanged = ((event: ConnectionTestEvent) => {
         setHasHost(event.detail.hasHost)
@@ -88,7 +102,7 @@ export const useConnectionTest = () => {
     ;(async () => {
       while (true) {
         try {
-          const connectionTest = new ConnectionTest()
+          const connectionTest = new ConnectionTest(turnConfig)
           const trackerConnectionTestResult =
             connectionTest.testTrackerConnection()
 
@@ -100,7 +114,7 @@ export const useConnectionTest = () => {
         await sleep(trackerPollInterval)
       }
     })()
-  }, [])
+  }, [turnConfig, isConfigLoading])
 
   return {
     connectionTestResults: { hasHost, hasTURNServer, trackerConnection },
