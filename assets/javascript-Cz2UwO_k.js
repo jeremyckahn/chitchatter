@@ -1,0 +1,2 @@
+import{g as c}from"./index-D4d9tqZs.js";import{r as n}from"./javascript-D8vYUPHd.js";function p(t,s){for(var o=0;o<s.length;o++){const r=s[o];if(typeof r!="string"&&!Array.isArray(r)){for(const e in r)if(e!=="default"&&!(e in t)){const a=Object.getOwnPropertyDescriptor(r,e);a&&Object.defineProperty(t,e,a.get?a:{enumerable:!0,get:()=>r[e]})}}}return Object.freeze(Object.defineProperty(t,Symbol.toStringTag,{value:"Module"}))}var i=n();const f=c(i),l=p({__proto__:null,default:f},[i]);export{l as j};
+//# sourceMappingURL=javascript-Cz2UwO_k.js.map
