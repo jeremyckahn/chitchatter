@@ -41,7 +41,7 @@ interface RoomInnerProps extends RoomProps {
   turnConfig: RTCConfiguration
 }
 
-const RoomInner = ({
+const RoomCore = ({
   appId = `${encodeURI(window.location.origin)}_${process.env.VITE_NAME}`,
   getUuid = uuid,
   encryptionService = encryption,
@@ -218,5 +218,5 @@ export function Room(props: RoomProps) {
     return <WholePageLoading />
   }
 
-  return <RoomInner {...props} turnConfig={turnConfig} />
+  return <RoomCore {...props} turnConfig={turnConfig} />
 }

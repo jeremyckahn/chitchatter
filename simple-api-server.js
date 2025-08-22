@@ -39,7 +39,7 @@ import { Buffer } from 'buffer'
 
 // Fallback rtcConfig in case environment variable is missing or invalid
 /**
- * @type RTCConfiguration
+ * @type RTCIceServer
  */
 const fallbackRtcConfig = {
   urls: ['turn:relay1.expressturn.com:3478'],
