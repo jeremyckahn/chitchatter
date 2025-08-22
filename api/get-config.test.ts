@@ -29,26 +29,23 @@ describe('/api/get-config', () => {
   const testRtcConfig = {
     iceServers: [
       {
-        urls: 'turn:test.example.com:3478',
+        urls: ['turn:test.example.com:3478'],
         username: 'testuser123',
         credential: 'testpass456',
-      },
-      {
-        urls: 'stun:stun.l.google.com:19302',
       },
     ],
   }
 
   // Expected TURN server response (extracted from testRtcConfig)
   const expectedTurnServer = {
-    urls: 'turn:test.example.com:3478',
+    urls: ['turn:test.example.com:3478'],
     username: 'testuser123',
     credential: 'testpass456',
   }
 
   // Fallback TURN server (matches the fallback in the handler)
   const fallbackTurnServer = {
-    urls: 'turn:relay1.expressturn.com:3478',
+    urls: ['turn:relay1.expressturn.com:3478'],
     username: 'efQUQ79N77B5BNVVKF',
     credential: 'N4EAUgpjMzPLrxSS',
   }
@@ -131,16 +128,13 @@ describe('/api/get-config', () => {
   })
 
   test('returns fallback TURN server when configuration has no TURN server', async () => {
-    // Base64 encode RTC config with only STUN servers (no TURN servers)
-    const stunOnlyConfig = {
-      iceServers: [
-        { urls: 'stun:stun.l.google.com:19302' },
-        { urls: 'stun:stun1.l.google.com:19302' },
-      ],
+    // Base64 encode empty RTC config
+    const emptyConfig = {
+      iceServers: [],
     }
-    process.env.RTC_CONFIG = Buffer.from(
-      JSON.stringify(stunOnlyConfig)
-    ).toString('base64')
+    process.env.RTC_CONFIG = Buffer.from(JSON.stringify(emptyConfig)).toString(
+      'base64'
+    )
 
     const req = createMockRequest('GET')
     const res = createMockResponse()

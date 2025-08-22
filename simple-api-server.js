@@ -38,18 +38,17 @@ import { createServer } from 'http'
 import { Buffer } from 'buffer'
 
 // Fallback rtcConfig in case environment variable is missing or invalid
-const fallbackRtcConfig = {
-  iceServers: [
-    {
-      urls: 'turn:relay1.expressturn.com:3478',
-      username: 'efQUQ79N77B5BNVVKF',
-      credential: 'N4EAUgpjMzPLrxSS',
-    },
-    // Free Google STUN server for basic NAT traversal.
-    {
-      urls: 'stun:stun.l.google.com:19302',
-    },
-  ],
+/**
+ * @type RTCIceServer
+ */
+// Fallback TURN server in case environment variable is missing or invalid
+/**
+ * @type RTCIceServer
+ */
+const fallbackTurnServer = {
+  urls: ['turn:relay1.expressturn.com:3478'],
+  username: 'efQUQ79N77B5BNVVKF',
+  credential: 'N4EAUgpjMzPLrxSS',
 }
 
 // Validate that the decoded data conforms to RTCConfiguration interface
@@ -110,7 +109,7 @@ function getRtcConfig() {
       )
     }
 
-    return fallbackRtcConfig
+    return fallbackTurnServer
   }
 
   try {
@@ -123,10 +122,23 @@ function getRtcConfig() {
       console.error(
         'Invalid RTC configuration format in environment variable. Configuration must conform to RTCConfiguration interface. Using fallback configuration.'
       )
-      return fallbackRtcConfig
+      return fallbackTurnServer
     }
 
-    return parsedConfig
+    const turnServer = parsedConfig.iceServers.find(server =>
+      (Array.isArray(server.urls) ? server.urls : [server.urls]).some(url =>
+        url.startsWith('turn:')
+      )
+    )
+
+    if (turnServer) {
+      return turnServer
+    }
+
+    console.error(
+      'No TURN server found in RTC_CONFIG environment variable. Using fallback configuration.'
+    )
+    return fallbackTurnServer
   } catch (error) {
     if (error instanceof SyntaxError) {
       console.error(
@@ -141,7 +153,7 @@ function getRtcConfig() {
         'Using fallback configuration.'
       )
     }
-    return fallbackRtcConfig
+    return fallbackTurnServer
   }
 }
 
