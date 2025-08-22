@@ -74,7 +74,8 @@ const RoomCore = ({
       password,
       relayRedundancy: 4,
       turnConfig: turnConfig.iceServers,
-      // NOTE: Avoid using STUN severs in the E2E tests to speed them up
+      // NOTE: Avoid using STUN severs in the E2E tests in order to make them
+      // run faster
       ...(import.meta.env.VITE_IS_E2E_TEST && {
         rtcConfig: {
           iceServers: [],
@@ -205,7 +206,7 @@ const RoomCore = ({
   )
 }
 
-export function Room(props: RoomProps) {
+export const Room = (props: RoomProps) => {
   const { isEnhancedConnectivityEnabled } =
     useContext(SettingsContext).getUserSettings()
 

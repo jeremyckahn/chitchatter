@@ -212,7 +212,7 @@ The build is minified and the filenames include the hashes.
 
 ### API Configuration
 
-**Note: The API server is completely optional.** Chitchatter works without any API server - users can connect and communicate using only fallback TURN servers. The API configuration described below is available for deployments that want to provide enhanced connectivity features.
+**Note: The API server is completely optional.** Chitchatter works without any API server - users can connect and communicate without TURN relay servers if their collective network conditions allow for it. The API configuration described below is available for deployments that want to provide enhanced connectivity features for users in a wider variety of network conditions.
 
 Chitchatter uses a hybrid approach for WebRTC configuration:
 
