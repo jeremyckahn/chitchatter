@@ -1,13 +1,12 @@
 import {
   joinRoom,
   Room,
-  BaseRoomConfig,
   DataPayload,
   ActionProgress,
   ActionReceiver,
   ActionSender,
-  RelayConfig,
 } from 'trystero/torrent'
+import { joinRoom as baseJoinRoom } from 'trystero'
 
 import { sleep } from 'lib/sleep'
 import { StreamType } from 'models/chat'
@@ -46,10 +45,12 @@ type PeerRoomAction<T extends DataPayload> = [
   () => void,
 ]
 
+export type RoomConfig = Parameters<typeof baseJoinRoom>[0]
+
 export class PeerRoom {
   private room: Room
 
-  private roomConfig: RelayConfig & BaseRoomConfig
+  private roomConfig: RoomConfig
 
   private peerJoinHandlers: Map<
     PeerHookType,
@@ -84,7 +85,7 @@ export class PeerRoom {
 
   private actions: Partial<Record<string, PeerRoomAction<any>>> = {}
 
-  constructor(config: RelayConfig & BaseRoomConfig, roomId: string) {
+  constructor(config: RoomConfig, roomId: string) {
     this.roomConfig = config
     this.room = joinRoom(this.roomConfig, roomId)
 

@@ -38,9 +38,8 @@ function question(prompt) {
 }
 
 function validateUrl(url) {
-  const stunPattern = /^stun:[^:]+:\d+$/
   const turnPattern = /^turns?:[^:]+:\d+$/
-  return stunPattern.test(url) || turnPattern.test(url)
+  return turnPattern.test(url)
 }
 
 async function getServerInput(type) {
@@ -109,11 +108,10 @@ async function getServerInput(type) {
 
 async function usePresetConfig() {
   console.log(colorize('\n🎯 Available presets:', 'blue'))
-  console.log('1. Google STUN + Custom TURN server (you provide credentials)')
-  console.log('2. Google STUN only')
-  console.log('3. Custom configuration')
+  console.log('1. Custom TURN server (you provide credentials)')
+  console.log('2. Custom configuration')
 
-  const choice = await question('\nSelect preset (1-3): ')
+  const choice = await question('\nSelect preset (1-2): ')
 
   switch (choice) {
     case '1':
@@ -140,8 +138,6 @@ async function usePresetConfig() {
 
       return {
         iceServers: [
-          { urls: 'stun:stun.l.google.com:19302' },
-          { urls: 'stun:stun1.l.google.com:19302' },
           {
             urls: turnUrl,
             username: turnUsername,
@@ -151,14 +147,6 @@ async function usePresetConfig() {
       }
 
     case '2':
-      return {
-        iceServers: [
-          { urls: 'stun:stun.l.google.com:19302' },
-          { urls: 'stun:stun1.l.google.com:19302' },
-        ],
-      }
-
-    case '3':
       return null // Will proceed to custom configuration
 
     default:
@@ -175,7 +163,7 @@ async function generateConfig() {
   console.log(
     'This tool helps you create the RTC_CONFIG environment variable for Chitchatter.'
   )
-  console.log('The configuration will include both STUN and TURN servers.\n')
+  console.log('The configuration will include TURN servers.\n')
 
   // Ask if user wants to use preset or custom config
   const preset = await usePresetConfig()
@@ -188,23 +176,18 @@ async function generateConfig() {
   } else {
     // Custom configuration
     console.log(colorize('\n⚙️  Custom Configuration', 'blue'))
-    console.log('You can add both STUN and TURN servers to your configuration.')
-    console.log(
-      'STUN servers help with NAT traversal, TURN servers relay traffic when direct connection fails.\n'
-    )
+    console.log('You can add TURN servers to your configuration.')
+    console.log('TURN servers relay traffic when direct connection fails.\n')
 
-    const stunServers = await getServerInput('stun')
     const turnServers = await getServerInput('turn')
 
-    const allServers = [...stunServers, ...turnServers]
-
-    if (allServers.length === 0) {
+    if (turnServers.length === 0) {
       console.log(colorize('❌ No servers configured. Exiting.', 'red'))
       rl.close()
       return
     }
 
-    rtcConfig = { iceServers: allServers }
+    rtcConfig = { iceServers: turnServers }
   }
 
   // Display configuration
@@ -270,31 +253,20 @@ if (args.includes('--example')) {
   console.log(colorize('📋 Example Configurations:', 'blue'))
   console.log('==========================\n')
 
-  console.log(colorize('1. STUN only configuration:', 'yellow'))
-  const stunOnly = {
-    iceServers: [{ urls: 'stun:stun.l.google.com:19302' }],
-  }
-  console.log(JSON.stringify(stunOnly, null, 2))
-  console.log(
-    colorize('Base64:', 'green'),
-    Buffer.from(JSON.stringify(stunOnly)).toString('base64')
-  )
-
-  console.log(colorize('\n2. STUN + TURN configuration:', 'yellow'))
-  const stunTurn = {
+  console.log(colorize('1. TURN configuration:', 'yellow'))
+  const rtcConfig = {
     iceServers: [
-      { urls: 'stun:stun.l.google.com:19302' },
       {
-        urls: 'turn:your-turn-server.com:3478',
+        urls: ['turn:your-turn-server.com:3478'],
         username: 'your-username',
         credential: 'your-password',
       },
     ],
   }
-  console.log(JSON.stringify(stunTurn, null, 2))
+  console.log(JSON.stringify(rtcConfig, null, 2))
   console.log(
     colorize('Base64:', 'green'),
-    Buffer.from(JSON.stringify(stunTurn)).toString('base64')
+    Buffer.from(JSON.stringify(rtcConfig)).toString('base64')
   )
 
   process.exit(0)

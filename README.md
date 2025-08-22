@@ -13,7 +13,7 @@ Chitchatter is a free (as in both price and freedom) communication tool. Designe
 - Ephemeral
   - Message content is never persisted to disk on either the client or server
 - Decentralized
-  - **No API server required**. Chitchatter works completely without an API server - all that's required for basic functionality is availability of GitHub for static assets, and public WebTorrent and STUN/TURN relay servers for establishing peer-to-peer communication. An optional API server is available to provide enhanced connectivity features, but users can always choose to use Chitchatter without it.
+  - **No API server required**. Chitchatter works completely without an API server - all that's required for basic functionality is availability of GitHub for static assets, and public WebTorrent and TURN relay servers for establishing peer-to-peer communication. An optional API server is available to provide enhanced connectivity features, but users can always choose to use Chitchatter without it.
 - Embeddable
 - [Self-hostable](#self-hosting)
 
@@ -50,7 +50,7 @@ Open <https://chitchatter.im/> and join a room to start chatting with anyone els
 ## Anti-features
 
 - Messages are never persisted to disk. When you leave a peer room, messages are cleared from memory and cannot be retrieved.
-- Chitchatter is an entirely client-side communication app. It uses public WebTorrent servers to establish peer connections and STUN/TURN relay servers when direct peer-to-peer connections cannot be established, but there is no Chitchatter API server.
+- Chitchatter is an entirely client-side communication app. It uses public WebTorrent servers to establish peer connections and TURN relay servers when direct peer-to-peer connections cannot be established, but there is no Chitchatter API server.
 - No analytics, tracking, or telemetry of any kind.
 - This is a community-driven and unfunded project that makes no money. The users come first and there is no corporate influence or financial interest involved.
 
@@ -212,15 +212,14 @@ The build is minified and the filenames include the hashes.
 
 ### API Configuration
 
-**Note: The API server is completely optional.** Chitchatter works without any API server - users can connect and communicate using only public STUN servers and fallback TURN servers. The API configuration described below is available for deployments that want to provide enhanced connectivity features.
+**Note: The API server is completely optional.** Chitchatter works without any API server - users can connect and communicate using only fallback TURN servers. The API configuration described below is available for deployments that want to provide enhanced connectivity features.
 
 Chitchatter uses a hybrid approach for WebRTC configuration:
 
 - **TURN servers**: Fetched from the API endpoint (configurable via `VITE_RTC_CONFIG_ENDPOINT`, defaults to `/api/get-config`) with data configured via `RTC_CONFIG` environment variable
-- **STUN servers**: Configured via the `VITE_STUN_SERVERS` environment variable in the frontend
-- **Final configuration**: The frontend merges both sources to create the complete RTCConfiguration
+- **Final configuration**: The frontend uses the configuration from the API to create the complete RTCConfiguration
 
-This separation allows for flexible configuration where TURN servers (which often require credentials and may change) are managed server-side, while STUN servers (which are typically public and stable) are configured client-side.
+This separation allows for flexible configuration where TURN servers (which often require credentials and may change) are managed server-side.
 
 #### Enhanced Connectivity Feature
 
@@ -294,16 +293,15 @@ npm run generate-rtc-config
 
 This interactive script will:
 
-- Guide you through adding STUN and TURN servers
+- Guide you through adding TURN servers
 - Provide preset configurations for common setups
 - Generate the properly formatted base64-encoded string
 - Show usage instructions for different deployment platforms
 
 **Quick start with presets:**
 
-- **Option 1**: Google STUN + Custom TURN server - Configure with your own TURN credentials
-- **Option 2**: Google STUN only - Requires separate TURN server setup
-- **Option 3**: Custom configuration - Full control over all servers
+- **Option 1**: Custom TURN server - Configure with your own TURN credentials
+- **Option 2**: Custom configuration - Full control over all servers
 
 **Script options:**
 
@@ -328,9 +326,6 @@ echo "eyJpY2VTZXJ2ZXJzIjpb..." | base64 -d | jq .
 # {
 #   "iceServers": [
 #     {
-#       "urls": "stun:stun.l.google.com:19302"
-#     },
-#     {
 #       "urls": "turn:your-turn-server.com:3478",
 #       "username": "your-username",
 #       "credential": "your-credential"
@@ -352,20 +347,13 @@ In production (GitHub Pages deployment), configure both server-side and client-s
 npm run generate-rtc-config
 
 # Method 2: Manual creation (advanced users)
-echo '{"iceServers":[{"urls":"turn:your-turn-server.com:3478","username":"your-username","credential":"your-password"},{"urls":"stun:stun.l.google.com:19302"}]}' | base64 -w 0
+echo '{"iceServers":[{"urls":"turn:your-turn-server.com:3478","username":"your-username","credential":"your-password"}]}' | base64 -w 0
 
 # Set in GitHub repository environment variables or secrets (replace with your actual config)
 RTC_CONFIG=<your-base64-encoded-rtc-config-here>
 ```
 
-**Client-side (STUN servers)**: Set the `VITE_STUN_SERVERS` environment variable with comma-separated STUN server URLs:
-
-```bash
-# Set in GitHub repository environment variables or secrets
-VITE_STUN_SERVERS=stun:stun.l.google.com:19302,stun:stun1.l.google.com:19302
-```
-
-If `RTC_CONFIG` is not set, the API will fall back to a default TURN server. If `VITE_STUN_SERVERS` is not set, the frontend will use default STUN servers.
+If `RTC_CONFIG` is not set, the API will fall back to a default TURN server.
 
 **For self-hosters**: If you don't set `VITE_RTC_CONFIG_ENDPOINT`, the Enhanced Connectivity feature will be automatically disabled and hidden from users. This prevents confusion when external TURN server configuration is not available. To enable Enhanced Connectivity, set `VITE_RTC_CONFIG_ENDPOINT` to your API endpoint (defaults to `/api/get-config` if you set it to any truthy value).
 
@@ -420,7 +408,7 @@ If you run into any issues with a custom Chitchatter installation, first ensure 
 
 #### Peers won't connect
 
-This could happen for a variety of reasons. The most likely of which is that one or more peers cannot connect directly and must use the configured STUN/TURN relay as a fallback. The standard relay is free and does not guarantee any level of service, so it may simply be unavailable for some time (or just not work at all for some users). There's not much to do other than wait until it becomes available again, or possibly try from another device or location.
+This could happen for a variety of reasons. The most likely of which is that one or more peers cannot connect directly and must use the configured TURN relay as a fallback. The standard relay is free and does not guarantee any level of service, so it may simply be unavailable for some time (or just not work at all for some users). There's not much to do other than wait until it becomes available again, or possibly try from another device or location.
 
 ##### Issues specific to browsers with ad blocking extensions
 

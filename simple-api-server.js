@@ -38,18 +38,13 @@ import { createServer } from 'http'
 import { Buffer } from 'buffer'
 
 // Fallback rtcConfig in case environment variable is missing or invalid
+/**
+ * @type RTCConfiguration
+ */
 const fallbackRtcConfig = {
-  iceServers: [
-    {
-      urls: 'turn:relay1.expressturn.com:3478',
-      username: 'efQUQ79N77B5BNVVKF',
-      credential: 'N4EAUgpjMzPLrxSS',
-    },
-    // Free Google STUN server for basic NAT traversal.
-    {
-      urls: 'stun:stun.l.google.com:19302',
-    },
-  ],
+  urls: ['turn:relay1.expressturn.com:3478'],
+  username: 'efQUQ79N77B5BNVVKF',
+  credential: 'N4EAUgpjMzPLrxSS',
 }
 
 // Validate that the decoded data conforms to RTCConfiguration interface

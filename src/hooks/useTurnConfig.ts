@@ -2,8 +2,7 @@
  * RTC Configuration Hook
  *
  * This hook manages the fetching and merging of WebRTC configuration from multiple sources.
- * It can optionally fetch TURN server configuration from the API and merges it with STUN
- * server configuration from environment variables to create a complete RTCConfiguration.
+ * It can optionally fetch TURN server configuration from the API.
  * API requests can be disabled for enhanced privacy.
  *
  * ENVIRONMENT CONFIGURATION:
@@ -18,8 +17,7 @@
  *
  * CONFIGURATION SOURCES:
  * 1. TURN servers: API endpoint (configurable via VITE_RTC_CONFIG_ENDPOINT, defaults to /api/get-config) - OPTIONAL
- * 2. STUN servers: VITE_STUN_SERVERS environment variable (comma-separated URLs)
- * 3. No fallback servers - only configured servers are used
+ * 2. No fallback servers - only configured servers are used
  *
  * CACHING:
  * - Cached for entire session (staleTime)
@@ -34,13 +32,6 @@ import {
 } from 'config/enhancedConnectivity'
 
 import { QueryKey } from './types'
-
-/**
- * Validates if a URL is a valid STUN server URL
- */
-const isValidStunUrl = (url: string): boolean => {
-  return /^stun:.+:\d+$/.test(url)
-}
 
 /**
  * Type guard to validate if an object is a valid RTCIceServer
@@ -66,56 +57,6 @@ const isRTCIceServer = (obj: any): obj is RTCIceServer => {
   }
 
   return true
-}
-
-/**
- * Gets STUN servers from environment variable or fallback
- *
- * @returns Array of STUN server configurations
- */
-const getStunServers = (): RTCIceServer[] => {
-  const stunServersEnv = import.meta.env.VITE_STUN_SERVERS
-
-  if (!stunServersEnv) {
-    console.log('VITE_STUN_SERVERS not set')
-
-    return []
-  }
-
-  if (typeof stunServersEnv !== 'string') {
-    console.error('VITE_STUN_SERVERS must be a string')
-    return []
-  }
-
-  const trimmedEnv = stunServersEnv.trim()
-  if (!trimmedEnv) {
-    console.error('VITE_STUN_SERVERS is empty')
-    return []
-  }
-
-  const stunUrls = trimmedEnv
-    .split(',')
-    .map((url: string) => url.trim())
-    .filter((url: string) => {
-      if (!url) {
-        console.warn('Skipping empty STUN server URL')
-        return false
-      }
-      if (!isValidStunUrl(url)) {
-        console.warn(`Skipping invalid STUN server URL: ${url}`)
-        return false
-      }
-      return true
-    })
-
-  if (stunUrls.length === 0) {
-    console.error('No valid STUN servers found in VITE_STUN_SERVERS')
-    return []
-  }
-
-  const stunServers = stunUrls.map((url: string) => ({ urls: url }))
-
-  return stunServers
 }
 
 /**
@@ -228,16 +169,16 @@ const fetchTurnServer = async (): Promise<RTCIceServer> => {
  * skips API request and uses fallback TURN server
  *
  * @returns Object containing:
- *   - rtcConfig: RTCConfiguration object (merged TURN + STUN servers)
+ *   - rtcConfig: RTCConfiguration object
  *   - isLoading: Boolean indicating if the TURN server request is in progress
  *   - isError: Boolean indicating if the TURN server request failed
  *   - error: Error object if the TURN server request failed
  *   - isEnhancedConnectivityAvailable: Boolean indicating if enhanced connectivity feature is available
  */
-export const useRtcConfig = (
+export const useTurnConfig = (
   enableApiRequest: boolean = true
 ): {
-  rtcConfig: RTCConfiguration
+  turnConfig: RTCConfiguration
   isLoading: boolean
   isError: boolean
   error: Error | null
@@ -270,11 +211,8 @@ export const useRtcConfig = (
     retryDelay: 1000, // 1 second delay before retry
   })
 
-  // Get STUN servers from environment
-  const stunServers = useMemo(() => getStunServers(), [])
-
-  // Merge TURN server (from API only) with STUN servers
-  const rtcConfig = useMemo((): RTCConfiguration => {
+  // Merge TURN server from API
+  const turnConfig = useMemo((): RTCConfiguration => {
     const iceServers: RTCIceServer[] = []
 
     // Only include TURN server if we have one from API
@@ -282,16 +220,13 @@ export const useRtcConfig = (
       iceServers.push(turnServer)
     }
 
-    // Add STUN servers
-    iceServers.push(...stunServers)
-
     return {
       iceServers,
     }
-  }, [turnServer, stunServers, enableApiRequest])
+  }, [turnServer, enableApiRequest])
 
   return {
-    rtcConfig,
+    turnConfig,
     isLoading,
     isError,
     error,

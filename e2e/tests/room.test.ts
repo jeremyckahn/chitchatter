@@ -149,8 +149,8 @@ test.describe('Multi-user Room Interaction', () => {
     await page2.waitForLoadState('networkidle')
 
     // Wait for both users to be connected
-    await expect(page1.getByPlaceholder('Your message')).toBeVisible()
-    await expect(page2.getByPlaceholder('Your message')).toBeVisible()
+    await expect(page1.getByPlaceholder('Your message').first()).toBeVisible()
+    await expect(page2.getByPlaceholder('Your message').first()).toBeVisible()
 
     // User 1 sends a message
     const chatInput1 = page1.getByPlaceholder('Your message').first()

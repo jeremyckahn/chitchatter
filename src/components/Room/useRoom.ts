@@ -1,7 +1,5 @@
 import { useDebounce } from '@react-hook/debounce'
 import { useContext, useEffect, useMemo, useState } from 'react'
-import { BaseRoomConfig } from 'trystero'
-import { RelayConfig } from 'trystero/torrent'
 import { v4 as uuid } from 'uuid'
 
 import { getPeerName, usePeerNameDisplay } from 'components/PeerNameDisplay'
@@ -10,7 +8,12 @@ import { SettingsContext } from 'contexts/SettingsContext'
 import { ShellContext } from 'contexts/ShellContext'
 import { usePeerAction } from 'hooks/usePeerAction'
 import { Audio } from 'lib/Audio'
-import { ActionNamespace, PeerHookType, PeerRoom } from 'lib/PeerRoom'
+import {
+  ActionNamespace,
+  PeerHookType,
+  PeerRoom,
+  RoomConfig,
+} from 'lib/PeerRoom'
 import { time } from 'lib/Time'
 import {
   AudioChannelName,
@@ -56,7 +59,7 @@ interface UserMetadata extends Record<string, any> {
 }
 
 export function useRoom(
-  { password, ...roomConfig }: BaseRoomConfig & RelayConfig,
+  { password, ...roomConfig }: RoomConfig,
   {
     roomId,
     userId,

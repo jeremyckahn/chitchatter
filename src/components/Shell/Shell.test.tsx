@@ -1,5 +1,6 @@
 import { waitFor, render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { SettingsContext } from 'contexts/SettingsContext'
 import { MemoryRouter as Router } from 'react-router-dom'
 import { userSettingsContextStubFactory } from 'test-utils/stubs/settingsContext'
@@ -12,17 +13,32 @@ const userSettingsStub = userSettingsContextStubFactory({
   userId: mockUserPeerId,
 })
 
+const createTestQueryClient = () =>
+  new QueryClient({
+    defaultOptions: {
+      queries: {
+        retry: false,
+        gcTime: Infinity,
+        staleTime: Infinity,
+      },
+    },
+  })
+
 const ShellStub = (shellProps: Partial<ShellProps> = {}) => {
+  const queryClient = createTestQueryClient()
+
   return (
-    <Router>
-      <SettingsContext.Provider value={userSettingsStub}>
-        <Shell
-          appNeedsUpdate={false}
-          userPeerId={mockUserPeerId}
-          {...shellProps}
-        />
-      </SettingsContext.Provider>
-    </Router>
+    <QueryClientProvider client={queryClient}>
+      <Router>
+        <SettingsContext.Provider value={userSettingsStub}>
+          <Shell
+            appNeedsUpdate={false}
+            userPeerId={mockUserPeerId}
+            {...shellProps}
+          />
+        </SettingsContext.Provider>
+      </Router>
+    </QueryClientProvider>
   )
 }
 
