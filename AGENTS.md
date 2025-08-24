@@ -1,4 +1,4 @@
-# LLM Rules for chitchatter Project
+# LLM Rules for Chitchatter Project
 
 ## TypeScript Function Definitions
 
@@ -7,14 +7,16 @@ When writing TypeScript functions in this project, always use the arrow function
 ```typescript
 const functionName = () => {
   // function body
-};
+}
 ```
 
 Instead of:
+
 - Function declarations: `function functionName() {}`
 - Function expressions: `const functionName = function() {}`
 
 This applies to:
+
 - Regular functions
 - Async functions: `const functionName = async () => {}`
 - Functions with parameters: `const functionName = (param1: string, param2: number) => {}`
@@ -23,6 +25,7 @@ This applies to:
 ## Exceptions
 
 The only exceptions to this rule are:
+
 - React component definitions (use function declarations or arrow functions as appropriate)
 - Method definitions within classes
 - Callback functions that are defined inline
@@ -77,6 +80,7 @@ This consistent style improves code readability and maintains uniformity across 
 ### Pre-Commit Checklist
 
 Before committing any code, ensure:
+
 1. `npm test` passes with all tests green
 2. `npm run lint` passes with zero warnings
 3. `npm run check:types` passes with zero errors
