@@ -129,7 +129,7 @@ export const Drawer = ({ isDrawerOpen, onDrawerClose }: DrawerProps) => {
         <Divider />
         <Box sx={{ padding: 2 }}>
           <Typography variant="subtitle2">
-            Build signature:{' '}
+            Подпись сборки:{' '}
             <Typography
               sx={{
                 fontFamily: 'monospace',

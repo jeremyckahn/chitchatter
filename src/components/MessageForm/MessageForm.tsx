@@ -96,7 +96,7 @@ export const MessageForm = ({
             onChange={handleMessageChange}
             onKeyPress={handleMessageKeyPress}
             size="medium"
-            placeholder="Your message"
+            placeholder="Введите ваше сообщение"
             inputRef={textFieldRef}
             multiline
           />

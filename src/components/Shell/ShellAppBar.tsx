@@ -136,7 +136,7 @@ export const ShellAppBar = ({
             )}
             {isEmbedded ? null : (
               <>
-                <Tooltip title="Copy current URL">
+                <Tooltip title="Копировать текущую ссылку">
                   <IconButton
                     size="large"
                     color="inherit"
@@ -146,7 +146,7 @@ export const ShellAppBar = ({
                     <Link />
                   </IconButton>
                 </Tooltip>
-                <Tooltip title="Show QR Code">
+                <Tooltip title="Показать QR код">
                   <IconButton
                     size="large"
                     color="inherit"
@@ -166,7 +166,7 @@ export const ShellAppBar = ({
             )}
             <Tooltip
               title={
-                showRoomControls ? 'Hide Room Controls' : 'Show Room Controls'
+                showRoomControls ? 'Скрыть элементы управления комнатой' : 'Показать элементы управления комнатой'
               }
             >
               <IconButton
@@ -179,7 +179,7 @@ export const ShellAppBar = ({
               </IconButton>
             </Tooltip>
             <Tooltip
-              title={isFullscreen ? 'Exit fullscreen' : 'Enter fullscreen'}
+              title={isFullscreen ? 'Закрыть полноэкранный режим' : 'Включить полноэкранный режим'}
             >
               <IconButton
                 size="large"
@@ -191,7 +191,7 @@ export const ShellAppBar = ({
                 {isFullscreen ? <FullscreenExit /> : <Fullscreen />}
               </IconButton>
             </Tooltip>
-            <Tooltip title="Click to show peer list">
+            <Tooltip title="Нажмите, чтобы отобразить список пользователей">
               <IconButton
                 size="large"
                 edge="end"

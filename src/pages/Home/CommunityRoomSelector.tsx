@@ -37,19 +37,19 @@ export const CommunityRoomSelector = () => {
           fontWeight: 'bold',
         }}
       >
-        Community rooms
+        Общественные комнаты
       </AccordionSummary>
       <AccordionDetails>
         <Typography variant="body1">
-          You can also chat in a public community room. You'll be anonymous, but
-          be careful what information you choose to share.
+          Вы также можете пообщаться в публичной общественной комнате. Вы будете анонимны, 
+          но будьте осторожны с информацией, которой решите поделиться.
         </Typography>
         <Box display="flex" mt={2} gap={1}>
           <Autocomplete
             disablePortal
             options={communityRoomNames}
             value={selectedRoom}
-            renderInput={params => <TextField {...params} label="Room" />}
+            renderInput={(params) => <TextField {...params} label="Комната" />}
             onChange={handleRoomNameChange}
             sx={{ flexGrow: 1 }}
           />
@@ -58,10 +58,10 @@ export const CommunityRoomSelector = () => {
             disabled={selectedRoom === null}
             onClick={handleJoinClick}
           >
-            Join
+            Войти
           </Button>
         </Box>
       </AccordionDetails>
     </Accordion>
-  )
+  );
 }
