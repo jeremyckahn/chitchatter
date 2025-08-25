@@ -33,11 +33,9 @@ export const Settings = ({ userId }: SettingsProps) => {
   const { setTitle, showAlert } = useContext(ShellContext)
   const { updateUserSettings, getUserSettings } = useContext(SettingsContext)
   const { getPersistedStorage } = useContext(StorageContext)
-  const [
-    isDeleteSettingsConfirmDiaglogOpen,
-    setIsDeleteSettingsConfirmDiaglogOpen,
-  ] = useState(false)
+  const [isDeleteSettingsConfirmDialogOpen, setIsDeleteSettingsConfirmDialogOpen] = useState(false)
   const [, setIsNotificationPermissionDetermined] = useState(false)
+
   const {
     playSoundOnNewMessage,
     showNotificationOnNewMessage,
@@ -50,15 +48,12 @@ export const Settings = ({ userId }: SettingsProps) => {
   useEffect(() => {
     ;(async () => {
       await notification.requestPermission()
-
-      // This state needs to be set to cause a rerender so that
-      // areNotificationsAvailable is up-to-date.
       setIsNotificationPermissionDetermined(true)
     })()
   }, [])
 
   useEffect(() => {
-    setTitle('Settings')
+    setTitle('Настройки')
   }, [setTitle])
 
   const handlePlaySoundOnNewMessageChange = (
@@ -88,7 +83,6 @@ export const Settings = ({ userId }: SettingsProps) => {
     _event: ChangeEvent,
     newIsEnhancedConnectivityEnabled: boolean
   ) => {
-    // Only update if enhanced connectivity is available
     if (isEnhancedConnectivityAvailable) {
       updateUserSettings({
         isEnhancedConnectivityEnabled: newIsEnhancedConnectivityEnabled,
@@ -97,11 +91,11 @@ export const Settings = ({ userId }: SettingsProps) => {
   }
 
   const handleDeleteSettingsClick = () => {
-    setIsDeleteSettingsConfirmDiaglogOpen(true)
+    setIsDeleteSettingsConfirmDialogOpen(true)
   }
 
   const handleDeleteSettingsCancel = () => {
-    setIsDeleteSettingsConfirmDiaglogOpen(false)
+    setIsDeleteSettingsConfirmDialogOpen(false)
   }
 
   const handleDeleteSettingsConfirm = async () => {
@@ -122,10 +116,8 @@ export const Settings = ({ userId }: SettingsProps) => {
   const handleImportSettingsClick = async ([[, file]]: Result[]) => {
     try {
       const userSettings = await settings.importSettings(file)
-
       updateUserSettings(userSettings)
-
-      showAlert('Profile successfully imported', { severity: 'success' })
+      showAlert('Профиль успешно импортирован', { severity: 'success' })
     } catch (e) {
       if (isErrorWithMessage(e)) {
         showAlert(e.message, { severity: 'error' })
@@ -145,10 +137,11 @@ export const Settings = ({ userId }: SettingsProps) => {
           mb: 2,
         }}
       >
-        Chat
+        Чат
       </Typography>
+
       <Paper elevation={3} sx={{ p: 2, mb: 2 }}>
-        <Typography>When a message is received in the background:</Typography>
+        <Typography>Когда приходит сообщение в фоне:</Typography>
         <FormGroup>
           <FormControlLabel
             control={
@@ -157,26 +150,26 @@ export const Settings = ({ userId }: SettingsProps) => {
                 onChange={handlePlaySoundOnNewMessageChange}
               />
             }
-            label="Play a sound"
+            label="Проигрывать звук"
           />
           <FormControlLabel
             control={
               <Switch
-                checked={
-                  areNotificationsAvailable && showNotificationOnNewMessage
-                }
+                checked={areNotificationsAvailable && showNotificationOnNewMessage}
                 onChange={handleShowNotificationOnNewMessageChange}
                 disabled={!areNotificationsAvailable}
               />
             }
-            label="Show a notification"
+            label="Показывать уведомление"
           />
         </FormGroup>
+
         <Typography mt={2}>
-          Select a sound that plays when you receive a message:
+          Выберите звук, который будет проигрываться при получении сообщения:
         </Typography>
         <SoundSelector disabled={!playSoundOnNewMessage} />
       </Paper>
+
       <Paper elevation={3} sx={{ p: 2, mb: 2 }}>
         <FormGroup>
           <FormControlLabel
@@ -186,11 +179,11 @@ export const Settings = ({ userId }: SettingsProps) => {
                 onChange={handleShowActiveTypingStatusChange}
               />
             }
-            label="Show active typing indicators"
+            label="Показывать индикатор набора текста"
           />
         </FormGroup>
         <Typography variant="subtitle2">
-          Disabling this will also hide your active typing status from others.
+          При отключении вы также не будете показывать свой статус набора другим.
         </Typography>
       </Paper>
       <Divider sx={{ my: 2 }} />
@@ -204,7 +197,7 @@ export const Settings = ({ userId }: SettingsProps) => {
               mb: 2,
             }}
           >
-            Networking
+            Сеть
           </Typography>
           <EnhancedConnectivityControl
             isEnabled={isEnhancedConnectivityEnabled}
@@ -222,7 +215,7 @@ export const Settings = ({ userId }: SettingsProps) => {
           mb: 2,
         }}
       >
-        Data
+        Данные
       </Typography>
       <Typography
         variant="h2"
@@ -232,27 +225,18 @@ export const Settings = ({ userId }: SettingsProps) => {
           mb: 1.5,
         }}
       >
-        Export profile data
+        Экспортировать данные профиля
       </Typography>
-      <Typography
-        variant="body1"
-        sx={{
-          mb: 2,
-        }}
-      >
-        Export your Chitchatter profile data so that it can be moved to another
-        browser or device.{' '}
-        <strong>Be careful not to share the exported data with anyone</strong>.
-        It contains your unique verification keys.
+      <Typography variant="body1" sx={{ mb: 2 }}>
+        Экспортируйте свой профиль Chitchatter, чтобы перенести его в другой браузер или на другое устройство.{' '}
+        <strong>Будьте осторожны: не передавайте экспортированные данные никому</strong>. Они содержат ваши уникальные ключи верификации.
       </Typography>
       <Button
         variant="outlined"
-        sx={{
-          mb: 2,
-        }}
+        sx={{ mb: 2 }}
         onClick={handleExportSettingsClick}
       >
-        Export profile data
+        Экспортировать данные профиля
       </Button>
       <Typography
         variant="h2"
@@ -262,33 +246,23 @@ export const Settings = ({ userId }: SettingsProps) => {
           mb: 1.5,
         }}
       >
-        Import profile data
+        Импортировать данные профиля
       </Typography>
-      <Typography
-        variant="body1"
-        sx={{
-          mb: 2,
-        }}
-      >
-        Import your Chitchatter profile that was previously exported from
-        another browser or device.
+      <Typography variant="body1" sx={{ mb: 2 }}>
+        Импортируйте ранее экспортированный профиль Chitchatter из другого браузера или устройства.
       </Typography>
       <FileReaderInput
-        {...{
-          as: 'text',
-          onChange: (_e, results) => {
-            handleImportSettingsClick(results)
-          },
+        as="text"
+        onChange={(_e, results) => {
+          handleImportSettingsClick(results)
         }}
       >
         <Button
           color="warning"
           variant="outlined"
-          sx={{
-            mb: 2,
-          }}
+          sx={{ mb: 2 }}
         >
-          Import profile data
+          Импортировать данные профиля
         </Button>
       </FileReaderInput>
       <Typography
@@ -299,53 +273,41 @@ export const Settings = ({ userId }: SettingsProps) => {
           mb: 1.5,
         }}
       >
-        Delete all profile data
+        Удалить все данные профиля
       </Typography>
-      <Typography
-        variant="body1"
-        sx={{
-          mb: 2,
-        }}
-      >
-        <strong>Be careful with this</strong>. This will cause your user name to
-        change from{' '}
+      <Typography variant="body1" sx={{ mb: 2 }}>
+        <strong>Будьте осторожны</strong>. Это изменит ваше имя пользователя с{' '}
         <strong>
           <PeerNameDisplay
-            sx={{
-              fontWeight: theme.typography.fontWeightMedium,
-            }}
+            sx={{ fontWeight: theme.typography.fontWeightMedium }}
           >
             {userId}
           </PeerNameDisplay>
         </strong>{' '}
-        to a new, randomly-assigned name. It will also reset all of your saved
-        Chitchatter application preferences.
+        на новое, случайное. Также будут сброшены все настройки приложения Chitchatter.
       </Typography>
       <Button
         variant="outlined"
         color="error"
-        sx={{
-          mb: 2,
-        }}
+        sx={{ mb: 2 }}
         onClick={handleDeleteSettingsClick}
       >
-        Delete all data and restart
+        Удалить данные и начать заново
       </Button>
+
       <ConfirmDialog
-        isOpen={isDeleteSettingsConfirmDiaglogOpen}
+        isOpen={isDeleteSettingsConfirmDialogOpen}
         onCancel={handleDeleteSettingsCancel}
         onConfirm={handleDeleteSettingsConfirm}
       />
+
       <Typography
         variant="subtitle2"
-        sx={{
-          mb: 2,
-        }}
+        sx={{ mb: 2 }}
       >
-        Chitchatter only stores user preferences and never message content of
-        any kind. This preference data is only stored locally on your device and
-        not a server.
+        Chitchatter хранит только ваши настройки и никогда — содержимое сообщений. Эти данные сохраняются только на вашем устройстве и не передаются на серверы.
       </Typography>
+
       <Divider sx={{ my: 2 }} />
     </Box>
   )

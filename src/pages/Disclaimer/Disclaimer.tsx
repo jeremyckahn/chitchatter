@@ -27,58 +27,58 @@ export const Disclaimer = () => {
     >
       <MuiMarkdown>
         {`
-### Interpretation and Definitions
+### Толкование и определения
 
-#### Interpretation
+#### Толкование
 
-The words of which the initial letter is capitalized have meanings defined under the following conditions. The following definitions shall have the same meaning regardless of whether they appear in singular or in plural.
+Слова, начинающиеся с заглавной буквы, имеют значения, определённые в следующих условиях. Нижеуказанные определения применяются одинаково как в единственном, так и во множественном числе.
 
-#### Definitions
+#### Определения
 
-For the purposes of this Disclaimer:
+Для целей настоящего отказа от ответственности:
 
-*   **Project** (referred to as either "the Project", "We", "Us" or "Our" in this Disclaimer) refers to Chitchatter.
-*   **Service** refers to the Website.
-*   **You** means the individual accessing the Service, or the company, or other legal entity on behalf of which such individual is accessing or using the Service, as applicable.
-*   **Website** refers to Chitchatter, accessible from [https://chitchatter.im](https://chitchatter.im)
+*   **Проект** (в дальнейшем именуемый «Проектом», «мы», «нас» или «нашим» в настоящем документе) означает Chitchatter.
+*   **Сервис** означает веб-сайт.
+*   **Вы** — это физическое лицо, имеющее доступ к Сервису, либо компания или другое юридическое лицо, от имени которого данное лицо получает доступ к Сервису или использует его.
+*   **Веб-сайт** означает Chitchatter, доступный по адресу: [https://chitchatter.im](https://chitchatter.im)
 
-### Disclaimer
+### Отказ от ответственности
 
-The information contained on the Service is for general information purposes only.
+Информация, содержащаяся в Сервисе, предоставляется исключительно в ознакомительных целях.
 
-The Project assumes no responsibility for errors or omissions in the contents of the Service.
+Проект не несёт ответственности за ошибки или упущения в содержании Сервиса.
 
-In no event shall the Project be liable for any special, direct, indirect, consequential, or incidental damages or any damages whatsoever, whether in an action of contract, negligence or other tort, arising out of or in connection with the use of the Service or the contents of the Service. The Project reserves the right to make additions, deletions, or modifications to the contents on the Service at any time without prior notice.
+В каком бы то ни было случае Проект не несёт ответственности за любые специальные, прямые, косвенные, случайные, последующие или иные убытки, возникшие в результате использования Сервиса или его содержимого, независимо от основания ответственности (договор, халатность или иное деликтное поведение). Проект оставляет за собой право вносить изменения, удалять или добавлять содержимое Сервиса в любое время без предварительного уведомления.
 
-The Project does not warrant that the Service is free of viruses or other harmful components.
+Проект не гарантирует, что Сервис свободен от вирусов или иных вредоносных компонентов.
 
-#### External Links Disclaimer
+#### Отказ от ответственности за внешние ссылки
 
-The Service may contain links to external websites that are not provided or maintained by or in any way affiliated with the Project.
+Сервис может содержать ссылки на внешние веб-сайты, которые не принадлежат Проекту, не поддерживаются им и не имеют с ним никакой связи.
 
-Please note that the Project does not guarantee the accuracy, relevance, timeliness, or completeness of any information on these external websites.
+Обратите внимание, что Проект не гарантирует точность, актуальность, своевременность или полноту информации, размещённой на таких внешних сайтах.
 
-#### Errors and Omissions Disclaimer
+#### Отказ от ответственности за ошибки и упущения
 
-The information given by the Service is for general guidance on matters of interest only. Even if the Project takes every precaution to insure that the content of the Service is both current and accurate, errors can occur. Plus, given the changing nature of laws, rules and regulations, there may be delays, omissions or inaccuracies in the information contained on the Service.
+Информация, предоставляемая Сервисом, носит исключительно общий информационный характер. Даже если Проект предпринимает все возможные меры для обеспечения актуальности и точности содержания Сервиса, ошибки могут возникать. Кроме того, учитывая постоянные изменения в законах, правилах и нормативных актах, информация на Сервисе может содержать задержки, пропуски или неточности.
 
-The Project is not responsible for any errors or omissions, or for the results obtained from the use of this information.
+Проект не несёт ответственности за любые ошибки или упущения, а также за результаты, полученные в результате использования данной информации.
 
-#### Views Expressed Disclaimer
+#### Отказ от ответственности за выраженные мнения
 
-The Service may contain views and opinions which are those of the authors and do not necessarily reflect the official policy or position of any other author, agency, organization, employer or company, including the Project.
+Сервис может содержать мнения и взгляды, принадлежащие их авторам и не обязательно отражающие официальную позицию других авторов, агентств, организаций, работодателей или компаний, включая Проект.
 
-Messages sent by users are their sole responsibility and the users will take full responsibility, liability and blame for any libel or litigation that results from something written in or as a direct result of something written in a message. The Project is not liable for any messages sent by users.
+Сообщения, отправляемые пользователями, являются исключительной ответственностью самих пользователей. Пользователи несут полную ответственность, включая юридическую и финансовую, за любые клеветнические заявления или судебные иски, возникшие в результате содержания сообщений или вследствие них. Проект не несёт ответственности за сообщения, отправленные пользователями.
 
-#### No Responsibility Disclaimer
+#### Отказ от ответственности за последствия использования
 
-In no event shall the Project or its suppliers be liable for any special, incidental, indirect, or consequential damages whatsoever arising out of or in connection with your access or use or inability to access or use the Service.
+В каком бы то ни было случае Проект или его поставщики не несут ответственности за любые специальные, случайные, косвенные или последующие убытки, возникшие в связи с доступом к Сервису, использованием или невозможностью использования Сервиса.
 
-#### "Use at Your Own Risk" Disclaimer
+#### Отказ от ответственности: «Использование на свой страх и риск»  
 
-All information in the Service is provided "as is", with no guarantee of completeness, accuracy, timeliness or of the results obtained from the use of this information, and without warranty of any kind, express or implied, including, but not limited to warranties of performance, merchantability and fitness for a particular purpose.
+Вся информация в Сервисе предоставляется «как есть», без каких-либо гарантий полноты, точности, своевременности или результатов, полученных при использовании этой информации, а также без явно выраженных или подразумеваемых гарантий, включая, но не ограничиваясь, гарантиями пригодности для определённой цели, товарного состояния и пригодности для конкретного использования.
 
-The Project will not be liable to You or anyone else for any decision made or action taken in reliance on the information given by the Service or for any consequential, special or similar damages, even if advised of the possibility of such damages.
+Проект не несёт ответственности перед Вами или третьими лицами за любые решения, принятые, или действия, предпринятые на основании информации, полученной из Сервиса, а также за любые последующие, особые или аналогичные убытки, даже если была указана возможность таких убытков.
 `}
       </MuiMarkdown>
     </Box>

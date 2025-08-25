@@ -81,7 +81,7 @@ export function Home({ userId }: HomeProps) {
           textAlign: 'center',
         }}
       >
-        <Link to={routes.ABOUT} aria-label="Go to About page">
+        <Link to={routes.ABOUT} aria-label="Перейти на страницу «О проекте»">
           <StyledLogo
             sx={{
               px: 0.5,
@@ -96,21 +96,21 @@ export function Home({ userId }: HomeProps) {
           sx={{ maxWidth: theme.breakpoints.values.sm, mx: 'auto' }}
         >
           <Typography sx={{ mb: 2 }}>
-            Your username:{' '}
+            Ваше имя пользователя:{' '}
             <PeerNameDisplay paragraph={false} sx={{ fontWeight: 'bold' }}>
               {userId}
             </PeerNameDisplay>
           </Typography>
           <FormControl fullWidth>
             <TextField
-              label="Room name (generated on your device)"
+              label="Название комнаты (генерируется на вашем устройстве)"
               variant="outlined"
               value={roomName}
               onChange={handleRoomNameChange}
               InputProps={{
                 endAdornment: (
                   <IconButton
-                    aria-label="Regenerate room id"
+                    aria-label="Сгенерировать новый идентификатор комнаты"
                     onClick={regenerateRoomName}
                     size="small"
                   >
@@ -127,7 +127,7 @@ export function Home({ userId }: HomeProps) {
               value={roomNameType}
               exclusive
               onChange={handleRoomNameTypeChange}
-              aria-label="room name type"
+              aria-label="тип названия комнаты"
               size="small"
             >
               <ToggleButton value={RoomNameType.UUID} aria-label="UUID">
@@ -135,9 +135,9 @@ export function Home({ userId }: HomeProps) {
               </ToggleButton>
               <ToggleButton
                 value={RoomNameType.PASSPHRASE}
-                aria-label="Passphrase"
+                aria-label="Парольная фраза"
               >
-                Passphrase
+                Парольная фраза
               </ToggleButton>
             </ToggleButtonGroup>
           </Box>
@@ -157,7 +157,7 @@ export function Home({ userId }: HomeProps) {
               }}
               disabled={!isRoomNameValid}
             >
-              Join public room
+              Войти в публичную комнату
             </Button>
             <Button
               variant="contained"
@@ -168,7 +168,7 @@ export function Home({ userId }: HomeProps) {
               }}
               disabled={!isRoomNameValid}
             >
-              Join private room
+              Войти в приватную комнату
             </Button>
             <Button
               variant="contained"
@@ -180,12 +180,12 @@ export function Home({ userId }: HomeProps) {
               }}
               disabled={!isRoomNameValid}
             >
-              Get embed code
+              Получить код для встраивания
             </Button>
           </Box>
         </Form>
       </Main>
-      <Box component="section" aria-label="Additional options and information">
+      <Box component="section" aria-label="Дополнительные опции и информация">
         <Divider sx={{ my: 2 }} />
         <Box maxWidth={theme.breakpoints.values.sm} mx="auto" px={2}>
           <CommunityRoomSelector />
@@ -212,10 +212,9 @@ export function Home({ userId }: HomeProps) {
           }}
         >
           <Typography variant="body1">
-            This is a free communication tool that is designed for simplicity,
-            privacy, and security. All interaction between you and your online
-            peers is encrypted. There is no record of your conversation once you
-            all leave.
+            Это бесплатный инструмент для общения, разработанный с упором на простоту, 
+            приватность и безопасность. Весь обмен данными между вами и собеседниками шифруется. 
+            После выхода всех участников история переписки не сохраняется.
           </Typography>
         </Box>
         <Box
@@ -238,25 +237,25 @@ export function Home({ userId }: HomeProps) {
               size="large"
               edge="start"
               color="inherit"
-              aria-label="View source code on GitHub"
+              aria-label="Посмотреть исходный код на GitHub"
             >
               <GitHubIcon sx={{ fontSize: '2em' }} />
             </IconButton>
           </MuiLink>
           <Typography variant="body1" sx={{ textAlign: 'center', mb: 1 }}>
-            Licensed under{' '}
+            Лицензия —{' '}
             <MuiLink
               href="https://github.com/jeremyckahn/chitchatter/blob/develop/LICENSE"
               target="_blank"
             >
               GPL v2
             </MuiLink>
-            . Please{' '}
+            . Пожалуйста,{' '}
             <MuiLink
               href="https://github.com/jeremyckahn/chitchatter/blob/develop/README.md"
               target="_blank"
             >
-              read the docs
+              ознакомьтесь с документацией
             </MuiLink>
             .
           </Typography>

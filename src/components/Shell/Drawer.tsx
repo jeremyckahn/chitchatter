@@ -86,7 +86,7 @@ export const Drawer = ({ isDrawerOpen, onDrawerClose }: DrawerProps) => {
               <ListItemIcon>
                 <Home />
               </ListItemIcon>
-              <ListItemText primary="Home" />
+              <ListItemText primary="Главная" />
             </ListItemButton>
           </ListItem>
           <ListItem disablePadding>
@@ -94,7 +94,7 @@ export const Drawer = ({ isDrawerOpen, onDrawerClose }: DrawerProps) => {
               <ListItemIcon>
                 <SettingsApplications />
               </ListItemIcon>
-              <ListItemText primary="Settings" />
+              <ListItemText primary="Настройка" />
             </ListItemButton>
           </ListItem>
           <ListItem disablePadding>
@@ -102,7 +102,7 @@ export const Drawer = ({ isDrawerOpen, onDrawerClose }: DrawerProps) => {
               <ListItemIcon>
                 <QuestionMark />
               </ListItemIcon>
-              <ListItemText primary="About" />
+              <ListItemText primary="О проекте" />
             </ListItemButton>
           </ListItem>
           <ListItem disablePadding>
@@ -110,7 +110,7 @@ export const Drawer = ({ isDrawerOpen, onDrawerClose }: DrawerProps) => {
               <ListItemIcon>
                 <ReportIcon />
               </ListItemIcon>
-              <ListItemText primary="Disclaimer" />
+              <ListItemText primary="Отказ от отвественности" />
             </ListItemButton>
           </ListItem>
           <ListItem disablePadding>
@@ -122,7 +122,7 @@ export const Drawer = ({ isDrawerOpen, onDrawerClose }: DrawerProps) => {
                   <Brightness4Icon />
                 )}
               </ListItemIcon>
-              <ListItemText primary="Change theme" />
+              <ListItemText primary="Сменить тему" />
             </ListItemButton>
           </ListItem>
         </List>

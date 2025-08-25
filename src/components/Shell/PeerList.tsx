@@ -89,7 +89,7 @@ export const PeerList = ({
               }}
             >
               <CircularProgress size={16} sx={{ mr: 1.5 }} />
-              <span>Searching for peers...</span>
+              <span>В поисках единомышленников...</span>
             </Box>
           </>
         ) : null}

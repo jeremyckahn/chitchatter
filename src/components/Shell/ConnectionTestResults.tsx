@@ -37,7 +37,7 @@ export const ConnectionTestResults = ({
           sx={{ display: 'flex', flexDirection: 'row', alignItems: 'center' }}
         >
           <ReportIcon color="error" sx={{ mr: 1 }} />
-          <span>Server connection failed</span>
+          <span>Ошибка подключения к серверу</span>
         </Box>
       </Typography>
     )
@@ -50,7 +50,7 @@ export const ConnectionTestResults = ({
           sx={{ display: 'flex', flexDirection: 'row', alignItems: 'center' }}
         >
           <CircularProgress size={16} sx={{ mr: 1.5 }} />
-          <span>Searching for servers...</span>
+          <span>Поиск серверов...</span>
         </Box>
       </Typography>
     )
@@ -65,7 +65,7 @@ export const ConnectionTestResults = ({
 
   if (hasFullConnectivity) {
     return (
-      <Tooltip title="Connections can be established with all peers that also have a full network connection.">
+      <Tooltip title="Вы можете устанавливать соединение со всеми собеседниками, у которых также полное сетевое подключение.">
         <Typography variant="subtitle2">
           <Typography
             component="span"
@@ -73,13 +73,13 @@ export const ConnectionTestResults = ({
           >
             <Circle sx={{ fontSize: 'small' }} />
           </Typography>{' '}
-          Full network connection
+          Полное сетевое подключение
         </Typography>
       </Tooltip>
     )
   } else if (hasHost) {
     return (
-      <Tooltip title="Relay server is unavailable. Connections can only be established when a relay server is not needed for either peer.">
+      <Tooltip title="Ретрансляционный сервер недоступен. Соединение можно установить только в тех случаях, когда ретрансляция не требуется ни одной из сторон.">
         <Typography variant="subtitle2">
           <Typography
             component="span"
@@ -87,13 +87,13 @@ export const ConnectionTestResults = ({
           >
             <Circle sx={{ fontSize: 'small' }} />
           </Typography>{' '}
-          Partial network connection
+          Частичное сетевое подключение
         </Typography>
       </Tooltip>
     )
   } else {
     return (
-      <Tooltip title="Pairing server is unavailable. Peer connections cannot be established.">
+      <Tooltip title="Сервер сопряжения недоступен. Установить соединение с собеседниками невозможно.">
         <Typography variant="subtitle2">
           <Typography
             component="span"
@@ -101,7 +101,7 @@ export const ConnectionTestResults = ({
           >
             <Circle sx={{ fontSize: 'small' }} />
           </Typography>{' '}
-          No network connection
+          Нет сетевого подключения
         </Typography>
       </Tooltip>
     )

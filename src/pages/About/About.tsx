@@ -39,37 +39,38 @@ export const About = () => {
     >
       <MuiMarkdown>
         {`
-### User Guide
+### Руководство для пользователей
 
-Chitchatter is a communication tool designed to make secure and private communication accessible to all. Please [see the README](https://github.com/jeremyckahn/chitchatter/blob/develop/README.md) for full project documentation.
+Chitchatter — это инструмент для общения, созданный с целью сделать безопасную и приватную коммуникацию доступной каждому. Полная документация по проекту доступна в [файле README](https://github.com/jeremyckahn/chitchatter/blob/develop/README.md).
 
-#### Chat rooms
+#### Чат-комнаты
 
-Public rooms can be joined by **anyone** with the room URL. By default, rooms are given a random and unguessable name. You can name your room whatever you'd like, but keep in mind that simpler room names are more guessable by others. For maximum security, consider using the default room name.
+**Публичные комнаты** могут присоединяться **любые пользователи**, имеющие ссылку на комнату. По умолчанию комнатам присваивается случайное и не поддающееся угадыванию имя. Вы можете задать комнате любое имя, но имейте в виду, что простые имена легче угадать. Для максимальной безопасности рекомендуется использовать имя по умолчанию.
 
-Private rooms can only be joined by peers with a matching password. The password must be mutually agreed upon before joining. If peers submit mismatching passwords, they will be in the room but be unable to connect to each other. **No error will be shown** if there is a password mismatch because there is no central arbitrating mechanism by which to detect the mismatch.
+**Приватные комнаты** могут присоединяться только те пользователи, которые вводят одинаковый пароль. Пароль должен быть заранее согласован между участниками. Если участники введут разные пароли, они окажутся в одной комнате, но не смогут установить соединение друг с другом. **Никакой ошибки при этом показано не будет**, поскольку отсутствует централизованный механизм, который мог бы обнаружить несоответствие паролей.
 
-To connect to others, share the room URL with a secure tool such as [Burner Note](https://burnernote.com/) or [Yopass](https://yopass.se/). You will be notified when others join the room.
+Чтобы подключиться к другим участникам, поделитесь ссылкой на комнату с помощью безопасного инструмента, например [Burner Note](https://burnernote.com/) или [Yopass](https://yopass.se/). Вы будете уведомлены, когда другие пользователи присоединятся к комнате.
 
-##### Peer verification
+##### Проверка собеседников
 
-When you connect with a peer, Chitchatter automatically attempts to use [public-key cryptography](https://en.wikipedia.org/wiki/Public-key_cryptography) to verify them. You can see everyone's public keys in the peer list. Feel free to share your public key with others (it is not sensitive information) so that they can uniquely identify you.
+Когда вы подключаетесь к собеседнику, Chitchatter автоматически пытается использовать [асимметричное шифрование](https://en.wikipedia.org/wiki/Public-key_cryptography) для его верификации. Вы можете увидеть открытые ключи всех участников в списке собеседников. Смело делитесь своим открытым ключом с другими (это не конфиденциальная информация), чтобы вас можно было однозначно идентифицировать.
 
-All public and private keys are generated locally. Your private key is never sent to any peer or server.
+Все открытые и закрытые ключи генерируются локально. Ваш закрытый ключ **никогда не передаётся** другим участникам или серверам.
 
-##### Conversation backfilling
+##### Восстановление истории сообщений
 
-Conversation transcripts are erased from local memory as soon as you close the page or navigate away from the room. Conversations are only ever held in volatile memory and never persisted to any disk by Chitchatter.
+Транскрипция бесед удаляется из локальной памяти сразу после закрытия страницы или перехода из комнаты. История переписки хранится исключительно в оперативной памяти и **никогда не сохраняется на диск**.
 
-When a peer joins a **public** room with participants already in it, the new peer will automatically request the transcript of the conversation that has already taken place from the other peers. Once all peers leave the room, the conversation is completely erased. Peers joining a **private** room will not get the conversation transcript backfilled.
+Когда новый участник присоединяется к **публичной** комнате, где уже ведётся общение, он автоматически запрашивает у других участников историю сообщений, отправленных ранее. Как только все участники покинут комнату, вся история беседы полностью уничтожается. Участники, присоединяющиеся к **приватной** комнате, **не получают** историю сообщений.
 
-Chat transcript history is limited to ${messageTranscriptSizeLimitFormatted} messages for all rooms.
+История чата ограничена ${messageTranscriptSizeLimitFormatted} сообщениями для всех типов комнат.
 
-#### Message Authoring
+#### Написание сообщений
 
-Chat messages support [GitHub-flavored Markdown](https://github.github.com/gfm/) with code syntax highlighting.
+Сообщения в чате поддерживают [Markdown в стиле GitHub](https://github.github.com/gfm/) с подсветкой синтаксиса кода.
 
-Press \`Enter\` to send a message. Press \`Shift + Enter\` to insert a line break. Message size is limited to ${messageCharacterSizeLimitFormatted} characters.
+Нажмите \`Enter\`, чтобы отправить сообщение. Нажмите \`Shift + Enter\`, чтобы вставить перенос строки. Максимальный размер сообщения — ${messageCharacterSizeLimitFormatted} символов.
+
         `}
       </MuiMarkdown>
     </Box>
