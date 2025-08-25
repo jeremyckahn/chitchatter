@@ -42,7 +42,9 @@ const config = () => {
     server: {
       proxy: {
         '/api': {
-          target: 'http://localhost:3001',
+          target: process.env.IS_E2E_TEST
+            ? 'http://localhost:3003'
+            : 'http://localhost:3001',
           changeOrigin: true,
           secure: false,
         },

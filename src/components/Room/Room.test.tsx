@@ -34,14 +34,11 @@ global.fetch = vi.fn().mockResolvedValue({
     get: vi.fn().mockReturnValue('application/json'),
   },
   json: vi.fn().mockResolvedValue({
-    urls: 'turn:relay1.expressturn.com:3478',
+    urls: ['turn:relay1.expressturn.com:3478'],
     username: 'efQUQ79N77B5BNVVKF',
     credential: 'N4EAUgpjMzPLrxSS',
   }),
 })
-
-// Mock environment variable for STUN servers
-vi.stubEnv('VITE_STUN_SERVERS', 'stun:stun.l.google.com:19302')
 
 // Create QueryClient for tests
 const queryClient = new QueryClient({

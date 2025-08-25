@@ -1,5 +1,4 @@
 import { getRelaySockets } from 'trystero/torrent'
-import { rtcConfig } from 'config/rtcConfig'
 import { parseCandidate } from 'sdp'
 
 export enum ConnectionTestEvents {
@@ -26,11 +25,17 @@ export class ConnectionTest extends EventTarget {
   hasServerReflexive = false
 
   rtcPeerConnection?: RTCPeerConnection
+  rtcConfig: RTCConfiguration
+
+  constructor(rtcConfig: RTCConfiguration) {
+    super()
+    this.rtcConfig = rtcConfig
+  }
 
   async initRtcPeerConnectionTest() {
     if (typeof RTCPeerConnection === 'undefined') return
 
-    const { iceServers } = rtcConfig
+    const { iceServers } = this.rtcConfig
 
     this.rtcPeerConnection = new RTCPeerConnection({
       iceServers,
