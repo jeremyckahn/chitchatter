@@ -11,18 +11,17 @@ import type { VercelRequest, VercelResponse } from '@vercel/node'
  *
  * RECOMMENDED: Use the helper script to generate the configuration:
  * 1. Run: npm run generate-rtc-config
- * 2. Follow the interactive prompts to configure STUN/TURN servers
+ * 2. Follow the interactive prompts to configure TURN servers
  * 3. Copy the generated base64 string and set as RTC_CONFIG environment variable
  *
  * ALTERNATIVE: Manual creation:
- * 1. Create your RTCConfiguration object as JSON (including both STUN and TURN servers)
+ * 1. Create your RTCConfiguration object as JSON (including TURN servers)
  * 2. Base64 encode it: Buffer.from(JSON.stringify(config)).toString('base64')
  * 3. Set RTC_CONFIG="<base64-encoded-string>"
  *
  * Example:
  * const config = {
  *   iceServers: [
- *     { urls: 'stun:stun.l.google.com:19302' },
  *     { urls: 'turn:example.com:3478', username: 'user', credential: 'pass' }
  *   ]
  * }
@@ -45,14 +44,14 @@ import type { VercelRequest, VercelResponse } from '@vercel/node'
 // In production, you should replace these with your own TURN server credentials
 // or ensure that RTC_CONFIG environment variable is properly configured.
 const fallbackTurnServer: RTCIceServer = {
-  urls: 'turn:relay1.expressturn.com:3478',
+  urls: ['turn:relay1.expressturn.com:3478'],
   username: 'efQUQ79N77B5BNVVKF',
   credential: 'N4EAUgpjMzPLrxSS',
 }
 
-// Validate URL format for STUN/TURN servers
+// Validate URL format for TURN servers
 const isValidIceServerUrl = (url: string): boolean => {
-  return /^(stun|turn|turns):.+/.test(url)
+  return /^(turn|turns):.+/.test(url)
 }
 
 // Validate that the decoded data conforms to RTCConfiguration interface
