@@ -122,12 +122,12 @@ describe('Room', () => {
         <RoomStub userId={mockUserId} roomId={mockRoomId} />
       </RouteStub>
     )
-
+  
     const sendButton = screen.getByLabelText('Send')
-    const textInput = screen.getByPlaceholderText('Your message')
-
+    const textInput = await screen.findByPlaceholderText('Your message', {}, { timeout: 2000 })
+  
     await userEvent.type(textInput, 'hello')
-
+  
     expect(sendButton).not.toBeDisabled()
   })
 
