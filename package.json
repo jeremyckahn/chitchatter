@@ -12,7 +12,7 @@
     "@mui/material": "^5.18.0",
     "@react-hook/debounce": "^4.0.0",
     "@react-hook/window-size": "^3.1.1",
-    "@tanstack/react-query": "^5.85.9",
+    "@tanstack/react-query": "^5.87.1",
     "@testing-library/react": "^15.0.7",
     "@testing-library/user-event": "^14.6.1",
     "buffer": "^6.0.3",
