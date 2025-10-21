@@ -140,7 +140,7 @@
     "url": "^0.11.0",
     "util": "^0.12.5",
     "vercel": "^43.3.0",
-    "vite": "^6.3.6",
+    "vite": "^6.4.1",
     "vite-plugin-node-polyfills": "^0.23.0",
     "vite-plugin-pwa": "^0.21.2",
     "vite-plugin-svgr": "^4.3.0",
