@@ -82,8 +82,8 @@
     ]
   },
   "engines": {
-    "node": "20.12.1",
-    "npm": "10.5.0"
+    "node": "20.19.5",
+    "npm": "10.8.2"
   },
   "browserslist": {
     "production": [
