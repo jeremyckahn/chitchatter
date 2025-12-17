@@ -119,9 +119,9 @@ export function useRoom(
         rtcConfig: roomConfig.rtcConfig!,
         peerRoom,
         useDirectFileTransferNetworking:
-          !!roomConfig.useDirectFileTransferNetworking,
+          import.meta.env.VITE_USE_DIRECT_FILE_TRANSFER_NETWORKING === 'true',
       }),
-    [roomConfig.rtcConfig, roomConfig.useDirectFileTransferNetworking, peerRoom]
+    [roomConfig.rtcConfig, peerRoom]
   )
 
   const setMessageLog = (messages: Array<Message | InlineMedia>) => {
