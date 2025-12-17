@@ -1,18 +1,15 @@
 import { PeerRoom } from 'lib/PeerRoom'
 import {
   FileTransfer,
-  OfferOpts,
-  DownloadOpts,
   TorrentFile,
 } from 'secure-file-transfer'
 import { v4 as uuid } from 'uuid'
-import { ActionSender, ActionReceiver } from 'trystero'
+import { ActionSender, DataPayload } from 'trystero'
 import streamSaver from 'streamsaver'
+import { PeerAction } from 'models/network'
+import { EventEmitter } from 'events'
 
-const FILE_TRANSFER_CHUNK = 'file-transfer-chunk'
-const FILE_TRANSFER_META = 'file-transfer-meta'
-
-interface FileTransferMeta {
+interface FileTransferMeta extends Record<string, any> {
   transferId: string
   files: {
     name: string
@@ -21,35 +18,39 @@ interface FileTransferMeta {
   }[]
 }
 
-export class TrysteroFileTransfer implements Partial<FileTransfer> {
+export class TrysteroFileTransfer extends EventEmitter implements Partial<FileTransfer> {
   private offers = new Map<
     string,
     { files: FileList | File[]; sender: ActionSender<any> }
   >()
-  private downloads = new Map<string, ActionReceiver<any>>()
 
-  constructor(private peerRoom: PeerRoom) {}
+  constructor(private peerRoom: PeerRoom) {
+    super()
+  }
 
-  async offer(
-    files: File[] | FileList,
-    password?: string,
-    offerOpts: OfferOpts = {}
-  ): Promise<string> {
+  async offer(files: File[] | FileList): Promise<string> {
     const transferId = uuid()
-    const selfId = this.peerRoom.getSelfId()
+    const selfId = this.peerRoom.getPeers()[0]
     const magnetURI = `${selfId}:${transferId}`
 
-    const [sendChunk] = this.peerRoom.makeAction(
-      `${FILE_TRANSFER_CHUNK}:${transferId}`,
-      selfId
+    const [sendChunk] = this.peerRoom.makeAction<DataPayload>(
+      PeerAction.FILE_TRANSFER_CHUNK,
+      transferId
     )
-    const [sendMeta, getMeta] = this.peerRoom.makeAction(
-      `${FILE_TRANSFER_META}:${transferId}`,
-      selfId
+    const [sendMeta, getMeta] = this.peerRoom.makeAction<FileTransferMeta>(
+      PeerAction.FILE_TRANSFER_META,
+      transferId
     )
 
     getMeta((meta, peerId) => {
       if (meta.transferId === transferId) {
+        const fileArray = Array.from(files)
+        const fileMetas = fileArray.map(file => ({
+          name: file.name,
+          size: file.size,
+          type: file.type,
+        }))
+        sendMeta({ transferId, files: fileMetas }, peerId)
         this.sendFiles(files, sendChunk, peerId)
       }
     })
@@ -83,38 +84,49 @@ export class TrysteroFileTransfer implements Partial<FileTransfer> {
       }
       sendChunk(value, peerId)
     }
+
+    sendChunk(null, peerId)
   }
 
-  async download(
-    magnetURI: string,
-    password?: string,
-    downloadOpts: DownloadOpts = {}
-  ): Promise<TorrentFile[]> {
+  async download(magnetURI: string): Promise<TorrentFile[]> {
     const [offererId, transferId] = magnetURI.split(':')
-    const [sendChunk, getChunk] = this.peerRoom.makeAction(
-      `${FILE_TRANSFER_CHUNK}:${transferId}`,
-      offererId
+    const [, getChunk] = this.peerRoom.makeAction<DataPayload>(
+      PeerAction.FILE_TRANSFER_CHUNK,
+      transferId
     )
-    const [sendMeta, getMeta] = this.peerRoom.makeAction(
-      `${FILE_TRANSFER_META}:${transferId}`,
-      offererId
+    const [sendMeta, getMeta] = this.peerRoom.makeAction<FileTransferMeta>(
+      PeerAction.FILE_TRANSFER_META,
+      transferId
     )
 
     return new Promise(resolve => {
       let writer: WritableStreamDefaultWriter
+      let receivedBytes = 0
+      let totalBytes = 0
+
       getMeta((meta: FileTransferMeta) => {
         const file = meta.files[0]
+        totalBytes = file.size
         const writable = streamSaver.createWriteStream(file.name, {
           size: file.size,
         })
         writer = writable.getWriter()
       })
 
-      getChunk((chunk: Uint8Array) => {
+      getChunk((chunk: DataPayload) => {
+        if (chunk === null) {
+          writer.close()
+          this.emit('complete')
+          resolve([])
+          return
+        }
+
         writer.write(chunk)
+        receivedBytes += (chunk as Uint8Array).byteLength
+        this.emit('progress', receivedBytes / totalBytes)
       })
 
-      sendMeta({ transferId })
+      sendMeta({ transferId, files: [] }, offererId)
     })
   }
 

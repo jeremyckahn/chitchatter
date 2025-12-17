@@ -45,7 +45,9 @@ type PeerRoomAction<T extends DataPayload> = [
   () => void,
 ]
 
-export type RoomConfig = Parameters<typeof baseJoinRoom>[0]
+export type RoomConfig = Parameters<typeof baseJoinRoom>[0] & {
+  useDirectFileTransferNetworking?: boolean
+}
 
 export class PeerRoom {
   private room: Room

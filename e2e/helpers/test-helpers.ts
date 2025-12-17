@@ -1,5 +1,4 @@
 import { Page, expect, Browser, chromium } from '@playwright/test'
-import { exec } from 'child_process'
 
 /**
  * Helper function to send a message in a room
@@ -45,7 +44,7 @@ export const waitFor = async (
 
 export const getDropAndDragTransfer = (page: Page, file: string) => {
   return page.evaluateHandle(
-    async file => {
+    async ([file]) => {
       const dataTransfer = new DataTransfer()
       const blob = await fetch(file).then(res => res.blob())
       const fileHandle = new File([blob], 'chitchatter.png', {
@@ -54,6 +53,6 @@ export const getDropAndDragTransfer = (page: Page, file: string) => {
       dataTransfer.items.add(fileHandle)
       return dataTransfer
     },
-    ['/e2e/fixtures/chitchatter.png']
+    [file]
   )
 }

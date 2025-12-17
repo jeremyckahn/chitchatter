@@ -39,31 +39,6 @@ import { QueryKey } from './types'
  * @param obj - Object to validate
  * @returns true if object is a valid RTCIceServer, false otherwise
  */
-const isRTCConfiguration = (obj: any): obj is RTCConfiguration => {
-  if (!obj || typeof obj !== 'object') {
-    return false
-  }
-
-  if (!Array.isArray(obj.iceServers)) {
-    return false
-  }
-
-  for (const server of obj.iceServers) {
-    if (typeof server.urls !== 'string' && !Array.isArray(server.urls)) {
-      return false
-    }
-
-    if (server.username && typeof server.username !== 'string') {
-      return false
-    }
-
-    if (server.credential && typeof server.credential !== 'string') {
-      return false
-    }
-  }
-
-  return true
-}
 
 /**
  * Gets the configurable RTC config endpoint from environment variable
@@ -144,13 +119,6 @@ const fetchTurnServer = async (): Promise<
     }
 
     const data = await response.json()
-
-    // Validate the response structure using type guard
-    if (!isRTCConfiguration(data)) {
-      throw new Error(
-        'Invalid TURN server response: malformed RTCIceServer object'
-      )
-    }
 
     return data
   } catch (error) {
