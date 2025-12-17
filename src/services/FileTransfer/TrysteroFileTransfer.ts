@@ -18,7 +18,7 @@ interface FileTransferMeta extends Record<string, any> {
   }[]
 }
 
-export class TrysteroFileTransfer extends EventEmitter implements Partial<FileTransfer> {
+export class TrysteroFileTransfer extends EventEmitter implements FileTransfer {
   private offers = new Map<
     string,
     { files: FileList | File[]; sender: ActionSender<any> }

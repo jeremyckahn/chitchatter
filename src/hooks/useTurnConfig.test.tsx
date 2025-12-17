@@ -96,7 +96,6 @@ describe('useTurnConfig', () => {
       { timeout: 3000 }
     )
 
-    console.log('isError', result.current.isError)
     expect(result.current.isError).toBeTruthy()
     expect(result.current.turnConfig).toEqual({ iceServers: [] })
   })
@@ -152,30 +151,6 @@ describe('useTurnConfig', () => {
     expect(result.current.turnConfig).toEqual({ iceServers: [] })
   })
 
-  test.skip('returns empty iceServers when API returns invalid RTCIceServer object', async () => {
-    const queryClient = createTestQueryClient()
-    const wrapper = createWrapper(queryClient)
-
-    global.fetch = vi.fn().mockResolvedValue({
-      ok: true,
-      headers: {
-        get: vi.fn().mockReturnValue('application/json'),
-      },
-      json: vi.fn().mockResolvedValue({ iceServers: null }),
-    })
-
-    const { result } = renderHook(() => useTurnConfig(), { wrapper })
-
-    await waitFor(
-      () => {
-        expect(result.current.isLoading).toBe(false)
-      },
-      { timeout: 3000 }
-    )
-
-    expect(result.current.isError).toBe(true)
-    expect(result.current.turnConfig).toEqual({ iceServers: [] })
-  })
 
   test('accepts valid RTCIceServer object with urls as array', async () => {
     const queryClient = createTestQueryClient()

@@ -68,7 +68,7 @@
     "lint": "eslint src e2e --max-warnings=0 --fix",
     "check:types": "tsc && echo \"No type errors.\"",
     "generate-rtc-config": "node scripts/generate-rtc-config.cjs",
-    "test:e2e": "playwright test --reporter=list",
+    "test:e2e": "playwright test",
     "test:e2e:report": "playwright show-report",
     "test:e2e:ui": "playwright test --ui",
     "test:e2e:debug": "playwright test --debug",

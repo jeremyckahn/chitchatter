@@ -251,7 +251,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     // Get TURN server from environment variable with validation
     const turnServer = getTurnServer()
     const useDirectFileTransferNetworking =
-      process.env.USE_DIRECT_FILE_TRANSFER_NETWORKING === 'true'
+      process.env.VITE_USE_DIRECT_FILE_TRANSFER_NETWORKING === 'true'
 
     // Set content type explicitly
     res.setHeader('Content-Type', 'application/json')
