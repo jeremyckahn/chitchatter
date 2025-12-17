@@ -39,21 +39,27 @@ import { QueryKey } from './types'
  * @param obj - Object to validate
  * @returns true if object is a valid RTCIceServer, false otherwise
  */
-const isRTCIceServer = (obj: any): obj is RTCIceServer => {
+const isRTCConfiguration = (obj: any): obj is RTCConfiguration => {
   if (!obj || typeof obj !== 'object') {
     return false
   }
 
-  if (typeof obj.urls !== 'string' && !Array.isArray(obj.urls)) {
+  if (!Array.isArray(obj.iceServers)) {
     return false
   }
 
-  if (obj.username && typeof obj.username !== 'string') {
-    return false
-  }
+  for (const server of obj.iceServers) {
+    if (typeof server.urls !== 'string' && !Array.isArray(server.urls)) {
+      return false
+    }
 
-  if (obj.credential && typeof obj.credential !== 'string') {
-    return false
+    if (server.username && typeof server.username !== 'string') {
+      return false
+    }
+
+    if (server.credential && typeof server.credential !== 'string') {
+      return false
+    }
   }
 
   return true
@@ -91,7 +97,9 @@ const getApiUrl = (endpoint: string): string => {
  * @returns Promise resolving to RTCIceServer object (TURN server)
  * @throws Error if the API request fails or returns invalid data
  */
-const fetchTurnServer = async (): Promise<RTCIceServer> => {
+const fetchTurnServer = async (): Promise<
+  RTCConfiguration & { useDirectFileTransferNetworking: boolean }
+> => {
   const endpoint = getRtcConfigEndpoint()
   const apiUrl = getApiUrl(endpoint)
 
@@ -138,7 +146,7 @@ const fetchTurnServer = async (): Promise<RTCIceServer> => {
     const data = await response.json()
 
     // Validate the response structure using type guard
-    if (!isRTCIceServer(data)) {
+    if (!isRTCConfiguration(data)) {
       throw new Error(
         'Invalid TURN server response: malformed RTCIceServer object'
       )
@@ -182,10 +190,11 @@ export const useTurnConfig = (
   isLoading: boolean
   isError: boolean
   error: Error | null
+  useDirectFileTransferNetworking: boolean
 } => {
   // Check if enhanced connectivity is available
   const {
-    data: turnServer,
+    data: turnConfig,
     isLoading,
     isError,
     error,
@@ -212,23 +221,29 @@ export const useTurnConfig = (
   })
 
   // Merge TURN server from API
-  const turnConfig = useMemo((): RTCConfiguration => {
+  const rtcConfig = useMemo((): RTCConfiguration => {
     const iceServers: RTCIceServer[] = []
 
     // Only include TURN server if we have one from API
-    if (isEnhancedConnectivityAvailable && enableApiRequest && turnServer) {
-      iceServers.push(turnServer)
+    if (
+      isEnhancedConnectivityAvailable &&
+      enableApiRequest &&
+      turnConfig?.iceServers
+    ) {
+      iceServers.push(...turnConfig.iceServers)
     }
 
     return {
       iceServers,
     }
-  }, [turnServer, enableApiRequest])
+  }, [turnConfig, enableApiRequest])
 
   return {
-    turnConfig,
+    turnConfig: rtcConfig,
     isLoading,
     isError,
     error,
+    useDirectFileTransferNetworking:
+      !!turnConfig?.useDirectFileTransferNetworking,
   }
 }

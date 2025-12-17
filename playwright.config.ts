@@ -4,7 +4,7 @@ import { defineConfig, devices } from '@playwright/test'
  * Read environment variables from file.
  * https://github.com/motdotla/dotenv
  */
-// require('dotenv').config();
+import 'dotenv/config'
 
 /**
  * See https://playwright.dev/docs/test-configuration.
@@ -99,9 +99,9 @@ export default defineConfig({
     command: 'npm run start:e2e',
     url: 'http://localhost:3000',
     reuseExistingServer: !process.env.CI,
-    timeout: 120 * 1000,
+    timeout: 240 * 1000,
     env: {
-      IS_E2E_TEST: 'true',
+      VITE_IS_E2E_TEST: 'true',
     },
   },
 })

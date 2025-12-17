@@ -114,8 +114,14 @@ export function useRoom(
   const { getDisplayUsername } = usePeerNameDisplay()
 
   const fileTransferService = useMemo(
-    () => new FileTransferService(roomConfig.rtcConfig!),
-    [roomConfig.rtcConfig]
+    () =>
+      new FileTransferService({
+        rtcConfig: roomConfig.rtcConfig!,
+        peerRoom,
+        useDirectFileTransferNetworking:
+          !!roomConfig.useDirectFileTransferNetworking,
+      }),
+    [roomConfig.rtcConfig, roomConfig.useDirectFileTransferNetworking, peerRoom]
   )
 
   const setMessageLog = (messages: Array<Message | InlineMedia>) => {

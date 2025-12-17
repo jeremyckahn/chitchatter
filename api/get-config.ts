@@ -250,12 +250,17 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   try {
     // Get TURN server from environment variable with validation
     const turnServer = getTurnServer()
+    const useDirectFileTransferNetworking =
+      process.env.USE_DIRECT_FILE_TRANSFER_NETWORKING === 'true'
 
     // Set content type explicitly
     res.setHeader('Content-Type', 'application/json')
 
     // Return the TURN server as JSON
-    res.status(200).json(turnServer)
+    res.status(200).json({
+      iceServers: [turnServer],
+      useDirectFileTransferNetworking,
+    })
   } catch (error) {
     console.error('Unexpected error in API handler:', error)
     res.setHeader('Content-Type', 'application/json')

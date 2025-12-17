@@ -41,7 +41,7 @@ const config = () => {
     server: {
       proxy: {
         '/api': {
-          target: process.env.IS_E2E_TEST
+          target: process.env.VITE_IS_E2E_TEST
             ? 'http://localhost:3003'
             : 'http://localhost:3001',
           changeOrigin: true,

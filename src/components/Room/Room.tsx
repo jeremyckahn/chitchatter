@@ -39,6 +39,7 @@ export interface RoomProps {
 
 interface RoomInnerProps extends RoomProps {
   turnConfig: RTCConfiguration
+  useDirectFileTransferNetworking: boolean
 }
 
 const RoomCore = ({
@@ -51,6 +52,7 @@ const RoomCore = ({
   userId,
   targetPeerId,
   turnConfig,
+  useDirectFileTransferNetworking,
 }: RoomInnerProps) => {
   const theme = useTheme()
   const settingsContext = useContext(SettingsContext)
@@ -74,6 +76,7 @@ const RoomCore = ({
       password,
       relayRedundancy: 4,
       turnConfig: turnConfig.iceServers,
+      useDirectFileTransferNetworking,
       // NOTE: Avoid using STUN severs in the E2E tests in order to make them
       // run faster
       ...(import.meta.env.VITE_IS_E2E_TEST && {
@@ -211,13 +214,21 @@ export const Room = (props: RoomProps) => {
     useContext(SettingsContext).getUserSettings()
 
   // Fetch rtcConfig from server
-  const { turnConfig, isLoading: isConfigLoading } = useTurnConfig(
-    isEnhancedConnectivityEnabled
-  )
+  const {
+    turnConfig,
+    isLoading: isConfigLoading,
+    useDirectFileTransferNetworking,
+  } = useTurnConfig(isEnhancedConnectivityEnabled)
 
   if (isConfigLoading) {
     return <WholePageLoading />
   }
 
-  return <RoomCore {...props} turnConfig={turnConfig} />
+  return (
+    <RoomCore
+      {...props}
+      turnConfig={turnConfig}
+      useDirectFileTransferNetworking={useDirectFileTransferNetworking}
+    />
+  )
 }
