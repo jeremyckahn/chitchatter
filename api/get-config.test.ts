@@ -71,7 +71,10 @@ describe('/api/get-config', () => {
     await handler(req as any, res as any)
 
     expect(res.status).toHaveBeenCalledWith(200)
-    expect(res.json).toHaveBeenCalledWith(expectedTurnServer)
+    expect(res.json).toHaveBeenCalledWith({
+      iceServers: [expectedTurnServer],
+      useDirectFileTransferNetworking: false,
+    })
   })
 
   test('returns fallback TURN server when environment variable is missing', async () => {
@@ -83,7 +86,10 @@ describe('/api/get-config', () => {
     await handler(req as any, res as any)
 
     expect(res.status).toHaveBeenCalledWith(200)
-    expect(res.json).toHaveBeenCalledWith(fallbackTurnServer)
+    expect(res.json).toHaveBeenCalledWith({
+      iceServers: [fallbackTurnServer],
+      useDirectFileTransferNetworking: false,
+    })
   })
 
   test('returns fallback TURN server when environment variable has invalid base64', async () => {
@@ -95,7 +101,10 @@ describe('/api/get-config', () => {
     await handler(req as any, res as any)
 
     expect(res.status).toHaveBeenCalledWith(200)
-    expect(res.json).toHaveBeenCalledWith(fallbackTurnServer)
+    expect(res.json).toHaveBeenCalledWith({
+      iceServers: [fallbackTurnServer],
+      useDirectFileTransferNetworking: false,
+    })
   })
 
   test('returns fallback TURN server when environment variable has invalid JSON', async () => {
@@ -108,7 +117,10 @@ describe('/api/get-config', () => {
     await handler(req as any, res as any)
 
     expect(res.status).toHaveBeenCalledWith(200)
-    expect(res.json).toHaveBeenCalledWith(fallbackTurnServer)
+    expect(res.json).toHaveBeenCalledWith({
+      iceServers: [fallbackTurnServer],
+      useDirectFileTransferNetworking: false,
+    })
   })
 
   test('returns fallback TURN server when environment variable has invalid RTCConfiguration format', async () => {
@@ -124,7 +136,10 @@ describe('/api/get-config', () => {
     await handler(req as any, res as any)
 
     expect(res.status).toHaveBeenCalledWith(200)
-    expect(res.json).toHaveBeenCalledWith(fallbackTurnServer)
+    expect(res.json).toHaveBeenCalledWith({
+      iceServers: [fallbackTurnServer],
+      useDirectFileTransferNetworking: false,
+    })
   })
 
   test('returns fallback TURN server when configuration has no TURN server', async () => {
@@ -142,7 +157,10 @@ describe('/api/get-config', () => {
     await handler(req as any, res as any)
 
     expect(res.status).toHaveBeenCalledWith(200)
-    expect(res.json).toHaveBeenCalledWith(fallbackTurnServer)
+    expect(res.json).toHaveBeenCalledWith({
+      iceServers: [fallbackTurnServer],
+      useDirectFileTransferNetworking: false,
+    })
   })
 
   test('sets CORS headers with allowed origin', async () => {
@@ -302,7 +320,10 @@ describe('/api/get-config', () => {
       'Content-Type'
     )
     expect(res.status).toHaveBeenCalledWith(200)
-    expect(res.json).toHaveBeenCalledWith(expectedTurnServer)
+    expect(res.json).toHaveBeenCalledWith({
+      iceServers: [expectedTurnServer],
+      useDirectFileTransferNetworking: false,
+    })
   })
 
   test('uses restricted CORS when debug override is explicitly disabled', async () => {
@@ -332,6 +353,9 @@ describe('/api/get-config', () => {
       'Content-Type'
     )
     expect(res.status).toHaveBeenCalledWith(200)
-    expect(res.json).toHaveBeenCalledWith(expectedTurnServer)
+    expect(res.json).toHaveBeenCalledWith({
+      iceServers: [expectedTurnServer],
+      useDirectFileTransferNetworking: false,
+    })
   })
 })
