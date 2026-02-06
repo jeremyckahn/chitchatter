@@ -139,7 +139,7 @@
     "serve": "^14.2.5",
     "url": "^0.11.0",
     "util": "^0.12.5",
-    "vercel": "^43.3.0",
+    "vercel": "^50.12.3",
     "vite": "^6.4.1",
     "vite-plugin-node-polyfills": "^0.23.0",
     "vite-plugin-pwa": "^0.21.2",
