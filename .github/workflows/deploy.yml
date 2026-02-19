@@ -7,6 +7,10 @@ on:
 
   workflow_dispatch:
 
+# 1. ADDED THIS BLOCK: Grants the automatic token permission to push to the gh-pages branch
+permissions:
+  contents: write
+
 jobs:
   deployment:
     runs-on: ubuntu-latest
@@ -30,6 +34,7 @@ jobs:
       - name: Deploy
         uses: peaceiris/actions-gh-pages@v4
         with:
-          deploy_key: ${{ secrets.DEPLOY_KEY }}
+          # 2. CHANGED THIS LINE: Swapped out deploy_key for the automatic github_token
+          github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: ./dist
           force_orphan: true
