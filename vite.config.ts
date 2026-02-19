@@ -37,7 +37,7 @@ const config = () => {
     // NOTE: Uncomment this if you are hosting Chitchatter on GitHub Pages
     // without a custom domain. If you renamed the repo to something other than
     // "chitchatter", then use that instead of "chitchatter" here.
-    // base: '/chitchatter/',
+    base: '/chitchatter/',
     server: {
       proxy: {
         '/api': {
