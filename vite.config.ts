@@ -3,7 +3,7 @@ import path from 'path'
 
 import { fileURLToPath } from 'url'
 
-import { defineConfig } from 'vite'
+import { defineConfig, type ConfigEnv } from 'vite'
 import react from '@vitejs/plugin-react'
 import svgr from 'vite-plugin-svgr'
 import { nodePolyfills } from 'vite-plugin-node-polyfills'
@@ -32,12 +32,12 @@ const srcPathAliases = srcPaths.reduce((acc, dir) => {
   return acc
 }, {})
 
-const config = () => {
+const config = ({ command }: ConfigEnv) => {
   return defineConfig({
-    // NOTE: Uncomment this if you are hosting Chitchatter on GitHub Pages
-    // without a custom domain. If you renamed the repo to something other than
-    // "chitchatter", then use that instead of "chitchatter" here.
-    base: '/chitchatter/',
+    // NOTE: This sets the base path for GitHub Pages deployment.
+    // During local development and testing (vite serve), base is '/' so that
+    // dev-server routing and Playwright e2e tests work without a sub-path prefix.
+    base: command === 'build' ? '/chitchatter/' : '/',
     server: {
       proxy: {
         '/api': {
