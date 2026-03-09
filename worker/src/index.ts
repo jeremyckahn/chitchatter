@@ -8,7 +8,7 @@ export interface Env {
   TURN_KEY_API_TOKEN?: string
   SFU_APP_ID?: string
   SFU_APP_SECRET?: string
-  CORS_ALLOW_ALL?: string
+  ALLOWED_ORIGINS?: string
 }
 
 const TURN_CREDENTIAL_TTL = 86400
@@ -17,19 +17,17 @@ const SFU_API_BASE = 'https://rtc.live.cloudflare.com/v1'
 const getCorsHeaders = (request: Request, env: Env): Record<string, string> => {
   const origin = request.headers.get('Origin') || ''
 
-  if (env.CORS_ALLOW_ALL === 'true') {
-    return {
-      'Access-Control-Allow-Origin': '*',
-      'Access-Control-Allow-Methods': 'GET, POST, PUT, OPTIONS',
-      'Access-Control-Allow-Headers': 'Content-Type, Upgrade, Connection',
-    }
-  }
+  // Parse allowed origins from env (comma-separated) or use defaults
+  const customOrigins = env.ALLOWED_ORIGINS
+    ? env.ALLOWED_ORIGINS.split(',').map(o => o.trim())
+    : []
 
   const isAllowed =
     origin === 'http://localhost:3000' ||
     origin === 'http://localhost:5173' ||
     origin.endsWith('.pages.dev') ||
-    origin.endsWith('.workers.dev')
+    origin.endsWith('.workers.dev') ||
+    customOrigins.includes(origin)
 
   return {
     'Access-Control-Allow-Origin': isAllowed ? origin : '',

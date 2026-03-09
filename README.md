@@ -359,25 +359,27 @@ npx wrangler secret put SFU_APP_SECRET
 7. 等待构建完成（约 2-3 分钟）
 8. 部署完成后获得 URL：`https://你的项目名.pages.dev`
 
-#### 步骤 9：更新 Worker CORS
+#### 步骤 9：配置 CORS（允许自定义域名访问 Worker）
 
-部署前端后，需要允许前端域名访问 Worker API：
+> `.pages.dev` 和 `localhost` 域名自动允许，**只有使用自定义域名时才需要此步骤**。
 
-1. 在 GitHub 仓库中编辑 `worker/src/index.ts`
-2. 找到 `allowedOrigins` 数组，添加你的 Pages URL：
+1. Cloudflare Dashboard → **Workers & Pages** → 选择你的 Worker
+2. **Settings** → **Variables and Secrets**
+3. 找到 `ALLOWED_ORIGINS` 变量，设置为你的自定义域名（含 `https://`）：
+   - 单个域名：`https://chat.example.com`
+   - 多个域名（逗号分隔）：`https://chat.example.com,https://www.example.com`
+4. 点击 **Save and deploy**
 
-```typescript
-const allowedOrigins = [
-  'https://你的项目名.pages.dev', // 添加这行
-  'http://localhost:3000',
-]
+也可以直接编辑 `worker/wrangler.toml`：
+
+```toml
+[vars]
+ALLOWED_ORIGINS = "https://chat.example.com"
 ```
-
-3. Commit 后 GitHub Action 会自动重新部署 Worker
 
 #### 完成！
 
-访问 `https://你的项目名.pages.dev` 即可使用。分享 URL 给朋友，进入同一房间即可聊天。
+访问你的域名即可使用。分享房间 URL 给朋友，进入同一房间即可加密聊天。
 
 ---
 
@@ -451,13 +453,13 @@ npm run dev   # 启动 Vite + Worker 本地服务器
 
 ### Worker（运行时密钥）
 
-| 变量                 | 必需 | 说明                      | 获取位置                 |
-| -------------------- | ---- | ------------------------- | ------------------------ |
-| `TURN_KEY_ID`        | 推荐 | Cloudflare TURN Key ID    | Dashboard → Calls → TURN |
-| `TURN_KEY_API_TOKEN` | 推荐 | Cloudflare TURN API Token | 同上                     |
-| `SFU_APP_ID`         | 推荐 | Cloudflare SFU App ID     | Dashboard → Calls → SFU  |
-| `SFU_APP_SECRET`     | 推荐 | Cloudflare SFU App Secret | 同上                     |
-| `CORS_ALLOW_ALL`     | 可选 | 调试用，允许所有来源      | wrangler.toml            |
+| 变量                 | 必需 | 说明                       | 获取位置                   |
+| -------------------- | ---- | -------------------------- | -------------------------- |
+| `TURN_KEY_ID`        | 推荐 | Cloudflare TURN Key ID     | Dashboard → Calls → TURN   |
+| `TURN_KEY_API_TOKEN` | 推荐 | Cloudflare TURN API Token  | 同上                       |
+| `SFU_APP_ID`         | 推荐 | Cloudflare SFU App ID      | Dashboard → Calls → SFU    |
+| `SFU_APP_SECRET`     | 推荐 | Cloudflare SFU App Secret  | 同上                       |
+| `ALLOWED_ORIGINS`    | 推荐 | 允许的前端域名（逗号分隔） | wrangler.toml 或 Dashboard |
 
 ---
 
@@ -518,7 +520,7 @@ chitchatter/
 1. 打开浏览器控制台查看错误信息
 2. 确认信令服务器可访问：浏览器打开 `https://你的worker.workers.dev`，应返回 "Not Found"（正常）
 3. 确认 TURN 配置：访问 `https://你的worker.workers.dev/api/get-config`，应返回 JSON
-4. 检查 CORS：控制台是否有 "blocked by CORS" 错误 → 更新 `allowedOrigins`
+4. 检查 CORS：控制台有 "blocked by CORS" 错误 → 在 Worker 的 `ALLOWED_ORIGINS` 环境变量中添加你的域名
 5. 禁用广告拦截器（可能阻止 WebSocket 连接）
 6. 尝试其他网络
 

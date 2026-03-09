@@ -12,13 +12,15 @@ tag = "v1"
 new_sqlite_classes = ["SignalingRoom"]
 
 [vars]
-CORS_ALLOW_ALL = "false"
+# 允许访问的前端域名（逗号分隔）
+# 除了 .pages.dev 和 localhost 自动允许外，自定义域名需要在这里添加
+# 示例: "https://chat.example.com,https://www.example.com"
+ALLOWED_ORIGINS = "https://chat.cn9.eu"
 
-# Cloudflare TURN 服务配置
-# 通过 wrangler secret 设置以下密钥：
+# Cloudflare TURN 服务配置（通过 wrangler secret 设置）:
 #   npx wrangler secret put TURN_KEY_ID
 #   npx wrangler secret put TURN_KEY_API_TOKEN
 #
-# 获取方式：
-# 1. 登录 Cloudflare Dashboard → Calls → TURN
-# 2. 创建 TURN Key，获得 Key ID 和 API Token
+# Cloudflare SFU 服务配置（通过 wrangler secret 设置）:
+#   npx wrangler secret put SFU_APP_ID
+#   npx wrangler secret put SFU_APP_SECRET
