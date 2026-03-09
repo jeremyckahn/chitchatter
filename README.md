@@ -137,19 +137,28 @@ https://your-app-signaling.your-subdomain.workers.dev
 
 **记下这个 URL**，后续配置前端需要用到。
 
-4. **配置 TURN 服务器**（可选，用于增强连接性）
+4. **配置 Cloudflare TURN 中继**（推荐，增强连接性）
 
-如果需要 TURN 中继服务器支持（用于网络环境复杂时的连接），设置环境变量：
+TURN 中继让处于严格防火墙/NAT 后的用户也能连接。Cloudflare 提供原生 TURN 服务（1000GB/月免费）：
+
+**a. 创建 TURN Key：**
+
+- 登录 [Cloudflare Dashboard](https://dash.cloudflare.com/)
+- 进入 "Calls" → "TURN Keys" → "Create"
+- 记下生成的 **Key ID** 和 **API Token**
+
+**b. 将密钥设置到 Worker：**
 
 ```bash
-# 生成 TURN 配置
-cd .. && npm run generate-rtc-config
-
-# 将生成的 base64 字符串设为 Worker 密钥
 cd worker
-npx wrangler secret put RTC_CONFIG
-# 粘贴生成的 base64 字符串
+npx wrangler secret put TURN_KEY_ID
+# 粘贴你的 TURN Key ID
+
+npx wrangler secret put TURN_KEY_API_TOKEN
+# 粘贴你的 TURN API Token
 ```
+
+这样 Worker 会自动为每个用户生成短期 TURN 凭证（24 小时过期），完全使用 Cloudflare 全球网络中继，无需任何外部 TURN 服务器。
 
 5. **配置 CORS**（生产环境）
 
@@ -247,10 +256,11 @@ npx wrangler pages deploy dist --project-name=your-app-name
 
 ### Worker
 
-| 变量             | 说明                    | 设置方式                         |
-| ---------------- | ----------------------- | -------------------------------- |
-| `RTC_CONFIG`     | Base64 编码的 TURN 配置 | `wrangler secret put RTC_CONFIG` |
-| `CORS_ALLOW_ALL` | 调试模式允许所有来源    | `wrangler.toml` 中设置           |
+| 变量                 | 说明                      | 设置方式                                 |
+| -------------------- | ------------------------- | ---------------------------------------- |
+| `TURN_KEY_ID`        | Cloudflare TURN Key ID    | `wrangler secret put TURN_KEY_ID`        |
+| `TURN_KEY_API_TOKEN` | Cloudflare TURN API Token | `wrangler secret put TURN_KEY_API_TOKEN` |
+| `CORS_ALLOW_ALL`     | 调试模式允许所有来源      | `wrangler.toml` 中设置                   |
 
 ## 费用估算
 

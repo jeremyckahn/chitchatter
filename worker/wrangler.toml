@@ -13,3 +13,12 @@ new_classes = ["SignalingRoom"]
 
 [vars]
 CORS_ALLOW_ALL = "false"
+
+# Cloudflare TURN 服务配置
+# 通过 wrangler secret 设置以下密钥：
+#   npx wrangler secret put TURN_KEY_ID
+#   npx wrangler secret put TURN_KEY_API_TOKEN
+#
+# 获取方式：
+# 1. 登录 Cloudflare Dashboard → Calls → TURN
+# 2. 创建 TURN Key，获得 Key ID 和 API Token

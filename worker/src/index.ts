@@ -1,11 +1,11 @@
 import { SignalingRoom } from './SignalingRoom'
-import type { RTCConfiguration, RTCIceServer } from './rtc-types'
 
 export { SignalingRoom }
 
 export interface Env {
   SIGNALING_ROOM: DurableObjectNamespace
-  RTC_CONFIG?: string
+  TURN_KEY_ID?: string
+  TURN_KEY_API_TOKEN?: string
   CORS_ALLOW_ALL?: string
 }
 
@@ -14,6 +14,8 @@ const allowedOrigins = [
   'http://localhost:3000',
   'http://localhost:5173',
 ]
+
+const TURN_CREDENTIAL_TTL = 86400
 
 const getCorsHeaders = (request: Request, env: Env): Record<string, string> => {
   const origin = request.headers.get('Origin') || ''
@@ -37,63 +39,67 @@ const getCorsHeaders = (request: Request, env: Env): Record<string, string> => {
   }
 }
 
-const isValidIceServerUrl = (url: string): boolean => {
-  return /^(turn|turns):.+/.test(url)
+interface CloudflareTurnResponse {
+  iceServers: Array<{
+    urls: string[]
+    username?: string
+    credential?: string
+  }>
 }
 
-const isValidRTCConfiguration = (
-  data: Record<string, unknown>
-): data is RTCConfiguration => {
-  if (!data || typeof data !== 'object') return false
-  if (!Array.isArray(data.iceServers)) return false
-  if (data.iceServers.length === 0) return false
-
-  for (const server of data.iceServers) {
-    if (!server || typeof server !== 'object') return false
-    if (!server.urls) return false
-
-    const urls = Array.isArray(server.urls) ? server.urls : [server.urls]
-    if (
-      !urls.every(
-        (url: unknown) => typeof url === 'string' && isValidIceServerUrl(url)
-      )
-    ) {
-      return false
-    }
+const generateCloudflareTurnCredentials = async (
+  env: Env
+): Promise<CloudflareTurnResponse | null> => {
+  if (!env.TURN_KEY_ID || !env.TURN_KEY_API_TOKEN) {
+    return null
   }
-  return true
-}
-
-const extractTurnServer = (
-  rtcConfig: RTCConfiguration
-): RTCIceServer | null => {
-  if (!rtcConfig.iceServers) return null
-
-  for (const server of rtcConfig.iceServers) {
-    const urls = Array.isArray(server.urls) ? server.urls : [server.urls]
-    if (urls.some((url: string) => url.startsWith('turn:'))) {
-      return server
-    }
-  }
-  return null
-}
-
-const getTurnServer = (rtcConfigEnv?: string): RTCIceServer | null => {
-  if (!rtcConfigEnv || !rtcConfigEnv.trim()) return null
 
   try {
-    const decoded = atob(rtcConfigEnv)
-    const parsed = JSON.parse(decoded)
+    const response = await fetch(
+      `https://rtc.live.cloudflare.com/v1/turn/keys/${env.TURN_KEY_ID}/credentials/generate-ice-servers`,
+      {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${env.TURN_KEY_API_TOKEN}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ ttl: TURN_CREDENTIAL_TTL }),
+      }
+    )
 
-    if (!isValidRTCConfiguration(parsed)) return null
+    if (!response.ok) {
+      console.error(
+        `Cloudflare TURN API error: ${response.status} ${response.statusText}`
+      )
+      return null
+    }
 
-    return extractTurnServer(parsed as RTCConfiguration)
-  } catch {
+    const data = (await response.json()) as CloudflareTurnResponse
+
+    if (!data.iceServers || !Array.isArray(data.iceServers)) {
+      console.error('Invalid Cloudflare TURN response format')
+      return null
+    }
+
+    // Filter out port 53 URLs (blocked by browsers)
+    const filtered: CloudflareTurnResponse = {
+      iceServers: data.iceServers.map(server => ({
+        ...server,
+        urls: server.urls.filter((url: string) => !url.includes(':53')),
+      })),
+    }
+
+    return filtered
+  } catch (error) {
+    console.error('Failed to generate Cloudflare TURN credentials:', error)
     return null
   }
 }
 
-const handleGetConfig = (request: Request, env: Env): Response => {
+const handleGetConfig = async (
+  request: Request,
+  env: Env
+): Promise<Response> => {
   if (request.method !== 'GET') {
     return new Response(JSON.stringify({ error: 'Method not allowed' }), {
       status: 405,
@@ -104,11 +110,11 @@ const handleGetConfig = (request: Request, env: Env): Response => {
     })
   }
 
-  const turnServer = getTurnServer(env.RTC_CONFIG)
+  const turnData = await generateCloudflareTurnCredentials(env)
 
-  if (!turnServer) {
+  if (!turnData) {
     return new Response(
-      JSON.stringify({ error: 'No TURN server configured' }),
+      JSON.stringify({ error: 'TURN service not configured' }),
       {
         status: 404,
         headers: {
@@ -119,10 +125,12 @@ const handleGetConfig = (request: Request, env: Env): Response => {
     )
   }
 
-  return new Response(JSON.stringify(turnServer), {
+  // Return the full iceServers array from Cloudflare
+  return new Response(JSON.stringify(turnData), {
     status: 200,
     headers: {
       'Content-Type': 'application/json',
+      'Cache-Control': `public, max-age=${Math.floor(TURN_CREDENTIAL_TTL / 2)}`,
       ...getCorsHeaders(request, env),
     },
   })
