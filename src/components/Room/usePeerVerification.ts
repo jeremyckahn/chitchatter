@@ -77,9 +77,10 @@ export const usePeerVerification = ({
           }
         )
 
-        throw new Error(
-          `Verification token for peerId ${peerId} does not match. [expected: ${verificationToken}] [received: ${decryptedVerificationToken}]`
+        console.warn(
+          `Verification token mismatch for ${peerId}, will re-verify on next connection`
         )
+        return
       }
 
       if (verificationTimer) {

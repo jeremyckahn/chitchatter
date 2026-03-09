@@ -120,7 +120,10 @@ export class PeerRoom {
   }
 
   initSfuIfAvailable = async (sfuAvailable: boolean) => {
-    if (!sfuAvailable || !this.roomConfig.sfuApiBase) return
+    if (!sfuAvailable || !this.roomConfig.sfuApiBase) {
+      this.sfuEnabled = false
+      return
+    }
 
     this.sfuEnabled = true
     this.sfuClient = new SfuClient(this.roomConfig.sfuApiBase)
