@@ -228,7 +228,7 @@ export function Home({ userId }: HomeProps) {
           }}
         >
           <MuiLink
-            href="https://github.com/jeremyckahn/chitchatter"
+            href="https://github.com/Shannon-x/chitchatter"
             target="_blank"
             sx={() => ({
               color: theme.palette.text.primary,
@@ -246,13 +246,13 @@ export function Home({ userId }: HomeProps) {
           <Typography variant="body1" sx={{ textAlign: 'center', mb: 1 }}>
             {t('home.license', { license: '' })}
             <MuiLink
-              href="https://github.com/jeremyckahn/chitchatter/blob/develop/LICENSE"
+              href="https://github.com/Shannon-x/chitchatter/blob/develop/LICENSE"
               target="_blank"
             >
               GPL v2
             </MuiLink>{' '}
             <MuiLink
-              href="https://github.com/jeremyckahn/chitchatter/blob/develop/README.md"
+              href="https://github.com/Shannon-x/chitchatter/blob/develop/README.md"
               target="_blank"
             >
               {t('home.readTheDocs')}

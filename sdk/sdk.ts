@@ -8,8 +8,7 @@ import { QueryParamKeys } from '../src/models/shell'
 import { isColorMode, UserSettings } from '../src/models/settings'
 import { iframeFeatureAllowList } from '../src/config/iframeFeatureAllowList'
 
-export const defaultRoot =
-  process.env.VITE_HOMEPAGE ?? 'https://chitchatter.im/'
+export const defaultRoot = process.env.VITE_HOMEPAGE ?? 'https://chat.cn9.eu/'
 
 // NOTE: This is a subset of standard iframe attributes:
 // https://developer.mozilla.org/en-US/docs/Web/HTML/Element/iframe#attributes

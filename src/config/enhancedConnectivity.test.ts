@@ -207,7 +207,7 @@ describe('enhancedConnectivity', () => {
       await import('./enhancedConnectivity')
       expect(consoleSpy).toHaveBeenCalledWith(
         'Enhanced connectivity is not available. To enable this feature, set the VITE_RTC_CONFIG_ENDPOINT environment variable to a valid API endpoint path. ' +
-          'See the documentation for more information: https://github.com/jeremyckahn/chitchatter#rtc-configuration-helper-script'
+          'See the documentation for more information: https://github.com/Shannon-x/chitchatter#rtc-configuration-helper-script'
       )
       consoleSpy.mockRestore()
     })

@@ -159,7 +159,7 @@ function getRtcConfig() {
 
 // CORS configuration
 const allowedOrigins = [
-  'https://chitchatter.im',
+  'https://chat.cn9.eu',
   'https://chitchatter.vercel.app',
   'https://chitchatter-git-develop-jeremyckahn.vercel.app',
   'http://localhost:3000', // Development frontend
@@ -179,7 +179,7 @@ function getCorsOrigin(req) {
     return origin
   }
   // For same-origin requests or allowed deployments, use the primary domain
-  return 'https://chitchatter.im'
+  return 'https://chat.cn9.eu'
 }
 
 // API handler function

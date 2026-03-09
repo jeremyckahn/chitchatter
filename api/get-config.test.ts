@@ -151,14 +151,14 @@ describe('/api/get-config', () => {
       JSON.stringify(testRtcConfig)
     ).toString('base64')
 
-    const req = createMockRequest('GET', { origin: 'https://chitchatter.im' })
+    const req = createMockRequest('GET', { origin: 'https://chat.cn9.eu' })
     const res = createMockResponse()
 
     await handler(req as any, res as any)
 
     expect(res.setHeader).toHaveBeenCalledWith(
       'Access-Control-Allow-Origin',
-      'https://chitchatter.im'
+      'https://chat.cn9.eu'
     )
     expect(res.setHeader).toHaveBeenCalledWith(
       'Access-Control-Allow-Methods',
@@ -208,7 +208,7 @@ describe('/api/get-config', () => {
 
     expect(res.setHeader).toHaveBeenCalledWith(
       'Access-Control-Allow-Origin',
-      'https://chitchatter.im'
+      'https://chat.cn9.eu'
     )
     expect(res.setHeader).toHaveBeenCalledWith(
       'Access-Control-Allow-Methods',
@@ -233,7 +233,7 @@ describe('/api/get-config', () => {
 
     expect(res.setHeader).toHaveBeenCalledWith(
       'Access-Control-Allow-Origin',
-      'https://chitchatter.im'
+      'https://chat.cn9.eu'
     )
     expect(res.setHeader).toHaveBeenCalledWith(
       'Access-Control-Allow-Methods',
@@ -321,7 +321,7 @@ describe('/api/get-config', () => {
 
     expect(res.setHeader).toHaveBeenCalledWith(
       'Access-Control-Allow-Origin',
-      'https://chitchatter.im'
+      'https://chat.cn9.eu'
     )
     expect(res.setHeader).toHaveBeenCalledWith(
       'Access-Control-Allow-Methods',

@@ -209,7 +209,7 @@ const getTurnServer = (): RTCIceServer => {
 }
 
 const allowedOrigins = [
-  'https://chitchatter.im',
+  'https://chat.cn9.eu',
   'https://chitchatter.vercel.app',
   'https://chitchatter-git-develop-jeremyckahn.vercel.app',
   'http://localhost:3000', // Development frontend
@@ -240,7 +240,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       res.setHeader('Access-Control-Allow-Origin', origin)
     } else {
       // For same-origin requests or allowed deployments, use the primary domain
-      res.setHeader('Access-Control-Allow-Origin', 'https://chitchatter.im')
+      res.setHeader('Access-Control-Allow-Origin', 'https://chat.cn9.eu')
     }
   }
 

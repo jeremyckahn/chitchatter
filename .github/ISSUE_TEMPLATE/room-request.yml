@@ -10,7 +10,7 @@ body:
     attributes:
       label: Room URL
       description: What is the Chitchatter URL for this room?
-      placeholder: ex. https://chitchatter.im/public/room-subject
+      placeholder: ex. https://chat.cn9.eu/public/room-subject
     validations:
       required: true
   - type: input
