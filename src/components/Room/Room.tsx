@@ -9,7 +9,7 @@ import { v4 as uuid } from 'uuid'
 import { ChatTranscript } from 'components/ChatTranscript'
 import { WholePageLoading } from 'components/Loading'
 import { MessageForm } from 'components/MessageForm'
-import { signalingServerUrl } from 'config/signalingServer'
+import { signalingServerUrl, sfuApiBase } from 'config/signalingServer'
 import { RoomContext } from 'contexts/RoomContext'
 import { SettingsContext } from 'contexts/SettingsContext'
 import { ShellContext } from 'contexts/ShellContext'
@@ -72,9 +72,10 @@ const RoomCore = ({
       appId,
       password,
       signalingServerUrl,
+      sfuApiBase,
       rtcConfig: {
         iceServers: [
-          { urls: 'stun:stun.l.google.com:19302' },
+          { urls: 'stun:stun.cloudflare.com:3478' },
           ...(turnConfig.iceServers || []),
         ],
         ...(import.meta.env.VITE_IS_E2E_TEST && {

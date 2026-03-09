@@ -32,6 +32,7 @@ export interface RoomConfig {
   password?: string
   rtcConfig?: RTCConfiguration
   signalingServerUrl: string
+  sfuApiBase?: string
 }
 
 export interface SignalingInitMessage {

@@ -1,4 +1,6 @@
 import { sleep } from 'lib/sleep'
+import { SfuClient } from 'lib/SfuClient'
+import type { SfuTrackInfo } from 'lib/SfuClient'
 import { StreamType } from 'models/chat'
 import { PeerAction } from 'models/network'
 
@@ -103,10 +105,51 @@ export class PeerRoom {
     { stream: MediaStream; metadata: { type: StreamType } }
   > = new Map()
 
+  private sfuClient: SfuClient | null = null
+
+  private sfuSessionReady = false
+
+  private sfuTrackNames: Map<string, string> = new Map()
+
+  private get useSfu(): boolean {
+    return !!this.roomConfig.sfuApiBase
+  }
+
   constructor(config: RoomConfig, roomId: string) {
     this.roomConfig = config
     this.roomId = roomId
     this.initSignaling()
+
+    if (this.useSfu && config.sfuApiBase) {
+      this.sfuClient = new SfuClient(config.sfuApiBase)
+      this.initSfu()
+    }
+  }
+
+  private initSfu = async () => {
+    if (!this.sfuClient) return
+
+    try {
+      await this.sfuClient.createSession(this.roomConfig.rtcConfig)
+      this.sfuSessionReady = true
+
+      this.sfuClient.onRemoteTrack(
+        (
+          _track: MediaStreamTrack,
+          stream: MediaStream,
+          peerId: string,
+          streamType: StreamType
+        ) => {
+          const metadata = { type: streamType }
+          for (const handler of this.peerStreamHandlers.values()) {
+            handler(stream, peerId, metadata)
+          }
+        }
+      )
+    } catch (e) {
+      console.error('Failed to initialize SFU session:', e)
+      this.sfuSessionReady = false
+    }
   }
 
   private initSignaling = async () => {
@@ -307,9 +350,44 @@ export class PeerRoom {
       return
     }
 
+    if (msg.action === '__sfu_track_published__') {
+      const info = msg.data as {
+        trackName: string
+        sessionId: string
+        streamType: StreamType
+      }
+      this.handleSfuTrackPublished(peerId, info)
+      return
+    }
+
     const handler = this.actionHandlers.get(msg.action)
     if (handler) {
       handler(msg.data, peerId)
+    }
+  }
+
+  private handleSfuTrackPublished = async (
+    _peerId: string,
+    info: {
+      trackName: string
+      sessionId: string
+      streamType: StreamType
+    }
+  ) => {
+    if (!this.sfuClient || !this.sfuSessionReady) return
+
+    const trackInfo: SfuTrackInfo = {
+      trackName: info.trackName,
+      mid: null,
+      sessionId: info.sessionId,
+      trackId: '',
+      streamType: info.streamType,
+    }
+
+    try {
+      await this.sfuClient.pullTracks([trackInfo])
+    } catch (e) {
+      console.error('Failed to pull SFU track:', e)
     }
   }
 
@@ -475,6 +553,13 @@ export class PeerRoom {
 
     this.ws?.close()
     this.ws = null
+
+    if (this.sfuClient) {
+      this.sfuClient.destroy()
+      this.sfuClient = null
+      this.sfuSessionReady = false
+      this.sfuTrackNames.clear()
+    }
 
     this.flush()
   }
@@ -645,6 +730,54 @@ export class PeerRoom {
   ) => {
     this.localStreams.set(stream.id, { stream, metadata })
 
+    if (this.useSfu && this.sfuClient && this.sfuSessionReady) {
+      this.addStreamViaSfu(stream, metadata)
+      return
+    }
+
+    this.addStreamViaP2P(stream, targetPeers, metadata)
+  }
+
+  private addStreamViaSfu = (
+    stream: MediaStream,
+    metadata: { type: StreamType }
+  ) => {
+    this.streamQueue.push(
+      async () => {
+        if (!this.sfuClient) return
+
+        for (const track of stream.getTracks()) {
+          const trackName = await this.sfuClient.pushTrack(
+            track,
+            stream,
+            metadata.type
+          )
+
+          if (trackName) {
+            this.sfuTrackNames.set(`${stream.id}_${track.id}`, trackName)
+
+            const sfuSessionId = this.sfuClient.getSessionId()
+            if (sfuSessionId) {
+              this.broadcastSfuTrackInfo({
+                trackName,
+                sessionId: sfuSessionId,
+                streamType: metadata.type,
+              })
+            }
+          }
+        }
+      },
+      () => sleep(streamQueueAddDelay)
+    )
+
+    this.processPendingStreams()
+  }
+
+  private addStreamViaP2P = (
+    stream: MediaStream,
+    targetPeers: string | string[] | null | undefined,
+    metadata: { type: StreamType }
+  ) => {
     this.streamQueue.push(
       () => {
         const resolvedPeers = targetPeers
@@ -687,6 +820,31 @@ export class PeerRoom {
   removeStream = (stream: MediaStream, targetPeers?: string | string[]) => {
     this.localStreams.delete(stream.id)
 
+    if (this.useSfu && this.sfuClient && this.sfuSessionReady) {
+      this.removeStreamViaSfu(stream)
+      return
+    }
+
+    this.removeStreamViaP2P(stream, targetPeers)
+  }
+
+  private removeStreamViaSfu = async (stream: MediaStream) => {
+    if (!this.sfuClient) return
+
+    for (const track of stream.getTracks()) {
+      const key = `${stream.id}_${track.id}`
+      const trackName = this.sfuTrackNames.get(key)
+      if (trackName) {
+        await this.sfuClient.unpushTrack(trackName)
+        this.sfuTrackNames.delete(key)
+      }
+    }
+  }
+
+  private removeStreamViaP2P = (
+    stream: MediaStream,
+    targetPeers?: string | string[]
+  ) => {
     const peers = targetPeers
       ? Array.isArray(targetPeers)
         ? targetPeers
@@ -706,6 +864,23 @@ export class PeerRoom {
       }
 
       this.renegotiate(pc, peerId)
+    }
+  }
+
+  private broadcastSfuTrackInfo = (info: {
+    trackName: string
+    sessionId: string
+    streamType: StreamType
+  }) => {
+    const message: DataChannelMessage = {
+      action: '__sfu_track_published__',
+      data: info,
+    }
+
+    for (const [, dc] of this.dataChannels) {
+      if (dc.readyState === 'open') {
+        dc.send(JSON.stringify(message))
+      }
     }
   }
 

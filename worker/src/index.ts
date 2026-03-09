@@ -6,6 +6,8 @@ export interface Env {
   SIGNALING_ROOM: DurableObjectNamespace
   TURN_KEY_ID?: string
   TURN_KEY_API_TOKEN?: string
+  SFU_APP_ID?: string
+  SFU_APP_SECRET?: string
   CORS_ALLOW_ALL?: string
 }
 
@@ -16,6 +18,7 @@ const allowedOrigins = [
 ]
 
 const TURN_CREDENTIAL_TTL = 86400
+const SFU_API_BASE = 'https://rtc.live.cloudflare.com/v1'
 
 const getCorsHeaders = (request: Request, env: Env): Record<string, string> => {
   const origin = request.headers.get('Origin') || ''
@@ -23,7 +26,7 @@ const getCorsHeaders = (request: Request, env: Env): Record<string, string> => {
   if (env.CORS_ALLOW_ALL === 'true') {
     return {
       'Access-Control-Allow-Origin': '*',
-      'Access-Control-Allow-Methods': 'GET, OPTIONS',
+      'Access-Control-Allow-Methods': 'GET, POST, PUT, OPTIONS',
       'Access-Control-Allow-Headers': 'Content-Type, Upgrade, Connection',
     }
   }
@@ -34,10 +37,12 @@ const getCorsHeaders = (request: Request, env: Env): Record<string, string> => {
 
   return {
     'Access-Control-Allow-Origin': allowedOrigin,
-    'Access-Control-Allow-Methods': 'GET, OPTIONS',
+    'Access-Control-Allow-Methods': 'GET, POST, PUT, OPTIONS',
     'Access-Control-Allow-Headers': 'Content-Type, Upgrade, Connection',
   }
 }
+
+// ─── TURN ───────────────────────────────────────────────
 
 interface CloudflareTurnResponse {
   iceServers: Array<{
@@ -47,16 +52,14 @@ interface CloudflareTurnResponse {
   }>
 }
 
-const generateCloudflareTurnCredentials = async (
+const generateTurnCredentials = async (
   env: Env
 ): Promise<CloudflareTurnResponse | null> => {
-  if (!env.TURN_KEY_ID || !env.TURN_KEY_API_TOKEN) {
-    return null
-  }
+  if (!env.TURN_KEY_ID || !env.TURN_KEY_API_TOKEN) return null
 
   try {
-    const response = await fetch(
-      `https://rtc.live.cloudflare.com/v1/turn/keys/${env.TURN_KEY_ID}/credentials/generate-ice-servers`,
+    const resp = await fetch(
+      `${SFU_API_BASE}/turn/keys/${env.TURN_KEY_ID}/credentials/generate-ice-servers`,
       {
         method: 'POST',
         headers: {
@@ -66,32 +69,18 @@ const generateCloudflareTurnCredentials = async (
         body: JSON.stringify({ ttl: TURN_CREDENTIAL_TTL }),
       }
     )
+    if (!resp.ok) return null
 
-    if (!response.ok) {
-      console.error(
-        `Cloudflare TURN API error: ${response.status} ${response.statusText}`
-      )
-      return null
-    }
+    const data = (await resp.json()) as CloudflareTurnResponse
+    if (!data.iceServers) return null
 
-    const data = (await response.json()) as CloudflareTurnResponse
-
-    if (!data.iceServers || !Array.isArray(data.iceServers)) {
-      console.error('Invalid Cloudflare TURN response format')
-      return null
-    }
-
-    // Filter out port 53 URLs (blocked by browsers)
-    const filtered: CloudflareTurnResponse = {
-      iceServers: data.iceServers.map(server => ({
-        ...server,
-        urls: server.urls.filter((url: string) => !url.includes(':53')),
+    return {
+      iceServers: data.iceServers.map(s => ({
+        ...s,
+        urls: s.urls.filter((u: string) => !u.includes(':53')),
       })),
     }
-
-    return filtered
-  } catch (error) {
-    console.error('Failed to generate Cloudflare TURN credentials:', error)
+  } catch {
     return null
   }
 }
@@ -101,31 +90,19 @@ const handleGetConfig = async (
   env: Env
 ): Promise<Response> => {
   if (request.method !== 'GET') {
-    return new Response(JSON.stringify({ error: 'Method not allowed' }), {
-      status: 405,
-      headers: {
-        'Content-Type': 'application/json',
-        ...getCorsHeaders(request, env),
-      },
-    })
+    return jsonResponse({ error: 'Method not allowed' }, 405, request, env)
   }
 
-  const turnData = await generateCloudflareTurnCredentials(env)
-
+  const turnData = await generateTurnCredentials(env)
   if (!turnData) {
-    return new Response(
-      JSON.stringify({ error: 'TURN service not configured' }),
-      {
-        status: 404,
-        headers: {
-          'Content-Type': 'application/json',
-          ...getCorsHeaders(request, env),
-        },
-      }
+    return jsonResponse(
+      { error: 'TURN service not configured' },
+      404,
+      request,
+      env
     )
   }
 
-  // Return the full iceServers array from Cloudflare
   return new Response(JSON.stringify(turnData), {
     status: 200,
     headers: {
@@ -135,6 +112,65 @@ const handleGetConfig = async (
     },
   })
 }
+
+// ─── SFU ────────────────────────────────────────────────
+
+const sfuProxy = async (
+  request: Request,
+  env: Env,
+  sfuPath: string
+): Promise<Response> => {
+  if (!env.SFU_APP_ID || !env.SFU_APP_SECRET) {
+    return jsonResponse({ error: 'SFU not configured' }, 503, request, env)
+  }
+
+  const body = request.method !== 'GET' ? await request.text() : undefined
+
+  try {
+    const resp = await fetch(
+      `${SFU_API_BASE}/apps/${env.SFU_APP_ID}/${sfuPath}`,
+      {
+        method: request.method,
+        headers: {
+          Authorization: `Bearer ${env.SFU_APP_SECRET}`,
+          'Content-Type': 'application/json',
+        },
+        body,
+      }
+    )
+
+    const data = await resp.text()
+
+    return new Response(data, {
+      status: resp.status,
+      headers: {
+        'Content-Type': 'application/json',
+        ...getCorsHeaders(request, env),
+      },
+    })
+  } catch (error) {
+    return jsonResponse({ error: 'SFU proxy error' }, 502, request, env)
+  }
+}
+
+// ─── Helpers ────────────────────────────────────────────
+
+const jsonResponse = (
+  data: Record<string, unknown>,
+  status: number,
+  request: Request,
+  env: Env
+): Response => {
+  return new Response(JSON.stringify(data), {
+    status,
+    headers: {
+      'Content-Type': 'application/json',
+      ...getCorsHeaders(request, env),
+    },
+  })
+}
+
+// ─── Router ─────────────────────────────────────────────
 
 export default {
   async fetch(request: Request, env: Env): Promise<Response> {
@@ -147,10 +183,51 @@ export default {
       })
     }
 
+    // TURN config
     if (url.pathname === '/api/get-config') {
       return handleGetConfig(request, env)
     }
 
+    // SFU: create session
+    if (url.pathname === '/sfu/sessions/new' && request.method === 'POST') {
+      return sfuProxy(request, env, 'sessions/new')
+    }
+
+    // SFU: add tracks
+    const tracksNewMatch = url.pathname.match(
+      /^\/sfu\/sessions\/([^/]+)\/tracks\/new$/
+    )
+    if (tracksNewMatch && request.method === 'POST') {
+      return sfuProxy(request, env, `sessions/${tracksNewMatch[1]}/tracks/new`)
+    }
+
+    // SFU: renegotiate
+    const renegotiateMatch = url.pathname.match(
+      /^\/sfu\/sessions\/([^/]+)\/renegotiate$/
+    )
+    if (renegotiateMatch && request.method === 'PUT') {
+      return sfuProxy(
+        request,
+        env,
+        `sessions/${renegotiateMatch[1]}/renegotiate`
+      )
+    }
+
+    // SFU: close tracks
+    const closeMatch = url.pathname.match(
+      /^\/sfu\/sessions\/([^/]+)\/tracks\/close$/
+    )
+    if (closeMatch && request.method === 'PUT') {
+      return sfuProxy(request, env, `sessions/${closeMatch[1]}/tracks/close`)
+    }
+
+    // SFU: session info
+    const sessionInfoMatch = url.pathname.match(/^\/sfu\/sessions\/([^/]+)$/)
+    if (sessionInfoMatch && request.method === 'GET') {
+      return sfuProxy(request, env, `sessions/${sessionInfoMatch[1]}`)
+    }
+
+    // Signaling WebSocket
     const roomMatch = url.pathname.match(/^\/room\/(.+)$/)
     if (roomMatch) {
       const roomId = decodeURIComponent(roomMatch[1])
