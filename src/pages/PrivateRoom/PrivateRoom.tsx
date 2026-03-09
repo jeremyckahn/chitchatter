@@ -1,11 +1,14 @@
-import { useContext, useEffect, useState } from 'react'
 import { Room } from 'components/Room'
+import { useContext, useEffect, useState } from 'react'
 import { useParams } from 'react-router-dom'
 
-import { ShellContext } from 'contexts/ShellContext'
-import { notification } from 'services/Notification'
+import { WholePageLoading } from 'components/Loading'
 import { PasswordPrompt } from 'components/PasswordPrompt'
+import { allowAdvancedRoomLinkSharing } from 'components/Shell/constants'
+import { ShellContext } from 'contexts/ShellContext'
+import { useThrottledRoomMount } from 'hooks/useThrottledRoomMount'
 import { encryption } from 'services/Encryption'
+import { notification } from 'services/Notification'
 
 interface PublicRoomProps {
   userId: string
@@ -14,11 +17,15 @@ interface PublicRoomProps {
 export function PrivateRoom({ userId }: PublicRoomProps) {
   const { roomId = '' } = useParams()
   const { setTitle } = useContext(ShellContext)
+  const canMount = useThrottledRoomMount(roomId)
 
   const urlParams = new URLSearchParams(window.location.hash.substring(1))
-  // Clear secret from address bar
-  if (window.location.hash.length > 0)
+
+  if (allowAdvancedRoomLinkSharing && window.location.hash.length > 0) {
+    // Clear secret from address bar
     window.history.replaceState(window.history.state, '', '#')
+  }
+
   const [secret, setSecret] = useState(urlParams.get('secret') ?? '')
 
   useEffect(() => {
@@ -38,6 +45,10 @@ export function PrivateRoom({ userId }: PublicRoomProps) {
     handlePasswordEntered(urlParams.get('pwd') ?? '')
 
   const awaitingSecret = secret.length === 0
+
+  if (!canMount) {
+    return <WholePageLoading />
+  }
 
   return awaitingSecret ? (
     <PasswordPrompt

@@ -1,3 +1,11 @@
+import { AlertColor } from '@mui/material/Alert'
+import Box from '@mui/material/Box'
+import CssBaseline from '@mui/material/CssBaseline'
+import MuiDrawer from '@mui/material/Drawer'
+import Link from '@mui/material/Link'
+import { ThemeProvider } from '@mui/material/styles'
+import Typography from '@mui/material/Typography'
+import { useWindowSize } from '@react-hook/window-size'
 import {
   PropsWithChildren,
   SyntheticEvent,
@@ -8,48 +16,41 @@ import {
   useRef,
   useState,
 } from 'react'
-import CssBaseline from '@mui/material/CssBaseline'
-import { ThemeProvider } from '@mui/material/styles'
-import Box from '@mui/material/Box'
-import Typography from '@mui/material/Typography'
-import { AlertColor } from '@mui/material/Alert'
-import MuiDrawer from '@mui/material/Drawer'
-import Link from '@mui/material/Link'
-import { useWindowSize } from '@react-hook/window-size'
 
+import { ErrorBoundary } from 'components/ErrorBoundary'
+import { SettingsContext } from 'contexts/SettingsContext'
 import {
   MessageLog,
   ShellContext,
   ShellMessageLog,
 } from 'contexts/ShellContext'
-import { SettingsContext } from 'contexts/SettingsContext'
-import { AlertOptions, QueryParamKeys } from 'models/shell'
+import { PeerConnectionType, PeerRoom } from 'lib/PeerRoom'
 import {
+  AudioChannel,
+  AudioChannelName,
   AudioState,
+  Peer,
+  PeerAudioChannelState,
   ScreenShareState,
   VideoState,
-  Peer,
-  AudioChannel,
-  PeerAudioChannelState,
-  AudioChannelName,
 } from 'models/chat'
-import { ErrorBoundary } from 'components/ErrorBoundary'
-import { PeerConnectionType, PeerRoom } from 'lib/PeerRoom'
+import { AlertOptions, QueryParamKeys } from 'models/shell'
 
+import { allowAdvancedRoomLinkSharing } from './constants'
 import { Drawer } from './Drawer'
-import { UpgradeDialog } from './UpgradeDialog'
-import { ShellAppBar } from './ShellAppBar'
-import { NotificationArea } from './NotificationArea'
-import { RouteContent } from './RouteContent'
-import { PeerList, peerListWidth } from './PeerList'
-import { QRCodeDialog } from './QRCodeDialog'
-import { RoomShareDialog } from './RoomShareDialog'
-import { useConnectionTest } from './useConnectionTest'
-import { ServerConnectionFailureDialog } from './ServerConnectionFailureDialog'
 import {
   EnvironmentUnsupportedDialog,
   isEnvironmentSupported,
 } from './EnvironmentUnsupportedDialog'
+import { NotificationArea } from './NotificationArea'
+import { PeerList, peerListWidth } from './PeerList'
+import { QRCodeDialog } from './QRCodeDialog'
+import { RoomShareDialog } from './RoomShareDialog'
+import { RouteContent } from './RouteContent'
+import { ServerConnectionFailureDialog } from './ServerConnectionFailureDialog'
+import { ShellAppBar } from './ShellAppBar'
+import { UpgradeDialog } from './UpgradeDialog'
+import { useConnectionTest } from './useConnectionTest'
 import { useShellTheme } from './useShellTheme'
 
 export interface ShellProps extends PropsWithChildren {
@@ -351,7 +352,11 @@ export const Shell = ({ appNeedsUpdate, children, userPeerId }: ShellProps) => {
   }
 
   const handleLinkButtonClick = async () => {
-    if (roomId !== undefined && password !== undefined) {
+    if (
+      roomId !== undefined &&
+      password !== undefined &&
+      allowAdvancedRoomLinkSharing
+    ) {
       setIsRoomShareDialogOpen(true)
     } else {
       copyToClipboard(window.location.href, 'Current URL copied to clipboard')

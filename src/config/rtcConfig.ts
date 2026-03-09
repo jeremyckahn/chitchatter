@@ -36,13 +36,9 @@ export const rtcConfig: RTCConfiguration = {
     },
     // Backup TURN server
     {
-      urls: 'turn:relay1.expressturn.com:3478',
+      urls: ['turn:relay1.expressturn.com:3478'],
       username: 'efQUQ79N77B5BNVVKF',
       credential: 'N4EAugpjMzPLrxSS',
-    },
-    // Free Google STUN server for basic NAT traversal.
-    {
-      urls: 'stun:stun.l.google.com:19302',
     },
   ],
   

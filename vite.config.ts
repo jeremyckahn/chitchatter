@@ -11,6 +11,7 @@ import macrosPlugin from 'vite-plugin-babel-macros'
 import { VitePWA } from 'vite-plugin-pwa'
 
 import { manifest } from './manifest'
+import { RouterType } from './src/models/router'
 
 const srcPaths = [
   'components',
@@ -40,7 +41,9 @@ const config = () => {
     server: {
       proxy: {
         '/api': {
-          target: 'http://localhost:3001',
+          target: process.env.IS_E2E_TEST
+            ? 'http://localhost:3003'
+            : 'http://localhost:3001',
           changeOrigin: true,
           secure: false,
         },
@@ -97,6 +100,9 @@ const config = () => {
       coverage: {
         reporter: ['text', 'html'],
         exclude: ['node_modules/', 'src/setupTests.ts'],
+      },
+      env: {
+        VITE_ROUTER_TYPE: RouterType.BROWSER,
       },
     },
   })

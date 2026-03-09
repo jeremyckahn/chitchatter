@@ -7,8 +7,7 @@ import Typography, { TypographyProps } from '@mui/material/Typography'
 import Link, { LinkProps } from '@mui/material/Link'
 import styled from '@mui/material/styles/styled'
 import { materialDark } from 'react-syntax-highlighter/dist/esm/styles/prism'
-import Markdown from 'react-markdown'
-import { CodeProps } from 'react-markdown/lib/ast-to-react'
+import Markdown, { ExtraProps } from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 
 import {
@@ -52,12 +51,20 @@ const componentMap = {
     variant: 'body1',
     underline: 'always',
     color: 'primary.contrastText',
+    target: '_blank',
+    rel: 'noopener noreferrer',
   }),
   // https://github.com/remarkjs/react-markdown#use-custom-components-syntax-highlight
-  code({ node, inline, className, children, style, ...props }: CodeProps) {
+  code({
+    node,
+    className,
+    children,
+    style,
+    ...props
+  }: HTMLAttributes<HTMLElement> & ExtraProps) {
     const match = /language-(\w+)/.exec(className || '')
 
-    return !inline && match ? (
+    return match ? (
       <CopyableBlock>
         <SyntaxHighlighter
           children={String(children).replace(/\n$/, '')}
@@ -128,7 +135,7 @@ export const Message = ({ message, showAuthor, userId }: MessageProps) => {
       >
         <Box
           sx={{
-            color: 'primary.contrastText',
+            color: message.authorId === userId ? 'primary.contrastText' : 'secondary.contrastText',
             backgroundColor,
             margin: 0.5,
             padding: '0.5em 0.75em',
@@ -147,7 +154,6 @@ export const Message = ({ message, showAuthor, userId }: MessageProps) => {
             <StyledMarkdown
               components={componentMap}
               remarkPlugins={[remarkGfm]}
-              linkTarget="_blank"
               sx={{
                 '& pre': {
                   overflow: 'auto',

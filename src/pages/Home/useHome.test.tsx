@@ -1,7 +1,9 @@
 import { Mock } from 'vitest'
-import { ShellContext, ShellContextProps } from 'contexts/ShellContext'
 import { renderHook, act } from '@testing-library/react'
 import { useNavigate } from 'react-router-dom'
+import type { FC, ReactNode } from 'react'
+import type { ShellContextProps } from 'contexts/ShellContext'
+import { ShellContext } from 'contexts/ShellContext'
 
 import { useHome } from './useHome'
 
@@ -9,14 +11,18 @@ vi.mock('react-router-dom', () => ({
   useNavigate: vi.fn(),
 }))
 
+vi.mock('config/router', () => ({
+  routerType: 'browser',
+}))
+
 const mockSetTitle = vi.fn()
 
-const MockShellContextProvider: React.FC<{ children: React.ReactNode }> = ({
+const MockShellContextProvider: FC<{ children: ReactNode }> = ({
   children,
 }) => {
   return (
+    // NOTE: Only properties necessary for the tests are mocked
     <ShellContext.Provider
-      // NOTE: Only properties necessary for the tests are mocked
       value={{ setTitle: mockSetTitle } as unknown as ShellContextProps}
     >
       {children}
@@ -70,6 +76,7 @@ describe('useHome Hook', () => {
     const { result } = renderHook(() => useHome(), {
       wrapper: MockShellContextProvider,
     })
+
     const event = {
       target: { value: 'http://localhost:3000/public/prefixedRoomName' },
     } as React.ChangeEvent<HTMLInputElement>
@@ -165,5 +172,21 @@ describe('useHome Hook', () => {
       result.current.setRoomName('validRoomName')
     })
     expect(result.current.isRoomNameValid).toBe(true)
+  })
+
+  it('should handle room names without any prefix', () => {
+    const { result } = renderHook(() => useHome(), {
+      wrapper: MockShellContextProvider,
+    })
+
+    const event = {
+      target: { value: 'plainRoomName' },
+    } as React.ChangeEvent<HTMLInputElement>
+
+    act(() => {
+      result.current.handleRoomNameChange(event)
+    })
+
+    expect(result.current.roomName).toBe('plainRoomName')
   })
 })
