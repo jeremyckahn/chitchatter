@@ -109,69 +109,33 @@ export class ConnectionTest extends EventTarget {
     this.rtcPeerConnection?.close()
   }
 
-  testSignalingConnection(): SignalingConnection {
+  async testSignalingConnection(): Promise<SignalingConnection> {
     const httpUrl = this.signalingServerUrl
       .replace('wss://', 'https://')
       .replace('ws://', 'http://')
 
     try {
-      const ws = new WebSocket(
-        `${this.signalingServerUrl}/room/__connection_test__`
-      )
-      let resolved = false
+      const controller = new AbortController()
+      const timeout = setTimeout(() => controller.abort(), 5000)
 
-      const testPromise = new Promise<SignalingConnection>(resolve => {
-        const timeout = setTimeout(() => {
-          if (!resolved) {
-            resolved = true
-            ws.close()
-            resolve(SignalingConnection.FAILED)
-          }
-        }, 5000)
-
-        ws.onopen = () => {
-          if (!resolved) {
-            resolved = true
-            clearTimeout(timeout)
-            ws.close()
-            resolve(SignalingConnection.CONNECTED)
-          }
-        }
-
-        ws.onerror = () => {
-          if (!resolved) {
-            resolved = true
-            clearTimeout(timeout)
-            resolve(SignalingConnection.FAILED)
-          }
-        }
+      const resp = await fetch(`${httpUrl}/health`, {
+        signal: controller.signal,
       })
 
-      testPromise.then(result => {
-        this.signalingConnection = result
-        this.dispatchEvent(
-          new CustomEvent(ConnectionTestEvents.SIGNALING_CONNECTION_CHANGED, {
-            detail: this,
-          })
-        )
-      })
+      clearTimeout(timeout)
 
-      fetch(`${httpUrl}/health`, { method: 'GET', mode: 'no-cors' })
-        .then(() => {
-          if (!resolved) {
-            this.signalingConnection = SignalingConnection.SEARCHING
-          }
-        })
-        .catch(() => {
-          if (!resolved) {
-            resolved = true
-            ws.close()
-            this.signalingConnection = SignalingConnection.FAILED
-          }
-        })
+      this.signalingConnection = resp.ok
+        ? SignalingConnection.CONNECTED
+        : SignalingConnection.FAILED
     } catch {
       this.signalingConnection = SignalingConnection.FAILED
     }
+
+    this.dispatchEvent(
+      new CustomEvent(ConnectionTestEvents.SIGNALING_CONNECTION_CHANGED, {
+        detail: this,
+      })
+    )
 
     return this.signalingConnection
   }

@@ -18,7 +18,7 @@ export interface ConnectionTestResults {
 }
 
 const rtcPollInterval = 20 * 1000
-const signalingPollInterval = 10 * 1000
+const signalingPollInterval = 30 * 1000
 
 export const useConnectionTest = () => {
   const settingsContext = useContext(SettingsContext)
@@ -106,7 +106,7 @@ export const useConnectionTest = () => {
             turnConfig,
             signalingServerUrl
           )
-          const result = connectionTest.testSignalingConnection()
+          const result = await connectionTest.testSignalingConnection()
           setSignalingConnection(result)
         } catch (_e) {
           setSignalingConnection(SignalingConnection.FAILED)

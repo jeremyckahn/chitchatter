@@ -75,15 +75,22 @@ const RoomCore = ({
       password,
       signalingServerUrl,
       sfuApiBase,
-      rtcConfig: {
-        iceServers: [
-          { urls: 'stun:stun.cloudflare.com:3478' },
-          ...(turnConfig.iceServers || []),
-        ],
-        ...(import.meta.env.VITE_IS_E2E_TEST && {
-          iceServers: [],
-        }),
-      },
+      rtcConfig: import.meta.env.VITE_IS_E2E_TEST
+        ? { iceServers: [] }
+        : {
+            iceServers: [
+              { urls: 'stun:stun.cloudflare.com:3478' },
+              ...(turnConfig.iceServers || []).map(server => ({
+                ...server,
+                // Limit TURN URLs to primary ports to avoid browser warning
+                urls: Array.isArray(server.urls)
+                  ? server.urls.filter(
+                      (u: string) => !u.includes(':53') && !u.includes(':80/')
+                    )
+                  : server.urls,
+              })),
+            ],
+          },
     },
     {
       roomId,

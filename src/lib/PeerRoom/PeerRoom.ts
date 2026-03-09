@@ -223,7 +223,10 @@ export class PeerRoom {
         break
 
       case 'peer-joined':
-        if (this.localPeerId > msg.peerId) {
+        // Only initiate if we don't already have a connection to this peer.
+        // The new peer will initiate to us from their 'init' handler.
+        // We only create as a fallback if the new peer's ID is lower (tiebreaker).
+        if (!this.peers.has(msg.peerId) && this.localPeerId > msg.peerId) {
           this.createPeerConnection(msg.peerId, true)
         }
         break
@@ -250,8 +253,18 @@ export class PeerRoom {
     peerId: string,
     initiator: boolean
   ): RTCPeerConnection => {
-    if (this.peers.has(peerId)) {
-      this.peers.get(peerId)!.close()
+    const existingPc = this.peers.get(peerId)
+    if (existingPc) {
+      // Don't destroy a connection that's already connected or connecting
+      if (
+        existingPc.connectionState === 'connected' ||
+        existingPc.connectionState === 'connecting' ||
+        existingPc.iceConnectionState === 'connected' ||
+        existingPc.iceConnectionState === 'checking'
+      ) {
+        return existingPc
+      }
+      existingPc.close()
       this.peers.delete(peerId)
       this.dataChannels.delete(peerId)
     }
@@ -270,11 +283,20 @@ export class PeerRoom {
     }
 
     pc.oniceconnectionstatechange = () => {
-      if (
-        pc.iceConnectionState === 'disconnected' ||
-        pc.iceConnectionState === 'failed'
-      ) {
+      if (pc.iceConnectionState === 'failed') {
         this.removePeer(peerId)
+      }
+      // 'disconnected' is often temporary (network change, sleep).
+      // Only remove after a timeout if it doesn't recover.
+      if (pc.iceConnectionState === 'disconnected') {
+        setTimeout(() => {
+          if (
+            this.peers.get(peerId) === pc &&
+            pc.iceConnectionState === 'disconnected'
+          ) {
+            this.removePeer(peerId)
+          }
+        }, 10000)
       }
     }
 
