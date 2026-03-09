@@ -1,114 +1,117 @@
 import Box from '@mui/material/Box'
 import CircularProgress from '@mui/material/CircularProgress'
 import Typography from '@mui/material/Typography'
-import { useContext, useEffect, useRef, useState } from 'react'
-import { TorrentFile } from 'webtorrent'
+import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
-import { RoomContext } from 'contexts/RoomContext'
-import { ShellContext } from 'contexts/ShellContext'
-
-type TorrentFiles = TorrentFile[]
+import {
+  TransferredFile,
+  fileTransferGetOffered,
+} from 'services/FileTransfer/FileTransfer'
 
 interface InlineMediaProps {
   magnetURI: string
 }
 
-interface InlineFileProps {
-  file: TorrentFile
-}
-
-// NOTE: These filename extensions are copied from render-media, the upstream
-// library used to embed media files:
-// https://github.com/feross/render-media/blob/a445b2ab90fcd4a248552d32027b2bc6a02600c8/index.js#L15-L72
-const supportedImageExtensions = [
-  '.bmp',
-  '.gif',
-  '.jpeg',
-  '.jpg',
-  '.png',
-  '.svg',
+const supportedImageTypes = [
+  'image/png',
+  'image/jpeg',
+  'image/gif',
+  'image/bmp',
+  'image/svg+xml',
+  'image/webp',
 ]
 
-const supportedAudioExtensions = ['.aac', '.oga', '.ogg', '.wav', '.flac']
-
-const supportedMediaExtensions = [
-  ...supportedImageExtensions,
-  ...supportedAudioExtensions,
+const supportedAudioTypes = [
+  'audio/mpeg',
+  'audio/ogg',
+  'audio/wav',
+  'audio/aac',
+  'audio/flac',
 ]
 
-export const InlineFile = ({ file }: InlineFileProps) => {
-  const containerRef = useRef(null)
-  const [didRenderingMediaFail, setDidRenderingMediaFail] = useState(false)
-  const [isMediaSupported, setIsMediaSupported] = useState(true)
-  const shellContext = useContext(ShellContext)
+const supportedVideoTypes = ['video/mp4', 'video/webm', 'video/ogg']
+
+const InlineFileDisplay = ({ file }: { file: TransferredFile }) => {
   const { t } = useTranslation()
+  const { metadata, url } = file
 
-  useEffect(() => {
-    const { current: container } = containerRef
+  if (supportedImageTypes.includes(metadata.type)) {
+    return (
+      <Box sx={{ '& img': { maxWidth: '100%', borderRadius: 1 } }}>
+        <img src={url} alt={metadata.name} />
+      </Box>
+    )
+  }
 
-    if (!container) return
+  if (supportedAudioTypes.includes(metadata.type)) {
+    return (
+      <Box>
+        <audio controls src={url} />
+      </Box>
+    )
+  }
 
-    const { name } = file
-    const fileNameExtension = name.split('.').pop() ?? ''
-
-    if (!supportedMediaExtensions.includes(`.${fileNameExtension}`)) {
-      setIsMediaSupported(false)
-      return
-    }
-
-    try {
-      file.appendTo(container)
-    } catch (e) {
-      console.error(e)
-      setDidRenderingMediaFail(true)
-    }
-  }, [file, containerRef, shellContext.roomId])
+  if (supportedVideoTypes.includes(metadata.type)) {
+    return (
+      <Box sx={{ '& video': { maxWidth: '100%', borderRadius: 1 } }}>
+        <video controls src={url} />
+      </Box>
+    )
+  }
 
   return (
-    <Box ref={containerRef} sx={{ '& img': { maxWidth: '100%' } }}>
-      {!isMediaSupported && (
-        <Typography sx={{ fontStyle: 'italic' }}>
-          {t('media.previewNotSupported')}
-        </Typography>
-      )}
-      {didRenderingMediaFail && (
-        <Typography sx={{ fontStyle: 'italic' }}>
-          {t('media.renderFailed')}
-        </Typography>
-      )}
-    </Box>
+    <Typography sx={{ fontStyle: 'italic' }}>
+      {t('media.previewNotSupported')} ({metadata.name})
+    </Typography>
   )
 }
 
 export const InlineMedia = ({ magnetURI }: InlineMediaProps) => {
-  const [hasDownloadInitiated, setHasDownloadInitiated] = useState(false)
-  const [downloadedFiles, setDownloadedFiles] = useState<TorrentFiles>([])
-  const shellContext = useContext(ShellContext)
-  const {
-    fileTransferService: { fileTransfer },
-  } = useContext(RoomContext)
+  const [files, setFiles] = useState<TransferredFile[]>([])
+  const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
-    ;(async () => {
-      if (hasDownloadInitiated) return
-      if (typeof shellContext.roomId !== 'string') {
-        throw new Error('shellContext.roomId is not a string')
+    const check = () => {
+      const found = fileTransferGetOffered(magnetURI)
+      if (found.length > 0) {
+        setFiles(found)
+        setIsLoading(false)
+        return true
       }
+      return false
+    }
 
-      setHasDownloadInitiated(true)
-      const files = await fileTransfer.download(magnetURI, shellContext.roomId)
-      setDownloadedFiles(files)
-    })()
-  }, [fileTransfer, hasDownloadInitiated, magnetURI, shellContext.roomId])
+    if (check()) return
+
+    // Poll briefly for incoming file data
+    let attempts = 0
+    const interval = setInterval(() => {
+      attempts++
+      if (check() || attempts > 30) {
+        clearInterval(interval)
+        setIsLoading(false)
+      }
+    }, 500)
+
+    return () => clearInterval(interval)
+  }, [magnetURI])
+
+  if (isLoading) {
+    return (
+      <CircularProgress variant="indeterminate" color="inherit" size={20} />
+    )
+  }
+
+  if (files.length === 0) {
+    return null
+  }
 
   return (
     <>
-      {hasDownloadInitiated && downloadedFiles.length === 0 ? (
-        <CircularProgress variant="indeterminate" color="inherit" />
-      ) : (
-        downloadedFiles.map(file => <InlineFile file={file} key={file.name} />)
-      )}
+      {files.map(file => (
+        <InlineFileDisplay file={file} key={file.metadata.name} />
+      ))}
     </>
   )
 }

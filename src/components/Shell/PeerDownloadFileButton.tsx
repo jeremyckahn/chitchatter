@@ -24,15 +24,9 @@ export const PeerDownloadFileButton = ({
   const [isDownloading, setIsDownloading] = useState(false)
   const [downloadProgress, setDownloadProgress] = useState<number | null>(null)
   const shellContext = useContext(ShellContext)
-  const {
-    fileTransferService: { fileTransfer },
-  } = useContext(RoomContext)
+  useContext(RoomContext)
   const { getDisplayUsername } = usePeerNameDisplay()
   const { offeredFileId } = peer
-
-  const onProgress = (progress: number) => {
-    setDownloadProgress(progress * 100)
-  }
 
   if (!offeredFileId) {
     return <></>
@@ -43,19 +37,26 @@ export const PeerDownloadFileButton = ({
     setDownloadProgress(null)
 
     try {
-      if (typeof shellContext.roomId !== 'string') {
-        throw new Error('shellContext.roomId is not a string')
+      const { fileTransferGetOffered } = await import(
+        'services/FileTransfer/FileTransfer'
+      )
+      const files = fileTransferGetOffered(offeredFileId)
+
+      for (const file of files) {
+        const a = document.createElement('a')
+        a.href = file.url
+        a.download = file.metadata.name
+        document.body.appendChild(a)
+        a.click()
+        document.body.removeChild(a)
       }
 
-      await fileTransfer.download(offeredFileId, shellContext.roomId, {
-        doSave: true,
-        onProgress,
-      })
+      if (files.length === 0) {
+        shellContext.showAlert('File not available', { severity: 'warning' })
+      }
     } catch (e) {
       if (isError(e)) {
-        shellContext.showAlert(e.message, {
-          severity: 'error',
-        })
+        shellContext.showAlert(e.message, { severity: 'error' })
       }
     }
 

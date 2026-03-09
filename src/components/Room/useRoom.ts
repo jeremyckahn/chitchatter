@@ -32,7 +32,12 @@ import {
 } from 'models/chat'
 import { PeerAction } from 'models/network'
 import { AllowedKeyType, encryption } from 'services/Encryption'
-import { FileTransferService } from 'services/FileTransfer'
+import {
+  FileTransferService,
+  fileToBase64,
+  fileTransferOffer,
+  fileTransferReceive,
+} from 'services/FileTransfer/FileTransfer'
 import { notification } from 'services/Notification'
 
 import { messageTranscriptSizeLimit } from 'config/messaging'
@@ -120,10 +125,7 @@ export function useRoom(
 
   const { getDisplayUsername } = usePeerNameDisplay()
 
-  const fileTransferService = useMemo(
-    () => new FileTransferService(roomConfig.rtcConfig!),
-    [roomConfig.rtcConfig]
-  )
+  const fileTransferService = useMemo(() => new FileTransferService(), [])
 
   const setMessageLog = (messages: Array<Message | InlineMedia>) => {
     if (messages.length > messageTranscriptSizeLimit) {
@@ -135,9 +137,9 @@ export function useRoom(
       for (const message of evictedMessages) {
         if (
           isInlineMedia(message) &&
-          fileTransferService.fileTransfer.isOffering(message.magnetURI)
+          fileTransferService.isOffering(message.magnetURI)
         ) {
-          fileTransferService.fileTransfer.rescind(message.magnetURI)
+          fileTransferService.rescind(message.magnetURI)
         }
       }
     }
@@ -408,8 +410,27 @@ export function useRoom(
     namespace,
     peerAction: PeerAction.MEDIA_MESSAGE,
     peerRoom,
-    onReceive: inlineMedia => {
+    onReceive: (inlineMedia: Record<string, unknown>) => {
       const userSettings = settingsContext.getUserSettings()
+      const media = inlineMedia as UnsentInlineMedia & {
+        fileName?: string
+        fileType?: string
+        fileSize?: number
+        fileData?: string
+      }
+
+      // If file data is included, store it for display
+      if (media.fileData && media.fileName && media.fileType) {
+        fileTransferReceive(
+          {
+            id: media.magnetURI,
+            name: media.fileName,
+            type: media.fileType,
+            size: media.fileSize || 0,
+          },
+          media.fileData
+        )
+      }
 
       if (!tabHasFocus) {
         if (userSettings.playSoundOnNewMessage) {
@@ -418,14 +439,14 @@ export function useRoom(
 
         if (userSettings.showNotificationOnNewMessage) {
           notification.showNotification(
-            `${getDisplayUsername(inlineMedia.authorId)} shared media`
+            `${getDisplayUsername(media.authorId)} shared media`
           )
         }
       }
 
       setMessageLog([
         ...messageLog,
-        { ...inlineMedia, timeReceived: timeService.now() },
+        { ...media, timeReceived: timeService.now() },
       ])
     },
   })
@@ -530,27 +551,38 @@ export function useRoom(
   if (!showVideoDisplay && !isShowingMessages) setIsShowingMessages(true)
 
   const handleInlineMediaUpload = async (files: File[]) => {
-    const fileOfferId = await fileTransferService.fileTransfer.offer(
-      files,
-      roomId
-    )
-
-    const unsentInlineMedia: UnsentInlineMedia = {
-      authorId: userId,
-      magnetURI: fileOfferId,
-      timeSent: timeService.now(),
-      id: getUuid(),
-    }
+    const fileOfferId = await fileTransferOffer(files)
 
     setIsMessageSending(true)
-    setMessageLog([...messageLog, unsentInlineMedia])
 
-    await Promise.all(sendPeerInlineMedia(unsentInlineMedia))
+    for (const file of files) {
+      const base64Data = await fileToBase64(file)
 
-    setMessageLog([
-      ...messageLog,
-      { ...unsentInlineMedia, timeReceived: timeService.now() },
-    ])
+      const unsentInlineMedia: UnsentInlineMedia = {
+        authorId: userId,
+        magnetURI: fileOfferId,
+        timeSent: timeService.now(),
+        id: getUuid(),
+      }
+
+      setMessageLog([...messageLog, unsentInlineMedia])
+
+      await Promise.all(
+        sendPeerInlineMedia({
+          ...unsentInlineMedia,
+          fileName: file.name,
+          fileType: file.type,
+          fileSize: file.size,
+          fileData: base64Data,
+        } as UnsentInlineMedia)
+      )
+
+      setMessageLog([
+        ...messageLog,
+        { ...unsentInlineMedia, timeReceived: timeService.now() },
+      ])
+    }
+
     setIsMessageSending(false)
   }
 

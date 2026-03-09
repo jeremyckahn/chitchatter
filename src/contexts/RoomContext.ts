@@ -39,5 +39,5 @@ export const RoomContext = createContext<RoomContextProps>({
   setPeerScreenStreams: () => {},
   peerOfferedFileMetadata: {},
   setPeerOfferedFileMetadata: () => {},
-  fileTransferService: new FileTransferService({}),
+  fileTransferService: new FileTransferService(),
 })

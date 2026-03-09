@@ -35,7 +35,7 @@ export function useRoomFileShare({
   const {
     peerOfferedFileMetadata,
     setPeerOfferedFileMetadata,
-    fileTransferService: { fileTransfer },
+    fileTransferService,
   } = roomContext
 
   const [sendFileOfferMetadata] = usePeerAction<FileOfferMetadata | null>({
@@ -47,14 +47,15 @@ export function useRoomFileShare({
         setPeerOfferedFileMetadata({ [peerId]: fileOfferMetadata })
       } else {
         fileOfferMetadata = peerOfferedFileMetadata[peerId]
-        const { magnetURI, isAllInlineMedia } = fileOfferMetadata
+        const { magnetURI, isAllInlineMedia } = fileOfferMetadata || {}
 
         if (
           fileOfferMetadata &&
-          fileTransfer.isOffering(magnetURI) &&
+          magnetURI &&
+          fileTransferService.isOffering(magnetURI) &&
           !isAllInlineMedia
         ) {
-          fileTransfer.rescind(magnetURI)
+          fileTransferService.rescind(magnetURI)
         }
 
         const newFileOfferMetadata = { ...peerOfferedFileMetadata }
@@ -85,13 +86,6 @@ export function useRoomFileShare({
   peerRoom.onPeerJoin(PeerHookType.FILE_SHARE, async (peerId: string) => {
     if (!selfFileOfferMagnetUri) return
 
-    // This sleep is needed to prevent this peer from not appearing on other
-    // peers' peer lists. This is because Trystero's interaction between
-    // onPeerJoin and its actions is not totally compatible with React's
-    // lifecycle hooks. In this case, the reference to peerList in
-    // receiveFileOfferMetadata is out of date and prevents this peer from ever
-    // being added to the receiver's peer list. Deferring the
-    // sendFileOfferMetadata call to the next tick serves as a workaround.
     await sleep(1)
 
     sendFileOfferMetadata(
@@ -110,8 +104,8 @@ export function useRoomFileShare({
 
     const { magnetURI, isAllInlineMedia } = fileOfferMetadata
 
-    if (fileTransfer.isOffering(magnetURI) && !isAllInlineMedia) {
-      fileTransfer.rescind(magnetURI)
+    if (fileTransferService.isOffering(magnetURI) && !isAllInlineMedia) {
+      fileTransferService.rescind(magnetURI)
     }
 
     const newPeerFileOfferMetadata = { ...peerOfferedFileMetadata }
@@ -129,13 +123,17 @@ export function useRoomFileShare({
       throw new Error('shellContext.roomId is not a non-empty string')
     }
 
-    const alertText =
+    showAlert(
       files.length > 1
         ? t('fileShare.encryptingFiles')
-        : t('fileShare.encryptingFile')
-    showAlert(alertText, { severity: 'info' })
+        : t('fileShare.encryptingFile'),
+      { severity: 'info' }
+    )
 
-    const magnetURI = await fileTransfer.offer(files, shellContext.roomId)
+    const magnetURI = await fileTransferService.offer(
+      files,
+      shellContext.roomId
+    )
 
     showAlert(t('fileShare.encryptionComplete'), { severity: 'success' })
 
@@ -158,18 +156,18 @@ export function useRoomFileShare({
 
     if (
       selfFileOfferMagnetUri &&
-      fileTransfer.isOffering(selfFileOfferMagnetUri) &&
+      fileTransferService.isOffering(selfFileOfferMagnetUri) &&
       !isEveryFileInlineMedia(sharedFiles)
     ) {
-      fileTransfer.rescind(selfFileOfferMagnetUri)
+      fileTransferService.rescind(selfFileOfferMagnetUri)
     }
   }
 
   useEffect(() => {
     return () => {
-      fileTransfer.rescindAll()
+      fileTransferService.rescindAll()
     }
-  }, [fileTransfer])
+  }, [fileTransferService])
 
   const isSharingFile = Boolean(selfFileOfferMagnetUri)
 
