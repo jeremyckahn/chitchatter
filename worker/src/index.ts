@@ -11,12 +11,6 @@ export interface Env {
   CORS_ALLOW_ALL?: string
 }
 
-const allowedOrigins = [
-  'https://chitchatter.im',
-  'http://localhost:3000',
-  'http://localhost:5173',
-]
-
 const TURN_CREDENTIAL_TTL = 86400
 const SFU_API_BASE = 'https://rtc.live.cloudflare.com/v1'
 
@@ -31,12 +25,14 @@ const getCorsHeaders = (request: Request, env: Env): Record<string, string> => {
     }
   }
 
-  const allowedOrigin = allowedOrigins.includes(origin)
-    ? origin
-    : allowedOrigins[0]
+  const isAllowed =
+    origin === 'http://localhost:3000' ||
+    origin === 'http://localhost:5173' ||
+    origin.endsWith('.pages.dev') ||
+    origin.endsWith('.workers.dev')
 
   return {
-    'Access-Control-Allow-Origin': allowedOrigin,
+    'Access-Control-Allow-Origin': isAllowed ? origin : '',
     'Access-Control-Allow-Methods': 'GET, POST, PUT, OPTIONS',
     'Access-Control-Allow-Headers': 'Content-Type, Upgrade, Connection',
   }
@@ -94,16 +90,19 @@ const handleGetConfig = async (
   }
 
   const turnData = await generateTurnCredentials(env)
+
+  const hasSfu = !!(env.SFU_APP_ID && env.SFU_APP_SECRET)
+
   if (!turnData) {
     return jsonResponse(
-      { error: 'TURN service not configured' },
-      404,
+      { iceServers: [], sfuEnabled: hasSfu },
+      200,
       request,
       env
     )
   }
 
-  return new Response(JSON.stringify(turnData), {
+  return new Response(JSON.stringify({ ...turnData, sfuEnabled: hasSfu }), {
     status: 200,
     headers: {
       'Content-Type': 'application/json',
@@ -148,7 +147,7 @@ const sfuProxy = async (
         ...getCorsHeaders(request, env),
       },
     })
-  } catch (error) {
+  } catch {
     return jsonResponse({ error: 'SFU proxy error' }, 502, request, env)
   }
 }
@@ -183,17 +182,21 @@ export default {
       })
     }
 
-    // TURN config
+    // Health check
+    if (url.pathname === '/' || url.pathname === '/health') {
+      return jsonResponse({ status: 'ok' }, 200, request, env)
+    }
+
+    // TURN + SFU availability config
     if (url.pathname === '/api/get-config') {
       return handleGetConfig(request, env)
     }
 
-    // SFU: create session
+    // SFU endpoints
     if (url.pathname === '/sfu/sessions/new' && request.method === 'POST') {
       return sfuProxy(request, env, 'sessions/new')
     }
 
-    // SFU: add tracks
     const tracksNewMatch = url.pathname.match(
       /^\/sfu\/sessions\/([^/]+)\/tracks\/new$/
     )
@@ -201,7 +204,6 @@ export default {
       return sfuProxy(request, env, `sessions/${tracksNewMatch[1]}/tracks/new`)
     }
 
-    // SFU: renegotiate
     const renegotiateMatch = url.pathname.match(
       /^\/sfu\/sessions\/([^/]+)\/renegotiate$/
     )
@@ -213,7 +215,6 @@ export default {
       )
     }
 
-    // SFU: close tracks
     const closeMatch = url.pathname.match(
       /^\/sfu\/sessions\/([^/]+)\/tracks\/close$/
     )
@@ -221,7 +222,6 @@ export default {
       return sfuProxy(request, env, `sessions/${closeMatch[1]}/tracks/close`)
     }
 
-    // SFU: session info
     const sessionInfoMatch = url.pathname.match(/^\/sfu\/sessions\/([^/]+)$/)
     if (sessionInfoMatch && request.method === 'GET') {
       return sfuProxy(request, env, `sessions/${sessionInfoMatch[1]}`)

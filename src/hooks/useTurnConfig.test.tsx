@@ -18,6 +18,11 @@ const mockTurnServer = {
   credential: 'N4EAUgpjMzPLrxSS',
 }
 
+const mockApiResponse = {
+  iceServers: [mockTurnServer],
+  sfuEnabled: false,
+}
+
 const createTestQueryClient = () =>
   new QueryClient({
     defaultOptions: {
@@ -57,7 +62,7 @@ describe('useTurnConfig', () => {
       headers: {
         get: vi.fn().mockReturnValue('application/json'),
       },
-      json: vi.fn().mockResolvedValue(mockTurnServer),
+      json: vi.fn().mockResolvedValue(mockApiResponse),
     })
 
     const { result } = renderHook(() => useTurnConfig(), { wrapper })
@@ -157,7 +162,7 @@ describe('useTurnConfig', () => {
       headers: {
         get: vi.fn().mockReturnValue('application/json'),
       },
-      json: vi.fn().mockResolvedValue(null),
+      json: vi.fn().mockResolvedValue({ iceServers: [], sfuEnabled: false }),
     })
 
     const { result } = renderHook(() => useTurnConfig(), { wrapper })
@@ -169,7 +174,7 @@ describe('useTurnConfig', () => {
       { timeout: 3000 }
     )
 
-    expect(result.current.isError).toBe(true)
+    expect(result.current.isError).toBe(false)
     expect(result.current.turnConfig).toEqual({ iceServers: [] })
   })
 
@@ -191,7 +196,10 @@ describe('useTurnConfig', () => {
       headers: {
         get: vi.fn().mockReturnValue('application/json'),
       },
-      json: vi.fn().mockResolvedValue(validTurnServerWithArray),
+      json: vi.fn().mockResolvedValue({
+        iceServers: [validTurnServerWithArray],
+        sfuEnabled: false,
+      }),
     })
 
     const { result } = renderHook(() => useTurnConfig(), { wrapper })
@@ -220,7 +228,10 @@ describe('useTurnConfig', () => {
       headers: {
         get: vi.fn().mockReturnValue('application/json'),
       },
-      json: vi.fn().mockResolvedValue(minimalTurnServer),
+      json: vi.fn().mockResolvedValue({
+        iceServers: [minimalTurnServer],
+        sfuEnabled: false,
+      }),
     })
 
     const { result } = renderHook(() => useTurnConfig(), { wrapper })
@@ -247,7 +258,7 @@ describe('useTurnConfig', () => {
       headers: {
         get: vi.fn().mockReturnValue('application/json'),
       },
-      json: vi.fn().mockResolvedValue(mockTurnServer),
+      json: vi.fn().mockResolvedValue(mockApiResponse),
     })
 
     const { result } = renderHook(() => useTurnConfig(), { wrapper })
@@ -280,7 +291,7 @@ describe('useTurnConfig', () => {
       headers: {
         get: vi.fn().mockReturnValue('application/json'),
       },
-      json: vi.fn().mockResolvedValue(mockTurnServer),
+      json: vi.fn().mockResolvedValue(mockApiResponse),
     })
 
     const { result } = renderHook(() => useTurnConfig(), { wrapper })

@@ -156,8 +156,7 @@ export class ConnectionTest extends EventTarget {
         )
       })
 
-      // Use fetch as a quick connectivity check instead of waiting for WebSocket
-      fetch(httpUrl, { method: 'HEAD', mode: 'no-cors' })
+      fetch(`${httpUrl}/health`, { method: 'GET', mode: 'no-cors' })
         .then(() => {
           if (!resolved) {
             this.signalingConnection = SignalingConnection.SEARCHING

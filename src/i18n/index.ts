@@ -15,12 +15,14 @@ i18n
       en: { translation: en },
     },
     fallbackLng: 'zh-CN',
+    supportedLngs: ['zh-CN', 'zh', 'en'],
     interpolation: {
       escapeValue: false,
     },
     detection: {
-      order: ['navigator', 'htmlTag', 'querystring', 'localStorage'],
+      order: ['localStorage', 'navigator', 'htmlTag'],
       caches: ['localStorage'],
+      lookupLocalStorage: 'i18n_lang',
     },
   })
 

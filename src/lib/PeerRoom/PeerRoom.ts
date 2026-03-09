@@ -111,23 +111,19 @@ export class PeerRoom {
 
   private sfuTrackNames: Map<string, string> = new Map()
 
-  private get useSfu(): boolean {
-    return !!this.roomConfig.sfuApiBase
-  }
+  private sfuEnabled = false
 
   constructor(config: RoomConfig, roomId: string) {
     this.roomConfig = config
     this.roomId = roomId
     this.initSignaling()
-
-    if (this.useSfu && config.sfuApiBase) {
-      this.sfuClient = new SfuClient(config.sfuApiBase)
-      this.initSfu()
-    }
   }
 
-  private initSfu = async () => {
-    if (!this.sfuClient) return
+  initSfuIfAvailable = async (sfuAvailable: boolean) => {
+    if (!sfuAvailable || !this.roomConfig.sfuApiBase) return
+
+    this.sfuEnabled = true
+    this.sfuClient = new SfuClient(this.roomConfig.sfuApiBase)
 
     try {
       await this.sfuClient.createSession(this.roomConfig.rtcConfig)
@@ -147,8 +143,11 @@ export class PeerRoom {
         }
       )
     } catch (e) {
-      console.error('Failed to initialize SFU session:', e)
+      console.error('SFU not available, using P2P for media:', e)
+      this.sfuEnabled = false
       this.sfuSessionReady = false
+      this.sfuClient?.destroy()
+      this.sfuClient = null
     }
   }
 
@@ -362,7 +361,7 @@ export class PeerRoom {
 
     const handler = this.actionHandlers.get(msg.action)
     if (handler) {
-      handler(msg.data, peerId)
+      handler(this.decodeDataFromTransport(msg.data), peerId)
     }
   }
 
@@ -418,6 +417,18 @@ export class PeerRoom {
     }
 
     try {
+      // Polite peer pattern: if we already have a local offer (glare),
+      // the peer with the lower ID rolls back
+      if (pc.signalingState === 'have-local-offer') {
+        const isPolite = this.localPeerId < fromPeerId
+        if (isPolite) {
+          await pc.setLocalDescription({ type: 'rollback' })
+        } else {
+          // We are impolite — ignore their offer, they should accept our offer
+          return
+        }
+      }
+
       await pc.setRemoteDescription(new RTCSessionDescription(sdp))
       this.flushPendingIceCandidates(fromPeerId)
 
@@ -439,6 +450,11 @@ export class PeerRoom {
   ) => {
     const pc = this.peers.get(fromPeerId)
     if (!pc) return
+
+    if (pc.signalingState !== 'have-local-offer') {
+      // Ignore stale answers from a previous negotiation round
+      return
+    }
 
     try {
       await pc.setRemoteDescription(new RTCSessionDescription(sdp))
@@ -515,6 +531,41 @@ export class PeerRoom {
     this.isProcessingPendingStreams = false
   }
 
+  private encodeDataForTransport = (data: unknown): unknown => {
+    if (data instanceof ArrayBuffer) {
+      return {
+        __type: 'ArrayBuffer',
+        __data: btoa(String.fromCharCode(...new Uint8Array(data))),
+      }
+    }
+    if (data instanceof Uint8Array) {
+      return {
+        __type: 'Uint8Array',
+        __data: btoa(String.fromCharCode(...data)),
+      }
+    }
+    return data
+  }
+
+  private decodeDataFromTransport = (data: unknown): unknown => {
+    if (
+      data &&
+      typeof data === 'object' &&
+      '__type' in (data as Record<string, unknown>) &&
+      '__data' in (data as Record<string, unknown>)
+    ) {
+      const typed = data as { __type: string; __data: string }
+      const binary = Uint8Array.from(atob(typed.__data), c => c.charCodeAt(0))
+      if (typed.__type === 'ArrayBuffer') {
+        return binary.buffer
+      }
+      if (typed.__type === 'Uint8Array') {
+        return binary
+      }
+    }
+    return data
+  }
+
   private sendToDataChannel = (
     peerId: string,
     message: DataChannelMessage
@@ -527,7 +578,11 @@ export class PeerRoom {
       }
 
       try {
-        dc.send(JSON.stringify(message))
+        const encoded = {
+          ...message,
+          data: this.encodeDataForTransport(message.data),
+        }
+        dc.send(JSON.stringify(encoded))
         resolve()
       } catch (e) {
         reject(e)
@@ -730,7 +785,7 @@ export class PeerRoom {
   ) => {
     this.localStreams.set(stream.id, { stream, metadata })
 
-    if (this.useSfu && this.sfuClient && this.sfuSessionReady) {
+    if (this.sfuEnabled && this.sfuClient && this.sfuSessionReady) {
       this.addStreamViaSfu(stream, metadata)
       return
     }
@@ -820,7 +875,7 @@ export class PeerRoom {
   removeStream = (stream: MediaStream, targetPeers?: string | string[]) => {
     this.localStreams.delete(stream.id)
 
-    if (this.useSfu && this.sfuClient && this.sfuSessionReady) {
+    if (this.sfuEnabled && this.sfuClient && this.sfuSessionReady) {
       this.removeStreamViaSfu(stream)
       return
     }

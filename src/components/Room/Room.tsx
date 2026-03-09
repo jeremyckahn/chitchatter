@@ -39,6 +39,7 @@ export interface RoomProps {
 
 interface RoomInnerProps extends RoomProps {
   turnConfig: RTCConfiguration
+  sfuEnabled: boolean
 }
 
 const RoomCore = ({
@@ -51,6 +52,7 @@ const RoomCore = ({
   userId,
   targetPeerId,
   turnConfig,
+  sfuEnabled,
 }: RoomInnerProps) => {
   const theme = useTheme()
   const settingsContext = useContext(SettingsContext)
@@ -91,6 +93,7 @@ const RoomCore = ({
       encryptionService,
       timeService,
       targetPeerId,
+      sfuEnabled,
     }
   )
 
@@ -208,13 +211,15 @@ export const Room = (props: RoomProps) => {
   const { isEnhancedConnectivityEnabled } =
     useContext(SettingsContext).getUserSettings()
 
-  const { turnConfig, isLoading: isConfigLoading } = useTurnConfig(
-    isEnhancedConnectivityEnabled
-  )
+  const {
+    turnConfig,
+    sfuEnabled,
+    isLoading: isConfigLoading,
+  } = useTurnConfig(isEnhancedConnectivityEnabled)
 
   if (isConfigLoading) {
     return <WholePageLoading />
   }
 
-  return <RoomCore {...props} turnConfig={turnConfig} />
+  return <RoomCore {...props} turnConfig={turnConfig} sfuEnabled={sfuEnabled} />
 }

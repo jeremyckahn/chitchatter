@@ -1,11 +1,7 @@
 /**
  * RTC Configuration Hook
  *
- * Fetches TURN server credentials from the Cloudflare Worker API.
- * The Worker generates short-lived Cloudflare TURN credentials on each request.
- *
- * Response format from Cloudflare TURN:
- * { iceServers: [{ urls: [...] }, { urls: [...], username, credential }] }
+ * Fetches TURN server credentials and SFU availability from the Worker API.
  */
 import { useMemo } from 'react'
 import { useQuery } from '@tanstack/react-query'
@@ -19,20 +15,19 @@ import { QueryKey } from './types'
 
 interface TurnResponse {
   iceServers: RTCIceServer[]
+  sfuEnabled?: boolean
+}
+
+interface TurnConfigResult {
+  iceServers: RTCIceServer[]
+  sfuEnabled: boolean
 }
 
 const isValidTurnResponse = (data: unknown): data is TurnResponse => {
   if (!data || typeof data !== 'object') return false
-
   const obj = data as Record<string, unknown>
   if (!Array.isArray(obj.iceServers)) return false
-
-  return obj.iceServers.every(
-    (server: unknown) =>
-      server &&
-      typeof server === 'object' &&
-      'urls' in (server as Record<string, unknown>)
-  )
+  return true
 }
 
 const getRtcConfigEndpoint = (): string => {
@@ -46,7 +41,7 @@ const getApiUrl = (endpoint: string): string => {
   return endpoint
 }
 
-const fetchTurnConfig = async (): Promise<RTCIceServer[]> => {
+const fetchTurnConfig = async (): Promise<TurnConfigResult> => {
   const endpoint = getRtcConfigEndpoint()
   const apiUrl = getApiUrl(endpoint)
 
@@ -62,32 +57,19 @@ const fetchTurnConfig = async (): Promise<RTCIceServer[]> => {
     clearTimeout(timeoutId)
 
     if (!response.ok) {
-      const errorMessage = `TURN API request failed: ${response.status} ${response.statusText}`
-      if (response.status >= 400 && response.status < 500) {
-        throw new Error(`Client error: ${errorMessage}`)
-      }
-      throw new Error(errorMessage)
-    }
-
-    const contentType = response.headers.get('content-type')
-    if (!contentType || !contentType.includes('application/json')) {
-      throw new Error(
-        `Invalid response format: expected JSON, got ${contentType}`
-      )
+      throw new Error(`TURN API: ${response.status} ${response.statusText}`)
     }
 
     const data = await response.json()
 
     if (isValidTurnResponse(data)) {
-      return data.iceServers
+      return {
+        iceServers: data.iceServers,
+        sfuEnabled: !!data.sfuEnabled,
+      }
     }
 
-    // Fallback: single RTCIceServer object (legacy format)
-    if (data && typeof data === 'object' && 'urls' in data) {
-      return [data as RTCIceServer]
-    }
-
-    throw new Error('Invalid TURN response format')
+    return { iceServers: [], sfuEnabled: false }
   } catch (error) {
     if (error instanceof Error && error.name === 'AbortError') {
       throw new Error('Request timeout: TURN API did not respond')
@@ -100,12 +82,13 @@ export const useTurnConfig = (
   enableApiRequest: boolean = true
 ): {
   turnConfig: RTCConfiguration
+  sfuEnabled: boolean
   isLoading: boolean
   isError: boolean
   error: Error | null
 } => {
   const {
-    data: turnIceServers,
+    data: turnResult,
     isLoading,
     isError,
     error,
@@ -113,7 +96,7 @@ export const useTurnConfig = (
     queryKey: [QueryKey.TURN_SERVER],
     queryFn: fetchTurnConfig,
     enabled: enableApiRequest && isEnhancedConnectivityAvailable,
-    staleTime: 12 * 60 * 60 * 1000, // 12 hours (credentials TTL is 24h)
+    staleTime: 12 * 60 * 60 * 1000,
     gcTime: Infinity,
     retry: (failureCount, retryError) => {
       if (
@@ -131,15 +114,18 @@ export const useTurnConfig = (
   const turnConfig = useMemo((): RTCConfiguration => {
     const iceServers: RTCIceServer[] = []
 
-    if (isEnhancedConnectivityAvailable && enableApiRequest && turnIceServers) {
-      iceServers.push(...turnIceServers)
+    if (isEnhancedConnectivityAvailable && enableApiRequest && turnResult) {
+      iceServers.push(...turnResult.iceServers)
     }
 
     return { iceServers }
-  }, [turnIceServers, enableApiRequest])
+  }, [turnResult, enableApiRequest])
+
+  const sfuEnabled = turnResult?.sfuEnabled ?? false
 
   return {
     turnConfig,
+    sfuEnabled,
     isLoading,
     isError,
     error,

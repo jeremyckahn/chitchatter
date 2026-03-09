@@ -21,6 +21,7 @@ import QuestionMark from '@mui/icons-material/QuestionMark'
 import Brightness4Icon from '@mui/icons-material/Brightness4'
 import Brightness7Icon from '@mui/icons-material/Brightness7'
 import ReportIcon from '@mui/icons-material/Report'
+import LanguageIcon from '@mui/icons-material/Language'
 import GitInfo from 'react-git-info/macro'
 
 import { routes } from 'config/routes'
@@ -37,7 +38,7 @@ export interface DrawerProps extends PropsWithChildren {
 }
 
 export const Drawer = ({ isDrawerOpen, onDrawerClose }: DrawerProps) => {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
   const theme = useTheme()
   const settingsContext = useContext(SettingsContext)
   const colorMode = settingsContext.getUserSettings().colorMode
@@ -46,6 +47,13 @@ export const Drawer = ({ isDrawerOpen, onDrawerClose }: DrawerProps) => {
     const newMode =
       colorMode === ColorMode.LIGHT ? ColorMode.DARK : ColorMode.LIGHT
     settingsContext.updateUserSettings({ colorMode: newMode })
+  }
+
+  const handleLanguageToggle = () => {
+    const currentLang = i18n.language
+    const newLang = currentLang.startsWith('zh') ? 'en' : 'zh-CN'
+    i18n.changeLanguage(newLang)
+    localStorage.setItem('i18n_lang', newLang)
   }
 
   return (
@@ -125,6 +133,16 @@ export const Drawer = ({ isDrawerOpen, onDrawerClose }: DrawerProps) => {
                 )}
               </ListItemIcon>
               <ListItemText primary={t('shell.changeTheme')} />
+            </ListItemButton>
+          </ListItem>
+          <ListItem disablePadding>
+            <ListItemButton onClick={handleLanguageToggle}>
+              <ListItemIcon>
+                <LanguageIcon />
+              </ListItemIcon>
+              <ListItemText
+                primary={i18n.language.startsWith('zh') ? 'English' : '中文'}
+              />
             </ListItemButton>
           </ListItem>
         </List>

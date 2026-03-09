@@ -47,6 +47,7 @@ interface UseRoomConfig {
   encryptionService?: typeof encryption
   timeService?: typeof time
   targetPeerId?: string | null
+  sfuEnabled?: boolean
 }
 
 interface UserMetadata extends Record<string, any> {
@@ -65,6 +66,7 @@ export function useRoom(
     getUuid = uuid,
     encryptionService = encryption,
     timeService = time,
+    sfuEnabled = false,
   }: UseRoomConfig
 ) {
   const { t } = useTranslation()
@@ -102,6 +104,12 @@ export function useRoom(
   )
 
   peerRoomRef.current = peerRoom
+
+  useEffect(() => {
+    if (sfuEnabled) {
+      peerRoom.initSfuIfAvailable(sfuEnabled)
+    }
+  }, [peerRoom, sfuEnabled])
 
   const settingsContext = useContext(SettingsContext)
   const { showActiveTypingStatus } = settingsContext.getUserSettings()
