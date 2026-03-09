@@ -34,10 +34,11 @@ import { PeerAction } from 'models/network'
 import { AllowedKeyType, encryption } from 'services/Encryption'
 import {
   FileTransferService,
-  fileToBase64,
+  fileToChunks,
   fileTransferOffer,
-  fileTransferReceive,
+  fileTransferReceiveChunk,
 } from 'services/FileTransfer/FileTransfer'
+import type { FileChunk } from 'services/FileTransfer/FileTransfer'
 import { notification } from 'services/Notification'
 
 import { messageTranscriptSizeLimit } from 'config/messaging'
@@ -413,30 +414,38 @@ export function useRoom(
     onReceive: (inlineMedia: Record<string, unknown>) => {
       const userSettings = settingsContext.getUserSettings()
       const media = inlineMedia as UnsentInlineMedia & {
-        fileName?: string
-        fileType?: string
-        fileSize?: number
-        fileData?: string
+        __chunk?: FileChunk
       }
 
-      // If file data is included, store it for display
-      if (media.fileData && media.fileName && media.fileType) {
-        fileTransferReceive(
-          {
-            id: media.magnetURI,
-            name: media.fileName,
-            type: media.fileType,
-            size: media.fileSize || 0,
-          },
-          media.fileData
-        )
+      if (media.__chunk) {
+        const completed = fileTransferReceiveChunk(media.__chunk)
+
+        // Only add to message log when file is fully received
+        if (completed) {
+          if (!tabHasFocus) {
+            if (userSettings.playSoundOnNewMessage) {
+              newMessageAudio.play()
+            }
+            if (userSettings.showNotificationOnNewMessage) {
+              notification.showNotification(
+                `${getDisplayUsername(media.authorId)} shared media`
+              )
+            }
+          }
+
+          setMessageLog([
+            ...messageLog,
+            { ...media, timeReceived: timeService.now() },
+          ])
+        }
+        return
       }
 
+      // Legacy: non-chunked inline media (text-only messages with magnetURI)
       if (!tabHasFocus) {
         if (userSettings.playSoundOnNewMessage) {
           newMessageAudio.play()
         }
-
         if (userSettings.showNotificationOnNewMessage) {
           notification.showNotification(
             `${getDisplayUsername(media.authorId)} shared media`
@@ -556,7 +565,7 @@ export function useRoom(
     setIsMessageSending(true)
 
     for (const file of files) {
-      const base64Data = await fileToBase64(file)
+      const chunks = await fileToChunks(file, fileOfferId)
 
       const unsentInlineMedia: UnsentInlineMedia = {
         authorId: userId,
@@ -567,15 +576,14 @@ export function useRoom(
 
       setMessageLog([...messageLog, unsentInlineMedia])
 
-      await Promise.all(
-        sendPeerInlineMedia({
-          ...unsentInlineMedia,
-          fileName: file.name,
-          fileType: file.type,
-          fileSize: file.size,
-          fileData: base64Data,
-        } as UnsentInlineMedia)
-      )
+      for (const chunk of chunks) {
+        await Promise.all(
+          sendPeerInlineMedia({
+            ...unsentInlineMedia,
+            __chunk: chunk,
+          } as UnsentInlineMedia)
+        )
+      }
 
       setMessageLog([
         ...messageLog,
