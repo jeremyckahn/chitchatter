@@ -1,10 +1,10 @@
 export const communityRoomNames = [
-  'buy-and-sell',
-  'crypto',
-  'hacking',
-  'leaks',
-  'news',
-  'organize',
-  'politics',
-  'resist',
+  '闲聊',
+  '技术',
+  '新闻',
+  '游戏',
+  '音乐',
+  '交易',
+  '学习',
+  '匿名树洞',
 ]
