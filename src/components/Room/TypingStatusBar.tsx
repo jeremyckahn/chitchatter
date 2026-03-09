@@ -1,4 +1,5 @@
 import { useContext } from 'react'
+import { useTranslation } from 'react-i18next'
 import Box from '@mui/material/Box'
 import Typography from '@mui/material/Typography'
 import { ShellContext } from 'contexts/ShellContext'
@@ -12,6 +13,7 @@ export const TypingStatusBar = ({
 }: {
   isDirectMessageRoom: boolean
 }) => {
+  const { t } = useTranslation()
   const { peerList } = useContext(ShellContext)
   const typingPeers = peerList.filter(
     ({ isTypingGroupMessage, isTypingDirectMessage }) =>
@@ -34,7 +36,7 @@ export const TypingStatusBar = ({
         <PeerNameDisplay {...peerNameDisplayProps}>
           {typingPeers[0].userId}
         </PeerNameDisplay>{' '}
-        is typing...
+        {t('room.isTyping')}
       </>
     )
   } else if (typingPeers.length === 2) {
@@ -43,15 +45,15 @@ export const TypingStatusBar = ({
         <PeerNameDisplay {...peerNameDisplayProps}>
           {typingPeers[0].userId}
         </PeerNameDisplay>{' '}
-        and{' '}
+        {t('room.andTyping')}{' '}
         <PeerNameDisplay {...peerNameDisplayProps}>
           {typingPeers[1].userId}
         </PeerNameDisplay>{' '}
-        are typing...
+        {t('room.areTyping')}
       </>
     )
   } else if (typingPeers.length > 2) {
-    statusMessage = <>Several people are typing...</>
+    statusMessage = <>{t('room.severalTyping')}</>
   }
 
   return (

@@ -20,6 +20,7 @@ import QrCode2 from '@mui/icons-material/QrCode2'
 import RoomPreferences from '@mui/icons-material/RoomPreferences'
 
 import { useContext } from 'react'
+import { useTranslation } from 'react-i18next'
 
 import { ShellContext } from 'contexts/ShellContext'
 
@@ -86,6 +87,7 @@ export const ShellAppBar = ({
   isFullscreen,
   setIsFullscreen,
 }: ShellAppBarProps) => {
+  const { t } = useTranslation()
   const theme = useTheme()
   const { peerList, isEmbedded, showRoomControls } = useContext(ShellContext)
   const handleQRCodeClick = () => setIsQRCodeDialogOpen(true)
@@ -112,7 +114,7 @@ export const ShellAppBar = ({
                 size="large"
                 edge="start"
                 color="inherit"
-                aria-label="Open menu"
+                aria-label={t('shell.openMenu')}
                 sx={{ mr: 2, ...(isDrawerOpen && { display: 'none' }) }}
                 onClick={onDrawerOpen}
               >
@@ -136,21 +138,21 @@ export const ShellAppBar = ({
             )}
             {isEmbedded ? null : (
               <>
-                <Tooltip title="Copy current URL">
+                <Tooltip title={t('shell.copyUrl')}>
                   <IconButton
                     size="large"
                     color="inherit"
-                    aria-label="Copy current URL"
+                    aria-label={t('shell.copyUrl')}
                     onClick={onLinkButtonClick}
                   >
                     <Link />
                   </IconButton>
                 </Tooltip>
-                <Tooltip title="Show QR Code">
+                <Tooltip title={t('shell.showQRCode')}>
                   <IconButton
                     size="large"
                     color="inherit"
-                    aria-label="Show QR Code"
+                    aria-label={t('shell.showQRCode')}
                     onClick={handleQRCodeClick}
                   >
                     <QrCode2 />
@@ -166,37 +168,47 @@ export const ShellAppBar = ({
             )}
             <Tooltip
               title={
-                showRoomControls ? 'Hide Room Controls' : 'Show Room Controls'
+                showRoomControls
+                  ? t('roomControls.hideRoomControls')
+                  : t('roomControls.showRoomControls')
               }
             >
               <IconButton
                 size="large"
                 color="inherit"
-                aria-label="show room controls"
+                aria-label={
+                  showRoomControls
+                    ? t('roomControls.hideRoomControls')
+                    : t('roomControls.showRoomControls')
+                }
                 onClick={onRoomControlsClick}
               >
                 <RoomPreferences />
               </IconButton>
             </Tooltip>
             <Tooltip
-              title={isFullscreen ? 'Exit fullscreen' : 'Enter fullscreen'}
+              title={
+                isFullscreen
+                  ? t('shell.exitFullscreen')
+                  : t('shell.enterFullscreen')
+              }
             >
               <IconButton
                 size="large"
                 edge="end"
                 color="inherit"
-                aria-label="fullscreen"
+                aria-label={t('shell.fullscreen')}
                 onClick={onClickFullscreen}
               >
                 {isFullscreen ? <FullscreenExit /> : <Fullscreen />}
               </IconButton>
             </Tooltip>
-            <Tooltip title="Click to show peer list">
+            <Tooltip title={t('peerList.clickToShowPeerList')}>
               <IconButton
                 size="large"
                 edge="end"
                 color="inherit"
-                aria-label="Peer list"
+                aria-label={t('peerList.peerList')}
                 onClick={onPeerListClick}
                 sx={{
                   ml: 1,
@@ -213,10 +225,10 @@ export const ShellAppBar = ({
         in={!showAppBar}
         unmountOnExit
       >
-        <Tooltip title="Show room controls">
+        <Tooltip title={t('roomControls.showRoomControls')}>
           <Fab
             size="small"
-            aria-label="show room controls"
+            aria-label={t('roomControls.showRoomControls')}
             color="primary"
             onClick={onRoomControlsClick}
           >

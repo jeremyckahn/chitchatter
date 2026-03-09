@@ -6,6 +6,7 @@ import DialogTitle from '@mui/material/DialogTitle'
 import IconButton from '@mui/material/IconButton'
 import CloseIcon from '@mui/icons-material/Close'
 import { QRCode } from 'react-qrcode-logo'
+import { useTranslation } from 'react-i18next'
 
 const QR_CODE_SIZE = 256
 const QR_IMAGE_OPACITY = 0.3
@@ -15,8 +16,10 @@ export interface QRCodeDialogProps {
   handleClose: () => void
 }
 
-export function QRCodeDialog({ isOpen, handleClose }: QRCodeDialogProps) {
+export const QRCodeDialog = ({ isOpen, handleClose }: QRCodeDialogProps) => {
+  const { t } = useTranslation()
   const url = window.location.href
+
   return (
     <Dialog
       open={isOpen}
@@ -25,9 +28,9 @@ export function QRCodeDialog({ isOpen, handleClose }: QRCodeDialogProps) {
       aria-describedby="alert-dialog-description"
     >
       <DialogTitle id="alert-dialog-title">
-        Room QR Code
+        {t('qrCodeDialog.title')}
         <IconButton
-          aria-label="close"
+          aria-label={t('common.close')}
           onClick={handleClose}
           sx={{
             position: 'absolute',
@@ -50,7 +53,7 @@ export function QRCodeDialog({ isOpen, handleClose }: QRCodeDialogProps) {
       </DialogContent>
       <DialogActions>
         <Button onClick={handleClose} autoFocus>
-          Dismiss
+          {t('common.dismiss')}
         </Button>
       </DialogActions>
     </Dialog>

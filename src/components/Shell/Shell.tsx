@@ -16,6 +16,7 @@ import {
   useRef,
   useState,
 } from 'react'
+import { useTranslation } from 'react-i18next'
 
 import { ErrorBoundary } from 'components/ErrorBoundary'
 import { SettingsContext } from 'contexts/SettingsContext'
@@ -61,6 +62,7 @@ export interface ShellProps extends PropsWithChildren {
 const queryParams = new URLSearchParams(window.location.search)
 
 export const Shell = ({ appNeedsUpdate, children, userPeerId }: ShellProps) => {
+  const { t } = useTranslation()
   const { getUserSettings, updateUserSettings } = useContext(SettingsContext)
   const isEmbedded = queryParams.get(QueryParamKeys.IS_EMBEDDED) !== null
 
@@ -359,7 +361,7 @@ export const Shell = ({ appNeedsUpdate, children, userPeerId }: ShellProps) => {
     ) {
       setIsRoomShareDialogOpen(true)
     } else {
-      copyToClipboard(window.location.href, 'Current URL copied to clipboard')
+      copyToClipboard(window.location.href, t('shell.urlCopied'))
     }
   }
 

@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next'
 import Box from '@mui/material/Box'
 import ScreenShare from '@mui/icons-material/ScreenShare'
 import StopScreenShare from '@mui/icons-material/StopScreenShare'
@@ -15,6 +16,7 @@ export interface RoomFileUploadControlsProps {
 export function RoomScreenShareControls({
   peerRoom,
 }: RoomFileUploadControlsProps) {
+  const { t } = useTranslation()
   const { isSharingScreen, handleScreenShareStart, handleScreenShareStop } =
     useRoomScreenShare({
       peerRoom,
@@ -44,12 +46,14 @@ export function RoomScreenShareControls({
     >
       <Tooltip
         title={
-          isSharingScreen ? 'Stop sharing screen' : 'Share screen with room'
+          isSharingScreen
+            ? t('roomControls.stopShareScreen')
+            : t('roomControls.shareScreen')
         }
       >
         <MediaButton
           isActive={isSharingScreen}
-          aria-label="share screen"
+          aria-label={t('roomControls.shareScreenLabel')}
           onClick={handleToggleScreenShareButtonClick}
         >
           {isSharingScreen ? <ScreenShare /> : <StopScreenShare />}

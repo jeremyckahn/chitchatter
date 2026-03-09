@@ -1,4 +1,5 @@
 import './polyfills'
+import './i18n'
 import ReactDOM from 'react-dom/client'
 import 'typeface-roboto'
 

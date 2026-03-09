@@ -1,23 +1,24 @@
 import { useContext, useEffect, useState } from 'react'
 
+import { signalingServerUrl } from 'config/signalingServer'
 import { SettingsContext } from 'contexts/SettingsContext'
 import { useTurnConfig } from 'hooks/useTurnConfig'
 import {
   ConnectionTest,
   ConnectionTestEvent,
   ConnectionTestEvents,
-  TrackerConnection,
+  SignalingConnection,
 } from 'lib/ConnectionTest'
 import { sleep } from 'lib/sleep'
 
 export interface ConnectionTestResults {
   hasHost: boolean
   hasTURNServer: boolean
-  trackerConnection: TrackerConnection
+  signalingConnection: SignalingConnection
 }
 
 const rtcPollInterval = 20 * 1000
-const trackerPollInterval = 5 * 1000
+const signalingPollInterval = 10 * 1000
 
 export const useConnectionTest = () => {
   const settingsContext = useContext(SettingsContext)
@@ -29,18 +30,17 @@ export const useConnectionTest = () => {
 
   const [hasHost, setHasHost] = useState(false)
   const [hasTURNServer, setHasTURNServer] = useState(false)
-  const [trackerConnection, setTrackerConnection] = useState(
-    TrackerConnection.SEARCHING
+  const [signalingConnection, setSignalingConnection] = useState(
+    SignalingConnection.SEARCHING
   )
 
   useEffect(() => {
-    // Don't start connection tests until rtcConfig is loaded
     if (isConfigLoading) {
       return
     }
 
     const checkRtcConnection = async () => {
-      const connectionTest = new ConnectionTest(turnConfig)
+      const connectionTest = new ConnectionTest(turnConfig, signalingServerUrl)
 
       const handleHasHostChanged = ((event: ConnectionTestEvent) => {
         setHasHost(event.detail.hasHost)
@@ -102,21 +102,22 @@ export const useConnectionTest = () => {
     ;(async () => {
       while (true) {
         try {
-          const connectionTest = new ConnectionTest(turnConfig)
-          const trackerConnectionTestResult =
-            connectionTest.testTrackerConnection()
-
-          setTrackerConnection(trackerConnectionTestResult)
+          const connectionTest = new ConnectionTest(
+            turnConfig,
+            signalingServerUrl
+          )
+          const result = connectionTest.testSignalingConnection()
+          setSignalingConnection(result)
         } catch (_e) {
-          setTrackerConnection(TrackerConnection.FAILED)
+          setSignalingConnection(SignalingConnection.FAILED)
         }
 
-        await sleep(trackerPollInterval)
+        await sleep(signalingPollInterval)
       }
     })()
   }, [turnConfig, isConfigLoading])
 
   return {
-    connectionTestResults: { hasHost, hasTURNServer, trackerConnection },
+    connectionTestResults: { hasHost, hasTURNServer, signalingConnection },
   }
 }

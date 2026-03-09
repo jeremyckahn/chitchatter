@@ -1,4 +1,3 @@
-// NOTE: Action names are limited to 12 characters, otherwise Trystero breaks.
 export enum PeerAction {
   MESSAGE = 0,
   MEDIA_MESSAGE,

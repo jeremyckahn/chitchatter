@@ -3,12 +3,14 @@ import Tooltip from '@mui/material/Tooltip'
 import Fab from '@mui/material/Fab'
 import ContentCopy from '@mui/icons-material/ContentCopy'
 import { useContext, useRef } from 'react'
+import { useTranslation } from 'react-i18next'
 import { ShellContext } from 'contexts/ShellContext'
 
 interface CopyableBlockProps extends BoxProps {}
 
 export const CopyableBlock = ({ children }: CopyableBlockProps) => {
   const { showAlert } = useContext(ShellContext)
+  const { t } = useTranslation()
   const boxRef = useRef<HTMLDivElement>(null)
 
   const handleCopyClick = async () => {
@@ -18,7 +20,7 @@ export const CopyableBlock = ({ children }: CopyableBlockProps) => {
 
     await navigator.clipboard.writeText(div.innerText)
 
-    showAlert('Copied to clipboard', { severity: 'success' })
+    showAlert(t('clipboard.copied'), { severity: 'success' })
   }
 
   return (
@@ -32,7 +34,7 @@ export const CopyableBlock = ({ children }: CopyableBlockProps) => {
       }}
     >
       {children}
-      <Tooltip title="Copy to clipboard">
+      <Tooltip title={t('clipboard.copied')}>
         <Fab
           color="default"
           size="small"

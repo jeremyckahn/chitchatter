@@ -1,0 +1,15 @@
+name = "chitchatter-signaling"
+main = "src/index.ts"
+compatibility_date = "2024-12-01"
+
+[durable_objects]
+bindings = [
+  { name = "SIGNALING_ROOM", class_name = "SignalingRoom" }
+]
+
+[[migrations]]
+tag = "v1"
+new_classes = ["SignalingRoom"]
+
+[vars]
+CORS_ALLOW_ALL = "false"

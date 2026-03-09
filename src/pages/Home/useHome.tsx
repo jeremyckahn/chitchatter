@@ -1,6 +1,7 @@
 import { ShellContext } from 'contexts/ShellContext'
 import React, { useContext, useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { RoomNameGenerator, RoomNameType } from 'lib/RoomNameGenerator'
 import { routerType } from 'config/router'
 import { RouterType } from 'models/router'
@@ -14,6 +15,7 @@ const rRoomNameAppPrefix =
 
 export const useHome = () => {
   const { setTitle } = useContext(ShellContext)
+  const { t } = useTranslation()
   const [roomNameType, setRoomNameType] = useState<RoomNameType>(
     RoomNameType.UUID
   )
@@ -24,8 +26,8 @@ export const useHome = () => {
   const navigate = useNavigate()
 
   useEffect(() => {
-    setTitle('Chitchatter')
-  }, [setTitle])
+    setTitle(t('home.title'))
+  }, [setTitle, t])
 
   const handleRoomNameChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const { value } = event.target

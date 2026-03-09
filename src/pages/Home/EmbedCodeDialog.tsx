@@ -8,7 +8,7 @@ import DialogActions from '@mui/material/DialogActions'
 import DialogContent from '@mui/material/DialogContent'
 import DialogContentText from '@mui/material/DialogContentText'
 import DialogTitle from '@mui/material/DialogTitle'
-import Link from '@mui/material/Link'
+import { useTranslation } from 'react-i18next'
 import { CopyableBlock } from 'components/CopyableBlock/CopyableBlock'
 
 import { iframeFeatureAllowList } from 'config/iframeFeatureAllowList'
@@ -32,6 +32,7 @@ export const EmbedCodeDialog = ({
   handleEmbedCodeWindowClose,
   roomName,
 }: EmbedCodeDialogProps) => {
+  const { t } = useTranslation()
   const iframeSrc = new URL(`${packageHomepage}public/${roomName}`)
   iframeSrc.search = new URLSearchParams({ embed: '1' }).toString()
 
@@ -58,15 +59,14 @@ export const EmbedCodeDialog = ({
 
   return (
     <Dialog open={showEmbedCode} onClose={handleEmbedCodeWindowClose}>
-      <DialogTitle>Embedding Chitchatter</DialogTitle>
+      <DialogTitle>{t('embedDialog.title')}</DialogTitle>
       <DialogContent>
         <DialogContentText
           sx={{
             mb: 2,
           }}
         >
-          Copy and paste this <code>iframe</code> HTML snippet into your
-          project:
+          {t('embedDialog.iframeDesc')}
         </DialogContentText>
         <CopyableBlock>
           <SyntaxHighlighter
@@ -95,28 +95,14 @@ export const EmbedCodeDialog = ({
             mb: 2,
           })}
         >
-          Advanced Embedding
+          {t('embedDialog.advancedTitle')}
         </Typography>
         <DialogContentText
           sx={{
             mb: 2,
           }}
         >
-          As an alternative to using an <code>iframe</code>, you can use the{' '}
-          <Link
-            href="https://github.com/jeremyckahn/chitchatter#SDK"
-            target="_blank"
-          >
-            Chitchatter SDK
-          </Link>{' '}
-          to embed a chat room as a{' '}
-          <Link
-            href="https://developer.mozilla.org/en-US/docs/Web/API/Web_components"
-            target="_blank"
-          >
-            Web Component
-          </Link>{' '}
-          with additional configuration options:
+          {t('embedDialog.sdkDesc')}
         </DialogContentText>
         <CopyableBlock>
           <SyntaxHighlighter
@@ -136,7 +122,9 @@ export const EmbedCodeDialog = ({
         </CopyableBlock>
       </DialogContent>
       <DialogActions>
-        <Button onClick={handleEmbedCodeWindowClose}>Close</Button>
+        <Button onClick={handleEmbedCodeWindowClose}>
+          {t('common.close')}
+        </Button>
       </DialogActions>
     </Dialog>
   )

@@ -1,4 +1,5 @@
 import { PropsWithChildren, useContext } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
 import useTheme from '@mui/material/styles/useTheme'
 import Box from '@mui/material/Box'
@@ -36,6 +37,7 @@ export interface DrawerProps extends PropsWithChildren {
 }
 
 export const Drawer = ({ isDrawerOpen, onDrawerClose }: DrawerProps) => {
+  const { t } = useTranslation()
   const theme = useTheme()
   const settingsContext = useContext(SettingsContext)
   const colorMode = settingsContext.getUserSettings().colorMode
@@ -70,7 +72,7 @@ export const Drawer = ({ isDrawerOpen, onDrawerClose }: DrawerProps) => {
           justifyContent: 'flex-end',
         })}
       >
-        <IconButton onClick={onDrawerClose} aria-label="Close menu">
+        <IconButton onClick={onDrawerClose} aria-label={t('shell.closeMenu')}>
           {theme.direction === 'ltr' ? (
             <ChevronLeftIcon />
           ) : (
@@ -79,14 +81,14 @@ export const Drawer = ({ isDrawerOpen, onDrawerClose }: DrawerProps) => {
         </IconButton>
       </Box>
       <Divider />
-      <Box component="nav" aria-label="Navigation menu">
+      <Box component="nav" aria-label={t('shell.navMenu')}>
         <List>
           <ListItem disablePadding>
             <ListItemButton component={Link} to={routes.ROOT}>
               <ListItemIcon>
                 <Home />
               </ListItemIcon>
-              <ListItemText primary="Home" />
+              <ListItemText primary={t('shell.home')} />
             </ListItemButton>
           </ListItem>
           <ListItem disablePadding>
@@ -94,7 +96,7 @@ export const Drawer = ({ isDrawerOpen, onDrawerClose }: DrawerProps) => {
               <ListItemIcon>
                 <SettingsApplications />
               </ListItemIcon>
-              <ListItemText primary="Settings" />
+              <ListItemText primary={t('shell.settings')} />
             </ListItemButton>
           </ListItem>
           <ListItem disablePadding>
@@ -102,7 +104,7 @@ export const Drawer = ({ isDrawerOpen, onDrawerClose }: DrawerProps) => {
               <ListItemIcon>
                 <QuestionMark />
               </ListItemIcon>
-              <ListItemText primary="About" />
+              <ListItemText primary={t('shell.about')} />
             </ListItemButton>
           </ListItem>
           <ListItem disablePadding>
@@ -110,7 +112,7 @@ export const Drawer = ({ isDrawerOpen, onDrawerClose }: DrawerProps) => {
               <ListItemIcon>
                 <ReportIcon />
               </ListItemIcon>
-              <ListItemText primary="Disclaimer" />
+              <ListItemText primary={t('shell.disclaimer')} />
             </ListItemButton>
           </ListItem>
           <ListItem disablePadding>
@@ -122,14 +124,14 @@ export const Drawer = ({ isDrawerOpen, onDrawerClose }: DrawerProps) => {
                   <Brightness4Icon />
                 )}
               </ListItemIcon>
-              <ListItemText primary="Change theme" />
+              <ListItemText primary={t('shell.changeTheme')} />
             </ListItemButton>
           </ListItem>
         </List>
         <Divider />
         <Box sx={{ padding: 2 }}>
           <Typography variant="subtitle2">
-            Build signature:{' '}
+            {t('shell.buildSignature')}{' '}
             <Typography
               sx={{
                 fontFamily: 'monospace',

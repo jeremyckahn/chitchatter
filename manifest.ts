@@ -1,10 +1,10 @@
 import { ManifestOptions } from 'vite-plugin-pwa'
 
 export const manifest: Partial<ManifestOptions> = {
-  short_name: 'Chitchatter',
-  name: 'Chitchatter',
+  short_name: '畅聊',
+  name: '畅聊 - 安全加密聊天',
   description:
-    'This is a communication tool that is free, open source, and designed for simplicity and security. All communication between you and your online peers is encrypted. There is no trace of your conversation once you leave.',
+    '一款免费开源的安全通讯工具，专为简洁和安全而设计。你和在线对等方之间的所有通讯都经过加密。离开后不会留下任何对话痕迹。',
   icons: [
     {
       src: 'favicon.ico',
@@ -64,7 +64,7 @@ export const manifest: Partial<ManifestOptions> = {
 
   shortcuts: [
     {
-      name: 'About',
+      name: '关于',
       url: './about',
       icons: [
         {
@@ -76,7 +76,7 @@ export const manifest: Partial<ManifestOptions> = {
       ],
     },
     {
-      name: 'Disclaimer',
+      name: '免责声明',
       url: './disclaimer',
       icons: [
         {

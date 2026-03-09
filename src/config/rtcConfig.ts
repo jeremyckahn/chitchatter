@@ -20,19 +20,19 @@ export const rtcConfig: RTCConfiguration = {
     {
       urls: [
         'turn:23.95.61.186:3478?transport=udp',
-        'turn:23.95.61.186:3478?transport=tcp'
+        'turn:23.95.61.186:3478?transport=tcp',
       ],
       username: 'h3Z7TPYyGFRkeA1',
-      credential: 'Pumhav-mamhyb-jufsa1'
+      credential: 'Pumhav-mamhyb-jufsa1',
     },
     // Second TURN server
     {
       urls: [
         'turn:206.189.39.100:3478?transport=udp',
-        'turn:206.189.39.100:3478?transport=tcp'
+        'turn:206.189.39.100:3478?transport=tcp',
       ],
       username: 'h3Z7TPYyGFRkeA1',
-      credential: 'Pumhav-mamhyb-jufsa1'
+      credential: 'Pumhav-mamhyb-jufsa1',
     },
     // Backup TURN server
     {
@@ -41,11 +41,11 @@ export const rtcConfig: RTCConfiguration = {
       credential: 'N4EAugpjMzPLrxSS',
     },
   ],
-  
+
   // Pre-generate ICE candidates to speed up connection establishment.
   iceCandidatePoolSize: 10,
-  
+
   // The bundlePolicy setting determines whether to bundle media tracks.
   // 'balanced' attempts to optimize between bandwidth usage and connection quality.
-  bundlePolicy: 'balanced'
-};
+  bundlePolicy: 'balanced',
+}

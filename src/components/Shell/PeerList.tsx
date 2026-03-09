@@ -1,4 +1,5 @@
 import { PropsWithChildren } from 'react'
+import { useTranslation } from 'react-i18next'
 import List from '@mui/material/List'
 import ListItemIcon from '@mui/material/ListItemIcon'
 import ListItemText from '@mui/material/ListItemText'
@@ -17,7 +18,7 @@ import {
   PeerAudioChannelState,
 } from 'models/chat'
 import { PeerConnectionType } from 'lib/PeerRoom'
-import { TrackerConnection } from 'lib/ConnectionTest'
+import { SignalingConnection } from 'lib/ConnectionTest'
 
 import { PeerListHeader } from './PeerListHeader'
 import { PeerListItem } from './PeerListItem'
@@ -46,6 +47,8 @@ export const PeerList = ({
   peerAudioChannels,
   connectionTestResults,
 }: PeerListProps) => {
+  const { t } = useTranslation()
+
   return (
     <>
       <PeerListHeader
@@ -76,8 +79,8 @@ export const PeerList = ({
         ))}
         {peerList.length === 0 &&
         typeof roomId === 'string' &&
-        connectionTestResults.trackerConnection ===
-          TrackerConnection.CONNECTED &&
+        connectionTestResults.signalingConnection ===
+          SignalingConnection.CONNECTED &&
         connectionTestResults.hasHost ? (
           <>
             <Box
@@ -89,7 +92,7 @@ export const PeerList = ({
               }}
             >
               <CircularProgress size={16} sx={{ mr: 1.5 }} />
-              <span>Searching for peers...</span>
+              <span>{t('room.searchingForPeers')}</span>
             </Box>
           </>
         ) : null}

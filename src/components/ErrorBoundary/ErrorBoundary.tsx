@@ -5,6 +5,7 @@ import Box from '@mui/material/Box'
 import IconButton from '@mui/material/IconButton'
 import Typography from '@mui/material/Typography'
 import CloseIcon from '@mui/icons-material/Close'
+import i18n from 'i18next'
 
 import { routes } from 'config/routes'
 
@@ -42,7 +43,7 @@ export class ErrorBoundary extends Component<Props, State> {
             severity="error"
             action={
               <IconButton
-                aria-label="close"
+                aria-label={i18n.t('common.close')}
                 color="inherit"
                 size="small"
                 onClick={() => {

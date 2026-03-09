@@ -1,4 +1,5 @@
 import { ChangeEventHandler, useContext, useRef } from 'react'
+import { useTranslation } from 'react-i18next'
 import Box from '@mui/material/Box'
 import Folder from '@mui/icons-material/Folder'
 import FolderOff from '@mui/icons-material/FolderOff'
@@ -22,6 +23,7 @@ export function RoomFileUploadControls({
   peerRoom,
   onInlineMediaUpload,
 }: RoomFileUploadControlsProps) {
+  const { t } = useTranslation()
   const roomContext = useContext(RoomContext)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
@@ -59,7 +61,8 @@ export function RoomFileUploadControls({
   }
 
   const shareFileLabel =
-    (sharedFiles && sharedFiles.length === 1 && sharedFiles[0].name) || 'files'
+    (sharedFiles && sharedFiles.length === 1 && sharedFiles[0].name) ||
+    t('roomControls.files')
 
   const disableFileUpload = !isFileSharingEnabled || isMessageSending
 
@@ -86,13 +89,13 @@ export function RoomFileUploadControls({
       <Tooltip
         title={
           isSharingFile
-            ? `Stop sharing ${shareFileLabel}`
-            : 'Share files with the room'
+            ? t('roomControls.stopShareFiles', { name: shareFileLabel })
+            : t('roomControls.shareFiles')
         }
       >
         <MediaButton
           isActive={isSharingFile}
-          aria-label="share screen"
+          aria-label={t('roomControls.shareFilesLabel')}
           onClick={handleToggleScreenShareButtonClick}
           disabled={disableFileUpload}
         >

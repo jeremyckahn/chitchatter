@@ -1,0 +1,243 @@
+{
+  "common": {
+    "close": "关闭",
+    "cancel": "取消",
+    "confirm": "确认",
+    "submit": "提交",
+    "refresh": "刷新",
+    "dismiss": "关闭",
+    "copy": "复制",
+    "join": "加入",
+    "loading": "加载中",
+    "send": "发送",
+    "goBack": "返回"
+  },
+  "app": {
+    "name": "畅聊",
+    "tagline": "一款无服务器、去中心化、即时消失的点对点聊天应用"
+  },
+  "home": {
+    "title": "畅聊",
+    "yourUsername": "你的用户名：",
+    "roomName": "房间名称（在你的设备上生成）",
+    "regenerateRoomId": "重新生成房间 ID",
+    "roomNameType": "房间名称类型",
+    "uuid": "UUID",
+    "passphrase": "短语",
+    "joinPublicRoom": "加入公开房间",
+    "joinPrivateRoom": "加入私密房间",
+    "getEmbedCode": "获取嵌入代码",
+    "additionalOptions": "更多选项和信息",
+    "description": "这是一款为简洁、隐私和安全而设计的免费通讯工具。你和在线对等方之间的所有互动都经过加密。当所有人离开后，不会留下任何对话记录。",
+    "license": "基于 {{license}} 协议发布。请",
+    "readTheDocs": "阅读文档",
+    "viewSource": "在 GitHub 上查看源代码",
+    "goToAbout": "前往关于页面"
+  },
+  "room": {
+    "title": "房间：{{roomId}}",
+    "yourMessage": "输入消息",
+    "sendMessage": "发送",
+    "someoneJoined": "有人加入了房间",
+    "someoneLeft": "有人离开了房间",
+    "peerLeft": "{{name}} 离开了房间",
+    "usernameChanged": "{{oldName}} 现在改名为 {{newName}}",
+    "searchingForPeers": "正在搜索对等方...",
+    "isTyping": "正在输入...",
+    "andTyping": " 和 ",
+    "areTyping": " 正在输入...",
+    "severalTyping": "多人正在输入..."
+  },
+  "roomControls": {
+    "turnOffMic": "关闭麦克风",
+    "turnOnMic": "开启麦克风并对房间说话（按住 ctrl + ` 说话）",
+    "call": "通话",
+    "micSelection": "麦克风选择",
+    "micToUse": "使用的麦克风",
+    "selectedMic": "已选麦克风",
+    "turnOffCamera": "关闭摄像头",
+    "turnOnCamera": "开启摄像头",
+    "toggleCamera": "切换摄像头",
+    "cameraSelection": "摄像头选择",
+    "cameraToUse": "使用的摄像头",
+    "selectedCamera": "已选摄像头",
+    "stopShareScreen": "停止共享屏幕",
+    "shareScreen": "与房间共享屏幕",
+    "shareScreenLabel": "共享屏幕",
+    "stopShareFiles": "停止共享 {{name}}",
+    "shareFiles": "与房间共享文件",
+    "shareFilesLabel": "共享文件",
+    "files": "文件",
+    "hideMessages": "隐藏消息",
+    "showMessages": "显示消息",
+    "showMessagesLabel": "显示消息",
+    "hideControls": "隐藏控制栏",
+    "hideControlsLabel": "隐藏控制栏",
+    "showRoomControls": "显示房间控制栏",
+    "hideRoomControls": "隐藏房间控制栏"
+  },
+  "peerList": {
+    "closePeerList": "关闭对等方列表",
+    "peerList": "对等方列表",
+    "clickToShowPeerList": "点击显示对等方列表",
+    "theirPublicKey": "对方的公钥",
+    "verificationFailed": "{{name}} 的身份验证失败",
+    "verificationTimeout": "{{name}} 的身份验证超时",
+    "unverifiedWarning": "此人未能通过公钥加密验证。他们可能在冒充他人。请谨慎分享信息。",
+    "verified": "此人已通过公钥加密验证",
+    "verifying": "正在验证此人...",
+    "directConnection": "你与 {{name}} 直接连接",
+    "relayConnection": "你通过中继服务器连接到 {{name}}。你的连接仍然是私密和加密的，但性能可能有所下降。",
+    "downloadFiles": "下载 {{name}} 提供的文件"
+  },
+  "connection": {
+    "serverFailed": "服务器连接失败",
+    "searchingServers": "正在搜索服务器...",
+    "fullConnection": "完整网络连接",
+    "fullConnectionTip": "可以与所有同样拥有完整网络连接的对等方建立连接。",
+    "partialConnection": "部分网络连接",
+    "partialConnectionTip": "中继服务器不可用。仅当双方都不需要中继服务器时才能建立连接。",
+    "noConnection": "无网络连接",
+    "noConnectionTip": "配对服务器不可用。无法建立对等连接。"
+  },
+  "serverFailureDialog": {
+    "title": "服务器连接失败",
+    "message": "找不到配对服务器。请确保你已连接到互联网。如果仍然无法连接，请尝试：",
+    "refreshPage": "刷新页面",
+    "disableAdblockers": "禁用广告拦截器",
+    "differentNetwork": "连接到其他网络"
+  },
+  "shell": {
+    "openMenu": "打开菜单",
+    "closeMenu": "关闭菜单",
+    "navMenu": "导航菜单",
+    "home": "首页",
+    "settings": "设置",
+    "about": "关于",
+    "disclaimer": "免责声明",
+    "changeTheme": "切换主题",
+    "buildSignature": "构建签名：",
+    "copyUrl": "复制当前 URL",
+    "urlCopied": "当前 URL 已复制到剪贴板",
+    "showQRCode": "显示二维码",
+    "exitFullscreen": "退出全屏",
+    "enterFullscreen": "进入全屏",
+    "fullscreen": "全屏"
+  },
+  "clipboard": {
+    "copied": "已复制到剪贴板"
+  },
+  "confirmDialog": {
+    "title": "确定吗？",
+    "message": "此操作无法撤销。"
+  },
+  "passwordPrompt": {
+    "title": "房间密码",
+    "description": "你只能连接到输入相同密码的房间对等方。",
+    "mismatchWarning": "如果密码不匹配，你将在房间中但无法连接到其他人。不会显示错误。",
+    "label": "密码",
+    "showPassword": "显示密码",
+    "hidePassword": "隐藏密码"
+  },
+  "qrCodeDialog": {
+    "title": "房间二维码"
+  },
+  "roomShareDialog": {
+    "title": "复制带密码的 URL",
+    "simple": "简单",
+    "advanced": "高级",
+    "description": "复制此私密房间的 URL，其中包含密码的不可解密哈希值。",
+    "securityWarning": "请注意此 URL 的分享方式和场所。任何获得此 URL 的人都可以进入房间。",
+    "browserOnly": "根据设计，密码哈希值不会离开浏览器。",
+    "understandRisks": "我了解风险",
+    "passwordLabel": "密码",
+    "copyWithPassword": "复制带密码的 URL",
+    "copyWithPasswordTip": "复制带密码的房间 URL。无需输入密码即可访问房间。",
+    "copyUrl": "复制 URL",
+    "copyUrlTip": "复制房间 URL。访问房间需要输入密码。",
+    "copiedWithPassword": "带密码的私密房间 URL 已复制到剪贴板",
+    "copiedWithoutPassword": "不含密码的私密房间 URL 已复制到剪贴板",
+    "urlCopied": "当前 URL 已复制到剪贴板",
+    "wrongPassword": "密码错误。请等待 2 秒后重试。"
+  },
+  "upgradeDialog": {
+    "title": "需要更新",
+    "message": "为了正常运行，畅聊需要更新。更新已在后台安装完成。你只需刷新页面或点击下方的「刷新」按钮。"
+  },
+  "environmentUnsupported": {
+    "title": "环境不受支持",
+    "message": "畅聊无法启动。检测到以下问题：",
+    "insecureContext": "应用未在安全上下文中运行",
+    "noWebRTC": "你的浏览器不支持 WebRTC。请考虑使用支持的浏览器"
+  },
+  "userInfo": {
+    "revealInfo": "显示你的用户信息",
+    "yourUsername": "你的用户名",
+    "publicKeyLabel": "你的公钥（在本地生成）：",
+    "privateKeyNote": "你的私钥同样在本地生成，已隐藏并且仅存在于你的设备上。",
+    "usernameChanged": "用户名已更改为「{{name}}」",
+    "usernameReset": "用户名已重置"
+  },
+  "settings": {
+    "title": "设置",
+    "chat": "聊天",
+    "backgroundMessage": "在后台收到消息时：",
+    "playSound": "播放提示音",
+    "showNotification": "显示通知",
+    "selectSound": "选择收到消息时播放的声音：",
+    "sound": "声音",
+    "showTyping": "显示正在输入状态",
+    "hideTypingNote": "禁用此选项也会向其他人隐藏你的输入状态。",
+    "networking": "网络",
+    "enhancedConnectivity": "增强连接",
+    "enhancedConnectivityNote": "使用外部 TURN 服务器提高连接可靠性。如果你不希望连接到第三方服务器，请禁用此选项。",
+    "data": "数据",
+    "exportProfile": "导出个人资料数据",
+    "exportProfileDesc": "导出你的畅聊个人资料数据，以便转移到其他浏览器或设备。请勿与任何人分享导出的数据，因为其中包含你的唯一验证密钥。",
+    "exportButton": "导出个人资料数据",
+    "importProfile": "导入个人资料数据",
+    "importProfileDesc": "导入之前从其他浏览器或设备导出的畅聊个人资料。",
+    "importButton": "导入个人资料数据",
+    "importSuccess": "个人资料导入成功",
+    "deleteProfile": "删除所有个人资料数据",
+    "deleteProfileDesc": "请谨慎操作。这将导致你的用户名从 {{userId}} 更改为新的随机分配名称。",
+    "deleteButton": "删除所有数据并重新开始",
+    "storageNote": "畅聊仅存储用户偏好设置，不会存储任何消息内容。这些偏好数据仅存储在你的本地设备上，而非服务器。"
+  },
+  "about": {
+    "title": "关于",
+    "content": "## 用户指南\n\n### 聊天室\n\n使用主页上的「加入公开房间」和「加入私密房间」按钮来创建聊天室。公开房间对知道 URL 的任何人开放。私密房间需要密码才能加入。\n\n你可以将房间 URL 分享给想要加入的人。当所有人离开后，房间及其对话历史将自动消失。\n\n### 对等方验证\n\n为了确保你正在与正确的人交谈，畅聊使用公钥加密技术来验证对等方身份。每个用户都有一对唯一的加密密钥，用于验证身份。\n\n### 对话回填\n\n当新用户加入公开房间时，现有的消息历史会自动同步给新成员。私密房间不支持此功能以增强安全性。\n\n### 消息编写\n\n消息支持 Markdown 格式和代码语法高亮。你可以发送文本、共享文件、进行视频/音频通话以及共享屏幕。"
+  },
+  "disclaimer": {
+    "title": "免责声明",
+    "content": "## 解释和定义\n\n### 解释\n\n首字母大写的词语在以下条件下具有定义的含义。无论是单数还是复数形式，以下定义具有相同含义。\n\n### 定义\n\n就本免责声明而言：\n\n- **应用**指软件程序畅聊\n- **你**指使用本应用的个人\n- **运营者**指本应用的运营者\n\n## 免责声明\n\n本应用提供的信息仅供一般参考之用。\n\n运营者不对本应用中提供的信息的完整性、可靠性和准确性做出任何保证。你对这些信息的任何依赖均由你自行承担风险。\n\n运营者不对使用本应用所产生的任何损失或损害负责。\n\n本应用中可能包含外部网站的链接，这些网站不由运营者提供或维护，运营者也不与其有任何关联。运营者不保证这些外部网站上任何信息的准确性、相关性、及时性或完整性。\n\n由于运营者无法控制本应用外部网站的内容，因此运营者不对因使用本应用提供的或通过本应用访问的任何外部内容而造成的任何损失或损害承担责任。"
+  },
+  "embedDialog": {
+    "title": "嵌入畅聊",
+    "iframeDesc": "复制并粘贴此 iframe HTML 代码片段到你的项目中：",
+    "advancedTitle": "高级嵌入",
+    "sdkDesc": "作为使用 iframe 的替代方案，你可以使用畅聊 SDK 将聊天室作为 Web Component 嵌入，并获得更多配置选项："
+  },
+  "communityRooms": {
+    "title": "社区房间",
+    "description": "你也可以在公开社区房间中聊天。你将保持匿名，但请注意你选择分享的信息。",
+    "room": "房间"
+  },
+  "fileShare": {
+    "encryptingFiles": "正在加密文件副本...",
+    "encryptingFile": "正在加密文件副本...",
+    "encryptionComplete": "加密完成"
+  },
+  "media": {
+    "previewNotSupported": "不支持媒体预览",
+    "renderFailed": "媒体渲染失败",
+    "theirMicVolume": "对方的麦克风音量",
+    "theirScreenVolume": "对方的屏幕音量",
+    "volume": "音量"
+  },
+  "sounds": {
+    "newMessage": "新消息",
+    "chime": "铃声",
+    "beep": "蜂鸣"
+  }
+}

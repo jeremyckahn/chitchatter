@@ -6,6 +6,7 @@ import DialogContent from '@mui/material/DialogContent'
 import DialogContentText from '@mui/material/DialogContentText'
 import DialogTitle from '@mui/material/DialogTitle'
 import WarningIcon from '@mui/icons-material/Warning'
+import { useTranslation } from 'react-i18next'
 
 interface ConfirmDialogProps {
   isOpen: boolean
@@ -18,6 +19,8 @@ export const ConfirmDialog = ({
   onCancel,
   onConfirm,
 }: ConfirmDialogProps) => {
+  const { t } = useTranslation()
+
   const handleDialogClose = () => {
     onCancel()
   }
@@ -38,20 +41,20 @@ export const ConfirmDialog = ({
               mr: theme.spacing(1),
             })}
           />
-          Are you sure?
+          {t('confirmDialog.title')}
         </Box>
       </DialogTitle>
       <DialogContent>
         <DialogContentText id="alert-dialog-description">
-          This action cannot be undone.
+          {t('confirmDialog.message')}
         </DialogContentText>
       </DialogContent>
       <DialogActions>
         <Button onClick={onCancel} autoFocus>
-          Cancel
+          {t('common.cancel')}
         </Button>
         <Button onClick={onConfirm} color="error">
-          Confirm
+          {t('common.confirm')}
         </Button>
       </DialogActions>
     </Dialog>

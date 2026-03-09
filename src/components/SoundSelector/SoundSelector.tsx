@@ -1,5 +1,6 @@
 import React, { useContext } from 'react'
 import { Autocomplete, TextField } from '@mui/material'
+import { useTranslation } from 'react-i18next'
 import { soundOptions } from 'config/soundNames'
 import { SettingsContext } from 'contexts/SettingsContext'
 
@@ -26,6 +27,7 @@ interface SoundSelectorProps {
 
 export const SoundSelector: React.FC<SoundSelectorProps> = ({ disabled }) => {
   const { getUserSettings, updateUserSettings } = useContext(SettingsContext)
+  const { t } = useTranslation()
   const { selectedSound } = getUserSettings()
 
   return (
@@ -42,7 +44,11 @@ export const SoundSelector: React.FC<SoundSelectorProps> = ({ disabled }) => {
       getOptionLabel={option => option.label}
       isOptionEqualToValue={(option, value) => option.value === value.value}
       renderInput={params => (
-        <TextField {...params} label="Sound" disabled={disabled} />
+        <TextField
+          {...params}
+          label={t('settings.sound')}
+          disabled={disabled}
+        />
       )}
       disabled={disabled}
     />

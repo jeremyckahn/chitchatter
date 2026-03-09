@@ -13,6 +13,7 @@ import DialogTitle from '@mui/material/DialogTitle'
 import Tooltip from '@mui/material/Tooltip'
 import useTheme from '@mui/material/styles/useTheme'
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined'
+import { useTranslation } from 'react-i18next'
 
 import { ShellContext } from 'contexts/ShellContext'
 import { getPeerName } from 'components/PeerNameDisplay'
@@ -28,6 +29,7 @@ const maxCustomUsernameLength = 30
 
 export const UserInfo = ({ userId }: UserInfoProps) => {
   const theme = useTheme()
+  const { t } = useTranslation()
   const userName = getPeerName(userId)
 
   const { customUsername, setCustomUsername, showAlert } =
@@ -48,11 +50,11 @@ export const UserInfo = ({ userId }: UserInfoProps) => {
     setCustomUsername(trimmedUsername)
 
     if (trimmedUsername.length) {
-      showAlert(`Username changed to "${trimmedUsername}"`, {
+      showAlert(t('userInfo.usernameChanged', { name: trimmedUsername }), {
         severity: 'success',
       })
     } else {
-      showAlert(`Username reset`, { severity: 'success' })
+      showAlert(t('userInfo.usernameReset'), { severity: 'success' })
     }
   }
 
@@ -87,7 +89,7 @@ export const UserInfo = ({ userId }: UserInfoProps) => {
               value={inflightCustomUsername}
               inputProps={{ maxLength: maxCustomUsernameLength }}
             />
-            <Tooltip title="Reveal your user info">
+            <Tooltip title={t('userInfo.revealInfo')}>
               <IconButton
                 sx={{
                   ml: 1.5,
@@ -99,7 +101,7 @@ export const UserInfo = ({ userId }: UserInfoProps) => {
               </IconButton>
             </Tooltip>
           </Box>
-          <FormHelperText>Your username</FormHelperText>
+          <FormHelperText>{t('userInfo.yourUsername')}</FormHelperText>
         </FormControl>
       </form>
       <Dialog open={isInfoDialogOpen} onClose={handleInfoDialogClose}>
@@ -111,17 +113,12 @@ export const UserInfo = ({ userId }: UserInfoProps) => {
           </Box>
         </DialogTitle>
         <DialogContent>
-          <DialogContentText>
-            Your public key (generated locally):
-          </DialogContentText>
+          <DialogContentText>{t('userInfo.publicKeyLabel')}</DialogContentText>
           <PublicKey publicKey={publicKey} />
-          <DialogContentText>
-            Your private key, which was also generated locally, is hidden and
-            only exists on your device.
-          </DialogContentText>
+          <DialogContentText>{t('userInfo.privateKeyNote')}</DialogContentText>
         </DialogContent>
         <DialogActions>
-          <Button onClick={handleInfoDialogClose}>Close</Button>
+          <Button onClick={handleInfoDialogClose}>{t('common.close')}</Button>
         </DialogActions>
       </Dialog>
     </>

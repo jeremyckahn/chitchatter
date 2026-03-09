@@ -1,12 +1,13 @@
-import { PeerRoom } from 'lib/PeerRoom'
-import { PeerAction } from 'models/network'
 import { useEffect, useState } from 'react'
+
 import {
   ActionProgress,
   ActionReceiver,
   ActionSender,
   DataPayload,
-} from 'trystero'
+  PeerRoom,
+} from 'lib/PeerRoom'
+import { PeerAction } from 'models/network'
 
 export const usePeerAction = <T extends DataPayload>({
   peerRoom,

@@ -1,4 +1,5 @@
 import { useContext, useEffect, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 
 import { sleep } from 'lib/sleep'
 import { RoomContext } from 'contexts/RoomContext'
@@ -21,6 +22,7 @@ export function useRoomFileShare({
   onInlineMediaUpload,
   peerRoom,
 }: UseRoomFileShareConfig) {
+  const { t } = useTranslation()
   const shellContext = useContext(ShellContext)
   const roomContext = useContext(RoomContext)
   const [sharedFiles, setSharedFiles] = useState<FileList | null>(null)
@@ -129,13 +131,13 @@ export function useRoomFileShare({
 
     const alertText =
       files.length > 1
-        ? 'Encrypting a copy of the files...'
-        : 'Encrypting a copy of the file...'
+        ? t('fileShare.encryptingFiles')
+        : t('fileShare.encryptingFile')
     showAlert(alertText, { severity: 'info' })
 
     const magnetURI = await fileTransfer.offer(files, shellContext.roomId)
 
-    showAlert('Encryption complete', { severity: 'success' })
+    showAlert(t('fileShare.encryptionComplete'), { severity: 'success' })
 
     if (inlineMediaFiles.length > 0) {
       onInlineMediaUpload(inlineMediaFiles)

@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import Box from '@mui/material/Box'
 import Videocam from '@mui/icons-material/Videocam'
 import VideocamOff from '@mui/icons-material/VideocamOff'
@@ -19,6 +20,7 @@ export interface RoomVideoControlsProps {
 }
 
 export function RoomVideoControls({ peerRoom }: RoomVideoControlsProps) {
+  const { t } = useTranslation()
   const {
     videoDevices,
     isCameraEnabled,
@@ -63,10 +65,16 @@ export function RoomVideoControls({ peerRoom }: RoomVideoControlsProps) {
         px: 1,
       }}
     >
-      <Tooltip title={isCameraEnabled ? 'Turn off camera' : 'Turn on camera'}>
+      <Tooltip
+        title={
+          isCameraEnabled
+            ? t('roomControls.turnOffCamera')
+            : t('roomControls.turnOnCamera')
+        }
+      >
         <MediaButton
           isActive={isCameraEnabled}
-          aria-label="toggle camera"
+          aria-label={t('roomControls.toggleCamera')}
           onClick={handleEnableCameraClick}
         >
           {isCameraEnabled ? <Videocam /> : <VideocamOff />}
@@ -76,7 +84,7 @@ export function RoomVideoControls({ peerRoom }: RoomVideoControlsProps) {
         <Box sx={{ mt: 1 }}>
           <List
             component="nav"
-            aria-label="Camera selection"
+            aria-label={t('roomControls.cameraSelection')}
             sx={{ bgcolor: 'background.paper' }}
           >
             <ListItem
@@ -84,12 +92,12 @@ export function RoomVideoControls({ peerRoom }: RoomVideoControlsProps) {
               id="video-input-select-button"
               aria-haspopup="listbox"
               aria-controls="video-input-select-menu"
-              aria-label="Camera to use"
+              aria-label={t('roomControls.cameraToUse')}
               aria-expanded={isVideoDeviceSelectOpen ? 'true' : undefined}
               onClick={handleVideoDeviceListItemClick}
             >
               <ListItemText
-                primary="Selected camera"
+                primary={t('roomControls.selectedCamera')}
                 secondary={videoDevices[selectedVideoDeviceIdx]?.label}
               />
             </ListItem>

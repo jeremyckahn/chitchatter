@@ -11,6 +11,7 @@ import FormControlLabel from '@mui/material/FormControlLabel'
 import TextField from '@mui/material/TextField'
 import Tooltip from '@mui/material/Tooltip'
 import CloseIcon from '@mui/icons-material/Close'
+import { useTranslation } from 'react-i18next'
 
 import { AlertOptions } from 'models/shell'
 import { useEffect, useState, SyntheticEvent } from 'react'
@@ -30,7 +31,8 @@ export interface RoomShareDialogProps {
   ) => Promise<void>
 }
 
-export function RoomShareDialog(props: RoomShareDialogProps) {
+export const RoomShareDialog = (props: RoomShareDialogProps) => {
+  const { t } = useTranslation()
   const [isAdvanced, setIsAdvanced] = useState(false)
   const [isUnderstood, setIsUnderstood] = useState(false)
   const [password, setPassword] = useState('')
@@ -59,14 +61,14 @@ export function RoomShareDialog(props: RoomShareDialogProps) {
 
       await props.copyToClipboard(
         `${url}#${params}`,
-        'Private room URL with password copied to clipboard',
+        t('roomShareDialog.copiedWithPassword'),
         'warning'
       )
 
       handleClose()
     } else {
       setPassThrottled(true)
-      props.showAlert('Incorrect password entered. Please wait 2s to retry.', {
+      props.showAlert(t('roomShareDialog.wrongPassword'), {
         severity: 'error',
       })
 
@@ -80,8 +82,8 @@ export function RoomShareDialog(props: RoomShareDialogProps) {
     await props.copyToClipboard(
       url,
       isAdvanced
-        ? 'Private room URL without password copied to clipboard'
-        : 'Current URL copied to clipboard',
+        ? t('roomShareDialog.copiedWithoutPassword')
+        : t('roomShareDialog.urlCopied'),
       'success'
     )
 
@@ -104,10 +106,12 @@ export function RoomShareDialog(props: RoomShareDialogProps) {
       <form onSubmit={handleFormSubmit}>
         {isAdvanced && (
           <DialogTitle id="alert-dialog-title">
-            Copy URL with password
-            <Button onClick={() => setIsAdvanced(false)}>Simple</Button>
+            {t('roomShareDialog.title')}
+            <Button onClick={() => setIsAdvanced(false)}>
+              {t('roomShareDialog.simple')}
+            </Button>
             <IconButton
-              aria-label="close"
+              aria-label={t('common.close')}
               onClick={handleClose}
               sx={{
                 position: 'absolute',
@@ -122,25 +126,14 @@ export function RoomShareDialog(props: RoomShareDialogProps) {
         {isAdvanced && (
           <DialogContent>
             <DialogContentText sx={{ mb: 2 }}>
-              Copy URL to this private room containing an indecipherable hash of
-              the password. When using this URL, users will not need to enter
-              the password themselves.
+              {t('roomShareDialog.description')}
             </DialogContentText>
             <Alert severity="error" sx={{ mb: 2 }}>
-              Be careful where and how this URL is shared. Anybody who obtains
-              it can enter the room. The sharing medium must be trusted, as well
-              as all potential recipients of the URL, just as if you were
-              sharing the password itself.
+              {t('roomShareDialog.securityWarning')}
             </Alert>
-            <Alert severity="warning">
-              By design, the password hash does not leave the web browser when
-              this URL is used to access the room. However, web browsers can
-              still independently record the full URL in the address history,
-              and may even store the history in the cloud if configured to do
-              so.
-            </Alert>
+            <Alert severity="warning">{t('roomShareDialog.browserOnly')}</Alert>
             <FormControlLabel
-              label="I understand the risks"
+              label={t('roomShareDialog.understandRisks')}
               control={
                 <Checkbox
                   checked={isUnderstood}
@@ -152,7 +145,7 @@ export function RoomShareDialog(props: RoomShareDialogProps) {
               autoFocus
               margin="none"
               id="password"
-              label="Password"
+              label={t('roomShareDialog.passwordLabel')}
               type="password"
               fullWidth
               variant="standard"
@@ -164,7 +157,7 @@ export function RoomShareDialog(props: RoomShareDialogProps) {
         )}
         <DialogActions>
           {isAdvanced ? (
-            <Tooltip title="Copy room URL with password. No password entry required to access room.">
+            <Tooltip title={t('roomShareDialog.copyWithPasswordTip')}>
               <span>
                 <Button
                   type="submit"
@@ -174,18 +167,18 @@ export function RoomShareDialog(props: RoomShareDialogProps) {
                     password.length === 0 || !isUnderstood || passThrottled
                   }
                 >
-                  Copy URL with password
+                  {t('roomShareDialog.copyWithPassword')}
                 </Button>
               </span>
             </Tooltip>
           ) : (
             <Button onClick={() => setIsAdvanced(true)} color="error">
-              Advanced
+              {t('roomShareDialog.advanced')}
             </Button>
           )}
-          <Tooltip title="Copy room URL. Password required to access room.">
+          <Tooltip title={t('roomShareDialog.copyUrlTip')}>
             <Button onClick={copyWithoutPass} color="success" autoFocus>
-              Copy URL
+              {t('roomShareDialog.copyUrl')}
             </Button>
           </Tooltip>
         </DialogActions>

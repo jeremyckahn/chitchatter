@@ -1,5 +1,6 @@
 import { useState, SyntheticEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import Button from '@mui/material/Button'
 import Box from '@mui/material/Box'
 import Typography from '@mui/material/Typography'
@@ -14,6 +15,7 @@ import { communityRoomNames } from 'config/communityRooms'
 
 export const CommunityRoomSelector = () => {
   const navigate = useNavigate()
+  const { t } = useTranslation()
   const [selectedRoom, setSelectedRoom] = useState<string | null>(null)
 
   const handleRoomNameChange = (
@@ -37,19 +39,20 @@ export const CommunityRoomSelector = () => {
           fontWeight: 'bold',
         }}
       >
-        Community rooms
+        {t('communityRooms.title')}
       </AccordionSummary>
       <AccordionDetails>
         <Typography variant="body1">
-          You can also chat in a public community room. You'll be anonymous, but
-          be careful what information you choose to share.
+          {t('communityRooms.description')}
         </Typography>
         <Box display="flex" mt={2} gap={1}>
           <Autocomplete
             disablePortal
             options={communityRoomNames}
             value={selectedRoom}
-            renderInput={params => <TextField {...params} label="Room" />}
+            renderInput={params => (
+              <TextField {...params} label={t('communityRooms.room')} />
+            )}
             onChange={handleRoomNameChange}
             sx={{ flexGrow: 1 }}
           />
@@ -58,7 +61,7 @@ export const CommunityRoomSelector = () => {
             disabled={selectedRoom === null}
             onClick={handleJoinClick}
           >
-            Join
+            {t('common.join')}
           </Button>
         </Box>
       </AccordionDetails>

@@ -43,7 +43,7 @@ const config = () => {
         '/api': {
           target: process.env.IS_E2E_TEST
             ? 'http://localhost:3003'
-            : 'http://localhost:3001',
+            : 'http://localhost:8787',
           changeOrigin: true,
           secure: false,
         },

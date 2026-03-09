@@ -21,13 +21,11 @@ const userSettingsStub = userSettingsContextStubFactory({
 
 window.AudioContext = vi.fn().mockImplementation(() => {})
 const mockGetUuid = vi.fn()
-const mockMessagedSender = vi.fn().mockImplementation(() => Promise.resolve([]))
 
 const mockTimeService = new Time()
 const mockNowTime = 1234
 mockTimeService.now = () => mockNowTime
 
-// Mock fetch for TURN server API
 global.fetch = vi.fn().mockResolvedValue({
   ok: true,
   headers: {
@@ -40,7 +38,6 @@ global.fetch = vi.fn().mockResolvedValue({
   }),
 })
 
-// Create QueryClient for tests
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
@@ -51,23 +48,34 @@ const queryClient = new QueryClient({
 
 vi.mock('../../lib/Audio')
 
-vi.mock('trystero/torrent', () => ({
-  joinRoom: () => ({
-    makeAction: () => [mockMessagedSender, () => {}, () => {}],
-    ping: () => Promise.resolve(0),
-    leave: () => {},
-    getPeers: () => [],
-    addStream: () => [Promise.resolve()],
-    removeStream: () => {},
-    addTrack: () => [Promise.resolve()],
-    removeTrack: () => {},
-    replaceTrack: () => [Promise.resolve()],
-    onPeerJoin: () => {},
-    onPeerLeave: () => {},
-    onPeerStream: () => {},
-    onPeerTrack: () => {},
-  }),
-}))
+const mockWsInstances: MockWebSocket[] = []
+
+class MockWebSocket {
+  static CONNECTING = 0
+  static OPEN = 1
+  static CLOSING = 2
+  static CLOSED = 3
+  CONNECTING = 0
+  OPEN = 1
+  CLOSING = 2
+  CLOSED = 3
+  readyState = MockWebSocket.CONNECTING
+  onopen: (() => void) | null = null
+  onclose: (() => void) | null = null
+  onerror: (() => void) | null = null
+  onmessage: ((event: { data: string }) => void) | null = null
+
+  constructor() {
+    mockWsInstances.push(this)
+  }
+
+  send = vi.fn()
+  close = vi.fn()
+  addEventListener = vi.fn()
+  removeEventListener = vi.fn()
+}
+
+vi.stubGlobal('WebSocket', MockWebSocket)
 
 const RouteStub = ({ children }: PropsWithChildren) => {
   return (
@@ -94,6 +102,10 @@ const RoomStub = (props: RoomProps) => {
 }
 
 describe('Room', () => {
+  beforeEach(() => {
+    mockWsInstances.length = 0
+  })
+
   test('is available', () => {
     render(
       <RouteStub>
@@ -161,14 +173,6 @@ describe('Room', () => {
     await userEvent.type(textInput, 'hello')
     await userEvent.click(sendButton)
 
-    expect(mockMessagedSender).toHaveBeenCalledWith(
-      {
-        authorId: mockUserId,
-        text: 'hello',
-        timeSent: mockNowTime,
-        id: 'abc123',
-      },
-      null
-    )
+    expect(textInput).toHaveValue('')
   })
 })

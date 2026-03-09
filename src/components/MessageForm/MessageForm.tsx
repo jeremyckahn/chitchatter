@@ -11,6 +11,7 @@ import Stack from '@mui/material/Stack'
 import TextField from '@mui/material/TextField'
 import Fab from '@mui/material/Fab'
 import ArrowUpward from '@mui/icons-material/ArrowUpward'
+import { useTranslation } from 'react-i18next'
 
 import { messageCharacterSizeLimit } from 'config/messaging'
 import { SettingsContext } from 'contexts/SettingsContext'
@@ -27,6 +28,7 @@ export const MessageForm = ({
   onMessageChange,
   isMessageSending,
 }: MessageFormProps) => {
+  const { t } = useTranslation()
   const settingsContext = useContext(SettingsContext)
   const { showActiveTypingStatus } = settingsContext.getUserSettings()
   const textFieldRef = useRef<HTMLInputElement>(null)
@@ -96,7 +98,7 @@ export const MessageForm = ({
             onChange={handleMessageChange}
             onKeyPress={handleMessageKeyPress}
             size="medium"
-            placeholder="Your message"
+            placeholder={t('room.yourMessage')}
             inputRef={textFieldRef}
             multiline
           />
@@ -107,7 +109,7 @@ export const MessageForm = ({
             // The !important is needed to override a Stack style
             marginTop: 'auto!important',
           }}
-          aria-label="Send"
+          aria-label={t('common.send')}
           type="submit"
           disabled={!canMessageBeSent()}
           color="primary"

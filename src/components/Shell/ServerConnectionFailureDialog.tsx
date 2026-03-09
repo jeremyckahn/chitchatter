@@ -1,4 +1,5 @@
 import { useContext } from 'react'
+import { useTranslation } from 'react-i18next'
 import useTheme from '@mui/material/styles/useTheme'
 import Typography from '@mui/material/Typography'
 import Box from '@mui/material/Box'
@@ -13,6 +14,7 @@ import ReportIcon from '@mui/icons-material/Report'
 import { ShellContext } from 'contexts/ShellContext'
 
 export const ServerConnectionFailureDialog = () => {
+  const { t } = useTranslation()
   const theme = useTheme()
   const {
     isServerConnectionFailureDialogOpen,
@@ -37,13 +39,12 @@ export const ServerConnectionFailureDialog = () => {
               mr: theme.spacing(1),
             })}
           />
-          Server connection failed
+          {t('serverFailureDialog.title')}
         </Box>
       </DialogTitle>
       <DialogContent>
         <DialogContentText>
-          A pairing server could not be found. Make sure you are connected to
-          the internet. If you still can't connect, try:
+          {t('serverFailureDialog.message')}
         </DialogContentText>
         <Typography
           component="ul"
@@ -52,13 +53,13 @@ export const ServerConnectionFailureDialog = () => {
             m: 1,
           }}
         >
-          <li>Refreshing the page</li>
-          <li>Disabling any adblockers</li>
-          <li>Connecting to a different network</li>
+          <li>{t('serverFailureDialog.refreshPage')}</li>
+          <li>{t('serverFailureDialog.disableAdblockers')}</li>
+          <li>{t('serverFailureDialog.differentNetwork')}</li>
         </Typography>
       </DialogContent>
       <DialogActions>
-        <Button onClick={handleDialogClose}>Close</Button>
+        <Button onClick={handleDialogClose}>{t('common.close')}</Button>
       </DialogActions>
     </Dialog>
   )

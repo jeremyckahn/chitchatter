@@ -19,9 +19,11 @@ import Typography from '@mui/material/Typography'
 import useTheme from '@mui/material/styles/useTheme'
 import { useMediaQuery } from '@mui/material'
 import { useContext, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 
 import { AudioVolume } from 'components/AudioVolume'
 import { PeerNameDisplay } from 'components/PeerNameDisplay'
+import { usePeerNameDisplay } from 'components/PeerNameDisplay/usePeerNameDisplay'
 import { PublicKey } from 'components/PublicKey'
 import { Room } from 'components/Room'
 import { PeerConnectionType } from 'lib/PeerRoom'
@@ -42,24 +44,6 @@ interface PeerListItemProps {
   roomId: string
 }
 
-const verificationStateDisplayMap = {
-  [PeerVerificationState.UNVERIFIED]: (
-    <Tooltip title="This person could not be verified with public-key cryptography. They may be misrepresenting themself. Be careful with what you share with them.">
-      <NoEncryptionIcon color="error" />
-    </Tooltip>
-  ),
-  [PeerVerificationState.VERIFIED]: (
-    <Tooltip title="This person has been verified with public-key cryptography">
-      <EnhancedEncryptionIcon color="success" />
-    </Tooltip>
-  ),
-  [PeerVerificationState.VERIFYING]: (
-    <Tooltip title="Attempting to verify this person...">
-      <CircularProgress size={16} sx={{ position: 'relative', top: 3 }} />
-    </Tooltip>
-  ),
-}
-
 const iconRightPadding = 1
 
 export const PeerListItem = ({
@@ -68,11 +52,31 @@ export const PeerListItem = ({
   peerAudioChannels,
   roomId,
 }: PeerListItemProps) => {
+  const { t } = useTranslation()
   const theme = useTheme()
   const { getUserSettings } = useContext(SettingsContext)
   const { userId } = getUserSettings()
+  const { getDisplayUsername } = usePeerNameDisplay()
   const [showPeerDialog, setShowPeerDialog] = useState(false)
   const isSmallViewport = useMediaQuery(theme.breakpoints.down('sm'))
+
+  const verificationStateDisplayMap = {
+    [PeerVerificationState.UNVERIFIED]: (
+      <Tooltip title={t('peerList.unverifiedWarning')}>
+        <NoEncryptionIcon color="error" />
+      </Tooltip>
+    ),
+    [PeerVerificationState.VERIFIED]: (
+      <Tooltip title={t('peerList.verified')}>
+        <EnhancedEncryptionIcon color="success" />
+      </Tooltip>
+    ),
+    [PeerVerificationState.VERIFYING]: (
+      <Tooltip title={t('peerList.verifying')}>
+        <CircularProgress size={16} sx={{ position: 'relative', top: 3 }} />
+      </Tooltip>
+    ),
+  }
 
   const hasPeerConnection = peer.peerId in peerConnectionTypes
 
@@ -104,27 +108,13 @@ export const PeerListItem = ({
             {hasPeerConnection ? (
               <Tooltip
                 title={
-                  isPeerConnectionDirect ? (
-                    <>
-                      You are connected directly to{' '}
-                      <PeerNameDisplay
-                        sx={{ fontSize: 'inherit', fontWeight: 'inherit' }}
-                      >
-                        {peer.userId}
-                      </PeerNameDisplay>
-                    </>
-                  ) : (
-                    <>
-                      You are connected to{' '}
-                      <PeerNameDisplay
-                        sx={{ fontSize: 'inherit', fontWeight: 'inherit' }}
-                      >
-                        {peer.userId}
-                      </PeerNameDisplay>{' '}
-                      via a relay server. Your connection is still private and
-                      encrypted, but performance may be degraded.
-                    </>
-                  )
+                  isPeerConnectionDirect
+                    ? t('peerList.directConnection', {
+                        name: getDisplayUsername(peer.userId),
+                      })
+                    : t('peerList.relayConnection', {
+                        name: getDisplayUsername(peer.userId),
+                      })
                 }
               >
                 <Box
@@ -182,7 +172,7 @@ export const PeerListItem = ({
         <DialogContent sx={{ display: 'flex', flexDirection: 'column' }}>
           <Accordion>
             <AccordionSummary>
-              <Typography>Their public key</Typography>
+              <Typography>{t('peerList.theirPublicKey')}</Typography>
             </AccordionSummary>
             <AccordionDetails>
               <PublicKey publicKey={peer.publicKey} />
@@ -200,7 +190,7 @@ export const PeerListItem = ({
           </Box>
         </DialogContent>
         <DialogActions>
-          <Button onClick={handleDialogClose}>Close</Button>
+          <Button onClick={handleDialogClose}>{t('common.close')}</Button>
         </DialogActions>
       </Dialog>
     </>

@@ -9,7 +9,7 @@ import { v4 as uuid } from 'uuid'
 import { ChatTranscript } from 'components/ChatTranscript'
 import { WholePageLoading } from 'components/Loading'
 import { MessageForm } from 'components/MessageForm'
-import { trackerUrls } from 'config/trackerUrls'
+import { signalingServerUrl } from 'config/signalingServer'
 import { RoomContext } from 'contexts/RoomContext'
 import { SettingsContext } from 'contexts/SettingsContext'
 import { ShellContext } from 'contexts/ShellContext'
@@ -70,17 +70,17 @@ const RoomCore = ({
   } = useRoom(
     {
       appId,
-      relayUrls: trackerUrls,
       password,
-      relayRedundancy: 4,
-      turnConfig: turnConfig.iceServers,
-      // NOTE: Avoid using STUN severs in the E2E tests in order to make them
-      // run faster
-      ...(import.meta.env.VITE_IS_E2E_TEST && {
-        rtcConfig: {
+      signalingServerUrl,
+      rtcConfig: {
+        iceServers: [
+          { urls: 'stun:stun.l.google.com:19302' },
+          ...(turnConfig.iceServers || []),
+        ],
+        ...(import.meta.env.VITE_IS_E2E_TEST && {
           iceServers: [],
-        },
-      }),
+        }),
+      },
     },
     {
       roomId,
@@ -102,9 +102,6 @@ const RoomCore = ({
   }
 
   const showMessages = roomContextValue.isShowingMessages
-
-  // NOTE: If rtcConfig fails to load, the useRtcConfig hook provides a
-  // fallback so the room will continue to work with default settings
 
   return (
     <RoomContext.Provider value={roomContextValue}>
@@ -210,7 +207,6 @@ export const Room = (props: RoomProps) => {
   const { isEnhancedConnectivityEnabled } =
     useContext(SettingsContext).getUserSettings()
 
-  // Fetch rtcConfig from server
   const { turnConfig, isLoading: isConfigLoading } = useTurnConfig(
     isEnhancedConnectivityEnabled
   )

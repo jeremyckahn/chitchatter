@@ -5,10 +5,11 @@ import Tooltip from '@mui/material/Tooltip'
 import Typography from '@mui/material/Typography'
 import { Box } from '@mui/system'
 import { useContext } from 'react'
+import { useTranslation } from 'react-i18next'
 
 import { SettingsContext } from 'contexts/SettingsContext'
 import { ShellContext } from 'contexts/ShellContext'
-import { TrackerConnection } from 'lib/ConnectionTest'
+import { SignalingConnection } from 'lib/ConnectionTest'
 
 import { ConnectionTestResults as IConnectionTestResults } from './useConnectionTest'
 
@@ -16,8 +17,9 @@ interface ConnectionTestResultsProps {
   connectionTestResults: IConnectionTestResults
 }
 export const ConnectionTestResults = ({
-  connectionTestResults: { hasHost, hasTURNServer, trackerConnection },
+  connectionTestResults: { hasHost, hasTURNServer, signalingConnection },
 }: ConnectionTestResultsProps) => {
+  const { t } = useTranslation()
   const { setIsServerConnectionFailureDialogOpen } = useContext(ShellContext)
   const { getUserSettings } = useContext(SettingsContext)
   const { isEnhancedConnectivityEnabled } = getUserSettings()
@@ -26,7 +28,7 @@ export const ConnectionTestResults = ({
     setIsServerConnectionFailureDialogOpen(true)
   }
 
-  if (trackerConnection === TrackerConnection.FAILED) {
+  if (signalingConnection === SignalingConnection.FAILED) {
     return (
       <Typography
         variant="subtitle2"
@@ -37,20 +39,20 @@ export const ConnectionTestResults = ({
           sx={{ display: 'flex', flexDirection: 'row', alignItems: 'center' }}
         >
           <ReportIcon color="error" sx={{ mr: 1 }} />
-          <span>Server connection failed</span>
+          <span>{t('connection.serverFailed')}</span>
         </Box>
       </Typography>
     )
   }
 
-  if (trackerConnection !== TrackerConnection.CONNECTED) {
+  if (signalingConnection !== SignalingConnection.CONNECTED) {
     return (
       <Typography variant="subtitle2">
         <Box
           sx={{ display: 'flex', flexDirection: 'row', alignItems: 'center' }}
         >
           <CircularProgress size={16} sx={{ mr: 1.5 }} />
-          <span>Searching for servers...</span>
+          <span>{t('connection.searchingServers')}</span>
         </Box>
       </Typography>
     )
@@ -65,7 +67,7 @@ export const ConnectionTestResults = ({
 
   if (hasFullConnectivity) {
     return (
-      <Tooltip title="Connections can be established with all peers that also have a full network connection.">
+      <Tooltip title={t('connection.fullConnectionTip')}>
         <Typography variant="subtitle2">
           <Typography
             component="span"
@@ -73,13 +75,13 @@ export const ConnectionTestResults = ({
           >
             <Circle sx={{ fontSize: 'small' }} />
           </Typography>{' '}
-          Full network connection
+          {t('connection.fullConnection')}
         </Typography>
       </Tooltip>
     )
   } else if (hasHost) {
     return (
-      <Tooltip title="Relay server is unavailable. Connections can only be established when a relay server is not needed for either peer.">
+      <Tooltip title={t('connection.partialConnectionTip')}>
         <Typography variant="subtitle2">
           <Typography
             component="span"
@@ -87,13 +89,13 @@ export const ConnectionTestResults = ({
           >
             <Circle sx={{ fontSize: 'small' }} />
           </Typography>{' '}
-          Partial network connection
+          {t('connection.partialConnection')}
         </Typography>
       </Tooltip>
     )
   } else {
     return (
-      <Tooltip title="Pairing server is unavailable. Peer connections cannot be established.">
+      <Tooltip title={t('connection.noConnectionTip')}>
         <Typography variant="subtitle2">
           <Typography
             component="span"
@@ -101,7 +103,7 @@ export const ConnectionTestResults = ({
           >
             <Circle sx={{ fontSize: 'small' }} />
           </Typography>{' '}
-          No network connection
+          {t('connection.noConnection')}
         </Typography>
       </Tooltip>
     )

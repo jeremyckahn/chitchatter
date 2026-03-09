@@ -1,0 +1,243 @@
+{
+  "common": {
+    "close": "Close",
+    "cancel": "Cancel",
+    "confirm": "Confirm",
+    "submit": "Submit",
+    "refresh": "Refresh",
+    "dismiss": "Dismiss",
+    "copy": "Copy",
+    "join": "Join",
+    "loading": "Loading",
+    "send": "Send",
+    "goBack": "Go back"
+  },
+  "app": {
+    "name": "Chitchatter",
+    "tagline": "A peer-to-peer chat app that is serverless, decentralized, and ephemeral"
+  },
+  "home": {
+    "title": "Chitchatter",
+    "yourUsername": "Your username:",
+    "roomName": "Room name (generated on your device)",
+    "regenerateRoomId": "Regenerate room id",
+    "roomNameType": "Room name type",
+    "uuid": "UUID",
+    "passphrase": "Passphrase",
+    "joinPublicRoom": "Join public room",
+    "joinPrivateRoom": "Join private room",
+    "getEmbedCode": "Get embed code",
+    "additionalOptions": "Additional options and information",
+    "description": "This is a free communication tool that is designed for simplicity, privacy, and security. All interaction between you and your online peers is encrypted. There is no record of your conversation once you all leave.",
+    "license": "Licensed under {{license}}. Please",
+    "readTheDocs": "read the docs",
+    "viewSource": "View source code on GitHub",
+    "goToAbout": "Go to About page"
+  },
+  "room": {
+    "title": "Room: {{roomId}}",
+    "yourMessage": "Your message",
+    "sendMessage": "Send",
+    "someoneJoined": "Someone has joined the room",
+    "someoneLeft": "Someone has left the room",
+    "peerLeft": "{{name}} has left the room",
+    "usernameChanged": "{{oldName}} is now {{newName}}",
+    "searchingForPeers": "Searching for peers...",
+    "isTyping": " is typing...",
+    "andTyping": " and ",
+    "areTyping": " are typing...",
+    "severalTyping": "Several people are typing..."
+  },
+  "roomControls": {
+    "turnOffMic": "Turn off microphone",
+    "turnOnMic": "Turn on microphone and speak to room (hold ctrl + ` to speak)",
+    "call": "call",
+    "micSelection": "Microphone selection",
+    "micToUse": "Microphone to use",
+    "selectedMic": "Selected microphone",
+    "turnOffCamera": "Turn off camera",
+    "turnOnCamera": "Turn on camera",
+    "toggleCamera": "toggle camera",
+    "cameraSelection": "Camera selection",
+    "cameraToUse": "Camera to use",
+    "selectedCamera": "Selected camera",
+    "stopShareScreen": "Stop sharing screen",
+    "shareScreen": "Share screen with room",
+    "shareScreenLabel": "share screen",
+    "stopShareFiles": "Stop sharing {{name}}",
+    "shareFiles": "Share files with the room",
+    "shareFilesLabel": "share files",
+    "files": "files",
+    "hideMessages": "Hide messages",
+    "showMessages": "Show messages",
+    "showMessagesLabel": "show messages",
+    "hideControls": "Hide controls",
+    "hideControlsLabel": "hide controls",
+    "showRoomControls": "Show Room Controls",
+    "hideRoomControls": "Hide Room Controls"
+  },
+  "peerList": {
+    "closePeerList": "Close peer list",
+    "peerList": "Peer list",
+    "clickToShowPeerList": "Click to show peer list",
+    "theirPublicKey": "Their public key",
+    "verificationFailed": "Verification for {{name}} failed",
+    "verificationTimeout": "Verification for {{name}} timed out",
+    "unverifiedWarning": "This person could not be verified with public-key cryptography. They may be misrepresenting themself. Be careful with what you share with them.",
+    "verified": "This person has been verified with public-key cryptography",
+    "verifying": "Attempting to verify this person...",
+    "directConnection": "You are connected directly to {{name}}",
+    "relayConnection": "You are connected to {{name}} via a relay server. Your connection is still private and encrypted, but performance may be degraded.",
+    "downloadFiles": "Download files being offered by {{name}}"
+  },
+  "connection": {
+    "serverFailed": "Server connection failed",
+    "searchingServers": "Searching for servers...",
+    "fullConnection": "Full network connection",
+    "fullConnectionTip": "Connections can be established with all peers that also have a full network connection.",
+    "partialConnection": "Partial network connection",
+    "partialConnectionTip": "Relay server is unavailable. Connections can only be established when a relay server is not needed for either peer.",
+    "noConnection": "No network connection",
+    "noConnectionTip": "Pairing server is unavailable. Peer connections cannot be established."
+  },
+  "serverFailureDialog": {
+    "title": "Server connection failed",
+    "message": "A pairing server could not be found. Make sure you are connected to the internet. If you still can't connect, try:",
+    "refreshPage": "Refreshing the page",
+    "disableAdblockers": "Disabling any adblockers",
+    "differentNetwork": "Connecting to a different network"
+  },
+  "shell": {
+    "openMenu": "Open menu",
+    "closeMenu": "Close menu",
+    "navMenu": "Navigation menu",
+    "home": "Home",
+    "settings": "Settings",
+    "about": "About",
+    "disclaimer": "Disclaimer",
+    "changeTheme": "Change theme",
+    "buildSignature": "Build signature:",
+    "copyUrl": "Copy current URL",
+    "urlCopied": "Current URL copied to clipboard",
+    "showQRCode": "Show QR Code",
+    "exitFullscreen": "Exit fullscreen",
+    "enterFullscreen": "Enter fullscreen",
+    "fullscreen": "fullscreen"
+  },
+  "clipboard": {
+    "copied": "Copied to clipboard"
+  },
+  "confirmDialog": {
+    "title": "Are you sure?",
+    "message": "This action cannot be undone."
+  },
+  "passwordPrompt": {
+    "title": "Room Password",
+    "description": "You will only be able to connect to room peers that enter the same password.",
+    "mismatchWarning": "If there is a mismatch, you will be in the room but be unable to connect to others. An error will not be shown.",
+    "label": "Password",
+    "showPassword": "Show password",
+    "hidePassword": "Hide password"
+  },
+  "qrCodeDialog": {
+    "title": "Room QR Code"
+  },
+  "roomShareDialog": {
+    "title": "Copy URL with password",
+    "simple": "Simple",
+    "advanced": "Advanced",
+    "description": "Copy URL to this private room containing an indecipherable hash of the password.",
+    "securityWarning": "Be careful where and how this URL is shared. Anybody who obtains it can enter the room.",
+    "browserOnly": "By design, the password hash does not leave the web browser.",
+    "understandRisks": "I understand the risks",
+    "passwordLabel": "Password",
+    "copyWithPassword": "Copy URL with password",
+    "copyWithPasswordTip": "Copy room URL with password. No password entry required to access room.",
+    "copyUrl": "Copy URL",
+    "copyUrlTip": "Copy room URL. Password required to access room.",
+    "copiedWithPassword": "Private room URL with password copied to clipboard",
+    "copiedWithoutPassword": "Private room URL without password copied to clipboard",
+    "urlCopied": "Current URL copied to clipboard",
+    "wrongPassword": "Incorrect password entered. Please wait 2s to retry."
+  },
+  "upgradeDialog": {
+    "title": "Update needed",
+    "message": "In order to function properly, Chitchatter needs to be updated. The update has already been installed in the background. All you need to do is reload the page or click \"Refresh\" below."
+  },
+  "environmentUnsupported": {
+    "title": "Environment unsupported",
+    "message": "Chitchatter is unable to start up. The following issues were detected:",
+    "insecureContext": "The app is not being served from a secure context",
+    "noWebRTC": "Your browser does not support WebRTC. Consider using a browser that does"
+  },
+  "userInfo": {
+    "revealInfo": "Reveal your user info",
+    "yourUsername": "Your username",
+    "publicKeyLabel": "Your public key (generated locally):",
+    "privateKeyNote": "Your private key, which was also generated locally, is hidden and only exists on your device.",
+    "usernameChanged": "Username changed to \"{{name}}\"",
+    "usernameReset": "Username reset"
+  },
+  "settings": {
+    "title": "Settings",
+    "chat": "Chat",
+    "backgroundMessage": "When a message is received in the background:",
+    "playSound": "Play a sound",
+    "showNotification": "Show a notification",
+    "selectSound": "Select a sound that plays when you receive a message:",
+    "sound": "Sound",
+    "showTyping": "Show active typing indicators",
+    "hideTypingNote": "Disabling this will also hide your active typing status from others.",
+    "networking": "Networking",
+    "enhancedConnectivity": "Enhanced connectivity",
+    "enhancedConnectivityNote": "Use external TURN servers to improve connection reliability. Disable this if you prefer not to connect to third-party servers.",
+    "data": "Data",
+    "exportProfile": "Export profile data",
+    "exportProfileDesc": "Export your Chitchatter profile data so that it can be moved to another browser or device. Be careful not to share the exported data with anyone. It contains your unique verification keys.",
+    "exportButton": "Export profile data",
+    "importProfile": "Import profile data",
+    "importProfileDesc": "Import your Chitchatter profile that was previously exported from another browser or device.",
+    "importButton": "Import profile data",
+    "importSuccess": "Profile successfully imported",
+    "deleteProfile": "Delete all profile data",
+    "deleteProfileDesc": "Be careful with this. This will cause your user name to change from {{userId}} to a new, randomly-assigned name.",
+    "deleteButton": "Delete all data and restart",
+    "storageNote": "Chitchatter only stores user preferences and never message content of any kind. This preference data is only stored locally on your device and not a server."
+  },
+  "about": {
+    "title": "About",
+    "content": "## User Guide\n\n### Chat Rooms\n\nUse the \"Join public room\" and \"Join private room\" buttons on the home page to create chat rooms. Public rooms are open to anyone who knows the URL. Private rooms require a password to join.\n\nYou can share the room URL with people you want to join. When everyone leaves, the room and its conversation history disappear automatically.\n\n### Peer Verification\n\nTo ensure you are talking to the right person, Chitchatter uses public-key cryptography to verify peer identities. Each user has a unique pair of encryption keys for identity verification.\n\n### Conversation Backfilling\n\nWhen a new user joins a public room, existing message history is automatically synced to the new member. Private rooms do not support this for enhanced security.\n\n### Message Authoring\n\nMessages support Markdown formatting and code syntax highlighting. You can send text, share files, make video/audio calls, and share your screen."
+  },
+  "disclaimer": {
+    "title": "Disclaimer",
+    "content": "## Interpretation and Definitions\n\n### Interpretation\n\nThe words of which the initial letter is capitalized have meanings defined under the following conditions. The following definitions shall have the same meaning regardless of whether they appear in singular or in plural.\n\n### Definitions\n\nFor the purposes of this Disclaimer:\n\n- **Application** refers to the software program Chitchatter\n- **You** means the individual using the Application\n- **Operator** refers to the operator of this Application\n\n## Disclaimer\n\nThe information provided by the Application is for general informational purposes only.\n\nThe Operator assumes no responsibility for errors or omissions in the contents of the Application.\n\nIn no event shall the Operator be liable for any special, direct, indirect, consequential, or incidental damages.\n\nThe Application may contain links to external websites that are not provided or maintained by the Operator."
+  },
+  "embedDialog": {
+    "title": "Embedding Chitchatter",
+    "iframeDesc": "Copy and paste this iframe HTML snippet into your project:",
+    "advancedTitle": "Advanced Embedding",
+    "sdkDesc": "As an alternative to using an iframe, you can use the Chitchatter SDK to embed a chat room as a Web Component with additional configuration options:"
+  },
+  "communityRooms": {
+    "title": "Community rooms",
+    "description": "You can also chat in a public community room. You'll be anonymous, but be careful what information you choose to share.",
+    "room": "Room"
+  },
+  "fileShare": {
+    "encryptingFiles": "Encrypting a copy of the files...",
+    "encryptingFile": "Encrypting a copy of the file...",
+    "encryptionComplete": "Encryption complete"
+  },
+  "media": {
+    "previewNotSupported": "Media preview not supported",
+    "renderFailed": "Media failed to render",
+    "theirMicVolume": "Their microphone volume",
+    "theirScreenVolume": "Their screen's volume",
+    "volume": "Volume"
+  },
+  "sounds": {
+    "newMessage": "New Message",
+    "chime": "Chime",
+    "beep": "Beep"
+  }
+}

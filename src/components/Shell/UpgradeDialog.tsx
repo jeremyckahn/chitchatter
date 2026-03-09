@@ -7,12 +7,14 @@ import DialogContentText from '@mui/material/DialogContentText'
 import DialogTitle from '@mui/material/DialogTitle'
 import WarningIcon from '@mui/icons-material/Warning'
 import { useRegisterSW } from 'virtual:pwa-register/react'
+import { useTranslation } from 'react-i18next'
 
 interface UpgradeDialogProps {
   appNeedsUpdate: boolean
 }
 
 export const UpgradeDialog = ({ appNeedsUpdate }: UpgradeDialogProps) => {
+  const { t } = useTranslation()
   const { updateServiceWorker } = useRegisterSW()
 
   const handleRestartClick = () => {
@@ -34,19 +36,17 @@ export const UpgradeDialog = ({ appNeedsUpdate }: UpgradeDialogProps) => {
               mr: theme.spacing(1),
             })}
           />
-          Update needed
+          {t('upgradeDialog.title')}
         </Box>
       </DialogTitle>
       <DialogContent>
         <DialogContentText id="alert-dialog-description">
-          In order to function properly, Chitchatter needs to be updated. The
-          update has already been installed in the background. All you need to
-          do is reload the page or click "Refresh" below.
+          {t('upgradeDialog.message')}
         </DialogContentText>
       </DialogContent>
       <DialogActions>
         <Button onClick={handleRestartClick} autoFocus>
-          Refresh
+          {t('common.refresh')}
         </Button>
       </DialogActions>
     </Dialog>

@@ -1,5 +1,6 @@
 import { useDebounce } from '@react-hook/debounce'
 import { useContext, useEffect, useMemo, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { v4 as uuid } from 'uuid'
 
 import { getPeerName, usePeerNameDisplay } from 'components/PeerNameDisplay'
@@ -8,12 +9,8 @@ import { SettingsContext } from 'contexts/SettingsContext'
 import { ShellContext } from 'contexts/ShellContext'
 import { usePeerAction } from 'hooks/usePeerAction'
 import { Audio } from 'lib/Audio'
-import {
-  ActionNamespace,
-  PeerHookType,
-  PeerRoom,
-  RoomConfig,
-} from 'lib/PeerRoom'
+import { ActionNamespace, PeerHookType, PeerRoom } from 'lib/PeerRoom'
+import type { RoomConfig } from 'lib/PeerRoom'
 import { time } from 'lib/Time'
 import {
   AudioChannelName,
@@ -59,7 +56,7 @@ interface UserMetadata extends Record<string, any> {
 }
 
 export function useRoom(
-  { password, ...roomConfig }: RoomConfig,
+  roomConfig: RoomConfig,
   {
     roomId,
     userId,
@@ -70,6 +67,8 @@ export function useRoom(
     timeService = time,
   }: UseRoomConfig
 ) {
+  const { t } = useTranslation()
+  const { password } = roomConfig
   const isPrivate = password !== undefined
 
   const isDirectMessageRoom = typeof targetPeerId === 'string'
@@ -99,7 +98,7 @@ export function useRoom(
   const [peerRoom] = useState(
     () =>
       peerRoomRef.current ??
-      new PeerRoom({ password: password ?? roomId, ...roomConfig }, roomId)
+      new PeerRoom({ ...roomConfig, password: password ?? roomId }, roomId)
   )
 
   peerRoomRef.current = peerRoom
@@ -338,7 +337,12 @@ export function useRoom(
         })
 
         if (oldUsername !== newUsername) {
-          showAlert(`${oldUsername} is now ${newUsername}`)
+          showAlert(
+            t('room.usernameChanged', {
+              oldName: oldUsername,
+              newName: newUsername,
+            })
+          )
         }
       }
     },
@@ -441,7 +445,7 @@ export function useRoom(
     setIsMessageSending(true)
     setMessageLog([...messageLog, unsentMessage])
 
-    await sendPeerMessage(unsentMessage, targetPeerId)
+    await Promise.all(sendPeerMessage(unsentMessage, targetPeerId))
 
     setMessageLog([
       ...messageLog,
@@ -452,7 +456,7 @@ export function useRoom(
 
   if (!isDirectMessageRoom) {
     peerRoom.onPeerJoin(PeerHookType.NEW_PEER, (peerId: string) => {
-      showAlert(`Someone has joined the room`, {
+      showAlert(t('room.someoneJoined'), {
         severity: 'success',
       })
       ;(async () => {
@@ -460,7 +464,7 @@ export function useRoom(
           const publicKeyString =
             await encryptionService.stringifyCryptoKey(publicKey)
 
-          const promises: Promise<any>[] = [
+          const promises: Promise<void>[][] = [
             sendPeerMetadata(
               { userId, customUsername, publicKeyString },
               peerId
@@ -476,7 +480,7 @@ export function useRoom(
             )
           }
 
-          await Promise.all(promises)
+          await Promise.all(promises.flat())
         } catch (e) {
           console.error(e)
         }
@@ -488,11 +492,11 @@ export function useRoom(
       const doesPeerExist = peerIndex !== -1
 
       showAlert(
-        `${
-          doesPeerExist
-            ? getDisplayUsername(peerList[peerIndex].userId)
-            : 'Someone'
-        } has left the room`,
+        doesPeerExist
+          ? t('room.peerLeft', {
+              name: getDisplayUsername(peerList[peerIndex].userId),
+            })
+          : t('room.someoneLeft'),
         {
           severity: 'warning',
         }
@@ -533,7 +537,7 @@ export function useRoom(
     setIsMessageSending(true)
     setMessageLog([...messageLog, unsentInlineMedia])
 
-    await sendPeerInlineMedia(unsentInlineMedia)
+    await Promise.all(sendPeerInlineMedia(unsentInlineMedia))
 
     setMessageLog([
       ...messageLog,

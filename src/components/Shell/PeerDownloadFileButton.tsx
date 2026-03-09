@@ -4,6 +4,7 @@ import CircularProgress from '@mui/material/CircularProgress'
 import Fab from '@mui/material/Fab'
 import Tooltip from '@mui/material/Tooltip'
 import { useContext, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 
 import { ShellContext } from 'contexts/ShellContext'
 import { isError } from 'lib/type-guards'
@@ -19,6 +20,7 @@ interface PeerDownloadFileButtonProps {
 export const PeerDownloadFileButton = ({
   peer,
 }: PeerDownloadFileButtonProps) => {
+  const { t } = useTranslation()
   const [isDownloading, setIsDownloading] = useState(false)
   const [downloadProgress, setDownloadProgress] = useState<number | null>(null)
   const shellContext = useContext(ShellContext)
@@ -73,9 +75,9 @@ export const PeerDownloadFileButton = ({
         />
       ) : (
         <Tooltip
-          title={`Download files being offered by ${getDisplayUsername(
-            peer.userId
-          )}`}
+          title={t('peerList.downloadFiles', {
+            name: getDisplayUsername(peer.userId),
+          })}
         >
           <Fab color="primary" size="small" onClick={handleDownloadFileClick}>
             <Download />

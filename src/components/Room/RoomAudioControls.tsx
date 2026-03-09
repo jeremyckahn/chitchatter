@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useHotkeys } from 'react-hotkeys-hook'
 import Box from '@mui/material/Box'
 import RecordVoiceOver from '@mui/icons-material/RecordVoiceOver'
@@ -20,6 +21,7 @@ export interface RoomAudioControlsProps {
 }
 
 export function RoomAudioControls({ peerRoom }: RoomAudioControlsProps) {
+  const { t } = useTranslation()
   const {
     audioDevices,
     isSpeakingToRoom,
@@ -81,13 +83,13 @@ export function RoomAudioControls({ peerRoom }: RoomAudioControlsProps) {
       <Tooltip
         title={
           isSpeakingToRoom
-            ? 'Turn off microphone'
-            : 'Turn on microphone and speak to room (hold ctrl + ` to speak)'
+            ? t('roomControls.turnOffMic')
+            : t('roomControls.turnOnMic')
         }
       >
         <MediaButton
           isActive={isSpeakingToRoom}
-          aria-label="call"
+          aria-label={t('roomControls.call')}
           onClick={handleVoiceCallClick}
         >
           {isSpeakingToRoom ? <RecordVoiceOver /> : <VoiceOverOff />}
@@ -97,7 +99,7 @@ export function RoomAudioControls({ peerRoom }: RoomAudioControlsProps) {
         <Box sx={{ mt: 1 }}>
           <List
             component="nav"
-            aria-label="Microphone selection"
+            aria-label={t('roomControls.micSelection')}
             sx={{ bgcolor: 'background.paper' }}
           >
             <ListItem
@@ -105,12 +107,12 @@ export function RoomAudioControls({ peerRoom }: RoomAudioControlsProps) {
               id="audio-input-select-button"
               aria-haspopup="listbox"
               aria-controls="audio-input-select-menu"
-              aria-label="Microphone to use"
+              aria-label={t('roomControls.micToUse')}
               aria-expanded={isAudioDeviceSelectOpen ? 'true' : undefined}
               onClick={handleAudioDeviceListItemClick}
             >
               <ListItemText
-                primary="Selected microphone"
+                primary={t('roomControls.selectedMic')}
                 secondary={audioDevices[selectedAudioDeviceIdx]?.label}
               />
             </ListItem>

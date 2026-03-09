@@ -1,6 +1,7 @@
 import { useContext, useEffect } from 'react'
 import { Room } from 'components/Room'
 import { useParams } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 
 import { WholePageLoading } from 'components/Loading'
 import { ShellContext } from 'contexts/ShellContext'
@@ -14,6 +15,7 @@ interface PublicRoomProps {
 export function PublicRoom({ userId }: PublicRoomProps) {
   const { roomId = '' } = useParams()
   const { setTitle } = useContext(ShellContext)
+  const { t } = useTranslation()
   const canMount = useThrottledRoomMount(roomId)
 
   useEffect(() => {
@@ -21,8 +23,8 @@ export function PublicRoom({ userId }: PublicRoomProps) {
   }, [])
 
   useEffect(() => {
-    setTitle(`Room: ${roomId}`)
-  }, [roomId, setTitle])
+    setTitle(t('room.title', { roomId }))
+  }, [roomId, setTitle, t])
 
   return canMount ? (
     <Room userId={userId} roomId={roomId} />

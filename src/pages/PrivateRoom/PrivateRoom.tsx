@@ -1,6 +1,7 @@
 import { Room } from 'components/Room'
 import { useContext, useEffect, useState } from 'react'
 import { useParams } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 
 import { WholePageLoading } from 'components/Loading'
 import { PasswordPrompt } from 'components/PasswordPrompt'
@@ -17,6 +18,7 @@ interface PublicRoomProps {
 export function PrivateRoom({ userId }: PublicRoomProps) {
   const { roomId = '' } = useParams()
   const { setTitle } = useContext(ShellContext)
+  const { t } = useTranslation()
   const canMount = useThrottledRoomMount(roomId)
 
   const urlParams = new URLSearchParams(window.location.hash.substring(1))
@@ -33,8 +35,8 @@ export function PrivateRoom({ userId }: PublicRoomProps) {
   }, [])
 
   useEffect(() => {
-    setTitle(`Room: ${roomId}`)
-  }, [roomId, setTitle])
+    setTitle(t('room.title', { roomId }))
+  }, [roomId, setTitle, t])
 
   const handlePasswordEntered = async (password: string) => {
     if (password.length !== 0)

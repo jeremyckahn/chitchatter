@@ -1,4 +1,5 @@
 import { useContext } from 'react'
+import { useTranslation } from 'react-i18next'
 
 import Tooltip from '@mui/material/Tooltip'
 import Badge from '@mui/material/Badge'
@@ -10,6 +11,7 @@ import { RoomContext } from 'contexts/RoomContext'
 import { MediaButton } from './MediaButton'
 
 export function RoomShowMessagesControls() {
+  const { t } = useTranslation()
   const { isShowingMessages, setIsShowingMessages, unreadMessages } =
     useContext(RoomContext)
 
@@ -23,10 +25,16 @@ export function RoomShowMessagesControls() {
         px: 1,
       }}
     >
-      <Tooltip title={isShowingMessages ? 'Hide messages' : 'Show messages'}>
+      <Tooltip
+        title={
+          isShowingMessages
+            ? t('roomControls.hideMessages')
+            : t('roomControls.showMessages')
+        }
+      >
         <MediaButton
           isActive={isShowingMessages}
-          aria-label="show messages"
+          aria-label={t('roomControls.showMessagesLabel')}
           onClick={() => setIsShowingMessages(!isShowingMessages)}
         >
           <Badge color="error" badgeContent={unreadMessages}>

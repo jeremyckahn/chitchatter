@@ -1,5 +1,6 @@
 import { useContext } from 'react'
 import { Link } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 
 import Box from '@mui/material/Box'
 import Button from '@mui/material/Button'
@@ -39,6 +40,7 @@ export interface HomeProps {
 
 export function Home({ userId }: HomeProps) {
   const theme = useTheme()
+  const { t } = useTranslation()
   const { updateUserSettings, getUserSettings } = useContext(SettingsContext)
   const { isEnhancedConnectivityEnabled } = getUserSettings()
   const {
@@ -81,7 +83,7 @@ export function Home({ userId }: HomeProps) {
           textAlign: 'center',
         }}
       >
-        <Link to={routes.ABOUT} aria-label="Go to About page">
+        <Link to={routes.ABOUT} aria-label={t('home.goToAbout')}>
           <StyledLogo
             sx={{
               px: 0.5,
@@ -96,21 +98,21 @@ export function Home({ userId }: HomeProps) {
           sx={{ maxWidth: theme.breakpoints.values.sm, mx: 'auto' }}
         >
           <Typography sx={{ mb: 2 }}>
-            Your username:{' '}
+            {t('home.yourUsername')}{' '}
             <PeerNameDisplay paragraph={false} sx={{ fontWeight: 'bold' }}>
               {userId}
             </PeerNameDisplay>
           </Typography>
           <FormControl fullWidth>
             <TextField
-              label="Room name (generated on your device)"
+              label={t('home.roomName')}
               variant="outlined"
               value={roomName}
               onChange={handleRoomNameChange}
               InputProps={{
                 endAdornment: (
                   <IconButton
-                    aria-label="Regenerate room id"
+                    aria-label={t('home.regenerateRoomId')}
                     onClick={regenerateRoomName}
                     size="small"
                   >
@@ -127,17 +129,20 @@ export function Home({ userId }: HomeProps) {
               value={roomNameType}
               exclusive
               onChange={handleRoomNameTypeChange}
-              aria-label="room name type"
+              aria-label={t('home.roomNameType')}
               size="small"
             >
-              <ToggleButton value={RoomNameType.UUID} aria-label="UUID">
-                UUID
+              <ToggleButton
+                value={RoomNameType.UUID}
+                aria-label={t('home.uuid')}
+              >
+                {t('home.uuid')}
               </ToggleButton>
               <ToggleButton
                 value={RoomNameType.PASSPHRASE}
-                aria-label="Passphrase"
+                aria-label={t('home.passphrase')}
               >
-                Passphrase
+                {t('home.passphrase')}
               </ToggleButton>
             </ToggleButtonGroup>
           </Box>
@@ -157,7 +162,7 @@ export function Home({ userId }: HomeProps) {
               }}
               disabled={!isRoomNameValid}
             >
-              Join public room
+              {t('home.joinPublicRoom')}
             </Button>
             <Button
               variant="contained"
@@ -168,7 +173,7 @@ export function Home({ userId }: HomeProps) {
               }}
               disabled={!isRoomNameValid}
             >
-              Join private room
+              {t('home.joinPrivateRoom')}
             </Button>
             <Button
               variant="contained"
@@ -180,12 +185,12 @@ export function Home({ userId }: HomeProps) {
               }}
               disabled={!isRoomNameValid}
             >
-              Get embed code
+              {t('home.getEmbedCode')}
             </Button>
           </Box>
         </Form>
       </Main>
-      <Box component="section" aria-label="Additional options and information">
+      <Box component="section" aria-label={t('home.additionalOptions')}>
         <Divider sx={{ my: 2 }} />
         <Box maxWidth={theme.breakpoints.values.sm} mx="auto" px={2}>
           <CommunityRoomSelector />
@@ -211,12 +216,7 @@ export function Home({ userId }: HomeProps) {
             px: 2,
           }}
         >
-          <Typography variant="body1">
-            This is a free communication tool that is designed for simplicity,
-            privacy, and security. All interaction between you and your online
-            peers is encrypted. There is no record of your conversation once you
-            all leave.
-          </Typography>
+          <Typography variant="body1">{t('home.description')}</Typography>
         </Box>
         <Box
           component="footer"
@@ -238,25 +238,24 @@ export function Home({ userId }: HomeProps) {
               size="large"
               edge="start"
               color="inherit"
-              aria-label="View source code on GitHub"
+              aria-label={t('home.viewSource')}
             >
               <GitHubIcon sx={{ fontSize: '2em' }} />
             </IconButton>
           </MuiLink>
           <Typography variant="body1" sx={{ textAlign: 'center', mb: 1 }}>
-            Licensed under{' '}
+            {t('home.license', { license: '' })}
             <MuiLink
               href="https://github.com/jeremyckahn/chitchatter/blob/develop/LICENSE"
               target="_blank"
             >
               GPL v2
-            </MuiLink>
-            . Please{' '}
+            </MuiLink>{' '}
             <MuiLink
               href="https://github.com/jeremyckahn/chitchatter/blob/develop/README.md"
               target="_blank"
             >
-              read the docs
+              {t('home.readTheDocs')}
             </MuiLink>
             .
           </Typography>

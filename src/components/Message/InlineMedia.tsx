@@ -3,6 +3,7 @@ import CircularProgress from '@mui/material/CircularProgress'
 import Typography from '@mui/material/Typography'
 import { useContext, useEffect, useRef, useState } from 'react'
 import { TorrentFile } from 'webtorrent'
+import { useTranslation } from 'react-i18next'
 
 import { RoomContext } from 'contexts/RoomContext'
 import { ShellContext } from 'contexts/ShellContext'
@@ -41,6 +42,7 @@ export const InlineFile = ({ file }: InlineFileProps) => {
   const [didRenderingMediaFail, setDidRenderingMediaFail] = useState(false)
   const [isMediaSupported, setIsMediaSupported] = useState(true)
   const shellContext = useContext(ShellContext)
+  const { t } = useTranslation()
 
   useEffect(() => {
     const { current: container } = containerRef
@@ -67,12 +69,12 @@ export const InlineFile = ({ file }: InlineFileProps) => {
     <Box ref={containerRef} sx={{ '& img': { maxWidth: '100%' } }}>
       {!isMediaSupported && (
         <Typography sx={{ fontStyle: 'italic' }}>
-          Media preview not supported
+          {t('media.previewNotSupported')}
         </Typography>
       )}
       {didRenderingMediaFail && (
         <Typography sx={{ fontStyle: 'italic' }}>
-          Media failed to render
+          {t('media.renderFailed')}
         </Typography>
       )}
     </Box>

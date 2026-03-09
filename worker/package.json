@@ -1,0 +1,15 @@
+{
+  "name": "chitchatter-signaling",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "check:types": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20241127.0",
+    "typescript": "^5.9.3",
+    "wrangler": "^3.99.0"
+  }
+}

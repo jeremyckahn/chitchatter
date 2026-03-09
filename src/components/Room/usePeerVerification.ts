@@ -1,4 +1,5 @@
 import { useCallback, useContext, useEffect, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { ShellContext } from 'contexts/ShellContext'
 import { Peer, PeerVerificationState } from 'models/chat'
 import { encryption } from 'services/Encryption'
@@ -21,6 +22,7 @@ export const usePeerVerification = ({
   isDirectMessageRoom,
   encryptionService = encryption,
 }: UserPeerVerificationProps) => {
+  const { t } = useTranslation()
   const { updatePeer, peerList, showAlert } = useContext(ShellContext)
   const namespace = isDirectMessageRoom ? 'dm' : 'g'
 
@@ -38,7 +40,9 @@ export const usePeerVerification = ({
             encryptedVerificationToken
           )
 
-        await sendVerificationTokenRaw(decryptedVerificationToken, [peerId])
+        await Promise.all(
+          sendVerificationTokenRaw(decryptedVerificationToken, [peerId])
+        )
       } catch (e) {
         console.error(e)
       }
@@ -65,7 +69,9 @@ export const usePeerVerification = ({
         })
 
         showAlert(
-          `Verification for ${getDisplayUsername(matchingPeer.userId)} failed`,
+          t('peerList.verificationFailed', {
+            name: getDisplayUsername(matchingPeer.userId),
+          }),
           {
             severity: 'error',
           }
@@ -103,7 +109,9 @@ export const usePeerVerification = ({
         })
 
         showAlert(
-          `Verification for ${getDisplayUsername(peer.userId)} timed out`,
+          t('peerList.verificationTimeout', {
+            name: getDisplayUsername(peer.userId),
+          }),
           {
             severity: 'error',
           }
@@ -114,9 +122,11 @@ export const usePeerVerification = ({
 
       updatePeer(peer.peerId, { encryptedVerificationToken, verificationTimer })
 
-      await sendVerificationTokenEncrypted(encryptedVerificationToken, [
-        peer.peerId,
-      ])
+      await Promise.all(
+        sendVerificationTokenEncrypted(encryptedVerificationToken, [
+          peer.peerId,
+        ])
+      )
     },
     [
       encryptionService,
@@ -124,6 +134,7 @@ export const usePeerVerification = ({
       sendVerificationTokenEncrypted,
       showAlert,
       updatePeer,
+      t,
     ]
   )
 

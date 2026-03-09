@@ -3,6 +3,7 @@ import { styled } from '@mui/material/styles'
 import IconButton from '@mui/material/IconButton'
 import ChevronRightIcon from '@mui/icons-material/ChevronRight'
 import ListItem from '@mui/material/ListItem'
+import { useTranslation } from 'react-i18next'
 
 import { routes } from 'config/routes'
 
@@ -26,32 +27,39 @@ interface PeerListWrapperProps {
 export const PeerListHeader = ({
   onPeerListClose,
   connectionTestResults,
-}: PeerListWrapperProps) => (
-  <StyledHeader>
-    <IconButton onClick={onPeerListClose} aria-label="Close peer list">
-      <ChevronRightIcon />
-    </IconButton>
-    <ListItem>
-      <Routes>
-        {/*
-        These stub routes are needed to silence spurious warnings in the console.
-        */}
-        {[routes.ROOT, routes.SETTINGS].map(route => (
-          <Route key={route} path={route} element={<></>} />
-        ))}
+}: PeerListWrapperProps) => {
+  const { t } = useTranslation()
 
-        {[routes.PUBLIC_ROOM, routes.PRIVATE_ROOM].map(route => (
-          <Route
-            key={route}
-            path={route}
-            element={
-              <ConnectionTestResults
-                connectionTestResults={connectionTestResults}
-              />
-            }
-          />
-        ))}
-      </Routes>
-    </ListItem>
-  </StyledHeader>
-)
+  return (
+    <StyledHeader>
+      <IconButton
+        onClick={onPeerListClose}
+        aria-label={t('peerList.closePeerList')}
+      >
+        <ChevronRightIcon />
+      </IconButton>
+      <ListItem>
+        <Routes>
+          {/*
+          These stub routes are needed to silence spurious warnings in the console.
+          */}
+          {[routes.ROOT, routes.SETTINGS].map(route => (
+            <Route key={route} path={route} element={<></>} />
+          ))}
+
+          {[routes.PUBLIC_ROOM, routes.PRIVATE_ROOM].map(route => (
+            <Route
+              key={route}
+              path={route}
+              element={
+                <ConnectionTestResults
+                  connectionTestResults={connectionTestResults}
+                />
+              }
+            />
+          ))}
+        </Routes>
+      </ListItem>
+    </StyledHeader>
+  )
+}
