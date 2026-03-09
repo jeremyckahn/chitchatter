@@ -4,333 +4,540 @@
 
 ## 功能特性
 
-- **端到端加密** — 所有消息通过 WebRTC 直接在对等方之间传输，端到端加密
-- **去中心化** — 无中心服务器存储消息，信令通过 Cloudflare Durable Objects 实现
+- **端到端加密** — 文字消息通过 WebRTC P2P 直连，端到端加密
+- **去中心化** — 无中心服务器存储消息
 - **即时消失** — 所有人离开房间后，对话历史自动消失
-- **多人聊天** — 支持多人同时在线聊天
-- **音视频通话** — 支持语音和视频通话
-- **屏幕共享** — 可以与房间内的人共享屏幕
+- **多人聊天** — 支持多人同时在线
+- **音视频通话** — 通过 Cloudflare SFU 高效转发
+- **屏幕共享** — 与房间内的人共享屏幕
 - **文件传输** — 加密文件共享
-- **私密房间** — 支持密码保护的私密房间
-- **身份验证** — 使用公钥加密技术验证对等方身份
-- **Markdown** — 消息支持 Markdown 格式和代码语法高亮
-- **PWA** — 可安装为渐进式 Web 应用
-- **多语言** — 支持中文和英文界面
-- **暗色主题** — 支持亮色/暗色主题切换
+- **私密房间** — 密码保护
+- **身份验证** — 公钥加密验证
+- **Markdown** — 消息支持 Markdown 和代码高亮
+- **PWA** — 可安装为桌面/手机应用
+- **多语言** — 中文/英文
+- **暗色主题** — 亮色/暗色切换
 
-## 技术架构
+---
 
-```
-┌─────────────────────────────────────────────────────────┐
-│                     Cloudflare Realtime 生态              │
-│                                                         │
-│  ┌──────────────┐    ┌────────────────────────────┐     │
-│  │ Cloudflare   │    │  Cloudflare Workers         │     │
-│  │ Pages        │    │  ┌──────────────────────┐  │     │
-│  │ (前端托管)    │    │  │ Durable Objects      │  │     │
-│  │              │    │  │ (信令服务器)          │  │     │
-│  └──────────────┘    │  └──────────────────────┘  │     │
-│                      │  ┌──────────────────────┐  │     │
-│                      │  │ Realtime TURN        │  │     │
-│                      │  │ (NAT穿透/中继)       │  │     │
-│                      │  └──────────────────────┘  │     │
-│                      │  ┌──────────────────────┐  │     │
-│                      │  │ Realtime SFU         │  │     │
-│                      │  │ (多人音视频转发)      │  │     │
-│                      │  └──────────────────────┘  │     │
-│                      └────────────────────────────┘     │
-│                                                         │
-│  文字聊天: P2P 数据通道（端到端加密）                      │
-│  音视频:   Cloudflare SFU 转发（多人场景高效）             │
-│  NAT穿透:  Cloudflare TURN 中继（复杂网络保障）           │
-└─────────────────────────────────────────────────────────┘
-```
+## 技术原理详解
 
-- **前端**: React 18 + TypeScript + Vite + Material UI
-- **信令**: Cloudflare Durable Objects (WebSocket)
-- **文字**: 原生 WebRTC P2P 数据通道（端到端加密）
-- **音视频**: Cloudflare Realtime SFU（多人高效转发）
-- **穿透**: Cloudflare TURN（STUN/TURN 全球中继）
-- **部署**: Cloudflare Pages + Workers + Realtime
+### 整体架构
 
-## 快速开始
-
-### 前置条件
-
-- [Node.js](https://nodejs.org/) 20.x
-- npm 10.x
-- [Cloudflare 账户](https://dash.cloudflare.com/sign-up)（免费即可）
-- [Wrangler CLI](https://developers.cloudflare.com/workers/wrangler/install-and-update/)
-
-### 本地开发
-
-1. **克隆项目**
-
-```bash
-git clone <your-repo-url>
-cd chitchatter
-```
-
-2. **安装依赖**
-
-```bash
-npm install
-cd worker && npm install && cd ..
-```
-
-3. **启动开发环境**
-
-```bash
-npm run dev
-```
-
-这会同时启动：
-
-- Vite 开发服务器（端口 3000）
-- Cloudflare Worker 本地开发服务器（端口 8787）
-- StreamSaver 服务（端口 3015）
-
-4. **访问应用**
-
-打开浏览器访问 http://localhost:3000
-
-### 运行测试
-
-```bash
-# 单元测试
-npm test
-
-# 类型检查
-npm run check:types
-
-# 代码检查
-npm run lint
-
-# 格式化
-npm run prettier
-```
-
-## 部署到 Cloudflare
-
-### 第一步：部署信令服务器（Worker + Durable Object）
-
-1. **登录 Cloudflare**
-
-```bash
-cd worker
-npx wrangler login
-```
-
-2. **修改 Worker 名称**（可选）
-
-编辑 `worker/wrangler.toml`，修改 `name` 字段：
-
-```toml
-name = "your-app-signaling"
-```
-
-3. **部署 Worker**
-
-```bash
-cd worker
-npx wrangler deploy
-```
-
-部署成功后，终端会输出 Worker URL，例如：
+本项目完全运行在 Cloudflare 生态中，使用了 5 项 Cloudflare 服务：
 
 ```
-https://your-app-signaling.your-subdomain.workers.dev
+用户 A 的浏览器                                    用户 B 的浏览器
+     │                                                  │
+     │  ① 加载前端页面                                    │
+     ▼                                                  ▼
+┌─────────────────────────────────────────────────────────────┐
+│  Cloudflare Pages（前端托管，全球 CDN）                        │
+│  托管 HTML/JS/CSS 静态文件，用户从最近的节点加载               │
+└─────────────────────────────────────────────────────────────┘
+     │                                                  │
+     │  ② 建立 WebSocket 连接到信令服务器                    │
+     ▼                                                  ▼
+┌─────────────────────────────────────────────────────────────┐
+│  Cloudflare Worker + Durable Object（信令服务器）              │
+│                                                             │
+│  每个聊天房间 = 一个 Durable Object 实例                      │
+│  职责：                                                      │
+│    - 维护房间内所有在线用户的 WebSocket 连接                    │
+│    - 当新用户加入时，通知房间内其他人                            │
+│    - 转发 SDP offer/answer（WebRTC 连接参数）                  │
+│    - 转发 ICE candidate（网络地址候选）                        │
+│    - 用户离开时通知其他人                                      │
+│                                                             │
+│  注意：信令服务器只传递连接参数，不传递实际消息内容               │
+└─────────────────────────────────────────────────────────────┘
+     │                                                  │
+     │  ③ 交换连接参数后，建立直连                           │
+     ▼                                                  ▼
+┌─────────────────────────────────────────────────────────────┐
+│  WebRTC P2P 直连（文字聊天）                                  │
+│                                                             │
+│  用户 A ◄══════════ 数据通道（加密）══════════► 用户 B        │
+│                                                             │
+│  - 消息直接在浏览器之间传输，不经过任何服务器                    │
+│  - DTLS 加密，即使信令服务器被攻破也无法解密消息                │
+│  - 支持发送文本、表情、Markdown                               │
+└─────────────────────────────────────────────────────────────┘
+     │                                                  │
+     │  ④ 音视频通过 SFU 转发（多人高效）                     │
+     ▼                                                  ▼
+┌─────────────────────────────────────────────────────────────┐
+│  Cloudflare Realtime SFU（选择性转发单元）                     │
+│                                                             │
+│  用户 A ──上传 1 路视频──► SFU ──转发──► 用户 B              │
+│                              │──转发──► 用户 C              │
+│                              │──转发──► 用户 D              │
+│                                                             │
+│  为什么不用 P2P 传视频？                                      │
+│  - P2P: 5人视频，每人需上传 4 路 = 20路总流量                  │
+│  - SFU: 5人视频，每人只上传 1 路 = 5路总流量 + SFU转发          │
+│  - SFU 运行在 Cloudflare 全球数百个节点，自动就近接入           │
+└─────────────────────────────────────────────────────────────┘
+     │                                                  │
+     │  ⑤ 当直连失败时（严格防火墙），走 TURN 中继             │
+     ▼                                                  ▼
+┌─────────────────────────────────────────────────────────────┐
+│  Cloudflare Realtime TURN（中继服务）                          │
+│                                                             │
+│  正常情况：A ←──直连──→ B （约 85% 的网络环境）                │
+│  防火墙后：A ──→ TURN ──→ B （约 15% 需要中继）               │
+│                                                             │
+│  - Worker 调用 Cloudflare API 生成短期凭证（24h 过期）         │
+│  - 客户端用凭证连接 turn.cloudflare.com                       │
+│  - 流量通过最近的 Cloudflare 节点中继                          │
+│  - 即使中继，连接仍然是加密的                                  │
+│  - 免费额度：1000 GB/月                                      │
+└─────────────────────────────────────────────────────────────┘
 ```
 
-**记下这个 URL**，后续配置前端需要用到。
+### 连接建立流程（时序）
 
-4. **配置 Cloudflare TURN 中继**（推荐，增强连接性）
+```
+用户A                    信令服务器(DO)                 用户B
+  │                          │                          │
+  │── WebSocket 连接 ──────►│                          │
+  │◄── 分配 peerId ────────│                          │
+  │                          │                          │
+  │                          │◄──── WebSocket 连接 ────│
+  │                          │──── 分配 peerId ───────►│
+  │                          │                          │
+  │◄── "新用户B加入" ────────│                          │
+  │                          │                          │
+  │  [创建 RTCPeerConnection]                          │
+  │  [创建数据通道]                                      │
+  │  [生成 SDP offer]                                    │
+  │                          │                          │
+  │── offer (经信令转发) ──►│── offer 转发 ──────────►│
+  │                          │                          │
+  │                          │  [创建 RTCPeerConnection]│
+  │                          │  [生成 SDP answer]       │
+  │                          │                          │
+  │◄── answer 转发 ────────│◄── answer (经信令转发) ──│
+  │                          │                          │
+  │◄────── ICE candidates 交换（双向）─────────────────►│
+  │                          │                          │
+  │◄══════════ P2P 数据通道建立 ═══════════════════════►│
+  │              （消息直接传输，不再经过信令服务器）         │
+```
 
-TURN 中继让处于严格防火墙/NAT 后的用户也能连接。Cloudflare 提供原生 TURN 服务（1000GB/月免费）：
+### 各 Cloudflare 服务详解
 
-**a. 创建 TURN Key：**
+#### 1. Cloudflare Pages — 前端托管
 
-- 登录 [Cloudflare Dashboard](https://dash.cloudflare.com/)
-- 进入 "Calls" → "TURN Keys" → "Create"
-- 记下生成的 **Key ID** 和 **API Token**
+**是什么**：静态网站托管服务，类似 GitHub Pages 但更快。
 
-**b. 将密钥设置到 Worker：**
+**在本项目中的作用**：
+
+- 托管编译后的 React 应用（HTML、JS、CSS、图片）
+- 全球 CDN 分发，用户从最近的节点加载页面
+- 自动 HTTPS
+- 连接 GitHub 后自动构建部署（推送代码即部署）
+
+**为什么用它**：免费、快速、与 GitHub 无缝集成，推送代码自动部署。
+
+#### 2. Cloudflare Workers — 服务端逻辑
+
+**是什么**：运行在 Cloudflare 边缘节点的 JavaScript 运行时（类似 AWS Lambda 但全球分布）。
+
+**在本项目中的作用**：
+
+- 作为 API 服务器处理 HTTP 请求
+- 代理 Cloudflare TURN API（生成临时凭证，隐藏 API 密钥）
+- 代理 Cloudflare SFU API（管理音视频会话，隐藏 App Secret）
+- 路由 WebSocket 连接到正确的 Durable Object
+
+**为什么用它**：无需管理服务器，代码运行在全球数百个节点，延迟低。
+
+#### 3. Durable Objects — 有状态信令
+
+**是什么**：Workers 的扩展，每个实例有独立的内存状态和存储，全球唯一。
+
+**在本项目中的作用**：
+
+- 每个聊天房间对应一个 Durable Object 实例
+- 内存中维护该房间所有 WebSocket 连接
+- 处理用户加入/离开/SDP交换
+
+**为什么用它**：普通 Worker 是无状态的，无法维护 WebSocket 连接列表。Durable Object 解决了这个问题——它像一个"有记忆的服务员"，知道房间里有谁。
+
+**具体工作原理**：
+
+```
+房间 "abc123" 的 Durable Object：
+  内存状态 = {
+    sessions: {
+      "peer-1": WebSocket连接1,
+      "peer-2": WebSocket连接2,
+      "peer-3": WebSocket连接3,
+    }
+  }
+
+  当收到来自 peer-1 的消息 { type: "offer", targetPeerId: "peer-2", sdp: "..." }：
+    → 从 sessions 中找到 peer-2 的 WebSocket
+    → 转发消息给 peer-2
+```
+
+#### 4. Cloudflare Realtime TURN — NAT 穿透
+
+**是什么**：WebRTC 中继服务，当两个用户无法直连时提供流量中转。
+
+**为什么需要**：
+
+- 大约 85% 的情况下，WebRTC 可以通过 STUN 发现公网地址并直连
+- 约 15% 的情况（对称 NAT、严格企业防火墙），必须通过 TURN 中继
+- 没有 TURN，这些用户将完全无法连接
+
+**工作流程**：
+
+1. Worker 用 `TURN_KEY_ID` 和 `TURN_KEY_API_TOKEN` 调用 Cloudflare API
+2. Cloudflare 返回临时用户名和密码（24小时过期）
+3. 客户端用这些凭证连接 `turn.cloudflare.com`
+4. 如果直连失败，WebRTC 自动回退到 TURN 中继
+
+#### 5. Cloudflare Realtime SFU — 音视频转发
+
+**是什么**：选择性转发单元（Selective Forwarding Unit），接收每个用户的媒体流并转发给其他用户。
+
+**为什么需要**：
+
+- P2P 网状拓扑在 3+ 人视频时带宽急剧增长：N人需要 N×(N-1) 路流
+- SFU 星型拓扑：每人只上传 1 路，SFU 转发 N-1 路
+- 5人视频：P2P 需要 20 路 vs SFU 只需 5 路上传 + 20 路服务器转发
+
+**工作流程**：
+
+1. Worker 用 `SFU_APP_ID` 和 `SFU_APP_SECRET` 代理 Cloudflare Realtime API
+2. 用户加入房间时创建 SFU Session（对应一个 RTCPeerConnection 到 Cloudflare）
+3. 用户开启摄像头 → 通过 SFU API 推送音视频轨道到 Cloudflare
+4. 通过 P2P 数据通道通知其他用户有新轨道
+5. 其他用户通过 SFU API 拉取（订阅）该轨道
+6. Cloudflare SFU 自动将音视频从上传者转发给所有订阅者
+
+---
+
+## 部署指南
+
+### 方案一：零终端部署（纯浏览器操作）
+
+> 完全不需要安装任何软件，不需要打开终端/命令行。只需要一个浏览器和 GitHub 账户。
+
+#### 前置条件
+
+- [GitHub 账户](https://github.com/signup)
+- [Cloudflare 账户](https://dash.cloudflare.com/sign-up)（免费注册）
+
+#### 步骤 1：Fork 仓库
+
+1. 打开 [本项目的 GitHub 仓库](https://github.com/Shannon-x/chitchatter)
+2. 点击右上角 **Fork** 按钮
+3. 确认创建 Fork
+
+#### 步骤 2：创建 Cloudflare TURN Key
+
+1. 登录 [Cloudflare Dashboard](https://dash.cloudflare.com/)
+2. 左侧菜单选择 **Calls**（如果看不到，在搜索框搜索 "Calls"）
+3. 点击 **TURN Keys** → **Create TURN Key**
+4. 记下两个值：
+   - **TURN Key ID**（一串字母数字）
+   - **API Token**（点击显示并复制）
+
+#### 步骤 3：创建 Cloudflare SFU App
+
+1. 还在 Calls 页面，点击 **SFU** → **Create Application**
+2. 输入名称（如 "chitchatter"）
+3. 创建后记下两个值：
+   - **App ID**
+   - **App Secret**（Token）
+
+#### 步骤 4：添加 Worker 部署 GitHub Action
+
+在你 Fork 的仓库中创建 `.github/workflows/deploy-worker.yml` 文件：
+
+1. 在 GitHub 仓库页面，点击 **Add file** → **Create new file**
+2. 文件名输入：`.github/workflows/deploy-worker.yml`
+3. 粘贴以下内容：
+
+```yaml
+name: Deploy Worker
+on:
+  push:
+    branches: [develop]
+    paths: [worker/**]
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Install worker dependencies
+        working-directory: worker
+        run: npm install
+      - name: Deploy Worker
+        working-directory: worker
+        run: npx wrangler deploy
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+```
+
+4. 点击 **Commit changes**
+
+#### 步骤 5：配置 GitHub Secrets
+
+1. 在你 Fork 的仓库，进入 **Settings** → **Secrets and variables** → **Actions**
+2. 添加以下 Secrets（点击 **New repository secret**）：
+
+| Secret 名称             | 值                   | 获取方式                                                                                 |
+| ----------------------- | -------------------- | ---------------------------------------------------------------------------------------- |
+| `CLOUDFLARE_API_TOKEN`  | Cloudflare API Token | Dashboard → My Profile → API Tokens → Create Token → 选择 "Edit Cloudflare Workers" 模板 |
+| `CLOUDFLARE_ACCOUNT_ID` | 你的账户 ID          | Dashboard 首页右侧 "Account ID"                                                          |
+
+#### 步骤 6：触发 Worker 部署
+
+1. 在仓库页面，点击 **Actions** 标签
+2. 选择 **Deploy Worker** 工作流
+3. 点击 **Run workflow** → **Run workflow**
+4. 等待部署完成（约 1-2 分钟）
+5. 查看部署日志，找到 Worker URL，格式如：`https://chitchatter-signaling.你的子域名.workers.dev`
+
+#### 步骤 7：设置 Worker 密钥
+
+> 这一步目前需要简短的终端操作，或者使用 Cloudflare Dashboard：
+
+**方法 A：通过 Cloudflare Dashboard（零终端）：**
+
+1. Dashboard → **Workers & Pages** → 选择你的 Worker
+2. **Settings** → **Variables** → **Environment Variables**
+3. 添加以下加密变量（选择 "Encrypt"）：
+
+| 变量名               | 值                           |
+| -------------------- | ---------------------------- |
+| `TURN_KEY_ID`        | 步骤 2 获得的 TURN Key ID    |
+| `TURN_KEY_API_TOKEN` | 步骤 2 获得的 TURN API Token |
+| `SFU_APP_ID`         | 步骤 3 获得的 SFU App ID     |
+| `SFU_APP_SECRET`     | 步骤 3 获得的 SFU App Secret |
+
+4. 点击 **Save and deploy**
+
+**方法 B：通过终端（如果你有 wrangler）：**
 
 ```bash
 cd worker
 npx wrangler secret put TURN_KEY_ID
-# 粘贴你的 TURN Key ID
-
 npx wrangler secret put TURN_KEY_API_TOKEN
-# 粘贴你的 TURN API Token
+npx wrangler secret put SFU_APP_ID
+npx wrangler secret put SFU_APP_SECRET
 ```
 
-这样 Worker 会自动为每个用户生成短期 TURN 凭证（24 小时过期），完全使用 Cloudflare 全球网络中继，无需任何外部 TURN 服务器。
+#### 步骤 8：部署前端到 Cloudflare Pages
 
-5. **配置 CORS**（生产环境）
+1. 登录 [Cloudflare Dashboard](https://dash.cloudflare.com/)
+2. 左侧选择 **Workers & Pages** → **Create** → **Pages** → **Connect to Git**
+3. 授权 GitHub 并选择你 Fork 的仓库
+4. 配置构建：
+   - **Production branch**: `develop`
+   - **Build command**: `npm run build:app`
+   - **Build output directory**: `dist`
+5. 展开 **Environment variables (advanced)**，添加：
 
-编辑 `worker/src/index.ts` 中的 `allowedOrigins` 数组，添加你的前端域名：
+| 变量名                      | 值                                                                                            |
+| --------------------------- | --------------------------------------------------------------------------------------------- |
+| `VITE_SIGNALING_SERVER_URL` | `wss://chitchatter-signaling.你的子域名.workers.dev`（步骤 6 获得的 URL，`https` 改为 `wss`） |
+| `VITE_RTC_CONFIG_ENDPOINT`  | `https://chitchatter-signaling.你的子域名.workers.dev/api/get-config`                         |
+| `NODE_VERSION`              | `20`                                                                                          |
+
+6. 点击 **Save and Deploy**
+7. 等待构建完成（约 2-3 分钟）
+8. 部署完成后获得 URL：`https://你的项目名.pages.dev`
+
+#### 步骤 9：更新 Worker CORS
+
+部署前端后，需要允许前端域名访问 Worker API：
+
+1. 在 GitHub 仓库中编辑 `worker/src/index.ts`
+2. 找到 `allowedOrigins` 数组，添加你的 Pages URL：
 
 ```typescript
 const allowedOrigins = [
-  'https://your-domain.com',
-  'https://your-app.pages.dev',
+  'https://你的项目名.pages.dev', // 添加这行
   'http://localhost:3000',
 ]
 ```
 
-然后重新部署：
+3. Commit 后 GitHub Action 会自动重新部署 Worker
+
+#### 完成！
+
+访问 `https://你的项目名.pages.dev` 即可使用。分享 URL 给朋友，进入同一房间即可聊天。
+
+---
+
+### 方案二：命令行部署
+
+适合开发者，操作更灵活。
+
+#### 前置条件
+
+- [Node.js 20.x](https://nodejs.org/)
+- [Cloudflare 账户](https://dash.cloudflare.com/sign-up)
+
+#### 1. 克隆并安装
 
 ```bash
-npx wrangler deploy
+git clone https://github.com/你的用户名/chitchatter.git
+cd chitchatter
+npm install
+cd worker && npm install && cd ..
 ```
 
-### 第二步：部署前端到 Cloudflare Pages
-
-#### 方法 A：通过 Cloudflare Dashboard（推荐）
-
-1. **将代码推送到 GitHub/GitLab**
-
-2. **登录 [Cloudflare Dashboard](https://dash.cloudflare.com/)**
-
-3. **创建 Pages 项目**
-   - 进入 "Workers & Pages" → "创建应用程序" → "Pages" → "连接 Git"
-   - 选择你的仓库
-
-4. **配置构建设置**
-   - 构建命令：`npm run build:app`
-   - 构建输出目录：`dist`
-   - Node.js 版本：`20`
-
-5. **设置环境变量**
-   - `VITE_SIGNALING_SERVER_URL` = `wss://your-app-signaling.your-subdomain.workers.dev`（第一步获得的 Worker URL，将 `https://` 替换为 `wss://`）
-   - `VITE_RTC_CONFIG_ENDPOINT` = `https://your-app-signaling.your-subdomain.workers.dev/api/get-config`（如果配置了 TURN）
-
-6. **点击部署**
-
-#### 方法 B：通过命令行
-
-1. **设置环境变量**
+#### 2. 部署 Worker
 
 ```bash
-export VITE_SIGNALING_SERVER_URL="wss://your-app-signaling.your-subdomain.workers.dev"
+cd worker
+npx wrangler login          # 浏览器中授权
+npx wrangler deploy          # 部署，记下输出的 URL
 ```
 
-2. **构建前端**
+#### 3. 配置密钥
 
 ```bash
+# 在 Cloudflare Dashboard 中创建 TURN Key 和 SFU App，然后：
+npx wrangler secret put TURN_KEY_ID
+npx wrangler secret put TURN_KEY_API_TOKEN
+npx wrangler secret put SFU_APP_ID
+npx wrangler secret put SFU_APP_SECRET
+```
+
+#### 4. 部署前端
+
+```bash
+cd ..
+export VITE_SIGNALING_SERVER_URL="wss://你的worker.workers.dev"
+export VITE_RTC_CONFIG_ENDPOINT="https://你的worker.workers.dev/api/get-config"
 npm run build:app
+npx wrangler pages deploy dist --project-name=chitchatter
 ```
 
-3. **部署到 Pages**
+#### 5. 本地开发
 
 ```bash
-npx wrangler pages deploy dist --project-name=your-app-name
+npm run dev   # 启动 Vite + Worker 本地服务器
 ```
 
-### 第三步：配置自定义域名（可选）
+访问 http://localhost:3000
 
-1. 在 Cloudflare Dashboard 的 Pages 项目设置中添加自定义域名
-2. 配置 DNS 记录指向 Cloudflare Pages
-3. 更新 Worker 的 `allowedOrigins` 包含新域名
-4. 重新部署 Worker
+---
 
-### 部署验证
+## 环境变量参考
 
-部署完成后，进行以下验证：
+### 前端（构建时，VITE\_ 前缀）
 
-1. **信令服务器连通性**
-   - 访问 `https://your-worker.workers.dev/api/get-config`，应返回 TURN 配置或 404
-2. **前端可用性**
-   - 访问前端 URL，应正常显示聊天界面
+| 变量                        | 必需   | 说明                              | 示例                                        |
+| --------------------------- | ------ | --------------------------------- | ------------------------------------------- |
+| `VITE_SIGNALING_SERVER_URL` | **是** | 信令服务器 WebSocket 地址         | `wss://signal.workers.dev`                  |
+| `VITE_RTC_CONFIG_ENDPOINT`  | 推荐   | TURN/SFU 配置 API 端点            | `https://signal.workers.dev/api/get-config` |
+| `VITE_SFU_API_BASE`         | 可选   | SFU API 地址（默认从信令URL推导） | `https://signal.workers.dev`                |
+| `VITE_HOMEPAGE`             | 可选   | 应用首页 URL                      | `https://chat.example.com`                  |
+| `VITE_ROUTER_TYPE`          | 可选   | `browser`（默认）或 `hash`        | `hash`                                      |
 
-3. **P2P 连接测试**
-   - 打开两个浏览器标签，进入同一房间
-   - 确认双方能看到对方在线并能发送消息
+### Worker（运行时密钥）
 
-## 环境变量
+| 变量                 | 必需 | 说明                      | 获取位置                 |
+| -------------------- | ---- | ------------------------- | ------------------------ |
+| `TURN_KEY_ID`        | 推荐 | Cloudflare TURN Key ID    | Dashboard → Calls → TURN |
+| `TURN_KEY_API_TOKEN` | 推荐 | Cloudflare TURN API Token | 同上                     |
+| `SFU_APP_ID`         | 推荐 | Cloudflare SFU App ID     | Dashboard → Calls → SFU  |
+| `SFU_APP_SECRET`     | 推荐 | Cloudflare SFU App Secret | 同上                     |
+| `CORS_ALLOW_ALL`     | 可选 | 调试用，允许所有来源      | wrangler.toml            |
 
-### 前端（Vite）
-
-| 变量                        | 说明                             | 示例                                                |
-| --------------------------- | -------------------------------- | --------------------------------------------------- |
-| `VITE_SIGNALING_SERVER_URL` | 信令服务器 WebSocket URL         | `wss://signal.example.workers.dev`                  |
-| `VITE_RTC_CONFIG_ENDPOINT`  | TURN 配置 API 端点               | `https://signal.example.workers.dev/api/get-config` |
-| `VITE_HOMEPAGE`             | 应用首页 URL                     | `https://your-domain.com`                           |
-| `VITE_STREAMSAVER_URL`      | StreamSaver MITM URL             | `https://your-domain.com/mitm.html`                 |
-| `VITE_TRACKER_URL`          | WebTorrent Tracker（文件传输用） | `ws://localhost:8000`                               |
-| `VITE_ROUTER_TYPE`          | 路由模式                         | `browser` 或 `hash`                                 |
-
-### Worker
-
-| 变量                 | 说明                      | 设置方式                                 |
-| -------------------- | ------------------------- | ---------------------------------------- |
-| `TURN_KEY_ID`        | Cloudflare TURN Key ID    | `wrangler secret put TURN_KEY_ID`        |
-| `TURN_KEY_API_TOKEN` | Cloudflare TURN API Token | `wrangler secret put TURN_KEY_API_TOKEN` |
-| `CORS_ALLOW_ALL`     | 调试模式允许所有来源      | `wrangler.toml` 中设置                   |
+---
 
 ## 费用估算
 
-| 服务               | 免费额度                | 超出费用             |
-| ------------------ | ----------------------- | -------------------- |
-| Cloudflare Pages   | 无限站点，500 次构建/月 | 付费计划更多构建次数 |
-| Cloudflare Workers | 10 万请求/天            | $0.30/百万请求       |
-| Durable Objects    | 100 万请求/月           | $0.15/百万请求       |
-| 带宽               | 无限                    | 无限                 |
+| Cloudflare 服务 | 免费额度               | 超出费用       | 本项目用途     |
+| --------------- | ---------------------- | -------------- | -------------- |
+| Pages           | 无限站点，500次构建/月 | 付费计划       | 前端托管       |
+| Workers         | 10万请求/天            | $0.30/百万请求 | API + 信令路由 |
+| Durable Objects | 100万请求/月           | $0.15/百万请求 | 信令房间       |
+| Realtime TURN   | 1000 GB/月             | $0.05/GB       | NAT 穿透中继   |
+| Realtime SFU    | 1000 GB/月             | $0.05/GB       | 音视频转发     |
+| 带宽            | 无限                   | 无限           | 静态资源分发   |
 
-**对于中小规模使用，完全在免费额度内运行。**
+**典型使用场景费用**：
+
+- 10 人日常使用文字聊天：完全免费
+- 50 人偶尔视频通话：完全免费
+- 100+ 人频繁视频：可能超出免费额度，约 $1-5/月
+
+---
 
 ## 项目结构
 
 ```
 chitchatter/
-├── worker/                 # Cloudflare Worker（信令服务器）
+├── worker/                    # Cloudflare Worker（后端）
 │   ├── src/
-│   │   ├── index.ts        # Worker 入口，路由处理
-│   │   ├── SignalingRoom.ts # Durable Object 信令房间
-│   │   └── rtc-types.ts    # RTC 类型定义
-│   ├── wrangler.toml       # Worker 部署配置
+│   │   ├── index.ts           # 路由：信令/TURN/SFU API代理
+│   │   └── SignalingRoom.ts   # Durable Object：WebSocket信令房间
+│   ├── wrangler.toml          # Worker 部署配置
 │   └── package.json
 ├── src/
-│   ├── components/         # React 组件
-│   ├── config/             # 应用配置
-│   ├── contexts/           # React 上下文
-│   ├── hooks/              # 自定义 Hooks
-│   ├── i18n/               # 国际化
-│   │   ├── index.ts        # i18n 配置
-│   │   └── locales/        # 翻译文件
-│   │       ├── zh-CN.json  # 中文翻译
-│   │       └── en.json     # 英文翻译
-│   ├── lib/                # 核心库
-│   │   ├── PeerRoom/       # P2P 房间管理（WebRTC + 信令）
-│   │   └── ConnectionTest/ # 连接测试
-│   ├── models/             # 类型定义
-│   ├── pages/              # 页面组件
-│   └── services/           # 服务层
-├── e2e/                    # 端到端测试（Playwright）
-├── sdk/                    # 可嵌入 SDK
-├── index.html              # HTML 入口
-├── vite.config.ts          # Vite 构建配置
-└── package.json
+│   ├── lib/
+│   │   ├── PeerRoom/          # 核心：P2P房间管理
+│   │   │   ├── PeerRoom.ts    # WebRTC连接管理（P2P文字+SFU媒体）
+│   │   │   └── types.ts       # 房间配置和消息类型
+│   │   ├── SfuClient/         # SFU客户端：会话/轨道管理
+│   │   └── ConnectionTest/    # 连接测试
+│   ├── i18n/locales/          # 翻译文件（zh-CN + en）
+│   ├── components/            # React 组件
+│   ├── pages/                 # 页面
+│   └── config/                # 配置
+├── .github/workflows/         # CI/CD
+│   ├── deploy-worker.yml      # Worker 自动部署
+│   └── ci.yml                 # 测试和类型检查
+└── index.html
 ```
+
+---
 
 ## 常见问题
 
 ### 对等方无法连接？
 
-1. 确认双方都能访问信令服务器
-2. 检查浏览器是否支持 WebRTC
-3. 如果在严格的 NAT 环境下，需要配置 TURN 服务器
-4. 尝试禁用广告拦截器
-5. 尝试使用其他网络
+**排查顺序**：
+
+1. 打开浏览器控制台查看错误信息
+2. 确认信令服务器可访问：浏览器打开 `https://你的worker.workers.dev`，应返回 "Not Found"（正常）
+3. 确认 TURN 配置：访问 `https://你的worker.workers.dev/api/get-config`，应返回 JSON
+4. 检查 CORS：控制台是否有 "blocked by CORS" 错误 → 更新 `allowedOrigins`
+5. 禁用广告拦截器（可能阻止 WebSocket 连接）
+6. 尝试其他网络
+
+### 视频卡顿？
+
+- 如果 SFU 未配置（`SFU_APP_ID` 未设置），视频走 P2P，多人时带宽不足
+- 确认已配置 SFU 密钥并重新部署 Worker
 
 ### iOS Safari 问题
 
-iOS Safari 在特定条件下可能有 WebRTC 限制。建议使用 Chrome 或 Firefox。
+iOS Safari 对 WebRTC 有限制。建议使用 Chrome 或 Firefox。
 
-### 文件下载问题
+### 部署后页面空白？
 
-大文件下载可能需要 Service Worker 支持。确保应用通过 HTTPS 访问。
+- 检查 Pages 构建日志是否有错误
+- 确认 `VITE_SIGNALING_SERVER_URL` 环境变量已正确设置
+- 确认使用了 `wss://`（不是 `https://`）作为信令 URL
+
+---
 
 ## 开源协议
 
@@ -338,10 +545,9 @@ iOS Safari 在特定条件下可能有 WebRTC 限制。建议使用 Chrome 或 F
 
 ## 贡献
 
-欢迎提交 Pull Request 和 Issue。请确保：
+欢迎 Pull Request 和 Issue。提交前请确保：
 
-1. 代码通过 `npm run check:types`（零类型错误）
-2. 代码通过 `npm run lint`（零警告）
-3. 所有测试通过 `npm test`
-4. 代码已格式化 `npm run prettier`
-5. 新功能包含测试覆盖
+1. `npm run check:types` — 零类型错误
+2. `npm run lint` — 零警告
+3. `npm test` — 所有测试通过
+4. `npm run prettier` — 代码格式化
