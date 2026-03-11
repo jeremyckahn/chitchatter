@@ -152,102 +152,218 @@
 
 ### 方案一：零终端部署（纯浏览器操作）
 
-> 完全不需要安装任何软件。只需浏览器 + GitHub 账户 + Cloudflare 账户。
+> 完全不需要安装任何软件，不需要打开终端/命令行。只需要一个浏览器、GitHub 账户和 Cloudflare 账户（免费）。
 
-| 步骤 | 操作位置             | 做什么                                                                          |
-| ---- | -------------------- | ------------------------------------------------------------------------------- |
-| 1    | GitHub               | Fork 本仓库                                                                     |
-| 2    | Cloudflare Dashboard | Calls → TURN Keys → Create（记下 ID 和 Token）                                  |
-| 3    | Cloudflare Dashboard | Calls → SFU → Create App（记下 ID 和 Secret）                                   |
-| 4    | GitHub               | 创建 `.github/workflows/deploy-worker.yml`（[内容见下方](#worker-部署-action)） |
-| 5    | GitHub Settings      | Secrets → 添加 `CLOUDFLARE_API_TOKEN` 和 `CLOUDFLARE_ACCOUNT_ID`                |
-| 6    | GitHub Actions       | 运行 Deploy Worker 工作流                                                       |
-| 7    | Cloudflare Dashboard | Worker → Settings → Variables → 添加 4 个密钥（TURN + SFU）                     |
-| 8    | Cloudflare Dashboard | Pages → Connect Git → 配置构建 → 部署                                           |
-| 9    | Cloudflare Dashboard | Worker → Variables → 设置 `ALLOWED_ORIGINS`（自定义域名时）                     |
+#### 步骤 1：Fork 仓库
 
-#### Worker 部署 Action
+1. 打开 [本项目的 GitHub 仓库](https://github.com/Shannon-x/chitchatter)
+2. 点击右上角 **Fork** 按钮
+3. 确认创建，你会得到自己的仓库副本
 
-创建 `.github/workflows/deploy-worker.yml`：
+#### 步骤 2：创建 Cloudflare TURN Key
 
-```yaml
-name: Deploy Worker
-on:
-  push:
-    branches: [develop]
-    paths: [worker/**]
-  workflow_dispatch:
+> TURN 服务让处于严格防火墙后的用户也能连接。
 
-jobs:
-  deploy:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-      - name: Install worker dependencies
-        working-directory: worker
-        run: npm install
-      - name: Deploy Worker
-        working-directory: worker
-        run: npx wrangler deploy
-        env:
-          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-```
+1. 登录 [Cloudflare Dashboard](https://dash.cloudflare.com/)
+2. 左侧菜单：**媒体** → **Realtime** → **TURN 服务器**
+3. 点击 **Create TURN Key**（创建 TURN 密钥）
+4. **记下两个值**（后面要用）：
+   - **TURN Key ID**（一串字母数字，如 `a1b2c3d4...`）
+   - **API Token**（点击显示并复制）
 
-#### Pages 构建配置
+#### 步骤 3：创建 Cloudflare SFU App（可选）
 
-| 设置项                      | 值                                              |
-| --------------------------- | ----------------------------------------------- |
-| Production branch           | `develop`                                       |
-| Build command               | `npm run build:app`                             |
-| Build output directory      | `dist`                                          |
-| `NODE_VERSION`              | `20`                                            |
-| `VITE_SIGNALING_SERVER_URL` | `wss://你的worker.workers.dev`                  |
-| `VITE_RTC_CONFIG_ENDPOINT`  | `https://你的worker.workers.dev/api/get-config` |
+> SFU 让多人视频通话更高效。如果你只需要文字聊天，可以跳过此步。
 
-#### CORS 配置（自定义域名）
+1. 还在 Realtime 页面，点击 **无服务器 SFU**
+2. 点击 **Create Application**（创建应用）
+3. 输入名称（如 `chitchatter`），点击创建
+4. **记下两个值**：
+   - **App ID**（如 `4b90c609...`）
+   - **App Secret / Token**
 
-> `.pages.dev` 和 `localhost` 自动允许，只有自定义域名需要配置。
+#### 步骤 4：配置 GitHub Secrets
 
-在 Worker 的 Settings → Variables 中设置 `ALLOWED_ORIGINS`：
+> 这些密钥让 GitHub Actions 能够部署到你的 Cloudflare 账户。
 
-```
-https://chat.example.com
-```
+1. 获取 Cloudflare API Token：
+   - Cloudflare Dashboard → 右上角头像 → **我的个人资料** → **API 令牌**
+   - 点击 **创建令牌** → 选择 **编辑 Cloudflare Workers** 模板 → 创建
+   - **复制生成的 Token**
 
-多个域名逗号分隔：`https://a.com,https://b.com`
+2. 获取 Account ID：
+   - Cloudflare Dashboard 首页，右侧栏可以看到 **帐户 ID**
+   - **复制这个 ID**
+
+3. 在你 Fork 的 GitHub 仓库中设置：
+   - 进入仓库 → **Settings** → **Secrets and variables** → **Actions**
+   - 点击 **New repository secret**，添加两个：
+
+| Secret 名称 | 值 |
+|---|---|
+| `CLOUDFLARE_API_TOKEN` | 上面获取的 API Token |
+| `CLOUDFLARE_ACCOUNT_ID` | 上面获取的 Account ID |
+
+#### 步骤 5：部署 Worker（信令服务器）
+
+> Worker 是后端服务，处理信令和 API 请求。
+
+仓库中已经包含了部署工作流文件 `.github/workflows/deploy-worker.yml`。
+
+1. 在仓库页面，点击 **Actions** 标签
+2. 如果提示启用 Actions，点击 **I understand my workflows, go ahead and enable them**
+3. 左侧选择 **Deploy Worker**
+4. 点击 **Run workflow** → 选择 `develop` 分支 → **Run workflow**
+5. 等待 1-2 分钟，看到绿色 ✅ 表示部署成功
+6. 在部署日志中找到 Worker URL，格式如：
+   ```
+   https://chitchatter-signaling.你的子域名.workers.dev
+   ```
+   **记下这个 URL**，后面要用。
+
+#### 步骤 6：设置 Worker 密钥
+
+> 把步骤 2、3 获得的密钥配置到 Worker。
+
+1. Cloudflare Dashboard → **Compute** → **Workers 和 Pages**
+2. 点击你的 Worker（名称类似 `chitchatter-signaling`）
+3. 进入 **设置** → **变量和机密**
+4. 在 **环境变量** 部分，逐个添加以下变量（点击 **添加**，类型选 **Secret 密文**）：
+
+| 变量名 | 值 | 说明 |
+|---|---|---|
+| `TURN_KEY_ID` | 步骤 2 的 TURN Key ID | TURN 服务认证 |
+| `TURN_KEY_API_TOKEN` | 步骤 2 的 API Token | TURN 服务认证 |
+| `SFU_APP_ID` | 步骤 3 的 App ID | SFU 服务（可选） |
+| `SFU_APP_SECRET` | 步骤 3 的 App Secret | SFU 服务（可选） |
+
+5. 点击 **部署 (Deploy)** 保存
+
+#### 步骤 7：部署前端到 Cloudflare Pages
+
+1. Cloudflare Dashboard → **Compute** → **Workers 和 Pages**
+2. 点击 **创建** → **Pages** → **连接到 Git**
+3. 授权 GitHub，选择你 Fork 的 `chitchatter` 仓库
+4. 配置构建设置：
+
+| 设置项 | 值 |
+|---|---|
+| 生产分支 (Production branch) | `develop` |
+| 构建命令 (Build command) | `npm run build:app` |
+| 构建输出目录 (Build output directory) | `dist` |
+
+5. 展开 **环境变量（高级）**，添加以下变量：
+
+| 变量名 | 值 | 说明 |
+|---|---|---|
+| `NODE_VERSION` | `20` | Node.js 版本 |
+| `VITE_SIGNALING_SERVER_URL` | `wss://chitchatter-signaling.你的子域名.workers.dev` | **步骤 5** 得到的 URL，把 `https://` 改为 `wss://` |
+| `VITE_RTC_CONFIG_ENDPOINT` | `https://chitchatter-signaling.你的子域名.workers.dev/api/get-config` | TURN 配置接口 |
+
+> ⚠️ **注意**：`VITE_SIGNALING_SERVER_URL` 必须用 `wss://` 开头（WebSocket 协议），不是 `https://`
+
+6. 点击 **保存并部署**
+7. 等待 2-3 分钟构建完成
+8. 部署成功后获得 URL：`https://你的项目名.pages.dev`
+
+#### 步骤 8：配置 CORS（使用自定义域名时）
+
+> 如果你只使用 `.pages.dev` 默认域名，**跳过此步**。`.pages.dev` 和 `localhost` 自动允许。
+
+使用自定义域名（如 `chat.example.com`）时：
+
+1. Cloudflare Dashboard → **Workers 和 Pages** → 选择你的 Worker
+2. **设置** → **变量和机密**
+3. 添加环境变量（类型选 **明文 Text**）：
+
+| 变量名 | 值 |
+|---|---|
+| `ALLOWED_ORIGINS` | `https://你的自定义域名` |
+
+多个域名用逗号分隔：`https://chat.example.com,https://www.example.com`
+
+4. 点击 **部署 (Deploy)** 保存
+
+#### 步骤 9：验证
+
+1. **Worker 健康检查**：浏览器打开 `https://你的worker.workers.dev/health`
+   - 正常返回：`{"status":"ok"}`
+2. **TURN 配置**：打开 `https://你的worker.workers.dev/api/get-config`
+   - 正常返回 JSON，包含 `iceServers` 数组
+3. **前端**：打开你的 Pages URL
+   - 应显示畅聊界面
+4. **P2P 测试**：打开两个浏览器标签，进入同一房间
+   - 双方应能互相看到并发送消息
+
+#### 🎉 完成！
+
+访问你的域名即可使用。分享房间 URL 给朋友，进入同一房间即可加密聊天。
 
 ---
 
 ### 方案二：命令行部署
 
+适合开发者，操作更灵活。
+
+#### 前置条件
+
+- [Node.js 20.x](https://nodejs.org/)
+- [Cloudflare 账户](https://dash.cloudflare.com/sign-up)（免费注册）
+
+#### 1. 克隆并安装
+
 ```bash
-# 1. 克隆安装
 git clone https://github.com/Shannon-x/chitchatter.git
-cd chitchatter && npm install
+cd chitchatter
+npm install
 cd worker && npm install && cd ..
-
-# 2. 部署 Worker
-cd worker
-npx wrangler login && npx wrangler deploy
-
-# 3. 配置密钥（在 Dashboard 创建 TURN Key 和 SFU App 后）
-npx wrangler secret put TURN_KEY_ID
-npx wrangler secret put TURN_KEY_API_TOKEN
-npx wrangler secret put SFU_APP_ID
-npx wrangler secret put SFU_APP_SECRET
-
-# 4. 部署前端
-cd ..
-VITE_SIGNALING_SERVER_URL="wss://你的worker.workers.dev" npm run build:app
-npx wrangler pages deploy dist --project-name=chitchatter
-
-# 5. 本地开发
-npm run dev   # http://localhost:3000
 ```
+
+#### 2. 部署 Worker
+
+```bash
+cd worker
+npx wrangler login       # 浏览器中授权 Cloudflare
+npx wrangler deploy      # 部署，记下输出的 URL
+```
+
+部署成功后终端输出 Worker URL，例如：
+```
+https://chitchatter-signaling.你的子域名.workers.dev
+```
+
+#### 3. 创建 TURN Key 和 SFU App
+
+1. Cloudflare Dashboard → **媒体** → **Realtime** → **TURN 服务器** → 创建
+2. Cloudflare Dashboard → **媒体** → **Realtime** → **无服务器 SFU** → 创建应用
+
+#### 4. 配置 Worker 密钥
+
+```bash
+cd worker
+npx wrangler secret put TURN_KEY_ID          # 粘贴 TURN Key ID
+npx wrangler secret put TURN_KEY_API_TOKEN   # 粘贴 TURN API Token
+npx wrangler secret put SFU_APP_ID           # 粘贴 SFU App ID（可选）
+npx wrangler secret put SFU_APP_SECRET       # 粘贴 SFU App Secret（可选）
+```
+
+#### 5. 部署前端
+
+```bash
+cd ..
+export VITE_SIGNALING_SERVER_URL="wss://你的worker.workers.dev"
+export VITE_RTC_CONFIG_ENDPOINT="https://你的worker.workers.dev/api/get-config"
+npm run build:app
+npx wrangler pages deploy dist --project-name=chitchatter
+```
+
+#### 6. 本地开发
+
+```bash
+npm run dev   # 启动 Vite + Worker 本地服务器
+```
+
+访问 http://localhost:3000
 
 ---
 
