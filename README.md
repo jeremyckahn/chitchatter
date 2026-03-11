@@ -446,59 +446,400 @@ iOS Safari 对 WebRTC 有限制。建议使用 Chrome 或 Firefox。
 
 ## English
 
-### What is Chitchatter?
-
 A free, open-source, decentralized peer-to-peer encrypted chat application. All communications are end-to-end encrypted and vanish when everyone leaves. Runs entirely on the Cloudflare ecosystem with zero external dependencies.
 
 ### Features
 
-- **End-to-end encrypted** — Text via WebRTC P2P data channels with DTLS
-- **Decentralized** — No central server stores messages
-- **Ephemeral** — Conversations disappear when all participants leave
-- **Multi-party** — Multiple peers per room
-- **Video/Audio** — Via Cloudflare Realtime SFU
-- **Screen sharing** — Share your screen with the room
-- **File transfer** — Direct P2P encrypted transfer
-- **Private rooms** — Password protected
-- **Identity verification** — Public-key cryptography
-- **Markdown** — Messages support Markdown with code highlighting
-- **PWA** — Installable as desktop/mobile app
-- **Bilingual** — Chinese/English with one-click toggle
-- **Dark mode** — Light/dark theme switching
+| Feature | Description |
+|---|---|
+| 🔐 End-to-end encrypted | Text messages via WebRTC P2P data channels with DTLS encryption |
+| 🌐 Decentralized | No central server stores messages |
+| 💨 Ephemeral | Conversations disappear when all participants leave |
+| 👥 Multi-party | Multiple peers per room |
+| 📹 Video/Audio calls | Via Cloudflare Realtime SFU for efficient multi-party forwarding |
+| 🖥️ Screen sharing | Share your screen with the room |
+| 📁 File transfer | Direct P2P encrypted transfer via data channels |
+| 🔑 Private rooms | Password protected |
+| ✅ Identity verification | Public-key cryptography |
+| 📝 Markdown | Messages support Markdown with code syntax highlighting |
+| 📱 PWA | Installable as desktop/mobile app |
+| 🌍 Bilingual | Chinese/English with one-click toggle |
+| 🌙 Dark mode | Light/dark theme switching |
 
 ### Architecture
 
-Runs on 5 Cloudflare services:
+This project runs entirely on the Cloudflare ecosystem, using 5 Cloudflare services:
 
-| Service             | Purpose                                     |
-| ------------------- | ------------------------------------------- |
-| **Pages**           | Frontend hosting with global CDN            |
-| **Workers**         | API server, TURN/SFU proxy                  |
-| **Durable Objects** | Stateful signaling rooms (WebSocket)        |
-| **Realtime TURN**   | NAT traversal relay (~15% of users need it) |
-| **Realtime SFU**    | Multi-party audio/video forwarding          |
+```
+User A's Browser                                   User B's Browser
+     │                                                  │
+     │  ① Load frontend                                 │
+     ▼                                                  ▼
+┌─────────────────────────────────────────────────────────────┐
+│  Cloudflare Pages (Frontend hosting, global CDN)            │
+│  Hosts HTML/JS/CSS static files, users load from nearest    │
+│  edge node                                                  │
+└─────────────────────────────────────────────────────────────┘
+     │                                                  │
+     │  ② Establish WebSocket to signaling server        │
+     ▼                                                  ▼
+┌─────────────────────────────────────────────────────────────┐
+│  Cloudflare Worker + Durable Object (Signaling Server)      │
+│                                                             │
+│  Each chat room = one Durable Object instance               │
+│  Responsibilities:                                          │
+│    - Maintain WebSocket connections for all online users     │
+│    - Notify others when a new user joins                    │
+│    - Relay SDP offer/answer (WebRTC connection parameters)  │
+│    - Relay ICE candidates (network address candidates)      │
+│    - Notify others when a user leaves                       │
+│                                                             │
+│  Note: Signaling server only relays connection parameters,  │
+│  never touches actual message content                       │
+└─────────────────────────────────────────────────────────────┘
+     │                                                  │
+     │  ③ After exchanging parameters, establish P2P     │
+     ▼                                                  ▼
+┌─────────────────────────────────────────────────────────────┐
+│  WebRTC P2P Direct Connection (Text chat + File transfer)   │
+│                                                             │
+│  User A ◄═══════ Data Channel (encrypted) ═══════► User B  │
+│                                                             │
+│  - Messages transfer directly between browsers              │
+│  - DTLS encrypted, even if signaling server is compromised  │
+│  - Supports text, emoji, Markdown, images, files            │
+└─────────────────────────────────────────────────────────────┘
+     │                                                  │
+     │  ④ Audio/video via SFU (efficient for multi-party)│
+     ▼                                                  ▼
+┌─────────────────────────────────────────────────────────────┐
+│  Cloudflare Realtime SFU (Selective Forwarding Unit)        │
+│                                                             │
+│  User A ──upload 1 stream──► SFU ──forward──► User B       │
+│                                │──forward──► User C        │
+│                                │──forward──► User D        │
+│                                                             │
+│  P2P: 5-person video = 4 uploads each = 20 total streams   │
+│  SFU: 5-person video = 1 upload each = 5 uploads + forward │
+└─────────────────────────────────────────────────────────────┘
+     │                                                  │
+     │  ⑤ When direct connection fails, use TURN relay   │
+     ▼                                                  ▼
+┌─────────────────────────────────────────────────────────────┐
+│  Cloudflare Realtime TURN (Relay Service)                   │
+│                                                             │
+│  Normal: A ←──direct──→ B (~85% of networks)               │
+│  Firewall: A ──→ TURN ──→ B (~15% need relay)              │
+│  - Free tier: 1000 GB/month                                │
+└─────────────────────────────────────────────────────────────┘
+```
 
-**Text chat** → P2P data channels (E2E encrypted, server can't see content)
-**Audio/Video** → Cloudflare SFU (efficient multi-party forwarding)
-**Files/Images** → P2P data channels (Base64 encoded, direct transfer)
+### Connection Establishment Flow
 
-### Deployment
+```
+User A                   Signaling Server (DO)           User B
+  │                          │                          │
+  │── WebSocket connect ───►│                          │
+  │◄── assign peerId ──────│                          │
+  │                          │◄──── WebSocket connect ─│
+  │                          │──── assign peerId ─────►│
+  │◄── "User B joined" ─────│                          │
+  │  [Create RTCPeerConnection]                        │
+  │  [Generate SDP offer]                                │
+  │── offer (via signaling) ►│── forward offer ───────►│
+  │                          │  [Create RTCPeerConnection]│
+  │                          │  [Generate SDP answer]   │
+  │◄── forward answer ──────│◄── answer (via signaling)│
+  │◄────── ICE candidates exchange (bidirectional) ────►│
+  │◄══════════ P2P Data Channel Established ═══════════►│
+  │        (Messages transfer directly, no longer       │
+  │         through signaling server)                   │
+```
 
-See the [Chinese deployment guide above](#部署指南) — it covers both zero-terminal (browser-only) and CLI deployment. The steps are the same regardless of language.
+### Cloudflare Services Explained
 
-**Quick CLI deployment:**
+| Service | Purpose | Why needed |
+|---|---|---|
+| **Pages** | Host frontend static files, global CDN | Free, fast, push-to-deploy |
+| **Workers** | API server, proxy TURN/SFU API | Serverless, runs on global edge nodes |
+| **Durable Objects** | Stateful signaling rooms, maintain WebSocket | Regular Workers are stateless; DO has "memory" |
+| **Realtime TURN** | NAT traversal relay, ~15% users need it | Without TURN, users behind firewalls can't connect |
+| **Realtime SFU** | Multi-party audio/video forwarding | P2P multi-party video causes bandwidth explosion |
+
+### Deployment Guide
+
+#### Option 1: Zero-Terminal Deployment (Browser Only)
+
+> No software installation needed. Just a browser + GitHub account + Cloudflare account (free).
+
+##### Step 1: Fork the Repository
+
+1. Open [this GitHub repository](https://github.com/Shannon-x/chitchatter)
+2. Click the **Fork** button in the top right
+3. Confirm to create your own copy
+
+##### Step 2: Create Cloudflare TURN Key
+
+> TURN service allows users behind strict firewalls to connect.
+
+1. Log in to [Cloudflare Dashboard](https://dash.cloudflare.com/)
+2. Left sidebar: **Media** → **Realtime** → **TURN Server**
+3. Click **Create TURN Key**
+4. **Note down two values** (needed later):
+   - **TURN Key ID** (e.g. `a1b2c3d4...`)
+   - **API Token** (click to reveal and copy)
+
+##### Step 3: Create Cloudflare SFU App (Optional)
+
+> SFU makes multi-party video calls more efficient. Skip if you only need text chat.
+
+1. Still on the Realtime page, click **Serverless SFU**
+2. Click **Create Application**
+3. Enter a name (e.g. `chitchatter`), click create
+4. **Note down two values**:
+   - **App ID** (e.g. `4b90c609...`)
+   - **App Secret / Token**
+
+##### Step 4: Configure GitHub Secrets
+
+> These secrets allow GitHub Actions to deploy to your Cloudflare account.
+
+1. Get Cloudflare API Token:
+   - Cloudflare Dashboard → top right avatar → **My Profile** → **API Tokens**
+   - Click **Create Token** → select **Edit Cloudflare Workers** template → Create
+   - **Copy the generated Token**
+
+2. Get Account ID:
+   - Cloudflare Dashboard home page, right sidebar shows **Account ID**
+   - **Copy this ID**
+
+3. In your forked GitHub repository:
+   - Go to **Settings** → **Secrets and variables** → **Actions**
+   - Click **New repository secret**, add two:
+
+| Secret Name | Value |
+|---|---|
+| `CLOUDFLARE_API_TOKEN` | API Token from above |
+| `CLOUDFLARE_ACCOUNT_ID` | Account ID from above |
+
+##### Step 5: Deploy Worker (Signaling Server)
+
+> The Worker is the backend service handling signaling and API requests.
+
+The repository already includes the deployment workflow file `.github/workflows/deploy-worker.yml`.
+
+1. In the repository page, click the **Actions** tab
+2. If prompted to enable Actions, click **I understand my workflows, go ahead and enable them**
+3. Select **Deploy Worker** on the left
+4. Click **Run workflow** → select `develop` branch → **Run workflow**
+5. Wait 1-2 minutes, green ✅ means deployment succeeded
+6. Find the Worker URL in the deployment logs:
+   ```
+   https://chitchatter-signaling.your-subdomain.workers.dev
+   ```
+   **Note this URL down** — you'll need it later.
+
+##### Step 6: Set Worker Secrets
+
+> Configure the TURN and SFU keys from Steps 2 & 3 into the Worker.
+
+1. Cloudflare Dashboard → **Compute** → **Workers and Pages**
+2. Click your Worker (named something like `chitchatter-signaling`)
+3. Go to **Settings** → **Variables and Secrets**
+4. In the **Environment Variables** section, add each variable (click **Add**, type select **Secret**):
+
+| Variable Name | Value | Description |
+|---|---|---|
+| `TURN_KEY_ID` | TURN Key ID from Step 2 | TURN service auth |
+| `TURN_KEY_API_TOKEN` | API Token from Step 2 | TURN service auth |
+| `SFU_APP_ID` | App ID from Step 3 | SFU service (optional) |
+| `SFU_APP_SECRET` | App Secret from Step 3 | SFU service (optional) |
+
+5. Click **Deploy** to save
+
+##### Step 7: Deploy Frontend to Cloudflare Pages
+
+1. Cloudflare Dashboard → **Compute** → **Workers and Pages**
+2. Click **Create** → **Pages** → **Connect to Git**
+3. Authorize GitHub, select your forked `chitchatter` repository
+4. Configure build settings:
+
+| Setting | Value |
+|---|---|
+| Production branch | `develop` |
+| Build command | `npm run build:app` |
+| Build output directory | `dist` |
+
+5. Expand **Environment variables (advanced)**, add:
+
+| Variable Name | Value | Description |
+|---|---|---|
+| `NODE_VERSION` | `20` | Node.js version |
+| `VITE_SIGNALING_SERVER_URL` | `wss://chitchatter-signaling.your-subdomain.workers.dev` | Worker URL from **Step 5**, change `https://` to `wss://` |
+| `VITE_RTC_CONFIG_ENDPOINT` | `https://chitchatter-signaling.your-subdomain.workers.dev/api/get-config` | TURN config endpoint |
+
+> ⚠️ **Important**: `VITE_SIGNALING_SERVER_URL` must start with `wss://` (WebSocket protocol), NOT `https://`
+
+6. Click **Save and Deploy**
+7. Wait 2-3 minutes for the build to complete
+8. After deployment, you'll get a URL: `https://your-project-name.pages.dev`
+
+##### Step 8: Configure CORS (For Custom Domains)
+
+> If you only use the default `.pages.dev` domain, **skip this step**. `.pages.dev` and `localhost` are automatically allowed.
+
+When using a custom domain (e.g. `chat.example.com`):
+
+1. Cloudflare Dashboard → **Workers and Pages** → select your Worker
+2. **Settings** → **Variables and Secrets**
+3. Add an environment variable (type select **Text**):
+
+| Variable Name | Value |
+|---|---|
+| `ALLOWED_ORIGINS` | `https://your-custom-domain` |
+
+Multiple domains separated by commas: `https://chat.example.com,https://www.example.com`
+
+4. Click **Deploy** to save
+
+##### Step 9: Verify
+
+1. **Worker health check**: Open `https://your-worker.workers.dev/health` in browser
+   - Should return: `{"status":"ok"}`
+2. **TURN config**: Open `https://your-worker.workers.dev/api/get-config`
+   - Should return JSON with `iceServers` array
+3. **Frontend**: Open your Pages URL
+   - Should display the chat interface
+4. **P2P test**: Open two browser tabs, join the same room
+   - Both should see each other and be able to send messages
+
+##### 🎉 Done!
+
+Visit your domain to start using it. Share the room URL with friends — enter the same room for encrypted chat.
+
+---
+
+#### Option 2: CLI Deployment
+
+For developers who prefer more control.
+
+##### Prerequisites
+
+- [Node.js 20.x](https://nodejs.org/)
+- [Cloudflare account](https://dash.cloudflare.com/sign-up) (free)
+
+##### 1. Clone and Install
 
 ```bash
 git clone https://github.com/Shannon-x/chitchatter.git
-cd chitchatter && npm install
-cd worker && npm install && npx wrangler login && npx wrangler deploy && cd ..
-VITE_SIGNALING_SERVER_URL="wss://your-worker.workers.dev" npm run build:app
+cd chitchatter
+npm install
+cd worker && npm install && cd ..
+```
+
+##### 2. Deploy Worker
+
+```bash
+cd worker
+npx wrangler login       # Authorize in browser
+npx wrangler deploy      # Deploy, note the output URL
+```
+
+Output will show the Worker URL:
+```
+https://chitchatter-signaling.your-subdomain.workers.dev
+```
+
+##### 3. Create TURN Key and SFU App
+
+1. Cloudflare Dashboard → **Media** → **Realtime** → **TURN Server** → Create
+2. Cloudflare Dashboard → **Media** → **Realtime** → **Serverless SFU** → Create App
+
+##### 4. Configure Worker Secrets
+
+```bash
+cd worker
+npx wrangler secret put TURN_KEY_ID          # Paste TURN Key ID
+npx wrangler secret put TURN_KEY_API_TOKEN   # Paste TURN API Token
+npx wrangler secret put SFU_APP_ID           # Paste SFU App ID (optional)
+npx wrangler secret put SFU_APP_SECRET       # Paste SFU App Secret (optional)
+```
+
+##### 5. Deploy Frontend
+
+```bash
+cd ..
+export VITE_SIGNALING_SERVER_URL="wss://your-worker.workers.dev"
+export VITE_RTC_CONFIG_ENDPOINT="https://your-worker.workers.dev/api/get-config"
+npm run build:app
 npx wrangler pages deploy dist --project-name=chitchatter
 ```
 
+##### 6. Local Development
+
+```bash
+npm run dev   # Start Vite + Worker local server
+```
+
+Visit http://localhost:3000
+
+### Environment Variables
+
+#### Frontend
+
+| Variable | Required | Description |
+|---|---|---|
+| `VITE_SIGNALING_SERVER_URL` | **Yes** | Signaling WebSocket URL |
+| `VITE_RTC_CONFIG_ENDPOINT` | Recommended | TURN config API endpoint |
+| `VITE_SFU_API_BASE` | Optional | SFU API (when SFU is enabled) |
+| `VITE_ROUTER_TYPE` | Optional | `browser` (default) or `hash` |
+
+#### Worker
+
+| Variable | Required | Description |
+|---|---|---|
+| `TURN_KEY_ID` | Recommended | Cloudflare TURN Key ID |
+| `TURN_KEY_API_TOKEN` | Recommended | Cloudflare TURN API Token |
+| `SFU_APP_ID` | Optional | Cloudflare SFU App ID |
+| `SFU_APP_SECRET` | Optional | Cloudflare SFU App Secret |
+| `ALLOWED_ORIGINS` | For custom domains | Comma-separated allowed origins |
+
 ### Cost
 
-Fully within Cloudflare's free tier for small-to-medium usage. Pages (unlimited), Workers (100K req/day), TURN (1000 GB/mo), SFU (1000 GB/mo).
+| Service | Free Tier | Usage in this project |
+|---|---|---|
+| Pages | Unlimited sites, 500 builds/mo | Frontend hosting |
+| Workers + DO | 100K requests/day | Signaling |
+| TURN | 1000 GB/mo | NAT traversal |
+| SFU | 1000 GB/mo | Audio/video forwarding |
+
+**Fully free for small-to-medium usage.**
+
+### FAQ
+
+<details>
+<summary><b>Peers can't connect?</b></summary>
+
+1. Check browser console for errors
+2. Visit `https://your-worker.workers.dev/health` to confirm Worker is running
+3. Visit `https://your-worker.workers.dev/api/get-config` to confirm TURN config
+4. CORS error → add your domain to `ALLOWED_ORIGINS`
+5. Disable ad blockers
+</details>
+
+<details>
+<summary><b>Blank page after deployment?</b></summary>
+
+- Check Pages build logs for errors
+- Confirm `VITE_SIGNALING_SERVER_URL` is set
+- Confirm using `wss://` not `https://`
+</details>
+
+<details>
+<summary><b>iOS Safari issues?</b></summary>
+
+iOS Safari has WebRTC limitations. Use Chrome or Firefox instead.
+</details>
 
 ### License
 
