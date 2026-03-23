@@ -21,12 +21,14 @@ interface InlineFileProps {
 // library used to embed media files:
 // https://github.com/feross/render-media/blob/a445b2ab90fcd4a248552d32027b2bc6a02600c8/index.js#L15-L72
 const supportedImageExtensions = [
+  '.avif',
   '.bmp',
   '.gif',
   '.jpeg',
   '.jpg',
   '.png',
   '.svg',
+  '.webp',
 ]
 
 const supportedAudioExtensions = ['.aac', '.oga', '.ogg', '.wav', '.flac']
