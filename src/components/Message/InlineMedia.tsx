@@ -29,7 +29,7 @@ const supportedImageExtensions = [
   '.svg',
 ]
 
-const supportedAudioExtensions = ['.aac', '.oga', '.ogg', '.wav', '.flac']
+const supportedAudioExtensions = ['.aac', '.oga', '.ogg', '.opus', '.wav', '.flac']
 
 const supportedMediaExtensions = [
   ...supportedImageExtensions,
