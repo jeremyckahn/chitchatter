@@ -117,7 +117,7 @@ export class ConnectionTest extends EventTarget {
       return this.trackerConnection
     }
 
-    const readyStates = relaySockets.map((socket: any) => socket.readyState)
+    const readyStates = (relaySockets as WebSocket[]).map((socket) => socket.readyState)
 
     const haveAllTrackerConnectionsFailed = readyStates.every(
       readyState => readyState === WebSocket.CLOSED
