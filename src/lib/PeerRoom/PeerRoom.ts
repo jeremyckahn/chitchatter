@@ -5,7 +5,7 @@ import {
   ActionProgress,
   ActionReceiver,
   ActionSender,
-} from 'trystero/torrent'
+} from '@trystero-p2p/torrent'
 import { joinRoom as baseJoinRoom } from 'trystero'
 
 import { sleep } from 'lib/sleep'

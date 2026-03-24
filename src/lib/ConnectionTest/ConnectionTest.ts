@@ -1,4 +1,4 @@
-import { getRelaySockets } from 'trystero/torrent'
+import { getRelaySockets } from '@trystero-p2p/torrent'
 import { parseCandidate } from 'sdp'
 
 export enum ConnectionTestEvents {
@@ -117,7 +117,7 @@ export class ConnectionTest extends EventTarget {
       return this.trackerConnection
     }
 
-    const readyStates = relaySockets.map(({ readyState }) => readyState)
+    const readyStates = relaySockets.map((socket: any) => socket.readyState)
 
     const haveAllTrackerConnectionsFailed = readyStates.every(
       readyState => readyState === WebSocket.CLOSED

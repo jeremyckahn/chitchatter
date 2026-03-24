@@ -135,7 +135,10 @@ export const Message = ({ message, showAuthor, userId }: MessageProps) => {
       >
         <Box
           sx={{
-            color: message.authorId === userId ? 'primary.contrastText' : 'secondary.contrastText',
+            color:
+              message.authorId === userId
+                ? 'primary.contrastText'
+                : 'secondary.contrastText',
             backgroundColor,
             margin: 0.5,
             padding: '0.5em 0.75em',
