@@ -1,4 +1,4 @@
-import { getRelaySockets } from '@trystero-p2p/torrent'
+import { getRelaySockets } from 'trystero'
 import { parseCandidate } from 'sdp'
 
 export enum ConnectionTestEvents {
@@ -7,7 +7,7 @@ export enum ConnectionTestEvents {
   HAS_RELAY_CHANGED = 'HAS_RELAY_CHANGED',
 }
 
-export enum TrackerConnection {
+export enum RelayConnection {
   SEARCHING = 'SEARCHING',
   CONNECTED = 'CONNECTED',
   FAILED = 'FAILED',
@@ -18,7 +18,7 @@ export type ConnectionTestEvent = CustomEvent<ConnectionTest>
 const checkExperationTime = 10 * 1000
 
 export class ConnectionTest extends EventTarget {
-  trackerConnection = TrackerConnection.SEARCHING
+  relayConnection = RelayConnection.SEARCHING
   hasHost = false
   hasTURNServer = false
   hasPeerReflexive = false
@@ -108,34 +108,34 @@ export class ConnectionTest extends EventTarget {
     this.rtcPeerConnection?.close()
   }
 
-  testTrackerConnection() {
+  testRelayConnection() {
     const relaySockets = Object.values(getRelaySockets())
 
     if (relaySockets.length === 0) {
-      // Trystero has not yet initialized tracker sockets
-      this.trackerConnection = TrackerConnection.SEARCHING
-      return this.trackerConnection
+      // Trystero has not yet initialized relay sockets
+      this.relayConnection = RelayConnection.SEARCHING
+      return this.relayConnection
     }
 
     const readyStates = (relaySockets as WebSocket[]).map((socket) => socket.readyState)
 
-    const haveAllTrackerConnectionsFailed = readyStates.every(
+    const haveAllRelayConnectionsFailed = readyStates.every(
       readyState => readyState === WebSocket.CLOSED
     )
 
-    if (haveAllTrackerConnectionsFailed) {
-      this.trackerConnection = TrackerConnection.FAILED
-      throw new Error('Could not connect to a WebTorrent tracker')
+    if (haveAllRelayConnectionsFailed) {
+      this.relayConnection = RelayConnection.FAILED
+      throw new Error('Could not connect to a Nostr relay')
     }
 
-    const areAnyTrackersConnected = readyStates.some(
+    const areAnyRelaysConnected = readyStates.some(
       readyState => readyState === WebSocket.OPEN
     )
 
-    this.trackerConnection = areAnyTrackersConnected
-      ? TrackerConnection.CONNECTED
-      : TrackerConnection.SEARCHING
+    this.relayConnection = areAnyRelaysConnected
+      ? RelayConnection.CONNECTED
+      : RelayConnection.SEARCHING
 
-    return this.trackerConnection
+    return this.relayConnection
   }
 }

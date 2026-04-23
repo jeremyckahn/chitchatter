@@ -22,7 +22,6 @@ afterEach(() => {
 })
 
 vi.mock('trystero')
-vi.mock('@trystero-p2p/torrent')
 
 vi.mock('secure-file-transfer', () => ({
   __esModule: true,
