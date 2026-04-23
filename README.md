@@ -13,7 +13,7 @@ Chitchatter is a free (as in both price and freedom) communication tool. Designe
 - Ephemeral
   - Message content is never persisted to disk on either the client or server
 - Decentralized
-  - **No API server required**. Chitchatter works completely without an API server - all that's required for basic functionality is availability of GitHub for static assets, and public WebTorrent and TURN relay servers for establishing peer-to-peer communication. An optional API server is available to provide enhanced connectivity features, but users can always choose to use Chitchatter without it.
+  - **No API server required**. Chitchatter works completely without an API server - all that's required for basic functionality is availability of GitHub for static assets, and public Nostr and TURN relay servers for establishing peer-to-peer communication. An optional API server is available to provide enhanced connectivity features, but users can always choose to use Chitchatter without it.
 - Embeddable
 - [Self-hostable](#self-hosting)
 
@@ -50,7 +50,7 @@ Open <https://chitchatter.im/> and join a room to start chatting with anyone els
 ## Anti-features
 
 - Messages are never persisted to disk. When you leave a peer room, messages are cleared from memory and cannot be retrieved.
-- Chitchatter is an entirely client-side communication app. It uses public WebTorrent servers to establish peer connections and TURN relay servers when direct peer-to-peer connections cannot be established, but there is no Chitchatter API server.
+- Chitchatter is an entirely client-side communication app. It uses public Nostr relays to establish peer connections and TURN relay servers when direct peer-to-peer connections cannot be established, but there is no Chitchatter API server.
 - No analytics, tracking, or telemetry of any kind.
 - This is a community-driven and unfunded project that makes no money. The users come first and there is no corporate influence or financial interest involved.
 
@@ -192,11 +192,11 @@ In the project directory, you can run:
 
 #### `npm dev`
 
-Runs the entire stack (client + WebTorrent tracker) locally.
+Runs the entire stack (client + Nostr relay) locally.
 
 #### `npm start`
 
-Runs the front end app in the development mode. Uses public WebTorrent trackers. Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+Runs the front end app in the development mode. Uses public Nostr relays. Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
 
 The page will reload when you make changes. You may also see any lint errors in the console.
 
@@ -251,7 +251,7 @@ When running `npm run dev`, the development stack includes:
 
 - **Frontend**: Vite dev server on port 3000
 - **API**: Vercel dev server on port 3001 (proxied through Vite)
-- **Tracker**: WebTorrent tracker on port 8000
+- **Relay**: Nostr relay on port 8000
 - **StreamSaver**: File download service on port 3015
 
 The Vite development server automatically proxies `/api/*` requests to the Vercel dev server running on port 3001.
@@ -412,7 +412,7 @@ This could happen for a variety of reasons. The most likely of which is that one
 
 ##### Issues specific to browsers with ad blocking extensions
 
-Some ad blockers (such as uBlock Origin) prevent connections to certain WebTorrent servers. This prevents Chitchatter peers from connecting. To work around this, you can either disable your ad blocker or [self-host your own Chitchatter instance](#self-hosting).
+Some ad blockers (such as uBlock Origin) prevent connections to certain Nostr relays. This prevents Chitchatter peers from connecting. To work around this, you can either disable your ad blocker or [self-host your own Chitchatter instance](#self-hosting).
 
 ##### Issues specific to iOS Safari
 

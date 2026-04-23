@@ -12,7 +12,7 @@ import { defineConfig, devices } from '@playwright/test'
 export default defineConfig({
   testDir: './e2e',
   /* Global timeout for each test */
-  timeout: 30 * 1000,
+  timeout: 60 * 1000,
   /* Run tests in files in parallel */
   fullyParallel: false,
   /* Fail the build on CI if you accidentally left test.only in the source code. */
@@ -20,7 +20,7 @@ export default defineConfig({
   /* Retry on CI only */
   retries: 2,
   /* Opt out of parallel tests on CI. */
-  workers: process.env.CI ? 1 : undefined,
+  workers: 1,
   /* Reporter to use. See https://playwright.dev/docs/test-reporters */
   reporter: process.env.CI
     ? [['github'], ['html', { outputFolder: 'playwright-report' }]]
@@ -102,6 +102,8 @@ export default defineConfig({
     timeout: 120 * 1000,
     env: {
       IS_E2E_TEST: 'true',
+      VITE_IS_E2E_TEST: 'true',
+      VITE_RELAY_URL: 'ws://localhost:8000',
     },
   },
 })

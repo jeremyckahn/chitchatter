@@ -5,8 +5,7 @@ import {
   ActionProgress,
   ActionReceiver,
   ActionSender,
-} from '@trystero-p2p/torrent'
-import { joinRoom as baseJoinRoom } from 'trystero'
+} from 'trystero'
 
 import { sleep } from 'lib/sleep'
 import { StreamType } from 'models/chat'
@@ -45,7 +44,7 @@ type PeerRoomAction<T extends DataPayload> = [
   () => void,
 ]
 
-export type RoomConfig = Parameters<typeof baseJoinRoom>[0]
+export type RoomConfig = Parameters<typeof joinRoom>[0]
 
 export class PeerRoom {
   private room: Room

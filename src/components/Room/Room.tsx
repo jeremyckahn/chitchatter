@@ -9,7 +9,7 @@ import { v4 as uuid } from 'uuid'
 import { ChatTranscript } from 'components/ChatTranscript'
 import { WholePageLoading } from 'components/Loading'
 import { MessageForm } from 'components/MessageForm'
-import { trackerUrls } from 'config/trackerUrls'
+import { relayUrls } from 'config/relayUrls'
 import { RoomContext } from 'contexts/RoomContext'
 import { SettingsContext } from 'contexts/SettingsContext'
 import { ShellContext } from 'contexts/ShellContext'
@@ -70,17 +70,10 @@ const RoomCore = ({
   } = useRoom(
     {
       appId,
-      relayUrls: trackerUrls,
+      relayUrls,
       password,
-      relayRedundancy: 4,
+      relayRedundancy: import.meta.env.VITE_IS_E2E_TEST ? 1 : 4,
       turnConfig: turnConfig.iceServers,
-      // NOTE: Avoid using STUN severs in the E2E tests in order to make them
-      // run faster
-      ...(import.meta.env.VITE_IS_E2E_TEST && {
-        rtcConfig: {
-          iceServers: [],
-        },
-      }),
     },
     {
       roomId,

@@ -6,14 +6,14 @@ import {
   ConnectionTest,
   ConnectionTestEvent,
   ConnectionTestEvents,
-  TrackerConnection,
+  RelayConnection,
 } from 'lib/ConnectionTest'
 import { sleep } from 'lib/sleep'
 
 export interface ConnectionTestResults {
   hasHost: boolean
   hasTURNServer: boolean
-  trackerConnection: TrackerConnection
+  relayConnection: RelayConnection
 }
 
 const rtcPollInterval = 20 * 1000
@@ -29,8 +29,8 @@ export const useConnectionTest = () => {
 
   const [hasHost, setHasHost] = useState(false)
   const [hasTURNServer, setHasTURNServer] = useState(false)
-  const [trackerConnection, setTrackerConnection] = useState(
-    TrackerConnection.SEARCHING
+  const [relayConnection, setRelayConnection] = useState(
+    RelayConnection.SEARCHING
   )
 
   useEffect(() => {
@@ -103,12 +103,12 @@ export const useConnectionTest = () => {
       while (true) {
         try {
           const connectionTest = new ConnectionTest(turnConfig)
-          const trackerConnectionTestResult =
-            connectionTest.testTrackerConnection()
+          const relayConnectionTestResult =
+            connectionTest.testRelayConnection()
 
-          setTrackerConnection(trackerConnectionTestResult)
+          setRelayConnection(relayConnectionTestResult)
         } catch (_e) {
-          setTrackerConnection(TrackerConnection.FAILED)
+          setRelayConnection(RelayConnection.FAILED)
         }
 
         await sleep(trackerPollInterval)
@@ -117,6 +117,6 @@ export const useConnectionTest = () => {
   }, [turnConfig, isConfigLoading])
 
   return {
-    connectionTestResults: { hasHost, hasTURNServer, trackerConnection },
+    connectionTestResults: { hasHost, hasTURNServer, relayConnection },
   }
 }

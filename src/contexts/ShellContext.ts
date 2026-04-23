@@ -6,7 +6,7 @@ import {
 } from 'react'
 
 import { ConnectionTestResults } from 'components/Shell/useConnectionTest'
-import { TrackerConnection } from 'lib/ConnectionTest'
+import { RelayConnection } from 'lib/ConnectionTest'
 import { PeerConnectionType, PeerRoom } from 'lib/PeerRoom'
 import {
   AudioChannel,
@@ -101,7 +101,7 @@ export const ShellContext = createContext<ShellContextProps>({
   connectionTestResults: {
     hasHost: false,
     hasTURNServer: false,
-    trackerConnection: TrackerConnection.SEARCHING,
+    relayConnection: RelayConnection.SEARCHING,
   },
   updatePeer: () => {},
   peerRoomRef: { current: null },
