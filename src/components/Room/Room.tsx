@@ -3,7 +3,7 @@ import Divider from '@mui/material/Divider'
 import useTheme from '@mui/material/styles/useTheme'
 import Zoom from '@mui/material/Zoom'
 import { useWindowSize } from '@react-hook/window-size'
-import { useContext } from 'react'
+import { useContext, useMemo } from 'react'
 import { v4 as uuid } from 'uuid'
 
 import { ChatTranscript } from 'components/ChatTranscript'
@@ -57,6 +57,14 @@ const RoomCore = ({
   const { showActiveTypingStatus, publicKey } =
     settingsContext.getUserSettings()
 
+  const relayConfig = useMemo(
+    () => ({
+      urls: trackerUrls,
+      redundancy: 4,
+    }),
+    []
+  )
+
   const {
     isDirectMessageRoom,
     handleInlineMediaUpload,
@@ -70,12 +78,11 @@ const RoomCore = ({
   } = useRoom(
     {
       appId,
-      relayConfig: {
-        urls: trackerUrls,
-        redundancy: 4,
-      },
+      relayConfig,
       password,
-      turnConfig: turnConfig.iceServers,
+      rtcConfig: turnConfig.iceServers
+        ? { iceServers: turnConfig.iceServers }
+        : undefined,
       // NOTE: Avoid using STUN severs in the E2E tests in order to make them
       // run faster
       ...(import.meta.env.VITE_IS_E2E_TEST && {
