@@ -70,9 +70,11 @@ const RoomCore = ({
   } = useRoom(
     {
       appId,
-      relayUrls: trackerUrls,
+      relayConfig: {
+        urls: trackerUrls,
+        redundancy: 4,
+      },
       password,
-      relayRedundancy: 4,
       turnConfig: turnConfig.iceServers,
       // NOTE: Avoid using STUN severs in the E2E tests in order to make them
       // run faster
