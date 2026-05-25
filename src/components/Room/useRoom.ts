@@ -224,7 +224,7 @@ export function useRoom(
   useEffect(() => {
     if (!showActiveTypingStatus) return
 
-    sendTypingStatusChange({ isTyping }, targetPeerId)
+    sendTypingStatusChange({ isTyping }, targetPeerId || undefined)
   }, [
     isDirectMessageRoom,
     isTyping,
@@ -237,7 +237,7 @@ export function useRoom(
     return () => {
       if (isDirectMessageRoom) return
 
-      sendTypingStatusChange({ isTyping: false }, targetPeerId)
+      sendTypingStatusChange({ isTyping: false }, targetPeerId || undefined)
       peerRoom.leaveRoom()
       peerRoomRef.current = null
       setPeerList([])
@@ -441,7 +441,7 @@ export function useRoom(
     setIsMessageSending(true)
     setMessageLog([...messageLog, unsentMessage])
 
-    await sendPeerMessage(unsentMessage, targetPeerId)
+    await sendPeerMessage(unsentMessage, targetPeerId || undefined)
 
     setMessageLog([
       ...messageLog,

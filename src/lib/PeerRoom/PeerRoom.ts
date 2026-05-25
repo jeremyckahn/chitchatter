@@ -36,8 +36,13 @@ export enum ActionNamespace {
 
 const streamQueueAddDelay = 1000
 
-export type ActionSender<T extends DataPayload> = (data: T, metadata?: any) => Promise<void>
-export type ActionReceiver<T extends DataPayload> = (callback: (data: T, context: MessageContext) => void | Promise<void>) => void
+export type ActionSender<T extends DataPayload> = (
+  data: T,
+  target?: string | string[]
+) => Promise<void>
+export type ActionReceiver<T extends DataPayload> = (
+  callback: (data: T, context: MessageContext) => void | Promise<void>
+) => void
 export type ActionProgress = (fn: ActionProgressHandler) => void
 
 export type PeerRoomAction<T extends DataPayload> = [
@@ -206,11 +211,11 @@ export class PeerRoom {
 
     const actionObj = this.room.makeAction<T>(actionName)
 
-    const sender: ActionSender<T> = (data, metadata) => {
-      return actionObj.send(data, metadata ? { target: metadata } : undefined)
+    const sender: ActionSender<T> = (data, target) => {
+      return actionObj.send(data, target ? { target } : undefined)
     }
 
-    const progress: ActionProgress = (fn) => {
+    const progress: ActionProgress = fn => {
       actionObj.onReceiveProgress = fn
     }
 

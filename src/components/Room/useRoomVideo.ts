@@ -145,7 +145,9 @@ export function useRoomVideo({ peerRoom }: UseRoomVideoConfig) {
         if (selfVideoStream) {
           cleanupVideo()
 
-          peerRoom.removeStream(selfVideoStream, { target: peerRoom.getPeers() })
+          peerRoom.removeStream(selfVideoStream, {
+            target: peerRoom.getPeers(),
+          })
           sendVideoChange(VideoState.STOPPED)
           setVideoState(VideoState.STOPPED)
           setSelfVideoStream(null)

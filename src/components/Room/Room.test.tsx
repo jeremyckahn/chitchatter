@@ -53,7 +53,11 @@ vi.mock('../../lib/Audio')
 
 vi.mock('@trystero-p2p/torrent', () => ({
   joinRoom: () => ({
-    makeAction: () => ({ send: mockMessagedSender, onMessage: null, onReceiveProgress: null }),
+    makeAction: () => ({
+      send: mockMessagedSender,
+      onMessage: null,
+      onReceiveProgress: null,
+    }),
     ping: () => Promise.resolve(0),
     leave: () => {},
     getPeers: () => [],
