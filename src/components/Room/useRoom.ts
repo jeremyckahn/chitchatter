@@ -7,6 +7,7 @@ import { RoomContextProps } from 'contexts/RoomContext'
 import { SettingsContext } from 'contexts/SettingsContext'
 import { ShellContext } from 'contexts/ShellContext'
 import { usePeerAction } from 'hooks/usePeerAction'
+import { MessageContext } from 'trystero'
 import { Audio } from 'lib/Audio'
 import {
   ActionNamespace,
@@ -205,7 +206,7 @@ export function useRoom(
     namespace,
     peerAction: PeerAction.TYPING_STATUS_CHANGE,
     peerRoom,
-    onReceive: (typingStatus, peerId) => {
+    onReceive: (typingStatus, { peerId }: MessageContext) => {
       const { isTyping } = typingStatus
 
       updatePeer(peerId, {
@@ -224,7 +225,10 @@ export function useRoom(
   useEffect(() => {
     if (!showActiveTypingStatus) return
 
-    sendTypingStatusChange({ isTyping }, targetPeerId)
+    sendTypingStatusChange(
+      { isTyping },
+      targetPeerId ? { target: targetPeerId } : undefined
+    )
   }, [
     isDirectMessageRoom,
     isTyping,
@@ -237,7 +241,10 @@ export function useRoom(
     return () => {
       if (isDirectMessageRoom) return
 
-      sendTypingStatusChange({ isTyping: false }, targetPeerId)
+      sendTypingStatusChange(
+        { isTyping: false },
+        targetPeerId ? { target: targetPeerId } : undefined
+      )
       peerRoom.leaveRoom()
       peerRoomRef.current = null
       setPeerList([])
@@ -287,7 +294,7 @@ export function useRoom(
         customUsername: peerCustomUsername,
         publicKeyString,
       },
-      peerId: string
+      { peerId }: MessageContext
     ) => {
       const parsedPublicKey = await encryptionService.parseCryptoKeyString(
         publicKeyString,
@@ -318,7 +325,7 @@ export function useRoom(
         }
 
         setPeerList(prev => [...prev, newPeer])
-        sendTypingStatusChange({ isTyping }, peerId)
+        sendTypingStatusChange({ isTyping }, { target: peerId })
         verifyPeer(newPeer)
       } else {
         const oldUsername =
@@ -361,7 +368,7 @@ export function useRoom(
     namespace,
     peerAction: PeerAction.MESSAGE,
     peerRoom,
-    onReceive: (message, peerId) => {
+    onReceive: (message, { peerId }: MessageContext) => {
       if (isDirectMessageRoom && peerId !== targetPeerId) {
         return
       }
@@ -441,7 +448,10 @@ export function useRoom(
     setIsMessageSending(true)
     setMessageLog([...messageLog, unsentMessage])
 
-    await sendPeerMessage(unsentMessage, targetPeerId)
+    await sendPeerMessage(
+      unsentMessage,
+      targetPeerId ? { target: targetPeerId } : undefined
+    )
 
     setMessageLog([
       ...messageLog,
@@ -463,16 +473,15 @@ export function useRoom(
           const promises: Promise<any>[] = [
             sendPeerMetadata(
               { userId, customUsername, publicKeyString },
-              peerId
+              { target: peerId }
             ),
           ]
 
           if (!isPrivate) {
             promises.push(
-              sendMessageTranscript(
-                messageLog.filter(isMessageReceived),
-                peerId
-              )
+              sendMessageTranscript(messageLog.filter(isMessageReceived), {
+                target: peerId,
+              })
             )
           }
 

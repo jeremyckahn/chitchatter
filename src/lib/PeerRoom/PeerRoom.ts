@@ -2,14 +2,13 @@ import {
   joinRoom,
   Room,
   DataPayload,
-  ActionProgress,
-  ActionReceiver,
-  ActionSender,
+  ActionProgressHandler,
+  MessageContext,
+  MessageAction,
 } from '@trystero-p2p/torrent'
 import { joinRoom as baseJoinRoom } from 'trystero'
 
 import { sleep } from 'lib/sleep'
-import { StreamType } from 'models/chat'
 import { PeerAction } from 'models/network'
 
 export enum PeerHookType {
@@ -38,7 +37,15 @@ export enum ActionNamespace {
 
 const streamQueueAddDelay = 1000
 
-type PeerRoomAction<T extends DataPayload> = [
+export type ActionSender<T extends DataPayload> = MessageAction<T>['send']
+
+export type ActionReceiver<T extends DataPayload> = (
+  callback: NonNullable<MessageAction<T>['onMessage']>
+) => void
+
+export type ActionProgress = (fn: ActionProgressHandler) => void
+
+export type PeerRoomAction<T extends DataPayload> = [
   ActionSender<T>,
   ActionReceiver<T>,
   ActionProgress,
@@ -54,17 +61,17 @@ export class PeerRoom {
 
   private peerJoinHandlers: Map<
     PeerHookType,
-    Parameters<Room['onPeerJoin']>[0]
+    Exclude<Room['onPeerJoin'], null>
   > = new Map()
 
   private peerLeaveHandlers: Map<
     PeerHookType,
-    Parameters<Room['onPeerLeave']>[0]
+    Exclude<Room['onPeerLeave'], null>
   > = new Map()
 
   private peerStreamHandlers: Map<
     PeerStreamType,
-    Parameters<Room['onPeerStream']>[0]
+    Exclude<Room['onPeerStream'], null>
   > = new Map()
 
   private streamQueue: (() => Promise<any>)[] = []
@@ -89,23 +96,23 @@ export class PeerRoom {
     this.roomConfig = config
     this.room = joinRoom(this.roomConfig, roomId)
 
-    this.room.onPeerJoin((...args) => {
+    this.room.onPeerJoin = (...args) => {
       for (const [, peerJoinHandler] of this.peerJoinHandlers) {
         peerJoinHandler(...args)
       }
-    })
+    }
 
-    this.room.onPeerLeave((...args) => {
+    this.room.onPeerLeave = (...args) => {
       for (const [, peerLeaveHandler] of this.peerLeaveHandlers) {
         peerLeaveHandler(...args)
       }
-    })
+    }
 
-    this.room.onPeerStream((...args) => {
+    this.room.onPeerStream = (...args) => {
       for (const [, peerStreamHandler] of this.peerStreamHandlers) {
         peerStreamHandler(...args)
       }
-    })
+    }
   }
 
   flush = () => {
@@ -121,7 +128,7 @@ export class PeerRoom {
 
   onPeerJoin = (
     peerHookType: PeerHookType,
-    fn: Parameters<Room['onPeerJoin']>[0]
+    fn: Exclude<Room['onPeerJoin'], null>
   ) => {
     this.peerJoinHandlers.set(peerHookType, fn)
   }
@@ -132,7 +139,7 @@ export class PeerRoom {
 
   onPeerLeave = (
     peerHookType: PeerHookType,
-    fn: Parameters<Room['onPeerLeave']>[0]
+    fn: Exclude<Room['onPeerLeave'], null>
   ) => {
     this.peerLeaveHandlers.set(peerHookType, fn)
   }
@@ -143,7 +150,7 @@ export class PeerRoom {
 
   onPeerStream = (
     peerStreamType: PeerStreamType,
-    fn: Parameters<Room['onPeerStream']>[0]
+    fn: Exclude<Room['onPeerStream'], null>
   ) => {
     this.peerStreamHandlers.set(peerStreamType, fn)
   }
@@ -202,12 +209,20 @@ export class PeerRoom {
       return this.actions[actionName] as PeerRoomAction<T>
     }
 
-    const [sender, receiver, progress] = this.room.makeAction<T>(actionName)
+    const actionObj = this.room.makeAction<T>(actionName)
+
+    const sender: ActionSender<T> = (data, options) => {
+      return actionObj.send(data, options)
+    }
+
+    const progress: ActionProgress = fn => {
+      actionObj.onReceiveProgress = fn
+    }
 
     const eventName = `peerRoomAction.${namespace}.${peerAction}`
     const eventTarget = new EventTarget()
 
-    type ActionParameters = Parameters<Parameters<ActionReceiver<T>>[0]>
+    type ActionParameters = [T, MessageContext]
     let handler: ((event: CustomEventInit<ActionParameters>) => void) | null =
       null
 
@@ -225,13 +240,13 @@ export class PeerRoom {
       eventTarget.addEventListener(eventName, handler)
     }
 
-    receiver((...args) => {
+    actionObj.onMessage = (data, context) => {
       const customEvent = new CustomEvent(eventName, {
-        detail: args,
+        detail: [data, context],
       })
 
       eventTarget.dispatchEvent(customEvent)
-    })
+    }
 
     const detatchDispatchReceiver = () => {
       eventTarget.removeEventListener(eventName, handler)
@@ -251,21 +266,20 @@ export class PeerRoom {
 
   addStream = (
     stream: Parameters<Room['addStream']>[0],
-    targetPeers: Parameters<Room['addStream']>[1],
-    metadata: { type: StreamType }
+    options?: Parameters<Room['addStream']>[1]
   ) => {
     // New streams need to be added as a delayed queue to prevent race
     // conditions on the receiver's end where streams and their metadata get
     // mixed up.
     this.streamQueue.push(
-      () => Promise.all(this.room.addStream(stream, targetPeers, metadata)),
+      () => Promise.all(this.room.addStream(stream, options)),
       () => sleep(streamQueueAddDelay)
     )
 
     this.processPendingStreams()
   }
 
-  removeStream: Room['removeStream'] = (stream, targetPeers) => {
-    return this.room.removeStream(stream, targetPeers)
+  removeStream: Room['removeStream'] = (stream, options) => {
+    return this.room.removeStream(stream, options)
   }
 }

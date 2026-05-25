@@ -53,7 +53,11 @@ vi.mock('../../lib/Audio')
 
 vi.mock('@trystero-p2p/torrent', () => ({
   joinRoom: () => ({
-    makeAction: () => [mockMessagedSender, () => {}, () => {}],
+    makeAction: () => ({
+      send: mockMessagedSender,
+      onMessage: null,
+      onReceiveProgress: null,
+    }),
     ping: () => Promise.resolve(0),
     leave: () => {},
     getPeers: () => [],
@@ -62,10 +66,10 @@ vi.mock('@trystero-p2p/torrent', () => ({
     addTrack: () => [Promise.resolve()],
     removeTrack: () => {},
     replaceTrack: () => [Promise.resolve()],
-    onPeerJoin: () => {},
-    onPeerLeave: () => {},
-    onPeerStream: () => {},
-    onPeerTrack: () => {},
+    onPeerJoin: null,
+    onPeerLeave: null,
+    onPeerStream: null,
+    onPeerTrack: null,
   }),
 }))
 
@@ -168,7 +172,7 @@ describe('Room', () => {
         timeSent: mockNowTime,
         id: 'abc123',
       },
-      null
+      undefined
     )
   })
 })

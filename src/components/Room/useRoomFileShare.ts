@@ -7,6 +7,7 @@ import { PeerAction } from 'models/network'
 import { FileOfferMetadata, Peer } from 'models/chat'
 import { PeerRoom, PeerHookType, ActionNamespace } from 'lib/PeerRoom'
 import { usePeerAction } from 'hooks/usePeerAction'
+import { MessageContext } from 'trystero'
 
 interface UseRoomFileShareConfig {
   onInlineMediaUpload: (files: File[]) => void
@@ -40,7 +41,7 @@ export function useRoomFileShare({
     namespace: ActionNamespace.GROUP,
     peerAction: PeerAction.FILE_OFFER,
     peerRoom,
-    onReceive: (fileOfferMetadata, peerId) => {
+    onReceive: (fileOfferMetadata, { peerId }: MessageContext) => {
       if (fileOfferMetadata) {
         setPeerOfferedFileMetadata({ [peerId]: fileOfferMetadata })
       } else {
@@ -97,7 +98,7 @@ export function useRoomFileShare({
         magnetURI: selfFileOfferMagnetUri,
         isAllInlineMedia: isEveryFileInlineMedia(sharedFiles),
       },
-      peerId
+      { target: peerId }
     )
   })
 

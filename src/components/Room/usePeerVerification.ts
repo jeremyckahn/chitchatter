@@ -5,6 +5,7 @@ import { encryption } from 'services/Encryption'
 import { PeerRoom } from 'lib/PeerRoom'
 import { PeerAction } from 'models/network'
 import { verificationTimeout } from 'config/messaging'
+import { MessageContext } from 'trystero'
 import { usePeerNameDisplay } from 'components/PeerNameDisplay'
 import { usePeerAction } from 'hooks/usePeerAction'
 
@@ -30,7 +31,10 @@ export const usePeerVerification = ({
     peerAction: PeerAction.VERIFICATION_TOKEN_ENCRYPTED,
     peerRoom,
     namespace,
-    onReceive: async (encryptedVerificationToken, peerId) => {
+    onReceive: async (
+      encryptedVerificationToken,
+      { peerId }: MessageContext
+    ) => {
       try {
         const decryptedVerificationToken =
           await encryptionService.decryptString(
@@ -38,7 +42,9 @@ export const usePeerVerification = ({
             encryptedVerificationToken
           )
 
-        await sendVerificationTokenRaw(decryptedVerificationToken, [peerId])
+        await sendVerificationTokenRaw(decryptedVerificationToken, {
+          target: [peerId],
+        })
       } catch (e) {
         console.error(e)
       }
@@ -49,7 +55,7 @@ export const usePeerVerification = ({
     peerAction: PeerAction.VERIFICATION_TOKEN_RAW,
     peerRoom,
     namespace,
-    onReceive: (decryptedVerificationToken, peerId) => {
+    onReceive: (decryptedVerificationToken, { peerId }: MessageContext) => {
       const matchingPeer = peerList.find(peer => peer.peerId === peerId)
 
       if (!matchingPeer) {
@@ -114,9 +120,9 @@ export const usePeerVerification = ({
 
       updatePeer(peer.peerId, { encryptedVerificationToken, verificationTimer })
 
-      await sendVerificationTokenEncrypted(encryptedVerificationToken, [
-        peer.peerId,
-      ])
+      await sendVerificationTokenEncrypted(encryptedVerificationToken, {
+        target: [peer.peerId],
+      })
     },
     [
       encryptionService,

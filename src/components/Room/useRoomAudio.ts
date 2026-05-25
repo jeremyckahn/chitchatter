@@ -16,6 +16,7 @@ import {
   ActionNamespace,
 } from 'lib/PeerRoom'
 import { usePeerAction } from 'hooks/usePeerAction'
+import { MessageContext } from 'trystero'
 
 interface UseRoomAudioConfig {
   peerRoom: PeerRoom
@@ -51,7 +52,7 @@ export function useRoomAudio({ peerRoom }: UseRoomAudioConfig) {
     namespace: ActionNamespace.GROUP,
     peerAction: PeerAction.AUDIO_CHANGE,
     peerRoom,
-    onReceive: (peerAudioChannelState, peerId) => {
+    onReceive: (peerAudioChannelState, { peerId }: MessageContext) => {
       setPeerList(peerList => {
         return peerList.map(peer => {
           const newPeer: Peer = { ...peer }
@@ -125,8 +126,8 @@ export function useRoomAudio({ peerRoom }: UseRoomAudioConfig) {
             video: false,
           })
 
-          peerRoom.addStream(newSelfStream, null, {
-            type: StreamType.MICROPHONE,
+          peerRoom.addStream(newSelfStream, {
+            metadata: { type: StreamType.MICROPHONE },
           })
 
           sendAudioChange({
@@ -144,7 +145,7 @@ export function useRoomAudio({ peerRoom }: UseRoomAudioConfig) {
         if (audioStream) {
           cleanupAudio()
 
-          peerRoom.removeStream(audioStream, peerRoom.getPeers())
+          peerRoom.removeStream(audioStream, { target: peerRoom.getPeers() })
 
           sendAudioChange({
             [AudioChannelName.MICROPHONE]: AudioState.STOPPED,
@@ -186,7 +187,7 @@ export function useRoomAudio({ peerRoom }: UseRoomAudioConfig) {
       audioStream.removeTrack(audioTrack)
     }
 
-    peerRoom.removeStream(audioStream, peerRoom.getPeers())
+    peerRoom.removeStream(audioStream, { target: peerRoom.getPeers() })
 
     const newSelfStream = await navigator.mediaDevices.getUserMedia({
       audio: {
@@ -195,8 +196,8 @@ export function useRoomAudio({ peerRoom }: UseRoomAudioConfig) {
       video: false,
     })
 
-    peerRoom.addStream(newSelfStream, null, {
-      type: StreamType.MICROPHONE,
+    peerRoom.addStream(newSelfStream, {
+      metadata: { type: StreamType.MICROPHONE },
     })
 
     setAudioStream(newSelfStream)
@@ -222,15 +223,16 @@ export function useRoomAudio({ peerRoom }: UseRoomAudioConfig) {
 
   const handleAudioForNewPeer = (peerId: string) => {
     if (audioStream) {
-      peerRoom.addStream(audioStream, peerId, {
-        type: StreamType.MICROPHONE,
+      peerRoom.addStream(audioStream, {
+        target: peerId,
+        metadata: { type: StreamType.MICROPHONE },
       })
     }
   }
 
   const handleAudioForLeavingPeer = (peerId: string) => {
     if (audioStream) {
-      peerRoom.removeStream(audioStream, peerId)
+      peerRoom.removeStream(audioStream, { target: peerId })
     }
 
     deletePeerAudio(peerId)

@@ -18,6 +18,7 @@ import {
   ActionNamespace,
 } from 'lib/PeerRoom'
 import { usePeerAction } from 'hooks/usePeerAction'
+import { MessageContext } from 'trystero'
 
 interface UseRoomScreenShareConfig {
   peerRoom: PeerRoom
@@ -46,7 +47,7 @@ export function useRoomScreenShare({ peerRoom }: UseRoomScreenShareConfig) {
     namespace: ActionNamespace.GROUP,
     peerAction: PeerAction.SCREEN_SHARE,
     peerRoom,
-    onReceive: (screenState, peerId) => {
+    onReceive: (screenState, { peerId }: MessageContext) => {
       setPeerList(peerList => {
         const newPeerList = peerList.map(peer => {
           const newPeer: Peer = { ...peer }
@@ -125,8 +126,8 @@ export function useRoomScreenShare({ peerRoom }: UseRoomScreenShareConfig) {
       video: true,
     })
 
-    peerRoom.addStream(displayMedia, null, {
-      type: StreamType.SCREEN_SHARE,
+    peerRoom.addStream(displayMedia, {
+      metadata: { type: StreamType.SCREEN_SHARE },
     })
 
     setSelfScreenStream(displayMedia)
@@ -139,7 +140,7 @@ export function useRoomScreenShare({ peerRoom }: UseRoomScreenShareConfig) {
     if (!selfScreenStream) return
 
     cleanupScreenStream()
-    peerRoom.removeStream(selfScreenStream, peerRoom.getPeers())
+    peerRoom.removeStream(selfScreenStream, { target: peerRoom.getPeers() })
     sendScreenShare(ScreenShareState.NOT_SHARING)
     setScreenState(ScreenShareState.NOT_SHARING)
     setSelfScreenStream(null)
@@ -193,15 +194,16 @@ export function useRoomScreenShare({ peerRoom }: UseRoomScreenShareConfig) {
 
   const handleScreenForNewPeer = (peerId: string) => {
     if (selfScreenStream) {
-      peerRoom.addStream(selfScreenStream, peerId, {
-        type: StreamType.SCREEN_SHARE,
+      peerRoom.addStream(selfScreenStream, {
+        target: peerId,
+        metadata: { type: StreamType.SCREEN_SHARE },
       })
     }
   }
 
   const handleScreenForLeavingPeer = (peerId: string) => {
     if (selfScreenStream) {
-      peerRoom.removeStream(selfScreenStream, peerId)
+      peerRoom.removeStream(selfScreenStream, { target: peerId })
     }
 
     deletePeerScreen(peerId)
