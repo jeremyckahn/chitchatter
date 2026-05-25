@@ -7,6 +7,7 @@ import { RoomContextProps } from 'contexts/RoomContext'
 import { SettingsContext } from 'contexts/SettingsContext'
 import { ShellContext } from 'contexts/ShellContext'
 import { usePeerAction } from 'hooks/usePeerAction'
+import { MessageContext } from 'trystero'
 import { Audio } from 'lib/Audio'
 import {
   ActionNamespace,
@@ -205,7 +206,7 @@ export function useRoom(
     namespace,
     peerAction: PeerAction.TYPING_STATUS_CHANGE,
     peerRoom,
-    onReceive: (typingStatus, peerId) => {
+    onReceive: (typingStatus, { peerId }: MessageContext) => {
       const { isTyping } = typingStatus
 
       updatePeer(peerId, {
@@ -287,7 +288,7 @@ export function useRoom(
         customUsername: peerCustomUsername,
         publicKeyString,
       },
-      peerId: string
+      { peerId }: MessageContext
     ) => {
       const parsedPublicKey = await encryptionService.parseCryptoKeyString(
         publicKeyString,
@@ -361,7 +362,7 @@ export function useRoom(
     namespace,
     peerAction: PeerAction.MESSAGE,
     peerRoom,
-    onReceive: (message, peerId) => {
+    onReceive: (message, { peerId }: MessageContext) => {
       if (isDirectMessageRoom && peerId !== targetPeerId) {
         return
       }

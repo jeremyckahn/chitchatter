@@ -40,9 +40,11 @@ export type ActionSender<T extends DataPayload> = (
   data: T,
   target?: string | string[]
 ) => Promise<void>
+
 export type ActionReceiver<T extends DataPayload> = (
   callback: (data: T, context: MessageContext) => void | Promise<void>
 ) => void
+
 export type ActionProgress = (fn: ActionProgressHandler) => void
 
 export type PeerRoomAction<T extends DataPayload> = [

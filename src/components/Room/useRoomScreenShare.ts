@@ -18,6 +18,7 @@ import {
   ActionNamespace,
 } from 'lib/PeerRoom'
 import { usePeerAction } from 'hooks/usePeerAction'
+import { MessageContext } from 'trystero'
 
 interface UseRoomScreenShareConfig {
   peerRoom: PeerRoom
@@ -46,7 +47,7 @@ export function useRoomScreenShare({ peerRoom }: UseRoomScreenShareConfig) {
     namespace: ActionNamespace.GROUP,
     peerAction: PeerAction.SCREEN_SHARE,
     peerRoom,
-    onReceive: (screenState, peerId) => {
+    onReceive: (screenState, { peerId }: MessageContext) => {
       setPeerList(peerList => {
         const newPeerList = peerList.map(peer => {
           const newPeer: Peer = { ...peer }

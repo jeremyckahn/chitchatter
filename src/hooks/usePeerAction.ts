@@ -1,7 +1,7 @@
 import { PeerRoom } from 'lib/PeerRoom'
 import { PeerAction } from 'models/network'
 import { useEffect, useState } from 'react'
-import { DataPayload } from 'trystero'
+import { DataPayload, MessageContext } from 'trystero'
 import { ActionProgress, ActionSender } from 'lib/PeerRoom'
 
 export const usePeerAction = <T extends DataPayload>({
@@ -12,7 +12,7 @@ export const usePeerAction = <T extends DataPayload>({
 }: {
   peerRoom: PeerRoom
   peerAction: PeerAction
-  onReceive: (data: T, peerId: string) => void | Promise<void>
+  onReceive: (data: T, context: MessageContext) => void | Promise<void>
   namespace: string
 }): [ActionSender<T>, ActionProgress] => {
   const [[sender, connectReceiver, progress, disconnectReceiver]] = useState(
@@ -20,7 +20,7 @@ export const usePeerAction = <T extends DataPayload>({
   )
 
   useEffect(() => {
-    connectReceiver((data, context) => onReceive(data, context.peerId))
+    connectReceiver(onReceive)
 
     return () => {
       disconnectReceiver()

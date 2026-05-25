@@ -16,6 +16,7 @@ import {
   ActionNamespace,
 } from 'lib/PeerRoom'
 import { usePeerAction } from 'hooks/usePeerAction'
+import { MessageContext } from 'trystero'
 
 interface UseRoomAudioConfig {
   peerRoom: PeerRoom
@@ -51,7 +52,7 @@ export function useRoomAudio({ peerRoom }: UseRoomAudioConfig) {
     namespace: ActionNamespace.GROUP,
     peerAction: PeerAction.AUDIO_CHANGE,
     peerRoom,
-    onReceive: (peerAudioChannelState, peerId) => {
+    onReceive: (peerAudioChannelState, { peerId }: MessageContext) => {
       setPeerList(peerList => {
         return peerList.map(peer => {
           const newPeer: Peer = { ...peer }

@@ -12,6 +12,7 @@ import {
 } from 'lib/PeerRoom'
 import { isRecord } from 'lib/type-guards'
 import { usePeerAction } from 'hooks/usePeerAction'
+import { MessageContext } from 'trystero'
 
 interface UseRoomVideoConfig {
   peerRoom: PeerRoom
@@ -78,7 +79,7 @@ export function useRoomVideo({ peerRoom }: UseRoomVideoConfig) {
     namespace: ActionNamespace.GROUP,
     peerAction: PeerAction.VIDEO_CHANGE,
     peerRoom,
-    onReceive: (videoState, peerId) => {
+    onReceive: (videoState, { peerId }: MessageContext) => {
       setPeerList(peerList => {
         const newPeerList = peerList.map(peer => {
           const newPeer: Peer = { ...peer }
