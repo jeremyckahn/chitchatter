@@ -98,7 +98,7 @@ export function useRoomFileShare({
         magnetURI: selfFileOfferMagnetUri,
         isAllInlineMedia: isEveryFileInlineMedia(sharedFiles),
       },
-      peerId
+      { target: peerId }
     )
   })
 

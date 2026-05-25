@@ -4,6 +4,7 @@ import {
   DataPayload,
   ActionProgressHandler,
   MessageContext,
+  MessageAction,
 } from '@trystero-p2p/torrent'
 import { joinRoom as baseJoinRoom } from 'trystero'
 
@@ -36,13 +37,10 @@ export enum ActionNamespace {
 
 const streamQueueAddDelay = 1000
 
-export type ActionSender<T extends DataPayload> = (
-  data: T,
-  target?: string | string[]
-) => Promise<void>
+export type ActionSender<T extends DataPayload> = MessageAction<T>['send']
 
 export type ActionReceiver<T extends DataPayload> = (
-  callback: (data: T, context: MessageContext) => void | Promise<void>
+  callback: NonNullable<MessageAction<T>['onMessage']>
 ) => void
 
 export type ActionProgress = (fn: ActionProgressHandler) => void
@@ -213,8 +211,8 @@ export class PeerRoom {
 
     const actionObj = this.room.makeAction<T>(actionName)
 
-    const sender: ActionSender<T> = (data, target) => {
-      return actionObj.send(data, target ? { target } : undefined)
+    const sender: ActionSender<T> = (data, options) => {
+      return actionObj.send(data, options)
     }
 
     const progress: ActionProgress = fn => {

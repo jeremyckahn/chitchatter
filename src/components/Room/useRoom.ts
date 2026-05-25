@@ -225,7 +225,10 @@ export function useRoom(
   useEffect(() => {
     if (!showActiveTypingStatus) return
 
-    sendTypingStatusChange({ isTyping }, targetPeerId || undefined)
+    sendTypingStatusChange(
+      { isTyping },
+      targetPeerId ? { target: targetPeerId } : undefined
+    )
   }, [
     isDirectMessageRoom,
     isTyping,
@@ -238,7 +241,10 @@ export function useRoom(
     return () => {
       if (isDirectMessageRoom) return
 
-      sendTypingStatusChange({ isTyping: false }, targetPeerId || undefined)
+      sendTypingStatusChange(
+        { isTyping: false },
+        targetPeerId ? { target: targetPeerId } : undefined
+      )
       peerRoom.leaveRoom()
       peerRoomRef.current = null
       setPeerList([])
@@ -319,7 +325,7 @@ export function useRoom(
         }
 
         setPeerList(prev => [...prev, newPeer])
-        sendTypingStatusChange({ isTyping }, peerId)
+        sendTypingStatusChange({ isTyping }, { target: peerId })
         verifyPeer(newPeer)
       } else {
         const oldUsername =
@@ -442,7 +448,10 @@ export function useRoom(
     setIsMessageSending(true)
     setMessageLog([...messageLog, unsentMessage])
 
-    await sendPeerMessage(unsentMessage, targetPeerId || undefined)
+    await sendPeerMessage(
+      unsentMessage,
+      targetPeerId ? { target: targetPeerId } : undefined
+    )
 
     setMessageLog([
       ...messageLog,
@@ -464,16 +473,15 @@ export function useRoom(
           const promises: Promise<any>[] = [
             sendPeerMetadata(
               { userId, customUsername, publicKeyString },
-              peerId
+              { target: peerId }
             ),
           ]
 
           if (!isPrivate) {
             promises.push(
-              sendMessageTranscript(
-                messageLog.filter(isMessageReceived),
-                peerId
-              )
+              sendMessageTranscript(messageLog.filter(isMessageReceived), {
+                target: peerId,
+              })
             )
           }
 

@@ -42,7 +42,9 @@ export const usePeerVerification = ({
             encryptedVerificationToken
           )
 
-        await sendVerificationTokenRaw(decryptedVerificationToken, [peerId])
+        await sendVerificationTokenRaw(decryptedVerificationToken, {
+          target: [peerId],
+        })
       } catch (e) {
         console.error(e)
       }
@@ -118,9 +120,9 @@ export const usePeerVerification = ({
 
       updatePeer(peer.peerId, { encryptedVerificationToken, verificationTimer })
 
-      await sendVerificationTokenEncrypted(encryptedVerificationToken, [
-        peer.peerId,
-      ])
+      await sendVerificationTokenEncrypted(encryptedVerificationToken, {
+        target: [peer.peerId],
+      })
     },
     [
       encryptionService,
