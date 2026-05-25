@@ -125,8 +125,8 @@ export function useRoomAudio({ peerRoom }: UseRoomAudioConfig) {
             video: false,
           })
 
-          peerRoom.addStream(newSelfStream, null, {
-            type: StreamType.MICROPHONE,
+          peerRoom.addStream(newSelfStream, {
+            metadata: { type: StreamType.MICROPHONE },
           })
 
           sendAudioChange({
@@ -144,7 +144,7 @@ export function useRoomAudio({ peerRoom }: UseRoomAudioConfig) {
         if (audioStream) {
           cleanupAudio()
 
-          peerRoom.removeStream(audioStream, peerRoom.getPeers())
+          peerRoom.removeStream(audioStream, { target: peerRoom.getPeers() })
 
           sendAudioChange({
             [AudioChannelName.MICROPHONE]: AudioState.STOPPED,
@@ -186,7 +186,7 @@ export function useRoomAudio({ peerRoom }: UseRoomAudioConfig) {
       audioStream.removeTrack(audioTrack)
     }
 
-    peerRoom.removeStream(audioStream, peerRoom.getPeers())
+    peerRoom.removeStream(audioStream, { target: peerRoom.getPeers() })
 
     const newSelfStream = await navigator.mediaDevices.getUserMedia({
       audio: {
@@ -195,8 +195,8 @@ export function useRoomAudio({ peerRoom }: UseRoomAudioConfig) {
       video: false,
     })
 
-    peerRoom.addStream(newSelfStream, null, {
-      type: StreamType.MICROPHONE,
+    peerRoom.addStream(newSelfStream, {
+      metadata: { type: StreamType.MICROPHONE },
     })
 
     setAudioStream(newSelfStream)
@@ -222,15 +222,16 @@ export function useRoomAudio({ peerRoom }: UseRoomAudioConfig) {
 
   const handleAudioForNewPeer = (peerId: string) => {
     if (audioStream) {
-      peerRoom.addStream(audioStream, peerId, {
-        type: StreamType.MICROPHONE,
+      peerRoom.addStream(audioStream, {
+        target: peerId,
+        metadata: { type: StreamType.MICROPHONE },
       })
     }
   }
 
   const handleAudioForLeavingPeer = (peerId: string) => {
     if (audioStream) {
-      peerRoom.removeStream(audioStream, peerId)
+      peerRoom.removeStream(audioStream, { target: peerId })
     }
 
     deletePeerAudio(peerId)

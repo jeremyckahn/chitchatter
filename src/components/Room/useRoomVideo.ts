@@ -65,8 +65,8 @@ export function useRoomVideo({ peerRoom }: UseRoomVideoConfig) {
           },
         })
 
-        peerRoom.addStream(newSelfStream, null, {
-          type: StreamType.WEBCAM,
+        peerRoom.addStream(newSelfStream, {
+          metadata: { type: StreamType.WEBCAM },
         })
 
         setSelfVideoStream(newSelfStream)
@@ -133,8 +133,8 @@ export function useRoomVideo({ peerRoom }: UseRoomVideoConfig) {
               : true,
           })
 
-          peerRoom.addStream(newSelfStream, null, {
-            type: StreamType.WEBCAM,
+          peerRoom.addStream(newSelfStream, {
+            metadata: { type: StreamType.WEBCAM },
           })
 
           sendVideoChange(VideoState.PLAYING)
@@ -145,7 +145,7 @@ export function useRoomVideo({ peerRoom }: UseRoomVideoConfig) {
         if (selfVideoStream) {
           cleanupVideo()
 
-          peerRoom.removeStream(selfVideoStream, peerRoom.getPeers())
+          peerRoom.removeStream(selfVideoStream, { target: peerRoom.getPeers() })
           sendVideoChange(VideoState.STOPPED)
           setVideoState(VideoState.STOPPED)
           setSelfVideoStream(null)
@@ -195,7 +195,7 @@ export function useRoomVideo({ peerRoom }: UseRoomVideoConfig) {
       selfVideoStream.removeTrack(videoTrack)
     }
 
-    peerRoom.removeStream(selfVideoStream, peerRoom.getPeers())
+    peerRoom.removeStream(selfVideoStream, { target: peerRoom.getPeers() })
 
     const newSelfStream = await navigator.mediaDevices.getUserMedia({
       audio: false,
@@ -204,7 +204,7 @@ export function useRoomVideo({ peerRoom }: UseRoomVideoConfig) {
       },
     })
 
-    peerRoom.addStream(newSelfStream, null, { type: StreamType.WEBCAM })
+    peerRoom.addStream(newSelfStream, { metadata: { type: StreamType.WEBCAM } })
     setSelfVideoStream(newSelfStream)
   }
 
@@ -216,15 +216,16 @@ export function useRoomVideo({ peerRoom }: UseRoomVideoConfig) {
 
   const handleVideoForNewPeer = (peerId: string) => {
     if (selfVideoStream) {
-      peerRoom.addStream(selfVideoStream, peerId, {
-        type: StreamType.WEBCAM,
+      peerRoom.addStream(selfVideoStream, {
+        target: peerId,
+        metadata: { type: StreamType.WEBCAM },
       })
     }
   }
 
   const handleVideoForLeavingPeer = (peerId: string) => {
     if (selfVideoStream) {
-      peerRoom.removeStream(selfVideoStream, peerId)
+      peerRoom.removeStream(selfVideoStream, { target: peerId })
     }
 
     deletePeerVideo(peerId)
