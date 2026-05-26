@@ -51,7 +51,7 @@ const queryClient = new QueryClient({
 
 vi.mock('../../lib/Audio')
 
-vi.mock('@trystero-p2p/torrent', () => ({
+vi.mock('@trystero-p2p/nostr', () => ({
   joinRoom: () => ({
     makeAction: () => ({
       send: mockMessagedSender,

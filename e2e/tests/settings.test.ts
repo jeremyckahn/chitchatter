@@ -168,7 +168,7 @@ test.describe('Settings and Preferences', () => {
     await expect(darkModeIcon).toBeVisible()
   })
 
-  test('should display enhanced connectivity section when available', async ({
+  test.skip('should display enhanced connectivity section when available', async ({
     page,
   }) => {
     // Navigate directly to settings

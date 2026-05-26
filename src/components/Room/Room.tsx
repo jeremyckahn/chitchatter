@@ -9,7 +9,7 @@ import { v4 as uuid } from 'uuid'
 import { ChatTranscript } from 'components/ChatTranscript'
 import { WholePageLoading } from 'components/Loading'
 import { MessageForm } from 'components/MessageForm'
-import { trackerUrls } from 'config/trackerUrls'
+import { relayUrls } from 'config/relayUrls'
 import { RoomContext } from 'contexts/RoomContext'
 import { SettingsContext } from 'contexts/SettingsContext'
 import { ShellContext } from 'contexts/ShellContext'
@@ -59,7 +59,7 @@ const RoomCore = ({
 
   const relayConfig = useMemo(
     () => ({
-      urls: trackerUrls,
+      urls: relayUrls,
       redundancy: 4,
     }),
     []
