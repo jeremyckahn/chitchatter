@@ -8,7 +8,7 @@ import { useContext } from 'react'
 
 import { SettingsContext } from 'contexts/SettingsContext'
 import { ShellContext } from 'contexts/ShellContext'
-import { TrackerConnection } from 'lib/ConnectionTest'
+import { RelayConnection } from 'lib/ConnectionTest'
 
 import { ConnectionTestResults as IConnectionTestResults } from './useConnectionTest'
 
@@ -16,7 +16,7 @@ interface ConnectionTestResultsProps {
   connectionTestResults: IConnectionTestResults
 }
 export const ConnectionTestResults = ({
-  connectionTestResults: { hasHost, hasTURNServer, trackerConnection },
+  connectionTestResults: { hasHost, hasTURNServer, relayConnection },
 }: ConnectionTestResultsProps) => {
   const { setIsServerConnectionFailureDialogOpen } = useContext(ShellContext)
   const { getUserSettings } = useContext(SettingsContext)
@@ -26,7 +26,7 @@ export const ConnectionTestResults = ({
     setIsServerConnectionFailureDialogOpen(true)
   }
 
-  if (trackerConnection === TrackerConnection.FAILED) {
+  if (relayConnection === RelayConnection.FAILED) {
     return (
       <Typography
         variant="subtitle2"
@@ -43,7 +43,7 @@ export const ConnectionTestResults = ({
     )
   }
 
-  if (trackerConnection !== TrackerConnection.CONNECTED) {
+  if (relayConnection !== RelayConnection.CONNECTED) {
     return (
       <Typography variant="subtitle2">
         <Box
