@@ -105,7 +105,7 @@
     "@playwright/test": "^1.56.1",
     "@testing-library/jest-dom": "^6.7.0",
     "@types/file-saver": "^2.0.7",
-    "@types/node": "^18.19.71",
+    "@types/node": "^20.19.41",
     "@types/react": "^18.2.72",
     "@types/react-dom": "^18.3.1",
     "@types/react-file-reader-input": "^2.0.4",
@@ -146,7 +146,7 @@
     "vite-plugin-node-polyfills": "^0.23.0",
     "vite-plugin-pwa": "^0.21.2",
     "vite-plugin-svgr": "^4.3.0",
-    "vitest": "^3.0.9"
+    "vitest": "^4.1.8"
   },
   "overrides": {
     "ipfs-core": "npm:dry-uninstall",
