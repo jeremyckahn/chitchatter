@@ -177,4 +177,51 @@ test.describe('Multi-user Room Interaction', () => {
     await context1.close()
     await context2.close()
   })
+
+  test('should verify peers successfully', async ({ browser }) => {
+    // Create first user context
+    const context1 = await browser.newContext()
+    const page1 = await context1.newPage()
+
+    // First user joins a public room
+    await page1.goto('/')
+    await page1.waitForLoadState('networkidle')
+
+    const joinPublicRoomButton = page1.getByRole('button', {
+      name: /join public room/i,
+    })
+    await joinPublicRoomButton.click()
+    await page1.waitForURL(/\/public\/.+/)
+    const roomUrl = page1.url()
+
+    // Create second user context
+    const context2 = await browser.newContext()
+    const page2 = await context2.newPage()
+
+    // Second user joins the same room
+    await page2.goto(roomUrl)
+    await page2.waitForLoadState('networkidle')
+
+    // Wait for P2P connection
+    await expect(page1.getByPlaceholder('Your message').first()).toBeVisible()
+    await expect(page2.getByPlaceholder('Your message').first()).toBeVisible()
+
+    // Verify both peers see each other as verified
+    const verifiedTooltipText =
+      'This person has been verified with public-key cryptography'
+
+    const verifiedElement1 = page1.locator(
+      `[aria-label="${verifiedTooltipText}"]`
+    )
+    await expect(verifiedElement1.first()).toBeVisible({ timeout: 15000 })
+
+    const verifiedElement2 = page2.locator(
+      `[aria-label="${verifiedTooltipText}"]`
+    )
+    await expect(verifiedElement2.first()).toBeVisible({ timeout: 15000 })
+
+    // Clean up
+    await context1.close()
+    await context2.close()
+  })
 })
