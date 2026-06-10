@@ -125,56 +125,119 @@ test.describe('Room Functionality', () => {
 
 test.describe('Multi-user Room Interaction', () => {
   test('should allow two users to chat', async ({ browser }) => {
-    // Create first user context
-    const context1 = await browser.newContext()
-    const page1 = await context1.newPage()
+    let context1
+    let context2
+    try {
+      // Create first user context
+      context1 = await browser.newContext()
+      const page1 = await context1.newPage()
 
-    // First user joins a public room
-    await page1.goto('/')
-    await page1.waitForLoadState('networkidle')
+      // First user joins a public room
+      await page1.goto('/')
+      await page1.waitForLoadState('networkidle')
 
-    const joinPublicRoomButton = page1.getByRole('button', {
-      name: /join public room/i,
-    })
-    await joinPublicRoomButton.click()
-    await page1.waitForURL(/\/public\/.+/)
-    const roomUrl = page1.url()
+      const joinPublicRoomButton = page1.getByRole('button', {
+        name: /join public room/i,
+      })
+      await joinPublicRoomButton.click()
+      await page1.waitForURL(/\/public\/.+/)
+      const roomUrl = page1.url()
 
-    // Create second user context
-    const context2 = await browser.newContext()
-    const page2 = await context2.newPage()
+      // Create second user context
+      context2 = await browser.newContext()
+      const page2 = await context2.newPage()
 
-    // Second user joins the same room
-    await page2.goto(roomUrl)
-    await page2.waitForLoadState('networkidle')
+      // Second user joins the same room
+      await page2.goto(roomUrl)
+      await page2.waitForLoadState('networkidle')
 
-    // Wait for both users to be connected
-    await expect(page1.getByPlaceholder('Your message').first()).toBeVisible()
-    await expect(page2.getByPlaceholder('Your message').first()).toBeVisible()
+      // Wait for both users to be connected
+      await expect(page1.getByPlaceholder('Your message').first()).toBeVisible()
+      await expect(page2.getByPlaceholder('Your message').first()).toBeVisible()
 
-    // User 1 sends a message
-    const chatInput1 = page1.getByPlaceholder('Your message').first()
-    const message1 = 'Hello from User 1!'
-    await chatInput1.fill(message1)
-    await chatInput1.press('Enter')
+      // User 1 sends a message
+      const chatInput1 = page1.getByPlaceholder('Your message').first()
+      const message1 = 'Hello from User 1!'
+      await chatInput1.fill(message1)
+      await chatInput1.press('Enter')
 
-    // User 1 should see their own message
-    await expect(page1.getByText(message1)).toBeVisible()
+      // User 1 should see their own message
+      await expect(page1.getByText(message1)).toBeVisible()
 
-    // Wait for P2P connection and message propagation
-    await expect(page2.getByText(message1)).toBeVisible({ timeout: 15000 })
+      // Wait for P2P connection and message propagation
+      await expect(page2.getByText(message1)).toBeVisible({ timeout: 15000 })
 
-    // User 2 sends a message
-    const chatInput2 = page2.getByPlaceholder('Your message').first()
-    const message2 = 'Hello back from User 2!'
-    await chatInput2.fill(message2)
-    await chatInput2.press('Enter')
+      // User 2 sends a message
+      const chatInput2 = page2.getByPlaceholder('Your message').first()
+      const message2 = 'Hello back from User 2!'
+      await chatInput2.fill(message2)
+      await chatInput2.press('Enter')
 
-    // User 2 should see their own message
-    await expect(page2.getByText(message2)).toBeVisible()
+      // User 2 should see their own message
+      await expect(page2.getByText(message2)).toBeVisible()
+    } finally {
+      // Clean up
+      if (context1) {
+        await context1.close()
+      }
+      if (context2) {
+        await context2.close()
+      }
+    }
+  })
 
-    // Clean up
-    await context1.close()
-    await context2.close()
+  test('should verify peers successfully', async ({ browser }) => {
+    let context1
+    let context2
+    try {
+      // Create first user context
+      context1 = await browser.newContext()
+      const page1 = await context1.newPage()
+
+      // First user joins a public room
+      await page1.goto('/')
+      await page1.waitForLoadState('networkidle')
+
+      const joinPublicRoomButton = page1.getByRole('button', {
+        name: /join public room/i,
+      })
+      await joinPublicRoomButton.click()
+      await page1.waitForURL(/\/public\/.+/)
+      const roomUrl = page1.url()
+
+      // Create second user context
+      context2 = await browser.newContext()
+      const page2 = await context2.newPage()
+
+      // Second user joins the same room
+      await page2.goto(roomUrl)
+      await page2.waitForLoadState('networkidle')
+
+      // Wait for P2P connection
+      await expect(page1.getByPlaceholder('Your message').first()).toBeVisible()
+      await expect(page2.getByPlaceholder('Your message').first()).toBeVisible()
+
+      // Verify both peers see each other as verified
+      const verifiedTooltipText =
+        'This person has been verified with public-key cryptography'
+
+      const verifiedElement1 = page1.locator(
+        `[aria-label="${verifiedTooltipText}"]`
+      )
+      await expect(verifiedElement1.first()).toBeVisible({ timeout: 15000 })
+
+      const verifiedElement2 = page2.locator(
+        `[aria-label="${verifiedTooltipText}"]`
+      )
+      await expect(verifiedElement2.first()).toBeVisible({ timeout: 15000 })
+    } finally {
+      // Clean up
+      if (context1) {
+        await context1.close()
+      }
+      if (context2) {
+        await context2.close()
+      }
+    }
   })
 })
