@@ -14,3 +14,7 @@ mockEncryptionService.stringifyCryptoKey = async () => ''
 
 mockEncryptionService.parseCryptoKeyString = async () =>
   encryption.cryptoKeyStub
+
+mockEncryptionService.signString = async () => new ArrayBuffer(0)
+
+mockEncryptionService.verifySignature = async () => true

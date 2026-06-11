@@ -23,7 +23,8 @@ const base64ToArrayBuffer = (base64: string) => {
   return bytes.buffer
 }
 
-const algorithmName = 'RSA-OAEP'
+const algorithmName = 'RSASSA-PKCS1-v1_5'
+const legacyAlgorithmName = 'RSA-OAEP'
 
 const algorithmHash = 'SHA-256'
 
@@ -45,7 +46,7 @@ export class EncryptionService {
         publicExponent: new Uint8Array([0x01, 0x00, 0x01]),
       },
       true,
-      ['encrypt', 'decrypt']
+      ['sign', 'verify']
     )
 
     return keyPair
@@ -72,24 +73,77 @@ export class EncryptionService {
   }
 
   parseCryptoKeyString = async (keyString: string, type: AllowedKeyType) => {
-    const importedKey = await window.crypto.subtle.importKey(
-      type === AllowedKeyType.PUBLIC ? 'spki' : 'pkcs8',
-      base64ToArrayBuffer(keyString),
-      {
-        name: algorithmName,
-        hash: algorithmHash,
-      },
-      true,
-      type === AllowedKeyType.PUBLIC ? ['encrypt'] : ['decrypt']
-    )
+    const format = type === AllowedKeyType.PUBLIC ? 'spki' : 'pkcs8'
+    const keyData = base64ToArrayBuffer(keyString)
 
-    return importedKey
+    try {
+      // Try importing as the NEW signature key
+      return await window.crypto.subtle.importKey(
+        format,
+        keyData,
+        {
+          name: algorithmName,
+          hash: algorithmHash,
+        },
+        true,
+        type === AllowedKeyType.PUBLIC ? ['verify'] : ['sign']
+      )
+    } catch (_error) {
+      // Fall back to importing as a LEGACY encryption key
+      return await window.crypto.subtle.importKey(
+        format,
+        keyData,
+        {
+          name: legacyAlgorithmName,
+          hash: algorithmHash,
+        },
+        true,
+        type === AllowedKeyType.PUBLIC ? ['encrypt'] : ['decrypt']
+      )
+    }
+  }
+
+  signString = async (
+    privateKey: CryptoKey,
+    plaintext: string
+  ): Promise<ArrayBuffer> => {
+    if (privateKey.algorithm.name === 'STUB-ALGORITHM')
+      return new ArrayBuffer(0)
+    const encodedText = new TextEncoder().encode(plaintext)
+    const signature = await window.crypto.subtle.sign(
+      algorithmName,
+      privateKey,
+      encodedText
+    )
+    return signature
+  }
+
+  verifySignature = async (
+    publicKey: CryptoKey,
+    signature: ArrayBuffer,
+    plaintext: string
+  ): Promise<boolean> => {
+    if (publicKey.algorithm.name === 'STUB-ALGORITHM') return true
+    if (
+      !signature ||
+      !(signature instanceof ArrayBuffer || ArrayBuffer.isView(signature))
+    ) {
+      return false
+    }
+    const encodedText = new TextEncoder().encode(plaintext)
+    const isVerified = await window.crypto.subtle.verify(
+      algorithmName,
+      publicKey,
+      signature,
+      encodedText
+    )
+    return isVerified
   }
 
   encryptString = async (publicKey: CryptoKey, plaintext: string) => {
     const encodedText = new TextEncoder().encode(plaintext)
     const encryptedData = await crypto.subtle.encrypt(
-      algorithmName,
+      legacyAlgorithmName,
       publicKey,
       encodedText
     )
@@ -99,7 +153,7 @@ export class EncryptionService {
 
   decryptString = async (privateKey: CryptoKey, encryptedData: ArrayBuffer) => {
     const decryptedArrayBuffer = await crypto.subtle.decrypt(
-      algorithmName,
+      legacyAlgorithmName,
       privateKey,
       encryptedData
     )

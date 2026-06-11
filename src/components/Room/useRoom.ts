@@ -41,8 +41,6 @@ import { notification } from 'services/Notification'
 
 import { messageTranscriptSizeLimit } from 'config/messaging'
 
-import { usePeerVerification } from './usePeerVerification'
-
 interface UseRoomConfig {
   roomId: string
   userId: string
@@ -57,6 +55,7 @@ interface UserMetadata extends Record<string, any> {
   userId: string
   customUsername: string
   publicKeyString: string
+  identitySignature: ArrayBuffer
 }
 
 export function useRoom(
@@ -293,6 +292,7 @@ export function useRoom(
         userId: peerUserId,
         customUsername: peerCustomUsername,
         publicKeyString,
+        identitySignature,
       },
       { peerId }: MessageContext
     ) => {
@@ -300,6 +300,35 @@ export function useRoom(
         publicKeyString,
         AllowedKeyType.PUBLIC
       )
+
+      let sig: any = identitySignature
+      if (identitySignature && !(identitySignature instanceof ArrayBuffer)) {
+        const anySig = identitySignature as any
+        if (anySig instanceof Uint8Array) {
+          sig = anySig.buffer.slice(
+            anySig.byteOffset,
+            anySig.byteOffset + anySig.byteLength
+          )
+        } else if (anySig.buffer instanceof ArrayBuffer) {
+          sig = anySig.buffer
+        } else if (typeof anySig === 'object') {
+          const vals = Object.values(anySig) as number[]
+          if (vals.length > 0 && typeof vals[0] === 'number') {
+            sig = new Uint8Array(vals).buffer
+          }
+        }
+      }
+
+      const isVerified = await encryptionService.verifySignature(
+        parsedPublicKey,
+        sig || new ArrayBuffer(0),
+        `${roomId}_${peerUserId}`
+      )
+
+      if (!isVerified) {
+        console.warn('Peer verification failed, ignoring metadata')
+        return
+      }
 
       const peerIndex = peerList.findIndex(peer => peer.peerId === peerId)
 
@@ -320,13 +349,12 @@ export function useRoom(
           isTypingDirectMessage: false,
           verificationToken: getUuid(),
           encryptedVerificationToken: new ArrayBuffer(0),
-          verificationState: PeerVerificationState.VERIFYING,
+          verificationState: PeerVerificationState.VERIFIED,
           verificationTimer: null,
         }
 
         setPeerList(prev => [...prev, newPeer])
         sendTypingStatusChange({ isTyping }, { target: peerId })
-        verifyPeer(newPeer)
       } else {
         const oldUsername =
           peerList[peerIndex].customUsername || getPeerName(peerUserId)
@@ -427,13 +455,6 @@ export function useRoom(
 
   const { privateKey } = settingsContext.getUserSettings()
 
-  const { verifyPeer } = usePeerVerification({
-    peerRoom,
-    privateKey,
-    encryptionService,
-    isDirectMessageRoom,
-  })
-
   const sendMessage = async (message: string) => {
     if (isMessageSending) return
 
@@ -469,10 +490,14 @@ export function useRoom(
         try {
           const publicKeyString =
             await encryptionService.stringifyCryptoKey(publicKey)
+          const identitySignature = await encryptionService.signString(
+            privateKey,
+            `${roomId}_${userId}`
+          )
 
           const promises: Promise<any>[] = [
             sendPeerMetadata(
-              { userId, customUsername, publicKeyString },
+              { userId, customUsername, publicKeyString, identitySignature },
               { target: peerId }
             ),
           ]
@@ -569,11 +594,16 @@ export function useRoom(
 
       const publicKeyString =
         await encryptionService.stringifyCryptoKey(publicKey)
+      const identitySignature = await encryptionService.signString(
+        privateKey,
+        `${roomId}_${userId}`
+      )
 
       sendPeerMetadata({
         customUsername,
         userId,
         publicKeyString,
+        identitySignature,
       })
     })()
   }, [
@@ -581,6 +611,8 @@ export function useRoom(
     userId,
     sendPeerMetadata,
     publicKey,
+    privateKey,
+    roomId,
     encryptionService,
     isDirectMessageRoom,
   ])

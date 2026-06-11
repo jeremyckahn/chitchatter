@@ -46,20 +46,41 @@ export class SettingsService {
           const deserializedUserSettings =
             await serialization.deserializeUserSettings(parsedFileResult)
 
-          const encryptedString = await encryption.encryptString(
-            deserializedUserSettings.publicKey,
-            encryptionTestTarget
-          )
+          try {
+            // First try validating as new signature keys
+            const signature = await encryption.signString(
+              deserializedUserSettings.privateKey,
+              encryptionTestTarget
+            )
+            const isVerified = await encryption.verifySignature(
+              deserializedUserSettings.publicKey,
+              signature,
+              encryptionTestTarget
+            )
 
-          const decryptedString = await encryption.decryptString(
-            deserializedUserSettings.privateKey,
-            encryptedString
-          )
+            if (!isVerified) {
+              throw new Error()
+            }
+          } catch (_e) {
+            // Fallback to legacy encryption validation
+            const encryptedString = await encryption.encryptString(
+              deserializedUserSettings.publicKey,
+              encryptionTestTarget
+            )
 
-          // NOTE: This determines whether the public and private keys match
-          // and are compatible with Chitchatter.
-          if (decryptedString !== encryptionTestTarget) {
-            throw new Error()
+            const decryptedString = await encryption.decryptString(
+              deserializedUserSettings.privateKey,
+              encryptedString
+            )
+
+            if (decryptedString !== encryptionTestTarget) {
+              throw new Error()
+            }
+
+            // Key was successfully verified as legacy, so we rotate it to new signature keys
+            const newKeyPair = await encryption.generateKeyPair()
+            deserializedUserSettings.publicKey = newKeyPair.publicKey
+            deserializedUserSettings.privateKey = newKeyPair.privateKey
           }
 
           resolve(deserializedUserSettings)
