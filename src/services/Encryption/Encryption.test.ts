@@ -9,62 +9,77 @@ import {
   EncryptionService,
 } from './Encryption'
 
-// Polyfill window.crypto if not present in the JSDOM environment
+// Always wrap window.crypto.subtle methods to ensure VM/realm context buffer compatibility
 if (typeof window !== 'undefined') {
-  if (!window.crypto) {
-    const subtle = {} as any
-    const originalSubtle = webcrypto.subtle
+  const originalSubtle = window.crypto?.subtle || webcrypto.subtle
+  const subtle = {} as any
 
-    const toNodeBuffer = (val: any): any => {
-      if (!val) return val
-      if (
-        val instanceof ArrayBuffer ||
-        val.constructor?.name === 'ArrayBuffer'
-      ) {
-        return Buffer.from(val)
-      }
-      if (ArrayBuffer.isView(val)) {
-        const view = val as any
-        return Buffer.from(view.buffer, view.byteOffset, view.byteLength)
-      }
-      return val
+  const toNodeBuffer = (val: any): any => {
+    if (!val) return val
+    if (val instanceof ArrayBuffer || val.constructor?.name === 'ArrayBuffer') {
+      return Buffer.from(val)
     }
+    if (ArrayBuffer.isView(val)) {
+      const view = val as any
+      return Buffer.from(view.buffer, view.byteOffset, view.byteLength)
+    }
+    return val
+  }
 
-    const wrapMethod = (name: string) => {
-      subtle[name] = async (...args: any[]) => {
-        const wrappedArgs = args.map(arg => {
-          if (
-            arg instanceof ArrayBuffer ||
-            arg?.constructor?.name === 'ArrayBuffer' ||
-            ArrayBuffer.isView(arg)
-          ) {
-            return toNodeBuffer(arg)
-          }
-          return arg
-        })
-        return (originalSubtle as any)[name](...wrappedArgs)
+  const wrapMethod = (name: string) => {
+    subtle[name] = async (...args: any[]) => {
+      const wrappedArgs = args.map(arg => {
+        if (
+          arg instanceof ArrayBuffer ||
+          arg?.constructor?.name === 'ArrayBuffer' ||
+          ArrayBuffer.isView(arg)
+        ) {
+          return toNodeBuffer(arg)
+        }
+        return arg
+      })
+      return (originalSubtle as any)[name](...wrappedArgs)
+    }
+  }
+
+  ;[
+    'generateKey',
+    'digest',
+    'exportKey',
+    'importKey',
+    'sign',
+    'verify',
+    'encrypt',
+    'decrypt',
+  ].forEach(wrapMethod)
+
+  if (window.crypto) {
+    try {
+      Object.defineProperty(window.crypto, 'subtle', {
+        value: subtle,
+        writable: true,
+        configurable: true,
+      })
+    } catch {
+      for (const key of Object.keys(subtle)) {
+        try {
+          ;(window.crypto.subtle as any)[key] = subtle[key]
+        } catch {
+          // Ignore write failure
+        }
       }
     }
-
-    ;[
-      'generateKey',
-      'digest',
-      'exportKey',
-      'importKey',
-      'sign',
-      'verify',
-      'encrypt',
-      'decrypt',
-    ].forEach(wrapMethod)
-
+  } else {
     Object.defineProperty(window, 'crypto', {
       value: {
         ...webcrypto,
         subtle,
       },
       writable: true,
+      configurable: true,
     })
   }
+
   // Align JSDOM window.ArrayBuffer with Node's global ArrayBuffer to prevent cross-realm instanceof issues
   window.ArrayBuffer = globalThis.ArrayBuffer
 }
