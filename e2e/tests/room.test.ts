@@ -255,7 +255,9 @@ test.describe('Multi-user Room Interaction', () => {
       let hasVerificationFailedWarning = false
       page1.on('console', msg => {
         if (
-          msg.text().includes('Peer verification failed, ignoring metadata')
+          msg
+            .text()
+            .includes('Peer verification failed, marking peer as unverified')
         ) {
           hasVerificationFailedWarning = true
         }
@@ -312,6 +314,14 @@ test.describe('Multi-user Room Interaction', () => {
         `[aria-label="${verifiedTooltipText}"]`
       )
       await expect(verifiedElement1.first()).not.toBeVisible({ timeout: 5000 })
+
+      // Verify that page1 shows the verification failure tooltip/icon instead
+      const unverifiedTooltipText =
+        'This person could not be verified with public-key cryptography. They may be misrepresenting themself. Be careful with what you share with them.'
+      const unverifiedElement1 = page1.locator(
+        `[aria-label="${unverifiedTooltipText}"]`
+      )
+      await expect(unverifiedElement1.first()).toBeVisible({ timeout: 25000 })
     } finally {
       // Clean up
       if (context1) {

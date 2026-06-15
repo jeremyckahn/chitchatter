@@ -320,8 +320,7 @@ export function useRoom(
       )
 
       if (!isVerified) {
-        console.warn('Peer verification failed, ignoring metadata')
-        return
+        console.warn('Peer verification failed, marking peer as unverified')
       }
 
       const peerIndex = peerList.findIndex(peer => peer.peerId === peerId)
@@ -343,7 +342,9 @@ export function useRoom(
           isTypingDirectMessage: false,
           verificationToken: getUuid(),
           encryptedVerificationToken: new ArrayBuffer(0),
-          verificationState: PeerVerificationState.VERIFIED,
+          verificationState: isVerified
+            ? PeerVerificationState.VERIFIED
+            : PeerVerificationState.UNVERIFIED,
           verificationTimer: null,
         }
 
@@ -360,6 +361,9 @@ export function useRoom(
             ...newPeerList[peerIndex],
             userId: peerUserId,
             customUsername: peerCustomUsername,
+            verificationState: isVerified
+              ? PeerVerificationState.VERIFIED
+              : PeerVerificationState.UNVERIFIED,
           }
           newPeerList[peerIndex] = newPeer
 
