@@ -12,8 +12,56 @@ import {
 // Polyfill window.crypto if not present in the JSDOM environment
 if (typeof window !== 'undefined') {
   if (!window.crypto) {
+    const subtle = {} as any
+    const originalSubtle = webcrypto.subtle
+
+    const toNodeBuffer = (val: any): any => {
+      if (!val) return val
+      if (
+        val instanceof ArrayBuffer ||
+        val.constructor?.name === 'ArrayBuffer'
+      ) {
+        return Buffer.from(val)
+      }
+      if (ArrayBuffer.isView(val)) {
+        const view = val as any
+        return Buffer.from(view.buffer, view.byteOffset, view.byteLength)
+      }
+      return val
+    }
+
+    const wrapMethod = (name: string) => {
+      subtle[name] = async (...args: any[]) => {
+        const wrappedArgs = args.map(arg => {
+          if (
+            arg instanceof ArrayBuffer ||
+            arg?.constructor?.name === 'ArrayBuffer' ||
+            ArrayBuffer.isView(arg)
+          ) {
+            return toNodeBuffer(arg)
+          }
+          return arg
+        })
+        return (originalSubtle as any)[name](...wrappedArgs)
+      }
+    }
+
+    ;[
+      'generateKey',
+      'digest',
+      'exportKey',
+      'importKey',
+      'sign',
+      'verify',
+      'encrypt',
+      'decrypt',
+    ].forEach(wrapMethod)
+
     Object.defineProperty(window, 'crypto', {
-      value: webcrypto,
+      value: {
+        ...webcrypto,
+        subtle,
+      },
       writable: true,
     })
   }
