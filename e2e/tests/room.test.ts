@@ -165,7 +165,7 @@ test.describe('Multi-user Room Interaction', () => {
       await expect(page1.getByText(message1)).toBeVisible()
 
       // Wait for P2P connection and message propagation
-      await expect(page2.getByText(message1)).toBeVisible({ timeout: 30000 })
+      await expect(page2.getByText(message1)).toBeVisible({ timeout: 25000 })
 
       // User 2 sends a message
       const chatInput2 = page2.getByPlaceholder('Your message').first()
@@ -224,12 +224,12 @@ test.describe('Multi-user Room Interaction', () => {
       const verifiedElement1 = page1.locator(
         `[aria-label="${verifiedTooltipText}"]`
       )
-      await expect(verifiedElement1.first()).toBeVisible({ timeout: 30000 })
+      await expect(verifiedElement1.first()).toBeVisible({ timeout: 25000 })
 
       const verifiedElement2 = page2.locator(
         `[aria-label="${verifiedTooltipText}"]`
       )
-      await expect(verifiedElement2.first()).toBeVisible({ timeout: 30000 })
+      await expect(verifiedElement2.first()).toBeVisible({ timeout: 25000 })
     } finally {
       // Clean up
       if (context1) {
