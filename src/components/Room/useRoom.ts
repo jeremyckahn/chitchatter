@@ -35,7 +35,12 @@ import {
   VideoState,
 } from 'models/chat'
 import { PeerAction } from 'models/network'
-import { AllowedKeyType, encryption } from 'services/Encryption'
+import {
+  AllowedKeyType,
+  encryption,
+  arrayBufferToBase64,
+  base64ToArrayBuffer,
+} from 'services/Encryption'
 import { FileTransferService } from 'services/FileTransfer'
 import { notification } from 'services/Notification'
 
@@ -55,7 +60,7 @@ interface UserMetadata extends Record<string, any> {
   userId: string
   customUsername: string
   publicKeyString: string
-  identitySignature: ArrayBuffer
+  identitySignature: string
 }
 
 export function useRoom(
@@ -301,27 +306,11 @@ export function useRoom(
         AllowedKeyType.PUBLIC
       )
 
-      let sig: any = identitySignature
-      if (identitySignature && !(identitySignature instanceof ArrayBuffer)) {
-        const anySig = identitySignature as any
-        if (anySig instanceof Uint8Array) {
-          sig = anySig.buffer.slice(
-            anySig.byteOffset,
-            anySig.byteOffset + anySig.byteLength
-          )
-        } else if (anySig.buffer instanceof ArrayBuffer) {
-          sig = anySig.buffer
-        } else if (typeof anySig === 'object') {
-          const vals = Object.values(anySig) as number[]
-          if (vals.length > 0 && typeof vals[0] === 'number') {
-            sig = new Uint8Array(vals).buffer
-          }
-        }
-      }
+      const sig = base64ToArrayBuffer(identitySignature)
 
       const isVerified = await encryptionService.verifySignature(
         parsedPublicKey,
-        sig || new ArrayBuffer(0),
+        sig,
         `${roomId}_${peerUserId}`
       )
 
@@ -490,9 +479,11 @@ export function useRoom(
         try {
           const publicKeyString =
             await encryptionService.stringifyCryptoKey(publicKey)
-          const identitySignature = await encryptionService.signString(
-            privateKey,
-            `${roomId}_${userId}`
+          const identitySignature = arrayBufferToBase64(
+            await encryptionService.signString(
+              privateKey,
+              `${roomId}_${userId}`
+            )
           )
 
           const promises: Promise<any>[] = [
@@ -594,9 +585,8 @@ export function useRoom(
 
       const publicKeyString =
         await encryptionService.stringifyCryptoKey(publicKey)
-      const identitySignature = await encryptionService.signString(
-        privateKey,
-        `${roomId}_${userId}`
+      const identitySignature = arrayBufferToBase64(
+        await encryptionService.signString(privateKey, `${roomId}_${userId}`)
       )
 
       sendPeerMetadata({

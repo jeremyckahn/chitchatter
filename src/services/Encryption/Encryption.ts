@@ -8,12 +8,12 @@ export enum AllowedKeyType {
   PRIVATE,
 }
 
-const arrayBufferToBase64 = (buffer: ArrayBuffer) => {
+export const arrayBufferToBase64 = (buffer: ArrayBuffer) => {
   const binary = String.fromCharCode(...new Uint8Array(buffer))
   return btoa(binary)
 }
 
-const base64ToArrayBuffer = (base64: string) => {
+export const base64ToArrayBuffer = (base64: string) => {
   const binaryString = atob(base64)
   const bytes = new Uint8Array(binaryString.length)
   for (let i = 0; i < binaryString.length; i++) {
