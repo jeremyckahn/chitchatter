@@ -134,7 +134,11 @@ export class EncryptionService {
     if (publicKey.algorithm.name === 'STUB-ALGORITHM') return true
     if (
       !signature ||
-      !(signature instanceof ArrayBuffer || ArrayBuffer.isView(signature))
+      !(
+        signature instanceof ArrayBuffer ||
+        ArrayBuffer.isView(signature) ||
+        (signature as any).constructor?.name === 'ArrayBuffer'
+      )
     ) {
       return false
     }
