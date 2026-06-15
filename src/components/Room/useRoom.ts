@@ -63,6 +63,11 @@ interface UserMetadata extends Record<string, any> {
   identitySignature: string
 }
 
+const getIdentityVerificationMessage = (
+  roomId: string,
+  userId: string
+): string => `${roomId}_${userId}`
+
 export function useRoom(
   { password, ...roomConfig }: RoomConfig,
   {
@@ -311,7 +316,7 @@ export function useRoom(
       const isVerified = await encryptionService.verifySignature(
         parsedPublicKey,
         sig,
-        `${roomId}_${peerUserId}`
+        getIdentityVerificationMessage(roomId, peerUserId)
       )
 
       if (!isVerified) {
@@ -482,7 +487,7 @@ export function useRoom(
           const identitySignature = arrayBufferToBase64(
             await encryptionService.signString(
               privateKey,
-              `${roomId}_${userId}`
+              getIdentityVerificationMessage(roomId, userId)
             )
           )
 
@@ -586,7 +591,10 @@ export function useRoom(
       const publicKeyString =
         await encryptionService.stringifyCryptoKey(publicKey)
       const identitySignature = arrayBufferToBase64(
-        await encryptionService.signString(privateKey, `${roomId}_${userId}`)
+        await encryptionService.signString(
+          privateKey,
+          getIdentityVerificationMessage(roomId, userId)
+        )
       )
 
       sendPeerMetadata({
