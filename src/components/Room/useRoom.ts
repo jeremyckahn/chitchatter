@@ -60,7 +60,7 @@ interface UserMetadata extends Record<string, any> {
   userId: string
   customUsername: string
   publicKeyString: string
-  identitySignature: string
+  identitySignatureBase64: string
 }
 
 const getIdentityVerificationMessage = (
@@ -302,7 +302,7 @@ export function useRoom(
         userId: peerUserId,
         customUsername: peerCustomUsername,
         publicKeyString,
-        identitySignature,
+        identitySignatureBase64,
       },
       { peerId }: MessageContext
     ) => {
@@ -311,11 +311,10 @@ export function useRoom(
         AllowedKeyType.PUBLIC
       )
 
-      const sig = base64ToArrayBuffer(identitySignature)
-
+      const identitySignature = base64ToArrayBuffer(identitySignatureBase64)
       const isVerified = await encryptionService.verifySignature(
         parsedPublicKey,
-        sig,
+        identitySignature,
         getIdentityVerificationMessage(roomId, peerUserId)
       )
 
@@ -488,16 +487,20 @@ export function useRoom(
         try {
           const publicKeyString =
             await encryptionService.stringifyCryptoKey(publicKey)
-          const identitySignature = arrayBufferToBase64(
-            await encryptionService.signString(
-              privateKey,
-              getIdentityVerificationMessage(roomId, userId)
-            )
+          const identitySignature = await encryptionService.signString(
+            privateKey,
+            getIdentityVerificationMessage(roomId, userId)
           )
+          const identitySignatureBase64 = arrayBufferToBase64(identitySignature)
 
           const promises: Promise<any>[] = [
             sendPeerMetadata(
-              { userId, customUsername, publicKeyString, identitySignature },
+              {
+                userId,
+                customUsername,
+                publicKeyString,
+                identitySignatureBase64,
+              },
               { target: peerId }
             ),
           ]
@@ -594,18 +597,17 @@ export function useRoom(
 
       const publicKeyString =
         await encryptionService.stringifyCryptoKey(publicKey)
-      const identitySignature = arrayBufferToBase64(
-        await encryptionService.signString(
-          privateKey,
-          getIdentityVerificationMessage(roomId, userId)
-        )
+      const identitySignature = await encryptionService.signString(
+        privateKey,
+        getIdentityVerificationMessage(roomId, userId)
       )
+      const identitySignatureBase64 = arrayBufferToBase64(identitySignature)
 
       sendPeerMetadata({
         customUsername,
         userId,
         publicKeyString,
-        identitySignature,
+        identitySignatureBase64,
       })
     })()
   }, [
