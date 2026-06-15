@@ -23,7 +23,15 @@ export const base64ToArrayBuffer = (base64: string) => {
   return bytes.buffer
 }
 
+// The primary algorithm used for peer verification.
+// RSASSA-PKCS1-v1_5 is a signature scheme (signing/verification) used in the
+// new signature-based peer authentication flow to prove a peer's identity.
 const algorithmName = 'RSASSA-PKCS1-v1_5'
+
+// The legacy algorithm historically used for peer verification in Chitchatter.
+// Previously, authentication relied on public-key encryption/decryption (challenge-response)
+// via RSA-OAEP. With the migration to signature-based authentication, RSA-OAEP keys are
+// considered legacy and are automatically rotated to signature keys upon booting the app.
 const legacyAlgorithmName = 'RSA-OAEP'
 
 const algorithmHash = 'SHA-256'
