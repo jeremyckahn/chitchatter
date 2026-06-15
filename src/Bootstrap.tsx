@@ -25,7 +25,6 @@ import { RouterType } from 'models/router'
 import { UserSettings } from 'models/settings'
 import { QueryParamKeys } from 'models/shell'
 import { PersistedStorageKeys } from 'models/storage'
-import { encryption } from 'services/Encryption'
 import { About } from 'pages/About'
 import { Disclaimer } from 'pages/Disclaimer'
 import { Home } from 'pages/Home'
@@ -170,29 +169,6 @@ const Bootstrap = ({
             )
           }
         }
-
-        try {
-          const testString = 'chitchatter-migration-test'
-          const signature = await encryption.signString(
-            finalSettings.privateKey,
-            testString
-          )
-          const isVerified = await encryption.verifySignature(
-            finalSettings.publicKey,
-            signature,
-            testString
-          )
-          if (!isVerified) {
-            throw new Error('Verification failed')
-          }
-        } catch (_e) {
-          // If signature validation fails, it's likely a legacy encryption key.
-          // We generate a new keypair and overwrite it.
-          const newKeyPair = await encryption.generateKeyPair()
-          finalSettings.publicKey = newKeyPair.publicKey
-          finalSettings.privateKey = newKeyPair.privateKey
-        }
-
         return finalSettings
       }
 

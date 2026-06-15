@@ -109,36 +109,27 @@ test.describe('Migration', () => {
     const usernameText = page1.getByText(/LegacyUser123/)
     await expect(usernameText).toBeVisible()
 
-    // Wait for the new key pair to be generated and stored
-    await page1.waitForFunction(
-      async legacyPubKey => {
-        return new Promise<boolean>(resolve => {
-          const request = indexedDB.open('chitchatter')
-          request.onerror = () => resolve(false)
-          request.onsuccess = () => {
-            const db = request.result
-            try {
-              const tx = db.transaction('keyvaluepairs', 'readonly')
-              const store = tx.objectStore('keyvaluepairs')
-              const getRequest = store.get('userSettings')
-              getRequest.onsuccess = () => {
-                const settings = getRequest.result
-                if (settings && settings.publicKey !== legacyPubKey) {
-                  resolve(true)
-                } else {
-                  resolve(false)
-                }
-              }
-              getRequest.onerror = () => resolve(false)
-            } catch (_e) {
-              resolve(false)
-            }
+    // Retrieve updated settings from IndexedDB and assert legacy key reuse
+    const updatedSettings = await page1.evaluate(async () => {
+      return new Promise<any>((resolve, reject) => {
+        const request = indexedDB.open('chitchatter')
+        request.onerror = () => reject(request.error)
+        request.onsuccess = () => {
+          const db = request.result
+          try {
+            const tx = db.transaction('keyvaluepairs', 'readonly')
+            const store = tx.objectStore('keyvaluepairs')
+            const getRequest = store.get('userSettings')
+            getRequest.onsuccess = () => resolve(getRequest.result)
+            getRequest.onerror = () => reject(getRequest.error)
+          } catch (e) {
+            reject(e)
           }
-        })
-      },
-      legacyPublicKeyBase64,
-      { timeout: 15000 }
-    )
+        }
+      })
+    })
+
+    expect(updatedSettings.publicKey).toBe(legacyPublicKeyBase64)
 
     // Join a public room with the migrated user
     await page1.goto('/')

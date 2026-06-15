@@ -28,12 +28,6 @@ export const base64ToArrayBuffer = (base64: string) => {
 // new signature-based peer authentication flow to prove a peer's identity.
 const algorithmName = 'RSASSA-PKCS1-v1_5'
 
-// The legacy algorithm historically used for peer verification in Chitchatter.
-// Previously, authentication relied on public-key encryption/decryption (challenge-response)
-// via RSA-OAEP. With the migration to signature-based authentication, RSA-OAEP keys are
-// considered legacy and are automatically rotated to signature keys upon booting the app.
-const legacyAlgorithmName = 'RSA-OAEP'
-
 const algorithmHash = 'SHA-256'
 
 export class EncryptionService {
@@ -84,31 +78,16 @@ export class EncryptionService {
     const format = type === AllowedKeyType.PUBLIC ? 'spki' : 'pkcs8'
     const keyData = base64ToArrayBuffer(keyString)
 
-    try {
-      // Try importing as the NEW signature key
-      return await window.crypto.subtle.importKey(
-        format,
-        keyData,
-        {
-          name: algorithmName,
-          hash: algorithmHash,
-        },
-        true,
-        type === AllowedKeyType.PUBLIC ? ['verify'] : ['sign']
-      )
-    } catch (_error) {
-      // Fall back to importing as a LEGACY encryption key
-      return await window.crypto.subtle.importKey(
-        format,
-        keyData,
-        {
-          name: legacyAlgorithmName,
-          hash: algorithmHash,
-        },
-        true,
-        type === AllowedKeyType.PUBLIC ? ['encrypt'] : ['decrypt']
-      )
-    }
+    return await window.crypto.subtle.importKey(
+      format,
+      keyData,
+      {
+        name: algorithmName,
+        hash: algorithmHash,
+      },
+      true,
+      type === AllowedKeyType.PUBLIC ? ['verify'] : ['sign']
+    )
   }
 
   signString = async (
@@ -150,29 +129,6 @@ export class EncryptionService {
       encodedText
     )
     return isVerified
-  }
-
-  encryptString = async (publicKey: CryptoKey, plaintext: string) => {
-    const encodedText = new TextEncoder().encode(plaintext)
-    const encryptedData = await crypto.subtle.encrypt(
-      legacyAlgorithmName,
-      publicKey,
-      encodedText
-    )
-
-    return encryptedData
-  }
-
-  decryptString = async (privateKey: CryptoKey, encryptedData: ArrayBuffer) => {
-    const decryptedArrayBuffer = await crypto.subtle.decrypt(
-      legacyAlgorithmName,
-      privateKey,
-      encryptedData
-    )
-
-    const decryptedString = new TextDecoder().decode(decryptedArrayBuffer)
-
-    return decryptedString
   }
 }
 
