@@ -38,8 +38,7 @@ import { PeerAction } from 'models/network'
 import {
   AllowedKeyType,
   encryption,
-  arrayBufferToBase64,
-  base64ToArrayBuffer,
+  EncryptionService,
 } from 'services/Encryption'
 import { FileTransferService } from 'services/FileTransfer'
 import { notification } from 'services/Notification'
@@ -311,7 +310,9 @@ export function useRoom(
         AllowedKeyType.PUBLIC
       )
 
-      const identitySignature = base64ToArrayBuffer(identitySignatureBase64)
+      const identitySignature = EncryptionService.base64ToArrayBuffer(
+        identitySignatureBase64
+      )
       const isVerified = await encryptionService.verifySignature(
         parsedPublicKey,
         identitySignature,
@@ -491,7 +492,8 @@ export function useRoom(
             privateKey,
             getIdentityVerificationMessage(roomId, userId)
           )
-          const identitySignatureBase64 = arrayBufferToBase64(identitySignature)
+          const identitySignatureBase64 =
+            EncryptionService.arrayBufferToBase64(identitySignature)
 
           const promises: Promise<any>[] = [
             sendPeerMetadata(
@@ -601,7 +603,8 @@ export function useRoom(
         privateKey,
         getIdentityVerificationMessage(roomId, userId)
       )
-      const identitySignatureBase64 = arrayBufferToBase64(identitySignature)
+      const identitySignatureBase64 =
+        EncryptionService.arrayBufferToBase64(identitySignature)
 
       sendPeerMetadata({
         customUsername,

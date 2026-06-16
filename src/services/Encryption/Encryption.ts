@@ -8,21 +8,6 @@ export enum AllowedKeyType {
   PRIVATE,
 }
 
-export const arrayBufferToBase64 = (buffer: ArrayBuffer) => {
-  const binary = String.fromCharCode(...new Uint8Array(buffer))
-  return btoa(binary)
-}
-
-export const base64ToArrayBuffer = (base64: string) => {
-  const binaryString = atob(base64)
-  const bytes = new Uint8Array(binaryString.length)
-  for (let i = 0; i < binaryString.length; i++) {
-    bytes[i] = binaryString.charCodeAt(i)
-  }
-
-  return bytes.buffer
-}
-
 // The primary algorithm used for peer verification.
 // RSASSA-PKCS1-v1_5 is a signature scheme (signing/verification) used in the
 // new signature-based peer authentication flow to prove a peer's identity.
@@ -31,6 +16,23 @@ const algorithmName = 'RSASSA-PKCS1-v1_5'
 const algorithmHash = 'SHA-256'
 
 export class EncryptionService {
+  static arrayBufferToBase64(buffer: ArrayBuffer): string {
+    const binary = String.fromCharCode(...new Uint8Array(buffer))
+
+    return btoa(binary)
+  }
+
+  static base64ToArrayBuffer(base64: string): ArrayBuffer {
+    const binaryString = atob(base64)
+    const bytes = new Uint8Array(binaryString.length)
+
+    for (let i = 0; i < binaryString.length; i++) {
+      bytes[i] = binaryString.charCodeAt(i)
+    }
+
+    return bytes.buffer
+  }
+
   cryptoKeyStub: CryptoKey = {
     algorithm: { name: 'STUB-ALGORITHM' },
     extractable: false,
@@ -69,14 +71,15 @@ export class EncryptionService {
       cryptoKey
     )
 
-    const exportedKeyAsString = arrayBufferToBase64(exportedKey)
+    const exportedKeyAsString =
+      EncryptionService.arrayBufferToBase64(exportedKey)
 
     return exportedKeyAsString
   }
 
   parseCryptoKeyString = async (keyString: string, type: AllowedKeyType) => {
     const format = type === AllowedKeyType.PUBLIC ? 'spki' : 'pkcs8'
-    const keyData = base64ToArrayBuffer(keyString)
+    const keyData = EncryptionService.base64ToArrayBuffer(keyString)
 
     return await window.crypto.subtle.importKey(
       format,

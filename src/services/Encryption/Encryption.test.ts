@@ -2,12 +2,7 @@ import { webcrypto } from 'node:crypto'
 
 import { describe, it, expect } from 'vitest'
 
-import {
-  AllowedKeyType,
-  arrayBufferToBase64,
-  base64ToArrayBuffer,
-  EncryptionService,
-} from './Encryption'
+import { AllowedKeyType, EncryptionService } from './Encryption'
 
 // Always wrap window.crypto.subtle methods to ensure VM/realm context buffer
 // compatibility. Needed for the CI environment's Node 20
@@ -93,13 +88,39 @@ if (typeof window !== 'undefined') {
   window.ArrayBuffer = globalThis.ArrayBuffer
 }
 
-describe('Encryption Service Helpers', () => {
+describe('EncryptionService Static Helpers', () => {
   it('should convert an ArrayBuffer to base64 and back', () => {
     const data = new Uint8Array(new TextEncoder().encode('Hello'))
-    const base64 = arrayBufferToBase64(data.buffer)
+    const base64 = EncryptionService.arrayBufferToBase64(data.buffer)
+
     expect(base64).toBe('SGVsbG8=')
 
-    const decodedBuffer = base64ToArrayBuffer(base64)
+    const decodedBuffer = EncryptionService.base64ToArrayBuffer(base64)
+
+    expect(new Uint8Array(decodedBuffer)).toEqual(data)
+  })
+
+  it('should handle empty buffers', () => {
+    const data = new Uint8Array(0)
+    const base64 = EncryptionService.arrayBufferToBase64(data.buffer)
+
+    expect(base64).toBe('')
+
+    const decodedBuffer = EncryptionService.base64ToArrayBuffer(base64)
+
+    expect(new Uint8Array(decodedBuffer)).toEqual(data)
+  })
+
+  it('should preserve binary data integrity across all byte values 0-255', () => {
+    const data = new Uint8Array(256)
+
+    for (let i = 0; i < 256; i++) {
+      data[i] = i
+    }
+
+    const base64 = EncryptionService.arrayBufferToBase64(data.buffer)
+    const decodedBuffer = EncryptionService.base64ToArrayBuffer(base64)
+
     expect(new Uint8Array(decodedBuffer)).toEqual(data)
   })
 })
