@@ -9,20 +9,26 @@ import {
   EncryptionService,
 } from './Encryption'
 
-// Always wrap window.crypto.subtle methods to ensure VM/realm context buffer compatibility
+// Always wrap window.crypto.subtle methods to ensure VM/realm context buffer
+// compatibility. Needed for the CI environment's Node 20
+// TODO: Update CI Node version and delete this shim
 if (typeof window !== 'undefined') {
   const originalSubtle = window.crypto?.subtle || webcrypto.subtle
   const subtle = {} as any
 
   const toNodeBuffer = (val: any): any => {
     if (!val) return val
+
     if (val instanceof ArrayBuffer || val.constructor?.name === 'ArrayBuffer') {
       return Buffer.from(val)
     }
+
     if (ArrayBuffer.isView(val)) {
       const view = val as any
+
       return Buffer.from(view.buffer, view.byteOffset, view.byteLength)
     }
+
     return val
   }
 
@@ -36,8 +42,10 @@ if (typeof window !== 'undefined') {
         ) {
           return toNodeBuffer(arg)
         }
+
         return arg
       })
+
       return (originalSubtle as any)[name](...wrappedArgs)
     }
   }
@@ -80,13 +88,14 @@ if (typeof window !== 'undefined') {
     })
   }
 
-  // Align JSDOM window.ArrayBuffer with Node's global ArrayBuffer to prevent cross-realm instanceof issues
+  // Align JSDOM window.ArrayBuffer with Node's global ArrayBuffer to prevent
+  // cross-realm instanceof issues
   window.ArrayBuffer = globalThis.ArrayBuffer
 }
 
 describe('Encryption Service Helpers', () => {
   it('should convert an ArrayBuffer to base64 and back', () => {
-    const data = new Uint8Array([72, 101, 108, 108, 111]) // "Hello"
+    const data = new Uint8Array(new TextEncoder().encode('Hello'))
     const base64 = arrayBufferToBase64(data.buffer)
     expect(base64).toBe('SGVsbG8=')
 
@@ -113,6 +122,7 @@ describe('EncryptionService', () => {
       service.cryptoKeyStub,
       'hello world'
     )
+
     expect(signature.byteLength).toBe(0)
 
     const isVerified = await service.verifySignature(
@@ -120,6 +130,7 @@ describe('EncryptionService', () => {
       signature,
       'hello world'
     )
+
     expect(isVerified).toBe(true)
   })
 
@@ -131,6 +142,7 @@ describe('EncryptionService', () => {
       null as any,
       'test'
     )
+
     expect(isVerified).toBe(false)
 
     // Non-ArrayBuffer signature
@@ -139,14 +151,15 @@ describe('EncryptionService', () => {
       {} as any,
       'test'
     )
+
     expect(isVerified).toBe(false)
   })
 
   it('should sign and verify strings using generated keys', async () => {
     const keyPair = await service.generateKeyPair()
     const plaintext = 'This is a secret message.'
-
     const signature = await service.signString(keyPair.privateKey, plaintext)
+
     expect(signature.byteLength).toBeGreaterThan(0)
 
     const isVerified = await service.verifySignature(
@@ -154,6 +167,7 @@ describe('EncryptionService', () => {
       signature,
       plaintext
     )
+
     expect(isVerified).toBe(true)
 
     // Modified plaintext should fail verification
@@ -162,6 +176,7 @@ describe('EncryptionService', () => {
       signature,
       'Different message.'
     )
+
     expect(isVerifiedDiffText).toBe(false)
 
     // Modified signature should fail verification
@@ -172,6 +187,7 @@ describe('EncryptionService', () => {
       modifiedSignature.buffer,
       plaintext
     )
+
     expect(isVerifiedCorrupted).toBe(false)
   })
 
