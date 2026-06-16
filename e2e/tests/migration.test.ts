@@ -35,6 +35,7 @@ test.describe('Migration', () => {
 
       const arrayBufferToBase64 = (buffer: ArrayBuffer) =>
         btoa(String.fromCharCode(...new Uint8Array(buffer)))
+
       return {
         publicKey: arrayBufferToBase64(pubBuffer),
         privateKey: arrayBufferToBase64(privBuffer),
@@ -65,16 +66,19 @@ test.describe('Migration', () => {
         request.onerror = () => reject(request.error)
         request.onupgradeneeded = () => {
           const db = request.result
+
           if (!db.objectStoreNames.contains('keyvaluepairs')) {
             db.createObjectStore('keyvaluepairs')
           }
         }
+
         request.onsuccess = () => {
           const db = request.result
           try {
             const tx = db.transaction('keyvaluepairs', 'readwrite')
             const store = tx.objectStore('keyvaluepairs')
             const putRequest = store.put(settings, 'userSettings')
+
             putRequest.onsuccess = () => resolve()
             putRequest.onerror = () => reject(putRequest.error)
           } catch (e) {
@@ -113,13 +117,16 @@ test.describe('Migration', () => {
     const updatedSettings = await page1.evaluate(async () => {
       return new Promise<any>((resolve, reject) => {
         const request = indexedDB.open('chitchatter')
+
         request.onerror = () => reject(request.error)
         request.onsuccess = () => {
           const db = request.result
+
           try {
             const tx = db.transaction('keyvaluepairs', 'readonly')
             const store = tx.objectStore('keyvaluepairs')
             const getRequest = store.get('userSettings')
+
             getRequest.onsuccess = () => resolve(getRequest.result)
             getRequest.onerror = () => reject(getRequest.error)
           } catch (e) {
@@ -138,8 +145,10 @@ test.describe('Migration', () => {
     const joinPublicRoomButton = page1.getByRole('button', {
       name: /join public room/i,
     })
+
     await joinPublicRoomButton.click()
     await page1.waitForURL(/\/public\/.+/)
+
     const roomUrl = page1.url()
 
     // 2. Create context 2 (Fresh User)
@@ -157,7 +166,7 @@ test.describe('Migration', () => {
     // Wait for the peer join alert to verify connection is established
     await expect(
       page1.getByText(/someone has joined the room/i).first()
-    ).toBeVisible({ timeout: 30000 })
+    ).toBeVisible({ timeout: 25000 })
 
     // Migrated user sends a message
     const chatInput1 = page1.getByPlaceholder('Your message').first()
@@ -169,7 +178,7 @@ test.describe('Migration', () => {
     await expect(page1.getByText(message1)).toBeVisible()
 
     // Fresh user should see the message (meaning signature verification passed)
-    await expect(page2.getByText(message1)).toBeVisible({ timeout: 30000 })
+    await expect(page2.getByText(message1)).toBeVisible({ timeout: 25000 })
 
     // Fresh user sends a message
     const chatInput2 = page2.getByPlaceholder('Your message').first()
@@ -181,7 +190,7 @@ test.describe('Migration', () => {
     await expect(page2.getByText(message2)).toBeVisible()
 
     // Migrated user should see the fresh user's message
-    await expect(page1.getByText(message2)).toBeVisible({ timeout: 30000 })
+    await expect(page1.getByText(message2)).toBeVisible({ timeout: 25000 })
 
     // Clean up
     await context1.close()

@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test'
+import { BrowserContext, expect, test } from '@playwright/test'
 
 test.describe('Room Functionality', () => {
   test.beforeEach(async ({ page }) => {
@@ -232,20 +232,17 @@ test.describe('Multi-user Room Interaction', () => {
       await expect(verifiedElement2.first()).toBeVisible({ timeout: 25000 })
     } finally {
       // Clean up
-      if (context1) {
-        await context1.close()
-      }
-      if (context2) {
-        await context2.close()
-      }
+      await context1?.close()
+      await context2?.close()
     }
   })
 
   test('should fail peer verification when signature is invalid', async ({
     browser,
   }) => {
-    let context1
-    let context2
+    let context1: BrowserContext | undefined
+    let context2: BrowserContext | undefined
+
     try {
       // Create first user context
       context1 = await browser.newContext()
@@ -253,6 +250,7 @@ test.describe('Multi-user Room Interaction', () => {
 
       // Listen for the console warning on page1
       let hasVerificationFailedWarning = false
+
       page1.on('console', msg => {
         if (
           msg
@@ -270,8 +268,10 @@ test.describe('Multi-user Room Interaction', () => {
       const joinPublicRoomButton = page1.getByRole('button', {
         name: /join public room/i,
       })
+
       await joinPublicRoomButton.click()
       await page1.waitForURL(/\/public\/.+/)
+
       const roomUrl = page1.url()
 
       // Create second user context
@@ -280,12 +280,15 @@ test.describe('Multi-user Room Interaction', () => {
       // Inject init script to mock signature failure
       await context2.addInitScript(() => {
         const originalSign = window.crypto.subtle.sign
+
         window.crypto.subtle.sign = async (algorithm, key, data) => {
           const algName =
             typeof algorithm === 'string' ? algorithm : algorithm.name
+
           if (algName === 'RSASSA-PKCS1-v1_5') {
             return new Uint8Array([1, 2, 3, 4]).buffer
           }
+
           return originalSign.call(window.crypto.subtle, algorithm, key, data)
         }
       })
@@ -313,6 +316,7 @@ test.describe('Multi-user Room Interaction', () => {
       const verifiedElement1 = page1.locator(
         `[aria-label="${verifiedTooltipText}"]`
       )
+
       await expect(verifiedElement1.first()).not.toBeVisible({ timeout: 5000 })
 
       // Verify that page1 shows the verification failure tooltip/icon instead
@@ -321,6 +325,7 @@ test.describe('Multi-user Room Interaction', () => {
       const unverifiedElement1 = page1.locator(
         `[aria-label="${unverifiedTooltipText}"]`
       )
+
       await expect(unverifiedElement1.first()).toBeVisible({ timeout: 25000 })
     } finally {
       // Clean up

@@ -324,6 +324,10 @@ export function useRoom(
 
       const peerIndex = peerList.findIndex(peer => peer.peerId === peerId)
 
+      const verificationState = isVerified
+        ? PeerVerificationState.VERIFIED
+        : PeerVerificationState.UNVERIFIED
+
       if (peerIndex === -1) {
         const newPeer: Peer = {
           peerId,
@@ -341,9 +345,7 @@ export function useRoom(
           isTypingDirectMessage: false,
           verificationToken: getUuid(),
           encryptedVerificationToken: new ArrayBuffer(0),
-          verificationState: isVerified
-            ? PeerVerificationState.VERIFIED
-            : PeerVerificationState.UNVERIFIED,
+          verificationState: verificationState,
           verificationTimer: null,
         }
 
@@ -360,9 +362,7 @@ export function useRoom(
             ...newPeerList[peerIndex],
             userId: peerUserId,
             customUsername: peerCustomUsername,
-            verificationState: isVerified
-              ? PeerVerificationState.VERIFIED
-              : PeerVerificationState.UNVERIFIED,
+            verificationState,
           }
           newPeerList[peerIndex] = newPeer
 
