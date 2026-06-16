@@ -8,26 +8,31 @@ export enum AllowedKeyType {
   PRIVATE,
 }
 
-const arrayBufferToBase64 = (buffer: ArrayBuffer) => {
-  const binary = String.fromCharCode(...new Uint8Array(buffer))
-  return btoa(binary)
-}
-
-const base64ToArrayBuffer = (base64: string) => {
-  const binaryString = atob(base64)
-  const bytes = new Uint8Array(binaryString.length)
-  for (let i = 0; i < binaryString.length; i++) {
-    bytes[i] = binaryString.charCodeAt(i)
-  }
-
-  return bytes.buffer
-}
-
-const algorithmName = 'RSA-OAEP'
+// The primary algorithm used for peer verification.
+// RSASSA-PKCS1-v1_5 is a signature scheme (signing/verification) used in the
+// new signature-based peer authentication flow to prove a peer's identity.
+const algorithmName = 'RSASSA-PKCS1-v1_5'
 
 const algorithmHash = 'SHA-256'
 
 export class EncryptionService {
+  static arrayBufferToBase64(buffer: ArrayBuffer): string {
+    const binary = String.fromCharCode(...new Uint8Array(buffer))
+
+    return btoa(binary)
+  }
+
+  static base64ToArrayBuffer(base64: string): ArrayBuffer {
+    const binaryString = atob(base64)
+    const bytes = new Uint8Array(binaryString.length)
+
+    for (let i = 0; i < binaryString.length; i++) {
+      bytes[i] = binaryString.charCodeAt(i)
+    }
+
+    return bytes.buffer
+  }
+
   cryptoKeyStub: CryptoKey = {
     algorithm: { name: 'STUB-ALGORITHM' },
     extractable: false,
@@ -45,7 +50,7 @@ export class EncryptionService {
         publicExponent: new Uint8Array([0x01, 0x00, 0x01]),
       },
       true,
-      ['encrypt', 'decrypt']
+      ['sign', 'verify']
     )
 
     return keyPair
@@ -66,47 +71,67 @@ export class EncryptionService {
       cryptoKey
     )
 
-    const exportedKeyAsString = arrayBufferToBase64(exportedKey)
+    const exportedKeyAsString =
+      EncryptionService.arrayBufferToBase64(exportedKey)
 
     return exportedKeyAsString
   }
 
   parseCryptoKeyString = async (keyString: string, type: AllowedKeyType) => {
-    const importedKey = await window.crypto.subtle.importKey(
-      type === AllowedKeyType.PUBLIC ? 'spki' : 'pkcs8',
-      base64ToArrayBuffer(keyString),
+    const format = type === AllowedKeyType.PUBLIC ? 'spki' : 'pkcs8'
+    const keyData = EncryptionService.base64ToArrayBuffer(keyString)
+
+    return await window.crypto.subtle.importKey(
+      format,
+      keyData,
       {
         name: algorithmName,
         hash: algorithmHash,
       },
       true,
-      type === AllowedKeyType.PUBLIC ? ['encrypt'] : ['decrypt']
+      type === AllowedKeyType.PUBLIC ? ['verify'] : ['sign']
     )
-
-    return importedKey
   }
 
-  encryptString = async (publicKey: CryptoKey, plaintext: string) => {
+  signString = async (
+    privateKey: CryptoKey,
+    plaintext: string
+  ): Promise<ArrayBuffer> => {
+    if (privateKey.algorithm.name === 'STUB-ALGORITHM')
+      return new ArrayBuffer(0)
     const encodedText = new TextEncoder().encode(plaintext)
-    const encryptedData = await crypto.subtle.encrypt(
-      algorithmName,
-      publicKey,
-      encodedText
-    )
-
-    return encryptedData
-  }
-
-  decryptString = async (privateKey: CryptoKey, encryptedData: ArrayBuffer) => {
-    const decryptedArrayBuffer = await crypto.subtle.decrypt(
+    const signature = await window.crypto.subtle.sign(
       algorithmName,
       privateKey,
-      encryptedData
+      encodedText
     )
+    return signature
+  }
 
-    const decryptedString = new TextDecoder().decode(decryptedArrayBuffer)
-
-    return decryptedString
+  verifySignature = async (
+    publicKey: CryptoKey,
+    signature: ArrayBuffer,
+    plaintext: string
+  ): Promise<boolean> => {
+    if (publicKey.algorithm.name === 'STUB-ALGORITHM') return true
+    if (
+      !signature ||
+      !(
+        signature instanceof ArrayBuffer ||
+        ArrayBuffer.isView(signature) ||
+        (signature as any).constructor?.name === 'ArrayBuffer'
+      )
+    ) {
+      return false
+    }
+    const encodedText = new TextEncoder().encode(plaintext)
+    const isVerified = await window.crypto.subtle.verify(
+      algorithmName,
+      publicKey,
+      signature,
+      encodedText
+    )
+    return isVerified
   }
 }
 

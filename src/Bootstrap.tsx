@@ -150,13 +150,17 @@ const Bootstrap = ({
         )
 
       const computeUserSettings = async (): Promise<UserSettings> => {
+        let finalSettings = {
+          ...userSettings,
+          ...persistedUserSettings,
+        }
+
         if (queryParams.has(QueryParamKeys.GET_SDK_CONFIG)) {
           try {
             const configFromSdk = await getConfigFromSdk()
 
-            return {
-              ...userSettings,
-              ...persistedUserSettings,
+            finalSettings = {
+              ...finalSettings,
               ...configFromSdk,
             }
           } catch (_e) {
@@ -165,11 +169,7 @@ const Bootstrap = ({
             )
           }
         }
-
-        return {
-          ...userSettings,
-          ...persistedUserSettings,
-        }
+        return finalSettings
       }
 
       const computedUserSettings = await computeUserSettings()

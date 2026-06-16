@@ -30,6 +30,9 @@ export default defineConfig({
     /* Base URL to use in actions like `await page.goto('/')`. */
     baseURL: 'http://localhost:3000',
 
+    /* Service workers are blocked from registering or running to prevent test caching issues */
+    serviceWorkers: 'block',
+
     /* Collect trace when retrying the failed test. See https://playwright.dev/docs/trace-viewer
      * Options: 'on-first-retry' | 'on-all-retries' | 'off' | 'on' | 'retain-on-failure' */
     trace: 'on-first-retry',
@@ -60,7 +63,14 @@ export default defineConfig({
   projects: [
     {
       name: 'chromium',
-      use: { ...devices['Desktop Chrome'] },
+      use: {
+        ...devices['Desktop Chrome'],
+        /* Disable mDNS local IP hiding so WebRTC connections between local browser contexts
+           can establish successfully in sandboxed/offline E2E environments without relying on system DNS */
+        launchOptions: {
+          args: ['--disable-features=WebRtcHideLocalIpsWithMdns'],
+        },
+      },
     },
 
     // {

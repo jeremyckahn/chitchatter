@@ -35,13 +35,15 @@ import {
   VideoState,
 } from 'models/chat'
 import { PeerAction } from 'models/network'
-import { AllowedKeyType, encryption } from 'services/Encryption'
+import {
+  AllowedKeyType,
+  encryption,
+  EncryptionService,
+} from 'services/Encryption'
 import { FileTransferService } from 'services/FileTransfer'
 import { notification } from 'services/Notification'
 
 import { messageTranscriptSizeLimit } from 'config/messaging'
-
-import { usePeerVerification } from './usePeerVerification'
 
 interface UseRoomConfig {
   roomId: string
@@ -57,7 +59,13 @@ interface UserMetadata extends Record<string, any> {
   userId: string
   customUsername: string
   publicKeyString: string
+  identitySignatureBase64: string
 }
+
+const getIdentityVerificationMessage = (
+  roomId: string,
+  userId: string
+): string => `${roomId}_${userId}`
 
 export function useRoom(
   { password, ...roomConfig }: RoomConfig,
@@ -293,6 +301,7 @@ export function useRoom(
         userId: peerUserId,
         customUsername: peerCustomUsername,
         publicKeyString,
+        identitySignatureBase64,
       },
       { peerId }: MessageContext
     ) => {
@@ -301,7 +310,24 @@ export function useRoom(
         AllowedKeyType.PUBLIC
       )
 
+      const identitySignature = EncryptionService.base64ToArrayBuffer(
+        identitySignatureBase64
+      )
+      const isVerified = await encryptionService.verifySignature(
+        parsedPublicKey,
+        identitySignature,
+        getIdentityVerificationMessage(roomId, peerUserId)
+      )
+
+      if (!isVerified) {
+        console.warn('Peer verification failed, marking peer as unverified')
+      }
+
       const peerIndex = peerList.findIndex(peer => peer.peerId === peerId)
+
+      const verificationState = isVerified
+        ? PeerVerificationState.VERIFIED
+        : PeerVerificationState.UNVERIFIED
 
       if (peerIndex === -1) {
         const newPeer: Peer = {
@@ -320,13 +346,12 @@ export function useRoom(
           isTypingDirectMessage: false,
           verificationToken: getUuid(),
           encryptedVerificationToken: new ArrayBuffer(0),
-          verificationState: PeerVerificationState.VERIFYING,
+          verificationState: verificationState,
           verificationTimer: null,
         }
 
         setPeerList(prev => [...prev, newPeer])
         sendTypingStatusChange({ isTyping }, { target: peerId })
-        verifyPeer(newPeer)
       } else {
         const oldUsername =
           peerList[peerIndex].customUsername || getPeerName(peerUserId)
@@ -338,6 +363,7 @@ export function useRoom(
             ...newPeerList[peerIndex],
             userId: peerUserId,
             customUsername: peerCustomUsername,
+            verificationState,
           }
           newPeerList[peerIndex] = newPeer
 
@@ -427,13 +453,6 @@ export function useRoom(
 
   const { privateKey } = settingsContext.getUserSettings()
 
-  const { verifyPeer } = usePeerVerification({
-    peerRoom,
-    privateKey,
-    encryptionService,
-    isDirectMessageRoom,
-  })
-
   const sendMessage = async (message: string) => {
     if (isMessageSending) return
 
@@ -469,10 +488,21 @@ export function useRoom(
         try {
           const publicKeyString =
             await encryptionService.stringifyCryptoKey(publicKey)
+          const identitySignature = await encryptionService.signString(
+            privateKey,
+            getIdentityVerificationMessage(roomId, userId)
+          )
+          const identitySignatureBase64 =
+            EncryptionService.arrayBufferToBase64(identitySignature)
 
           const promises: Promise<any>[] = [
             sendPeerMetadata(
-              { userId, customUsername, publicKeyString },
+              {
+                userId,
+                customUsername,
+                publicKeyString,
+                identitySignatureBase64,
+              },
               { target: peerId }
             ),
           ]
@@ -569,11 +599,18 @@ export function useRoom(
 
       const publicKeyString =
         await encryptionService.stringifyCryptoKey(publicKey)
+      const identitySignature = await encryptionService.signString(
+        privateKey,
+        getIdentityVerificationMessage(roomId, userId)
+      )
+      const identitySignatureBase64 =
+        EncryptionService.arrayBufferToBase64(identitySignature)
 
       sendPeerMetadata({
         customUsername,
         userId,
         publicKeyString,
+        identitySignatureBase64,
       })
     })()
   }, [
@@ -581,6 +618,8 @@ export function useRoom(
     userId,
     sendPeerMetadata,
     publicKey,
+    privateKey,
+    roomId,
     encryptionService,
     isDirectMessageRoom,
   ])
