@@ -365,6 +365,7 @@ export function useRoom(
             customUsername: peerCustomUsername,
             verificationState,
           }
+
           newPeerList[peerIndex] = newPeer
 
           return newPeerList
@@ -540,6 +541,7 @@ export function useRoom(
       if (doesPeerExist) {
         setPeerList(prev => {
           const peerListClone = [...prev]
+
           peerListClone.splice(peerIndex, 1)
 
           return peerListClone

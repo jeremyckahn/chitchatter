@@ -13,6 +13,7 @@ export class Audio {
     try {
       const response = await fetch(audioDataUrl)
       const arrayBuffer = await response.arrayBuffer()
+
       this.audioBuffer = await this.audioContext.decodeAudioData(arrayBuffer)
     } catch (e) {
       console.error(e)
@@ -26,6 +27,7 @@ export class Audio {
     }
 
     const audioSource = this.audioContext.createBufferSource()
+
     audioSource.buffer = this.audioBuffer
     audioSource.connect(this.audioContext.destination)
     audioSource.start()

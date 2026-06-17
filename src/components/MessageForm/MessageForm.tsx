@@ -34,6 +34,7 @@ export const MessageForm = ({
 
   useEffect(() => {
     const { current: textField } = textFieldRef
+
     if (!textField) return
 
     textField.focus()
@@ -49,6 +50,7 @@ export const MessageForm = ({
 
   const handleMessageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const { value } = event.target
+
     setTextMessage(value)
     onMessageChange(value)
   }

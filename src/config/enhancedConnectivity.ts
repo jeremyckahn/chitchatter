@@ -12,6 +12,7 @@ export const isValidEndpointPath = (endpoint: string): boolean => {
   // First check if it's a valid absolute URL
   try {
     const url = new URL(endpoint)
+
     // Only allow HTTP and HTTPS protocols
     return url.protocol === 'http:' || url.protocol === 'https:'
   } catch {

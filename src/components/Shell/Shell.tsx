@@ -156,6 +156,7 @@ export const Shell = ({ appNeedsUpdate, children, userPeerId }: ShellProps) => {
 
         const peerListClone = [...prev]
         const peer = prev[peerIndex]
+
         peerListClone[peerIndex] = { ...peer, ...updatedProperties }
         return peerListClone
       })
@@ -276,6 +277,7 @@ export const Shell = ({ appNeedsUpdate, children, userPeerId }: ShellProps) => {
 
   const exitFullscreen = async () => {
     const document: any = window.document
+
     try {
       if (document.exitFullscreen) {
         await document.exitFullscreen()
@@ -320,6 +322,7 @@ export const Shell = ({ appNeedsUpdate, children, userPeerId }: ShellProps) => {
     const handleFullscreen = () => {
       setIsFullscreen(!!document.fullscreenElement)
     }
+
     window.addEventListener('focus', handleFocus)
     window.addEventListener('blur', handleBlur)
     document.addEventListener('fullscreenchange', handleFullscreen)

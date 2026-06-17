@@ -105,6 +105,7 @@ export class EncryptionService {
       privateKey,
       encodedText
     )
+
     return signature
   }
 
@@ -131,6 +132,7 @@ export class EncryptionService {
       signature,
       encodedText
     )
+
     return isVerified
   }
 }

@@ -55,6 +55,7 @@ export function RoomShareDialog(props: RoomShareDialogProps) {
 
     if (encoded === props.password) {
       const params = new URLSearchParams()
+
       params.set('secret', props.password)
 
       await props.copyToClipboard(

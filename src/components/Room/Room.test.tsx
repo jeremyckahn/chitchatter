@@ -25,6 +25,7 @@ const mockMessagedSender = vi.fn().mockImplementation(() => Promise.resolve([]))
 
 const mockTimeService = new Time()
 const mockNowTime = 1234
+
 mockTimeService.now = () => mockNowTime
 
 // Mock fetch for TURN server API
@@ -114,6 +115,7 @@ describe('Room', () => {
     )
 
     const sendButton = screen.getByLabelText('Send')
+
     expect(sendButton).toBeDisabled()
   })
 

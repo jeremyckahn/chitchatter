@@ -96,6 +96,7 @@ export const InlineMedia = ({ magnetURI }: InlineMediaProps) => {
 
       setHasDownloadInitiated(true)
       const files = await fileTransfer.download(magnetURI, shellContext.roomId)
+
       setDownloadedFiles(files)
     })()
   }, [fileTransfer, hasDownloadInitiated, magnetURI, shellContext.roomId])

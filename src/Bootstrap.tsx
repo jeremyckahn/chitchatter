@@ -173,6 +173,7 @@ const Bootstrap = ({
       }
 
       const computedUserSettings = await computeUserSettings()
+
       setUserSettings(computedUserSettings)
       setHasLoadedSettings(true)
 

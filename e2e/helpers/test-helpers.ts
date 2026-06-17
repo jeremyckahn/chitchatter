@@ -8,6 +8,7 @@ export const sendMessage = async (
   message: string
 ): Promise<void> => {
   const chatInput = page.getByPlaceholder('Your message')
+
   await chatInput.fill(message)
   await chatInput.press('Enter')
   await expect(page.getByText(message)).toBeVisible()

@@ -121,6 +121,7 @@ describe('useHome Hook', () => {
 
   it('should navigate to the private room when handleJoinPrivateRoomClick is called', () => {
     const navigate = vi.fn()
+
     ;(useNavigate as Mock).mockReturnValue(navigate)
     const { result } = renderHook(() => useHome(), {
       wrapper: MockShellContextProvider,

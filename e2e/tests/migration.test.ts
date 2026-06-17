@@ -63,6 +63,7 @@ test.describe('Migration', () => {
     await page1.evaluate(async settings => {
       return new Promise<void>((resolve, reject) => {
         const request = indexedDB.open('chitchatter')
+
         request.onerror = () => reject(request.error)
         request.onupgradeneeded = () => {
           const db = request.result
@@ -74,6 +75,7 @@ test.describe('Migration', () => {
 
         request.onsuccess = () => {
           const db = request.result
+
           try {
             const tx = db.transaction('keyvaluepairs', 'readwrite')
             const store = tx.objectStore('keyvaluepairs')
@@ -97,6 +99,7 @@ test.describe('Migration', () => {
 
     // Wait until the username is set
     const usernameDisplay = page1.getByText('LegacyUser123')
+
     await expect(usernameDisplay).toBeVisible()
 
     // Assert Settings navigation works and name is displayed
@@ -107,10 +110,12 @@ test.describe('Migration', () => {
       name: 'Chat',
       exact: true,
     })
+
     await expect(chatHeading).toBeVisible()
 
     // We should see LegacyUser123 in the settings
     const usernameText = page1.getByText(/LegacyUser123/)
+
     await expect(usernameText).toBeVisible()
 
     // Retrieve updated settings from IndexedDB and assert legacy key reuse
@@ -171,6 +176,7 @@ test.describe('Migration', () => {
     // Migrated user sends a message
     const chatInput1 = page1.getByPlaceholder('Your message').first()
     const message1 = 'Hello from migrated LegacyUser123!'
+
     await chatInput1.fill(message1)
     await chatInput1.press('Enter')
 
@@ -183,6 +189,7 @@ test.describe('Migration', () => {
     // Fresh user sends a message
     const chatInput2 = page2.getByPlaceholder('Your message').first()
     const message2 = 'Hello back from modern user!'
+
     await chatInput2.fill(message2)
     await chatInput2.press('Enter')
 

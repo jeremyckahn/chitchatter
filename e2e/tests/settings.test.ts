@@ -9,10 +9,12 @@ test.describe('Settings and Preferences', () => {
 
       // Clear IndexedDB
       const databases = await indexedDB.databases()
+
       await Promise.all(
         databases.map(db => {
           return new Promise<void>((resolve, reject) => {
             const deleteReq = indexedDB.deleteDatabase(db.name!)
+
             deleteReq.onsuccess = () => resolve()
             deleteReq.onerror = () => reject(deleteReq.error)
           })
@@ -31,6 +33,7 @@ test.describe('Settings and Preferences', () => {
       name: 'Chat',
       exact: true,
     })
+
     await expect(chatHeading).toBeVisible()
   })
 
@@ -41,10 +44,12 @@ test.describe('Settings and Preferences', () => {
 
     // Should show sound notification text
     const soundText = page.getByText('Play a sound')
+
     await expect(soundText).toBeVisible()
 
     // Should show notification text
     const notificationText = page.getByText('Show a notification')
+
     await expect(notificationText).toBeVisible()
   })
 
@@ -57,6 +62,7 @@ test.describe('Settings and Preferences', () => {
     const backgroundText = page.getByText(
       'When a message is received in the background:'
     )
+
     await expect(backgroundText).toBeVisible()
   })
 
@@ -67,12 +73,14 @@ test.describe('Settings and Preferences', () => {
 
     // Should show typing indicators setting
     const typingText = page.getByText('Show active typing indicators')
+
     await expect(typingText).toBeVisible()
 
     // Should show the explanation text
     const explanationText = page.getByText(
       'Disabling this will also hide your active typing status from others.'
     )
+
     await expect(explanationText).toBeVisible()
   })
 
@@ -85,10 +93,12 @@ test.describe('Settings and Preferences', () => {
     const exportButton = page.getByRole('button', {
       name: /export profile data/i,
     })
+
     await expect(exportButton).toBeVisible()
 
     // Set up download promise
     const downloadPromise = page.waitForEvent('download')
+
     await exportButton.click()
     const download = await downloadPromise
 
@@ -105,6 +115,7 @@ test.describe('Settings and Preferences', () => {
     const importButton = page.getByRole('button', {
       name: /import profile data/i,
     })
+
     await expect(importButton).toBeVisible()
   })
 
@@ -117,6 +128,7 @@ test.describe('Settings and Preferences', () => {
     const deleteButton = page.getByRole('button', {
       name: /delete all data and restart/i,
     })
+
     await expect(deleteButton).toBeVisible()
 
     // Click delete button
@@ -124,6 +136,7 @@ test.describe('Settings and Preferences', () => {
 
     // Should show confirmation dialog
     const confirmDialog = page.getByRole('dialog')
+
     await expect(confirmDialog).toBeVisible()
 
     // Should have cancel and confirm buttons
@@ -145,12 +158,14 @@ test.describe('Settings and Preferences', () => {
 
     // Should show current username in the delete section
     const userNameText = page.getByText(/your user name to change from/i)
+
     await expect(userNameText).toBeVisible()
   })
 
   test('should toggle theme from drawer', async ({ page }) => {
     // Find the theme toggle button in the list
     const themeButton = page.getByRole('button', { name: 'Change theme' })
+
     await expect(themeButton).toBeVisible()
 
     // Check current theme state and toggle
@@ -177,6 +192,7 @@ test.describe('Settings and Preferences', () => {
 
     // Should have enhanced connectivity controls
     const enhancedConnectivityText = page.getByText('Enhanced connectivity')
+
     await expect(enhancedConnectivityText).toBeVisible()
   })
 
@@ -187,6 +203,7 @@ test.describe('Settings and Preferences', () => {
 
     // Should show sound selector text
     const soundSelectorText = page.getByText(/select a sound that plays/i)
+
     await expect(soundSelectorText).toBeVisible()
   })
 

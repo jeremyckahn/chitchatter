@@ -47,6 +47,7 @@ describe('Shell', () => {
     test('can be opened', async () => {
       render(<ShellStub />)
       const menuButton = screen.getByLabelText('Open menu')
+
       await waitFor(() => {
         userEvent.click(menuButton)
       })

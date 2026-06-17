@@ -33,6 +33,7 @@ export const EmbedCodeDialog = ({
   roomName,
 }: EmbedCodeDialogProps) => {
   const iframeSrc = new URL(`${packageHomepage}public/${roomName}`)
+
   iframeSrc.search = new URLSearchParams({ embed: '1' }).toString()
 
   const needsRootUrlAttribute =
