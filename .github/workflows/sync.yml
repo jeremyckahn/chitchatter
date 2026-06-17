@@ -1,0 +1,36 @@
+name: Sync upstream
+on:
+  schedule:
+    - cron: '0 6 * * *'     # elke dag 06:00 UTC
+  workflow_dispatch:          # ook handmatig te starten
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: main
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Check op nieuwere versie upstream
+        id: check
+        run: |
+          git remote add upstream https://github.com/jeremyckahn/chitchatter.git
+          git fetch upstream main
+          LOCAL=$(git rev-parse HEAD)
+          UPSTREAM=$(git rev-parse upstream/main)
+          if [ "$LOCAL" = "$UPSTREAM" ]; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+            echo "Geen nieuwe versie — niets te doen."
+          else
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+            echo "Nieuwe versie gevonden — fork wordt bijgewerkt."
+          fi
+
+      - name: Fork bijwerken (alleen als er iets nieuws is)
+        if: steps.check.outputs.changed == 'true'
+        run: |
+          git merge upstream/main --ff-only
+          git push origin main
