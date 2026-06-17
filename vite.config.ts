@@ -56,11 +56,12 @@ const config = () => {
       // See: https://github.com/vitejs/vite/issues/15012#issuecomment-1956429165
       sourcemap: true,
     },
+
     plugins: [
       svgr({
         include: '**/*.svg?react',
       }),
-      react(),
+      react({ jsxImportSource: '@emotion/react', babel: { plugins: ['@emotion/babel-plugin'] } }),
       macrosPlugin(),
       nodePolyfills({
         globals: {

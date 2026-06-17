@@ -1,0 +1,33 @@
+
+> chitchatter@0.0.0 start:e2e
+> cross-env IS_E2E_TEST=true node simple-api-server.js & npm run start:tracker & cross-env VITE_HOMEPAGE=$(npm pkg get homepage) IS_E2E_TEST=true VITE_IS_E2E_TEST=true VITE_RTC_CONFIG_ENDPOINT=/api/get-config VITE_TRACKER_URL="ws://localhost:8000" vite --port 3000 --logLevel error
+
+node:events:497
+      throw er; // Unhandled 'error' event
+      ^
+
+Error: listen EADDRINUSE: address already in use 127.0.0.1:3003
+    at Server.setupListenHandle [as _listen2] (node:net:1940:16)
+    at listenInCluster (node:net:1997:12)
+    at node:net:2206:7
+    at process.processTicksAndRejections (node:internal/process/task_queues:89:21)
+Emitted 'error' event on Server instance at:
+    at emitErrorNT (node:net:1976:8)
+    at process.processTicksAndRejections (node:internal/process/task_queues:89:21) {
+  code: 'EADDRINUSE',
+  errno: -98,
+  syscall: 'listen',
+  address: '127.0.0.1',
+  port: 3003
+}
+
+Node.js v22.22.1Terminated
+tter@0.0.0 start:tracker
+> bittorrent-tracker
+
+ERROR: listen EADDRINUSE: address already in use :::8000
+ERROR: listen EADDRINUSE: address already in use :::8000
+Browserslist: browsers data (caniuse-lite) is 12 months old. Please run:
+  npx update-browserslist-db@latest
+  Why you should do it regularly: https://github.com/browserslist/update-db#readme
+Terminated
