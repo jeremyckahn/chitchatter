@@ -1,4 +1,7 @@
 {
+  "engines": {
+    "node": "24.x"
+  },
   "framework": "vite",
   "buildCommand": "npm run build",
   "installCommand": "npm ci && npm pkg set homepage=\"https://$VERCEL_BRANCH_URL\"",
