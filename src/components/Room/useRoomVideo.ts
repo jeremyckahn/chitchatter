@@ -189,6 +189,7 @@ export function useRoomVideo({ peerRoom }: UseRoomVideoConfig) {
 
   const handleVideoDeviceSelect = async (videoDevice: MediaDeviceInfo) => {
     const { deviceId } = videoDevice
+
     setSelectedVideoDeviceId(deviceId)
 
     if (!selfVideoStream) return
@@ -213,6 +214,7 @@ export function useRoomVideo({ peerRoom }: UseRoomVideoConfig) {
 
   const deletePeerVideo = (peerId: string) => {
     const newPeerVideos = { ...peerVideoStreams }
+
     delete newPeerVideos[peerId]
     setPeerVideoStreams(newPeerVideos)
   }

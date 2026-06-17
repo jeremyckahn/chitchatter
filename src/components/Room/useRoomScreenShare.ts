@@ -93,6 +93,7 @@ export function useRoomScreenShare({ peerRoom }: UseRoomScreenShareConfig) {
 
       if (audioTracks.length > 0) {
         const audio = new Audio()
+
         audio.srcObject = stream
         audio.autoplay = true
 

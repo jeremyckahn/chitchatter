@@ -10,6 +10,7 @@ const mockEnhancedConnectivity = vi.hoisted(() => ({
   isEnhancedConnectivityAvailable: true,
   getValidatedRtcConfigEndpoint: (): string | null => '/api/get-config',
 }))
+
 vi.mock('config/enhancedConnectivity', () => mockEnhancedConnectivity)
 
 const mockTurnServer = {

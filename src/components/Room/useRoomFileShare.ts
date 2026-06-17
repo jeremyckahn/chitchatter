@@ -57,6 +57,7 @@ export function useRoomFileShare({
         }
 
         const newFileOfferMetadata = { ...peerOfferedFileMetadata }
+
         delete newFileOfferMetadata[peerId]
 
         setPeerOfferedFileMetadata(newFileOfferMetadata)
@@ -114,6 +115,7 @@ export function useRoomFileShare({
     }
 
     const newPeerFileOfferMetadata = { ...peerOfferedFileMetadata }
+
     delete newPeerFileOfferMetadata[peerId]
     setPeerOfferedFileMetadata(newPeerFileOfferMetadata)
   })
@@ -132,6 +134,7 @@ export function useRoomFileShare({
       files.length > 1
         ? 'Encrypting a copy of the files...'
         : 'Encrypting a copy of the file...'
+
     showAlert(alertText, { severity: 'info' })
 
     const magnetURI = await fileTransfer.offer(files, shellContext.roomId)

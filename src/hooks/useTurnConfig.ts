@@ -110,6 +110,7 @@ const fetchTurnServer = async (): Promise<RTCIceServer> => {
 
     if (!response.ok) {
       const errorMessage = `TURN server API request failed: ${response.status} ${response.statusText}`
+
       console.error(errorMessage)
 
       // Provide more specific error information
@@ -126,6 +127,7 @@ const fetchTurnServer = async (): Promise<RTCIceServer> => {
 
     if (!contentType || !contentType.includes('application/json')) {
       const text = await response.text()
+
       console.error(
         `TURN server API returned unexpected content type: ${contentType}`
       )

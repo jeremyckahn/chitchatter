@@ -13,6 +13,7 @@ export const handleChange = async (
   // Play the selected sound immediately
   if (newSound) {
     const audio = new Audio(newSound)
+
     audio.play().catch(error => console.error('Error playing sound:', error))
   }
 

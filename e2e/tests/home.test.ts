@@ -12,10 +12,12 @@ test.describe('Home Page', () => {
 
     // Check that the main content loaded (verify logo area exists)
     const mainContent = page.locator('main, [role="main"]')
+
     await expect(mainContent.first()).toBeVisible()
 
     // Check for username display
     const usernameText = page.getByText(/Your username:/)
+
     await expect(usernameText).toBeVisible()
   })
 
@@ -27,18 +29,21 @@ test.describe('Home Page', () => {
     const joinPublicRoomButton = page.getByRole('button', {
       name: /join public room/i,
     })
+
     await expect(joinPublicRoomButton).toBeVisible()
 
     // Look for the join private room button
     const joinPrivateRoomButton = page.getByRole('button', {
       name: /join private room/i,
     })
+
     await expect(joinPrivateRoomButton).toBeVisible()
 
     // Look for the get embed code button
     const getEmbedCodeButton = page.getByRole('button', {
       name: /get embed code/i,
     })
+
     await expect(getEmbedCodeButton).toBeVisible()
   })
 
@@ -48,6 +53,7 @@ test.describe('Home Page', () => {
 
     // Look for the room name input
     const roomNameInput = page.getByRole('textbox', { name: /room name/i })
+
     await expect(roomNameInput).toBeVisible()
 
     // Test typing into the input
@@ -65,6 +71,7 @@ test.describe('Home Page', () => {
     const joinPublicRoomButton = page.getByRole('button', {
       name: /join public room/i,
     })
+
     await joinPublicRoomButton.click()
 
     // Wait for navigation
@@ -72,6 +79,7 @@ test.describe('Home Page', () => {
 
     // Verify we're on a public room page
     const url = page.url()
+
     expect(url).toContain('/public/')
   })
 
@@ -85,6 +93,7 @@ test.describe('Home Page', () => {
     const joinPrivateRoomButton = page.getByRole('button', {
       name: /join private room/i,
     })
+
     await joinPrivateRoomButton.click()
 
     // Wait for navigation
@@ -92,6 +101,7 @@ test.describe('Home Page', () => {
 
     // Verify we're on a private room page
     const url = page.url()
+
     expect(url).toContain('/private/')
   })
 
@@ -103,6 +113,7 @@ test.describe('Home Page', () => {
     const regenerateButton = page.getByRole('button', {
       name: /regenerate room id/i,
     })
+
     await expect(regenerateButton).toBeVisible()
 
     // Get initial room name value
@@ -122,10 +133,12 @@ test.describe('Home Page', () => {
 
     // Look for UUID toggle button
     const uuidButton = page.getByRole('button', { name: /uuid/i })
+
     await expect(uuidButton).toBeVisible()
 
     // Look for Passphrase toggle button
     const passphraseButton = page.getByRole('button', { name: /passphrase/i })
+
     await expect(passphraseButton).toBeVisible()
   })
 
@@ -143,9 +156,11 @@ test.describe('Home Page', () => {
     const joinPublicRoomButton = page.getByRole('button', {
       name: /join public room/i,
     })
+
     await expect(joinPublicRoomButton).toBeVisible()
 
     const roomNameInput = page.getByRole('textbox', { name: /room name/i })
+
     await expect(roomNameInput).toBeVisible()
   })
 })

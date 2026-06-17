@@ -39,6 +39,7 @@ export function useThrottledRoomMount(roomId: string) {
       Number(sessionStorage.getItem(LAST_MOUNT_TIME_KEY) || '0') || 0
 
     const timeSinceLastMount = now - lastMountTime
+
     sessionStorage.setItem(LAST_MOUNT_TIME_KEY, now.toString())
 
     let backoff = Number(sessionStorage.getItem(BACKOFF_KEY) || '0') || 0

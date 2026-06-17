@@ -94,6 +94,7 @@ export function useRoomAudio({ peerRoom }: UseRoomAudioConfig) {
     if (audioTracks.length === 0) return
 
     const audio = new Audio()
+
     audio.srcObject = stream
     audio.autoplay = true
 
@@ -178,6 +179,7 @@ export function useRoomAudio({ peerRoom }: UseRoomAudioConfig) {
 
   const handleAudioDeviceSelect = async (audioDevice: MediaDeviceInfo) => {
     const { deviceId } = audioDevice
+
     setSelectedAudioDeviceId(deviceId)
 
     if (!audioStream) return
@@ -210,6 +212,7 @@ export function useRoomAudio({ peerRoom }: UseRoomAudioConfig) {
       }
 
       const microphoneAudio = newPeerAudios[peerId][AudioChannelName.MICROPHONE]
+
       microphoneAudio?.pause()
 
       const { [AudioChannelName.MICROPHONE]: _, ...newPeerAudioChannels } =

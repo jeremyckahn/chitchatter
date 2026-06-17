@@ -30,6 +30,7 @@ export const useHome = () => {
   const handleRoomNameChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const { value } = event.target
     const baseRoomName = value.replace(new RegExp(rRoomNameAppPrefix), '')
+
     setRoomName(baseRoomName)
   }
 

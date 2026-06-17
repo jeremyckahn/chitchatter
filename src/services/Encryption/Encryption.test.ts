@@ -225,6 +225,7 @@ describe('EncryptionService', () => {
 
       // Modified signature should fail verification
       const modifiedSignature = new Uint8Array(signature)
+
       modifiedSignature[0] ^= 1 // Corrupt first byte
       const isVerifiedCorrupted = await service.verifySignature(
         keyPair.publicKey,

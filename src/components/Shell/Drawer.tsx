@@ -43,6 +43,7 @@ export const Drawer = ({ isDrawerOpen, onDrawerClose }: DrawerProps) => {
   const handleColorModeToggleClick = () => {
     const newMode =
       colorMode === ColorMode.LIGHT ? ColorMode.DARK : ColorMode.LIGHT
+
     settingsContext.updateUserSettings({ colorMode: newMode })
   }
 

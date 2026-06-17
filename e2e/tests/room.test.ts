@@ -10,6 +10,7 @@ test.describe('Room Functionality', () => {
     const joinPublicRoomButton = page.getByRole('button', {
       name: /join public room/i,
     })
+
     await joinPublicRoomButton.click()
 
     // Wait for navigation to room
@@ -19,14 +20,17 @@ test.describe('Room Functionality', () => {
   test('should display room UI elements', async ({ page }) => {
     // Check for essential room UI elements
     const chatInput = page.getByPlaceholder('Your message')
+
     await expect(chatInput).toBeVisible()
 
     // Check for send button
     const sendButton = page.getByRole('button', { name: 'Send' })
+
     await expect(sendButton).toBeVisible()
 
     // Check for room info/header
     const roomHeader = page.locator('header, [data-testid="room-header"]')
+
     await expect(roomHeader.first()).toBeVisible()
   })
 
@@ -34,10 +38,12 @@ test.describe('Room Functionality', () => {
     // Type a message
     const chatInput = page.getByPlaceholder('Your message')
     const testMessage = 'Hello, this is a test message!'
+
     await chatInput.fill(testMessage)
 
     // Send the message
     const sendButton = page.getByRole('button', { name: 'Send' })
+
     await sendButton.click()
 
     // Input should be cleared after sending
@@ -45,6 +51,7 @@ test.describe('Room Functionality', () => {
 
     // Verify message appears in chat
     const messageElement = page.getByText(testMessage)
+
     await expect(messageElement).toBeVisible()
   })
 
@@ -67,6 +74,7 @@ test.describe('Room Functionality', () => {
 
     // Look for the copy URL button with Link icon
     const copyButton = page.getByRole('button', { name: 'Copy current URL' })
+
     await expect(copyButton).toBeVisible()
 
     // Get the current room URL before copying
@@ -79,6 +87,7 @@ test.describe('Room Functionality', () => {
     const successMessage = page
       .getByText(/copied/i)
       .or(page.getByText(/current url copied/i))
+
     await expect(successMessage.first()).toBeVisible({ timeout: 5000 })
 
     // Validate clipboard contents
@@ -127,6 +136,7 @@ test.describe('Multi-user Room Interaction', () => {
   test('should allow two users to chat', async ({ browser }) => {
     let context1
     let context2
+
     try {
       // Create first user context
       context1 = await browser.newContext()
@@ -139,6 +149,7 @@ test.describe('Multi-user Room Interaction', () => {
       const joinPublicRoomButton = page1.getByRole('button', {
         name: /join public room/i,
       })
+
       await joinPublicRoomButton.click()
       await page1.waitForURL(/\/public\/.+/)
       const roomUrl = page1.url()
@@ -158,6 +169,7 @@ test.describe('Multi-user Room Interaction', () => {
       // User 1 sends a message
       const chatInput1 = page1.getByPlaceholder('Your message').first()
       const message1 = 'Hello from User 1!'
+
       await chatInput1.fill(message1)
       await chatInput1.press('Enter')
 
@@ -170,6 +182,7 @@ test.describe('Multi-user Room Interaction', () => {
       // User 2 sends a message
       const chatInput2 = page2.getByPlaceholder('Your message').first()
       const message2 = 'Hello back from User 2!'
+
       await chatInput2.fill(message2)
       await chatInput2.press('Enter')
 
@@ -189,6 +202,7 @@ test.describe('Multi-user Room Interaction', () => {
   test('should verify peers successfully', async ({ browser }) => {
     let context1
     let context2
+
     try {
       // Create first user context
       context1 = await browser.newContext()
@@ -201,6 +215,7 @@ test.describe('Multi-user Room Interaction', () => {
       const joinPublicRoomButton = page1.getByRole('button', {
         name: /join public room/i,
       })
+
       await joinPublicRoomButton.click()
       await page1.waitForURL(/\/public\/.+/)
       const roomUrl = page1.url()
@@ -224,11 +239,13 @@ test.describe('Multi-user Room Interaction', () => {
       const verifiedElement1 = page1.locator(
         `[aria-label="${verifiedTooltipText}"]`
       )
+
       await expect(verifiedElement1.first()).toBeVisible({ timeout: 25000 })
 
       const verifiedElement2 = page2.locator(
         `[aria-label="${verifiedTooltipText}"]`
       )
+
       await expect(verifiedElement2.first()).toBeVisible({ timeout: 25000 })
     } finally {
       // Clean up

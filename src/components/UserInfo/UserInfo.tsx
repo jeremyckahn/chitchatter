@@ -45,6 +45,7 @@ export const UserInfo = ({ userId }: UserInfoProps) => {
 
   const updateCustomUsername = () => {
     const trimmedUsername = inflightCustomUsername.trim()
+
     setCustomUsername(trimmedUsername)
 
     if (trimmedUsername.length) {

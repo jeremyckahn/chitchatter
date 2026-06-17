@@ -12,6 +12,7 @@ import {
 
 const mockSessionStorage = (() => {
   let store: Record<string, string> = {}
+
   return {
     getItem: vi.fn((key: string) => store[key] || null),
     setItem: vi.fn((key: string, value: string) => {
@@ -52,6 +53,7 @@ describe('useThrottledRoomMount', () => {
 
   test('applies throttling when mounting within backoff reset period', () => {
     const baseTime = 1000000
+
     vi.setSystemTime(baseTime)
 
     mockSessionStorage.getItem
@@ -75,6 +77,7 @@ describe('useThrottledRoomMount', () => {
 
   test('resets backoff when sufficient time has passed', () => {
     const baseTime = 1000000
+
     vi.setSystemTime(baseTime)
 
     mockSessionStorage.getItem
@@ -89,6 +92,7 @@ describe('useThrottledRoomMount', () => {
 
   test('multiplies backoff when mounting repeatedly within reset period', () => {
     const baseTime = 1000000
+
     vi.setSystemTime(baseTime)
 
     mockSessionStorage.getItem
@@ -114,6 +118,7 @@ describe('useThrottledRoomMount', () => {
 
   test('continues multiplying backoff with each rapid mount attempt', () => {
     const baseTime = 1000000
+
     vi.setSystemTime(baseTime)
 
     mockSessionStorage.getItem
@@ -153,6 +158,7 @@ describe('useThrottledRoomMount', () => {
 
   test('cleans up timeout on unmount', () => {
     const baseTime = 1000000
+
     vi.setSystemTime(baseTime)
 
     mockSessionStorage.getItem
@@ -172,6 +178,7 @@ describe('useThrottledRoomMount', () => {
 
   test('triggers new effect when roomId changes', async () => {
     const baseTime = 1000000
+
     vi.setSystemTime(baseTime)
 
     const { result, rerender } = renderHook(
@@ -221,6 +228,7 @@ describe('useThrottledRoomMount', () => {
   test('correctly calculates time since last mount', () => {
     const baseTime = 1000000
     const lastMountTime = baseTime - 3000
+
     vi.setSystemTime(baseTime)
 
     mockSessionStorage.getItem
@@ -238,6 +246,7 @@ describe('useThrottledRoomMount', () => {
   test('handles concurrent timeout and cleanup properly', () => {
     const baseTime = 1000000
     const timePassed = 1000
+
     vi.setSystemTime(baseTime)
 
     mockSessionStorage.getItem

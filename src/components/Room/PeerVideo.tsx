@@ -43,6 +43,7 @@ export const PeerVideo = ({
 
   useEffect(() => {
     const { current: video } = videoRef
+
     if (!video) return
 
     video.autoplay = true

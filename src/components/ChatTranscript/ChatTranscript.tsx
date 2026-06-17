@@ -23,6 +23,7 @@ export const ChatTranscript = ({
 
   useEffect(() => {
     const { current: boxEl } = boxRef
+
     if (!boxEl) return
 
     const { scrollHeight, clientHeight, scrollTop, children } = boxEl

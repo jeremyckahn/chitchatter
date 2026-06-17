@@ -32,10 +32,12 @@ test.describe('Accessibility', () => {
 
     // Check that the page loads and has basic interactive elements
     const joinButton = page.getByRole('button', { name: /join public room/i })
+
     await expect(joinButton.first()).toBeVisible()
 
     // Verify basic page structure is accessible
     const mainContent = page.locator('main, [role="main"], body')
+
     await expect(mainContent.first()).toBeVisible()
 
     // Check that interactive elements can receive focus
@@ -58,6 +60,7 @@ test.describe('Accessibility', () => {
     const joinPublicRoomButton = page.getByRole('button', {
       name: /join public room/i,
     })
+
     await joinPublicRoomButton.click()
 
     // Wait for navigation to room
@@ -66,6 +69,7 @@ test.describe('Accessibility', () => {
 
     // Check that room page loads and has essential elements
     const chatInput = page.getByPlaceholder('Your message')
+
     await expect(chatInput).toBeVisible()
 
     // Check that interactive elements can receive focus
@@ -73,10 +77,12 @@ test.describe('Accessibility', () => {
     const isFocused = await chatInput.evaluate(
       el => document.activeElement === el
     )
+
     expect(isFocused).toBe(true)
 
     // Verify send button is present and accessible
     const sendButton = page.getByRole('button', { name: 'Send' })
+
     await expect(sendButton).toBeVisible()
   })
 
@@ -98,6 +104,7 @@ test.describe('Accessibility', () => {
       const isFocused = await element.evaluate(
         el => document.activeElement === el
       )
+
       expect(isFocused).toBe(true)
     }
   })
@@ -118,6 +125,7 @@ test.describe('Accessibility', () => {
         // Check for associated label
         expect(inputId).not.toBeNull()
         const label = page.locator(`label[for="${inputId}"]`)
+
         await expect(label).toHaveCount(1)
       }
     }
@@ -136,6 +144,7 @@ test.describe('Accessibility', () => {
       for (const heading of headings) {
         const tagName = await heading.evaluate(el => el.tagName)
         const level = parseInt(tagName.substring(1))
+
         headingLevels.push(level)
       }
 
@@ -172,6 +181,7 @@ test.describe('Accessibility', () => {
 
       // Verify main content is visible
       const mainContent = page.locator('main, [role="main"], body')
+
       await expect(mainContent.first()).toBeVisible()
 
       // Check that interactive elements can receive focus
@@ -179,6 +189,7 @@ test.describe('Accessibility', () => {
       const isFocused = await joinButton
         .first()
         .evaluate(el => document.activeElement === el)
+
       expect(isFocused).toBe(true)
     }
   })

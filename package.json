@@ -103,6 +103,7 @@
     "@axe-core/playwright": "^4.10.2",
     "@babel/plugin-proposal-private-property-in-object": "^7.21.11",
     "@playwright/test": "^1.56.1",
+    "@stylistic/eslint-plugin": "^2.13.0",
     "@testing-library/jest-dom": "^6.7.0",
     "@types/file-saver": "^2.0.7",
     "@types/node": "^20.19.41",
