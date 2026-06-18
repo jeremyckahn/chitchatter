@@ -84,8 +84,8 @@
     ]
   },
   "engines": {
-    "node": "20.19.5",
-    "npm": "10.8.2"
+    "node": "24.16.0",
+    "npm": "11.13.0"
   },
   "browserslist": {
     "production": [
@@ -102,11 +102,11 @@
   "devDependencies": {
     "@axe-core/playwright": "^4.10.2",
     "@babel/plugin-proposal-private-property-in-object": "^7.21.11",
-    "@playwright/test": "^1.56.1",
+    "@playwright/test": "^1.61.0",
     "@stylistic/eslint-plugin": "^2.13.0",
     "@testing-library/jest-dom": "^6.7.0",
     "@types/file-saver": "^2.0.7",
-    "@types/node": "^20.19.41",
+    "@types/node": "^24.13.2",
     "@types/react": "^18.2.72",
     "@types/react-dom": "^18.3.1",
     "@types/react-file-reader-input": "^2.0.4",
@@ -135,7 +135,7 @@
     "mprocs": "^0.6.4",
     "nodemon": "^3.0.1",
     "parcel": "^2.10.0",
-    "playwright": "^1.56.1",
+    "playwright": "^1.61.0",
     "prettier": "^3.2.5",
     "pretty-quick": "^4.0.0",
     "process": "^0.11.10",
