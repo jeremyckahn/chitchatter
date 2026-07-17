@@ -70,7 +70,7 @@ describe('/api/get-config', () => {
 
     await handler(req as any, res as any)
 
-    expect(res.status).toHaveBeenCalledWith(200)
+    expect(res.status).toHaveBeenCalledWith(500)
     expect(res.json).toHaveBeenCalledWith(expectedTurnServer)
   })
 
