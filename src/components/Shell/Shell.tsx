@@ -56,11 +56,17 @@ import { useShellTheme } from './useShellTheme'
 export interface ShellProps extends PropsWithChildren {
   userPeerId: string
   appNeedsUpdate: boolean
+  updateServiceWorker?: (reloadPage?: boolean) => Promise<void>
 }
 
 const queryParams = new URLSearchParams(window.location.search)
 
-export const Shell = ({ appNeedsUpdate, children, userPeerId }: ShellProps) => {
+export const Shell = ({
+  appNeedsUpdate,
+  updateServiceWorker = async () => {},
+  children,
+  userPeerId,
+}: ShellProps) => {
   const { getUserSettings, updateUserSettings } = useContext(SettingsContext)
   const isEmbedded = queryParams.get(QueryParamKeys.IS_EMBEDDED) !== null
 
@@ -380,7 +386,10 @@ export const Shell = ({ appNeedsUpdate, children, userPeerId }: ShellProps) => {
         <CssBaseline />
         {isEnvironmentSupported ? (
           <>
-            <UpgradeDialog appNeedsUpdate={appNeedsUpdate} />
+            <UpgradeDialog
+              appNeedsUpdate={appNeedsUpdate}
+              updateServiceWorker={updateServiceWorker}
+            />
             <Box
               className="Chitchatter"
               sx={{

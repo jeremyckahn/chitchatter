@@ -8,3 +8,8 @@ interface ImportMetaEnv {
 interface ImportMeta {
   readonly env: ImportMetaEnv
 }
+
+interface Window {
+  __triggerAppUpdateAvailable?: (value: boolean) => void
+  __updateServiceWorkerCalled?: boolean
+}

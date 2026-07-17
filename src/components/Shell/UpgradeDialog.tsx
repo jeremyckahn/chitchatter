@@ -6,15 +6,16 @@ import DialogContent from '@mui/material/DialogContent'
 import DialogContentText from '@mui/material/DialogContentText'
 import DialogTitle from '@mui/material/DialogTitle'
 import WarningIcon from '@mui/icons-material/Warning'
-import { useRegisterSW } from 'virtual:pwa-register/react'
 
 interface UpgradeDialogProps {
   appNeedsUpdate: boolean
+  updateServiceWorker: (reloadPage?: boolean) => Promise<void>
 }
 
-export const UpgradeDialog = ({ appNeedsUpdate }: UpgradeDialogProps) => {
-  const { updateServiceWorker } = useRegisterSW()
-
+export const UpgradeDialog = ({
+  appNeedsUpdate,
+  updateServiceWorker,
+}: UpgradeDialogProps) => {
   const handleRestartClick = () => {
     updateServiceWorker(true)
   }

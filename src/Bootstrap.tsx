@@ -127,8 +127,34 @@ const Bootstrap = ({
   )
 
   const {
-    needRefresh: [appNeedsUpdate],
+    needRefresh: [appNeedsUpdate, setAppNeedsUpdate],
+    updateServiceWorker,
   } = useRegisterSW()
+
+  useEffect(() => {
+    if (import.meta.env.VITE_IS_E2E_TEST) {
+      window.__triggerAppUpdateAvailable = (value: boolean) => {
+        setAppNeedsUpdate(value)
+      }
+    }
+    return () => {
+      if (import.meta.env.VITE_IS_E2E_TEST) {
+        delete window.__triggerAppUpdateAvailable
+      }
+    }
+  }, [setAppNeedsUpdate])
+
+  const handleUpdateServiceWorker = useCallback(
+    async (reloadPage?: boolean) => {
+      if (import.meta.env.VITE_IS_E2E_TEST) {
+        window.__updateServiceWorkerCalled = true
+        window.location.reload()
+        return
+      }
+      await updateServiceWorker(reloadPage)
+    },
+    [updateServiceWorker]
+  )
 
   useEffect(() => {
     ;(async () => {
@@ -249,7 +275,11 @@ const Bootstrap = ({
         <StorageContext.Provider value={storageContextValue}>
           <SettingsContext.Provider value={settingsContextValue}>
             {hasLoadedSettings ? (
-              <Shell appNeedsUpdate={appNeedsUpdate} userPeerId={userId}>
+              <Shell
+                appNeedsUpdate={appNeedsUpdate}
+                updateServiceWorker={handleUpdateServiceWorker}
+                userPeerId={userId}
+              >
                 <Routes>
                   {[routes.ROOT, routes.INDEX_HTML].map(path => (
                     <Route
