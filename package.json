@@ -134,7 +134,7 @@
     "jsdom": "^24.0.0",
     "mprocs": "^0.6.4",
     "nodemon": "^3.0.1",
-    "parcel": "^2.10.0",
+    "parcel": "^2.16.4",
     "playwright": "^1.61.0",
     "prettier": "^3.2.5",
     "pretty-quick": "^4.0.0",
