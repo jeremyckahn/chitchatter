@@ -147,7 +147,7 @@
     "vite-plugin-node-polyfills": "^0.23.0",
     "vite-plugin-pwa": "^0.21.2",
     "vite-plugin-svgr": "^4.3.0",
-    "vitest": "^4.1.8"
+    "vitest": "^4.1.11"
   },
   "overrides": {
     "ipfs-core": "npm:dry-uninstall",
