@@ -2,7 +2,7 @@ import { useRef, useEffect, useState, useContext } from 'react'
 import Box, { BoxProps } from '@mui/material/Box'
 import useTheme from '@mui/material/styles/useTheme'
 
-import { Message as IMessage, InlineMedia } from 'models/chat'
+import { Message as IMessage, InlineMedia } from 'core/models/chat'
 import { Message } from 'components/Message'
 import { ShellContext } from 'contexts/ShellContext'
 

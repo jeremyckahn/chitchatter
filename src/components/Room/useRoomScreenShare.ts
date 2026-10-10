@@ -1,22 +1,22 @@
 import { useContext, useEffect, useCallback, useState } from 'react'
 
-import { isRecord } from 'lib/type-guards'
+import { isRecord } from 'core/lib/type-guards'
 import { RoomContext } from 'contexts/RoomContext'
 import { ShellContext } from 'contexts/ShellContext'
-import { PeerAction } from 'models/network'
+import { PeerAction } from 'core/models/network'
 import {
   ScreenShareState,
   Peer,
   StreamType,
   AudioChannelName,
   AudioState,
-} from 'models/chat'
+} from 'core/models/chat'
 import {
   PeerRoom,
   PeerHookType,
   PeerStreamType,
   ActionNamespace,
-} from 'lib/PeerRoom'
+} from 'core/transport/TrysteroTransport'
 import { usePeerAction } from 'hooks/usePeerAction'
 import { MessageContext } from 'trystero'
 

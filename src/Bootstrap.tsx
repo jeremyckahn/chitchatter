@@ -22,7 +22,7 @@ import {
   PostMessageEventName,
 } from 'models/sdk'
 import { RouterType } from 'models/router'
-import { UserSettings } from 'models/settings'
+import { UserSettings } from 'core/models/settings'
 import { QueryParamKeys } from 'models/shell'
 import { PersistedStorageKeys } from 'models/storage'
 import { About } from 'pages/About'
@@ -31,7 +31,10 @@ import { Home } from 'pages/Home'
 import { PrivateRoom } from 'pages/PrivateRoom'
 import { PublicRoom } from 'pages/PublicRoom'
 import { Settings } from 'pages/Settings'
-import { serialization, SerializedUserSettings } from 'services/Serialization'
+import {
+  serialization,
+  SerializedUserSettings,
+} from 'core/settings/serialization'
 import { routerType } from 'config/router'
 
 export interface BootstrapProps {

@@ -8,8 +8,8 @@ import {
 } from '@trystero-p2p/torrent'
 import { joinRoom as baseJoinRoom } from 'trystero'
 
-import { sleep } from 'lib/sleep'
-import { PeerAction } from 'models/network'
+import { sleep } from 'core/lib/sleep'
+import { PeerAction } from 'core/models/network'
 
 export enum PeerHookType {
   NEW_PEER = 'NEW_PEER',

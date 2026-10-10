@@ -2,15 +2,15 @@ import { useContext, useEffect, useCallback, useState } from 'react'
 
 import { RoomContext } from 'contexts/RoomContext'
 import { ShellContext } from 'contexts/ShellContext'
-import { PeerAction } from 'models/network'
-import { VideoState, Peer, StreamType } from 'models/chat'
+import { PeerAction } from 'core/models/network'
+import { VideoState, Peer, StreamType } from 'core/models/chat'
 import {
   PeerRoom,
   PeerHookType,
   PeerStreamType,
   ActionNamespace,
-} from 'lib/PeerRoom'
-import { isRecord } from 'lib/type-guards'
+} from 'core/transport/TrysteroTransport'
+import { isRecord } from 'core/lib/type-guards'
 import { usePeerAction } from 'hooks/usePeerAction'
 import { MessageContext } from 'trystero'
 

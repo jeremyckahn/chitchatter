@@ -10,7 +10,7 @@ import Menu from '@mui/material/Menu'
 import MenuItem from '@mui/material/MenuItem'
 import Tooltip from '@mui/material/Tooltip'
 
-import { PeerRoom } from 'lib/PeerRoom'
+import { PeerRoom } from 'core/transport/TrysteroTransport'
 
 import { useRoomAudio } from './useRoomAudio'
 import { MediaButton } from './MediaButton'

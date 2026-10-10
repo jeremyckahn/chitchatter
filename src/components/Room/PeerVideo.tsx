@@ -3,7 +3,7 @@ import Paper from '@mui/material/Paper'
 import Tooltip from '@mui/material/Tooltip'
 
 import { PeerNameDisplay } from 'components/PeerNameDisplay'
-import { StreamType } from 'models/chat'
+import { StreamType } from 'core/models/chat'
 
 import { SelectedPeerStream } from './RoomVideoDisplay'
 

@@ -21,7 +21,7 @@ import { StorageContext } from 'contexts/StorageContext'
 import { notification } from 'services/Notification'
 import { settings } from 'services/Settings'
 
-import { isErrorWithMessage } from '../../lib/type-guards'
+import { isErrorWithMessage } from 'core/lib/type-guards'
 
 interface SettingsProps {
   userId: string

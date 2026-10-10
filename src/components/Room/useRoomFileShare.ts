@@ -1,11 +1,15 @@
 import { useContext, useEffect, useState } from 'react'
 
-import { sleep } from 'lib/sleep'
+import { sleep } from 'core/lib/sleep'
 import { RoomContext } from 'contexts/RoomContext'
 import { ShellContext } from 'contexts/ShellContext'
-import { PeerAction } from 'models/network'
-import { FileOfferMetadata, Peer } from 'models/chat'
-import { PeerRoom, PeerHookType, ActionNamespace } from 'lib/PeerRoom'
+import { PeerAction } from 'core/models/network'
+import { FileOfferMetadata, Peer } from 'core/models/chat'
+import {
+  PeerRoom,
+  PeerHookType,
+  ActionNamespace,
+} from 'core/transport/TrysteroTransport'
 import { usePeerAction } from 'hooks/usePeerAction'
 import { MessageContext } from 'trystero'
 

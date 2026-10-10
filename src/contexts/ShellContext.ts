@@ -7,9 +7,8 @@ import {
 
 import { ConnectionTestResults } from 'components/Shell/useConnectionTest'
 import { TrackerConnection } from 'lib/ConnectionTest'
-import { PeerConnectionType, PeerRoom } from 'lib/PeerRoom'
+import { PeerConnectionType, PeerRoom } from 'core/transport/TrysteroTransport'
 import {
-  AudioChannel,
   AudioChannelName,
   AudioState,
   InlineMedia,
@@ -18,7 +17,8 @@ import {
   PeerAudioChannelState,
   ScreenShareState,
   VideoState,
-} from 'models/chat'
+} from 'core/models/chat'
+import { AudioChannel } from 'models/media'
 import { AlertOptions } from 'models/shell'
 
 export type MessageLog = (Message | InlineMedia)[]

@@ -15,6 +15,8 @@ import { RouterType } from './src/models/router'
 
 const srcPaths = [
   'components',
+  'core',
+  'adapters',
   'hooks',
   'config',
   'contexts',
@@ -95,8 +97,6 @@ const config = () => {
     test: {
       watch: false,
       globals: true,
-      environment: 'jsdom',
-      setupFiles: './src/setupTests.ts',
       exclude: ['**/e2e/**', '**/node_modules/**'],
       coverage: {
         reporter: ['text', 'html'],
@@ -105,6 +105,37 @@ const config = () => {
       env: {
         VITE_ROUTER_TYPE: RouterType.BROWSER,
       },
+      projects: [
+        {
+          // The web app: jsdom, plus the global Trystero/secure-file-transfer
+          // mocks that component tests rely on.
+          extends: true,
+          test: {
+            name: 'web',
+            globals: true,
+            environment: 'jsdom',
+            setupFiles: './src/setupTests.ts',
+            include: ['src/**/*.test.{ts,tsx}'],
+            exclude: ['src/core/**', '**/e2e/**', '**/node_modules/**'],
+            env: {
+              VITE_ROUTER_TYPE: RouterType.BROWSER,
+            },
+          },
+        },
+        {
+          // src/core must run with no DOM and no global mocks. That this
+          // project passes is the proof that the core is headless; keep it
+          // free of jsdom and of setupTests.ts.
+          extends: true,
+          test: {
+            name: 'core',
+            globals: true,
+            environment: 'node',
+            include: ['src/core/**/*.test.ts'],
+            exclude: ['**/node_modules/**'],
+          },
+        },
+      ],
     },
   })
 }

@@ -24,16 +24,16 @@ import {
   ShellContext,
   ShellMessageLog,
 } from 'contexts/ShellContext'
-import { PeerConnectionType, PeerRoom } from 'lib/PeerRoom'
+import { PeerConnectionType, PeerRoom } from 'core/transport/TrysteroTransport'
 import {
-  AudioChannel,
   AudioChannelName,
   AudioState,
   Peer,
   PeerAudioChannelState,
   ScreenShareState,
   VideoState,
-} from 'models/chat'
+} from 'core/models/chat'
+import { AudioChannel } from 'models/media'
 import { AlertOptions, QueryParamKeys } from 'models/shell'
 
 import { allowAdvancedRoomLinkSharing } from './constants'

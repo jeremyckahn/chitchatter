@@ -1,10 +1,10 @@
 import { saveAs } from 'file-saver'
 
-import { UserSettings } from 'models/settings'
+import { UserSettings } from 'core/models/settings'
 import {
   isSerializedUserSettings,
   serialization,
-} from 'services/Serialization/Serialization'
+} from 'core/settings/serialization'
 
 class InvalidFileError extends Error {
   message = 'InvalidFileError: File could not be imported'

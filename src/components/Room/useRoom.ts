@@ -14,8 +14,8 @@ import {
   PeerHookType,
   PeerRoom,
   RoomConfig,
-} from 'lib/PeerRoom'
-import { time } from 'lib/Time'
+} from 'core/transport/TrysteroTransport'
+import { time } from 'core/lib/Time'
 import {
   AudioChannelName,
   AudioState,
@@ -33,17 +33,17 @@ import {
   UnsentInlineMedia,
   UnsentMessage,
   VideoState,
-} from 'models/chat'
-import { PeerAction } from 'models/network'
+} from 'core/models/chat'
+import { PeerAction } from 'core/models/network'
 import {
   AllowedKeyType,
   encryption,
   EncryptionService,
-} from 'services/Encryption'
+} from 'core/crypto/Encryption'
 import { FileTransferService } from 'services/FileTransfer'
 import { notification } from 'services/Notification'
 
-import { messageTranscriptSizeLimit } from 'config/messaging'
+import { messageTranscriptSizeLimit } from 'core/config/messaging'
 
 interface UseRoomConfig {
   roomId: string
@@ -344,10 +344,7 @@ export function useRoom(
           offeredFileId: null,
           isTypingGroupMessage: false,
           isTypingDirectMessage: false,
-          verificationToken: getUuid(),
-          encryptedVerificationToken: new ArrayBuffer(0),
-          verificationState: verificationState,
-          verificationTimer: null,
+          verificationState,
         }
 
         setPeerList(prev => [...prev, newPeer])

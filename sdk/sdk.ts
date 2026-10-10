@@ -5,7 +5,7 @@ import {
   isPostMessageEvent,
 } from '../src/models/sdk'
 import { QueryParamKeys } from '../src/models/shell'
-import { isColorMode, UserSettings } from '../src/models/settings'
+import { isColorMode, UserSettings } from '../src/core/models/settings'
 import { iframeFeatureAllowList } from '../src/config/iframeFeatureAllowList'
 
 export const defaultRoot =

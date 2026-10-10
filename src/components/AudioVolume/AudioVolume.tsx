@@ -9,7 +9,7 @@ import VolumeMuteIcon from '@mui/icons-material/VolumeMute'
 import MicIcon from '@mui/icons-material/Mic'
 import LaptopWindowsIcon from '@mui/icons-material/LaptopWindows'
 import Tooltip from '@mui/material/Tooltip'
-import { AudioChannelName } from 'models/chat'
+import { AudioChannelName } from 'core/models/chat'
 
 interface AudioVolumeProps {
   audioEl: HTMLAudioElement

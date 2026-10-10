@@ -24,13 +24,9 @@ import { AudioVolume } from 'components/AudioVolume'
 import { PeerNameDisplay } from 'components/PeerNameDisplay'
 import { PublicKey } from 'components/PublicKey'
 import { Room } from 'components/Room'
-import { PeerConnectionType } from 'lib/PeerRoom'
-import {
-  AudioChannel,
-  AudioChannelName,
-  Peer,
-  PeerVerificationState,
-} from 'models/chat'
+import { PeerConnectionType } from 'core/transport/TrysteroTransport'
+import { AudioChannelName, Peer, PeerVerificationState } from 'core/models/chat'
+import { AudioChannel } from 'models/media'
 import { SettingsContext } from 'contexts/SettingsContext'
 
 import { PeerDownloadFileButton } from './PeerDownloadFileButton'
