@@ -2,7 +2,7 @@ import { vi } from 'vitest'
 import { act, render } from '@testing-library/react'
 import persistedStorage from 'localforage'
 
-import { PersistedStorageKeys } from 'models/storage'
+import { userSettingsStorageKey } from 'core/settings/SettingsManager'
 import {
   mockSerialization,
   mockSerializedPrivateKey,
@@ -40,9 +40,7 @@ test('renders', async () => {
 
 test('checks persistedStorage for user settings', async () => {
   await renderBootstrap()
-  expect(persistedStorage.getItem).toHaveBeenCalledWith(
-    PersistedStorageKeys.USER_SETTINGS
-  )
+  expect(persistedStorage.getItem).toHaveBeenCalledWith(userSettingsStorageKey)
 })
 
 test('updates persisted user settings', async () => {
@@ -51,7 +49,7 @@ test('updates persisted user settings', async () => {
   })
 
   expect(persistedStorage.setItem).toHaveBeenCalledWith(
-    PersistedStorageKeys.USER_SETTINGS,
+    userSettingsStorageKey,
     {
       colorMode: 'dark',
       userId: 'abc123',

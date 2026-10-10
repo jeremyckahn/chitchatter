@@ -24,17 +24,15 @@ import {
 import { RouterType } from 'models/router'
 import { UserSettings } from 'core/models/settings'
 import { QueryParamKeys } from 'models/shell'
-import { PersistedStorageKeys } from 'models/storage'
 import { About } from 'pages/About'
 import { Disclaimer } from 'pages/Disclaimer'
 import { Home } from 'pages/Home'
 import { PrivateRoom } from 'pages/PrivateRoom'
 import { PublicRoom } from 'pages/PublicRoom'
 import { Settings } from 'pages/Settings'
-import {
-  serialization,
-  SerializedUserSettings,
-} from 'core/settings/serialization'
+import { serialization } from 'core/settings/serialization'
+import { SettingsManager } from 'core/settings/SettingsManager'
+import { createWebStorage } from 'adapters/web'
 import { routerType } from 'config/router'
 
 export interface BootstrapProps {
@@ -112,21 +110,29 @@ const Bootstrap = ({
     useState<UserSettings>(initialUserSettings)
   const { userId } = userSettings
 
+  // An embedded instance is a guest in someone else's page, so it reads
+  // settings but never writes them. Expressing that as a write-only-nowhere
+  // storage adapter keeps the condition out of every save path.
+  const isEmbedded = queryParams.has(QueryParamKeys.IS_EMBEDDED)
+
+  const settingsManager = useMemo(
+    () =>
+      new SettingsManager({
+        storage: isEmbedded
+          ? {
+              getItem: () => Promise.resolve(null),
+              setItem: <T,>(_key: string, value: T) => Promise.resolve(value),
+              removeItem: () => Promise.resolve(),
+            }
+          : createWebStorage(persistedStorageProp),
+        serializationService,
+      }),
+    [isEmbedded, persistedStorageProp, serializationService]
+  )
+
   const persistUserSettings = useCallback(
-    async (newUserSettings: UserSettings) => {
-      if (queryParams.has(QueryParamKeys.IS_EMBEDDED)) {
-        return Promise.resolve(userSettings)
-      }
-
-      const userSettingsForIndexedDb =
-        await serializationService.serializeUserSettings(newUserSettings)
-
-      return persistedStorageProp.setItem(
-        PersistedStorageKeys.USER_SETTINGS,
-        userSettingsForIndexedDb
-      )
-    },
-    [persistedStorageProp, queryParams, serializationService, userSettings]
+    (newUserSettings: UserSettings) => settingsManager.save(newUserSettings),
+    [settingsManager]
   )
 
   const {
@@ -137,20 +143,11 @@ const Bootstrap = ({
     ;(async () => {
       if (hasLoadedSettings) return
 
-      const serializedUserSettings = {
-        // NOTE: This migrates persisted user settings data to latest version
-        ...(await serializationService.serializeUserSettings(
-          initialUserSettings
-        )),
-        ...(await persistedStorageProp.getItem<SerializedUserSettings>(
-          PersistedStorageKeys.USER_SETTINGS
-        )),
-      }
-
+      // Layering persisted settings over the defaults is what migrates data
+      // saved by an older version: a setting added since then takes its default
+      // rather than arriving undefined.
       const persistedUserSettings =
-        await serializationService.deserializeUserSettings(
-          serializedUserSettings
-        )
+        await settingsManager.load(initialUserSettings)
 
       const computeUserSettings = async (): Promise<UserSettings> => {
         let finalSettings = {
@@ -184,12 +181,11 @@ const Bootstrap = ({
     })()
   }, [
     hasLoadedSettings,
-    persistedStorageProp,
     userSettings,
     userId,
     queryParams,
     persistUserSettings,
-    serializationService,
+    settingsManager,
     initialUserSettings,
   ])
 
