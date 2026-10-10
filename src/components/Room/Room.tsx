@@ -66,6 +66,7 @@ const RoomCore = ({
   )
 
   const {
+    chatRoom,
     isDirectMessageRoom,
     handleInlineMediaUpload,
     handleMessageChange,
@@ -151,7 +152,7 @@ const RoomCore = ({
                 <RoomVideoControls peerRoom={peerRoom} />
                 <RoomScreenShareControls peerRoom={peerRoom} />
                 <RoomFileUploadControls
-                  peerRoom={peerRoom}
+                  chatRoom={chatRoom}
                   onInlineMediaUpload={handleInlineMediaUpload}
                 />
                 <Zoom in={showVideoDisplay} mountOnEnter unmountOnExit>

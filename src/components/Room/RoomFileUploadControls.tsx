@@ -6,7 +6,7 @@ import Tooltip from '@mui/material/Tooltip'
 import CircularProgress from '@mui/material/CircularProgress'
 
 import { RoomContext } from 'contexts/RoomContext'
-import { TrysteroTransport } from 'core/transport/TrysteroTransport'
+import { ChatRoom } from 'core/chat/ChatRoom'
 
 import { Input } from 'components/Elements'
 
@@ -15,11 +15,11 @@ import { MediaButton } from './MediaButton'
 
 export interface RoomFileUploadControlsProps {
   onInlineMediaUpload: (files: File[]) => void
-  peerRoom: TrysteroTransport
+  chatRoom: ChatRoom
 }
 
 export function RoomFileUploadControls({
-  peerRoom,
+  chatRoom,
   onInlineMediaUpload,
 }: RoomFileUploadControlsProps) {
   const roomContext = useContext(RoomContext)
@@ -34,7 +34,7 @@ export function RoomFileUploadControls({
     handleFileShareStop,
     sharedFiles,
   } = useRoomFileShare({
-    peerRoom,
+    chatRoom,
     onInlineMediaUpload,
   })
 

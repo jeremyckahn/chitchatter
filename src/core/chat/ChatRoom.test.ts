@@ -75,7 +75,10 @@ const createClient = (
     rescindAll: vi.fn(async () => {}),
     isOffering: vi.fn(() => true),
   }
-  const adapters = createPlatformAdapters(makeIds(), { fileTransfer })
+  const adapters = createPlatformAdapters(makeIds(), {
+    fileTransfer,
+    logger: { warn: vi.fn(), error: vi.fn() },
+  })
 
   const chatRoom = new ChatRoom({
     roomId,
@@ -296,6 +299,10 @@ describe('ChatRoom', () => {
       expect(verifications).toContain(PeerVerificationState.UNVERIFIED)
       expect(alice.chatRoom.getPeers()[0].verificationState).toBe(
         PeerVerificationState.UNVERIFIED
+      )
+      // The warning is a documented diagnostic; an e2e test asserts on it.
+      expect(alice.adapters.logger.warn).toHaveBeenCalledWith(
+        'Peer verification failed, marking peer as unverified'
       )
     })
 

@@ -3,7 +3,7 @@ import { useContext, useEffect, useCallback, useState } from 'react'
 import { RoomContext } from 'contexts/RoomContext'
 import { ShellContext } from 'contexts/ShellContext'
 import { PeerAction } from 'core/models/network'
-import { VideoState, Peer, StreamType } from 'core/models/chat'
+import { VideoState, StreamType } from 'core/models/chat'
 import { TrysteroTransport } from 'core/transport/TrysteroTransport'
 import {
   PeerHookType,
@@ -27,7 +27,7 @@ export function useRoomVideo({ peerRoom }: UseRoomVideoConfig) {
     string | null
   >(null)
 
-  const { setPeerList, setVideoState } = shellContext
+  const { updatePeer, setVideoState } = shellContext
 
   const {
     peerVideoStreams,
@@ -80,23 +80,11 @@ export function useRoomVideo({ peerRoom }: UseRoomVideoConfig) {
     peerAction: PeerAction.VIDEO_CHANGE,
     peerRoom,
     onReceive: (videoState, { peerId }: MessageContext) => {
-      setPeerList(peerList => {
-        const newPeerList = peerList.map(peer => {
-          const newPeer: Peer = { ...peer }
+      updatePeer(peerId, { videoState })
 
-          if (peer.peerId === peerId) {
-            newPeer.videoState = videoState
-
-            if (videoState === VideoState.STOPPED) {
-              deletePeerVideo(peerId)
-            }
-          }
-
-          return newPeer
-        })
-
-        return newPeerList
-      })
+      if (videoState === VideoState.STOPPED) {
+        deletePeerVideo(peerId)
+      }
     },
   })
 

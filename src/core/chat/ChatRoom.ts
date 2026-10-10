@@ -30,6 +30,7 @@ import {
   Message,
   MessageLog,
   Peer,
+  PeerVerificationState,
   ReceivedInlineMedia,
   ReceivedMessage,
   TypingStatus,
@@ -547,6 +548,12 @@ export class ChatRoom extends EventTarget {
       )
 
       return
+    }
+
+    if (verified.verificationState === PeerVerificationState.UNVERIFIED) {
+      this.adapters.logger.warn(
+        'Peer verification failed, marking peer as unverified'
+      )
     }
 
     // Verification is asynchronous, so a peer can leave while its metadata is

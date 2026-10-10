@@ -29,8 +29,8 @@ export interface PeerListProps extends PropsWithChildren {
   userId: string
   roomId: string | undefined
   onPeerListClose: () => void
-  peerList: Peer[]
-  peerConnectionTypes: Record<string, PeerConnectionType>
+  peerList: readonly Peer[]
+  peerConnectionTypes: Readonly<Record<string, PeerConnectionType>>
   peerAudioChannelState: PeerAudioChannelState
   peerAudioChannels: Record<string, AudioChannel>
   connectionTestResults: IConnectionTestResults

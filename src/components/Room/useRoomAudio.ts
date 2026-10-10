@@ -4,7 +4,6 @@ import { ShellContext } from 'contexts/ShellContext'
 import { PeerAction } from 'core/models/network'
 import {
   AudioState,
-  Peer,
   AudioChannelName,
   PeerAudioChannelState,
   StreamType,
@@ -32,7 +31,7 @@ export function useRoomAudio({ peerRoom }: UseRoomAudioConfig) {
     string | null
   >(null)
 
-  const { setPeerList, setAudioChannelState, setPeerAudioChannels } =
+  const { peerList, updatePeer, setAudioChannelState, setPeerAudioChannels } =
     shellContext
 
   useEffect(() => {
@@ -53,29 +52,25 @@ export function useRoomAudio({ peerRoom }: UseRoomAudioConfig) {
     peerAction: PeerAction.AUDIO_CHANGE,
     peerRoom,
     onReceive: (peerAudioChannelState, { peerId }: MessageContext) => {
-      setPeerList(peerList => {
-        return peerList.map(peer => {
-          const newPeer: Peer = { ...peer }
+      const microphoneAudioChannel =
+        peerAudioChannelState[AudioChannelName.MICROPHONE]
 
-          const microphoneAudioChannel =
-            peerAudioChannelState[AudioChannelName.MICROPHONE]
+      if (!microphoneAudioChannel) return
 
-          if (microphoneAudioChannel) {
-            if (peer.peerId === peerId) {
-              newPeer.audioChannelState = {
-                ...newPeer.audioChannelState,
-                ...peerAudioChannelState,
-              }
+      const peer = peerList.find(({ peerId: id }) => id === peerId)
 
-              if (microphoneAudioChannel === AudioState.STOPPED) {
-                deletePeerAudio(peerId)
-              }
-            }
-          }
+      if (!peer) return
 
-          return newPeer
-        })
+      updatePeer(peerId, {
+        audioChannelState: {
+          ...peer.audioChannelState,
+          ...peerAudioChannelState,
+        },
       })
+
+      if (microphoneAudioChannel === AudioState.STOPPED) {
+        deletePeerAudio(peerId)
+      }
     },
   })
 

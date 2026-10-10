@@ -6,7 +6,6 @@ import { ShellContext } from 'contexts/ShellContext'
 import { PeerAction } from 'core/models/network'
 import {
   ScreenShareState,
-  Peer,
   StreamType,
   AudioChannelName,
   AudioState,
@@ -30,7 +29,7 @@ export function useRoomScreenShare({ peerRoom }: UseRoomScreenShareConfig) {
   const [isSharingScreen, setIsSharingScreen] = useState(false)
 
   const {
-    setPeerList,
+    updatePeer,
     setScreenState,
     setAudioChannelState,
     setPeerAudioChannels,
@@ -48,23 +47,11 @@ export function useRoomScreenShare({ peerRoom }: UseRoomScreenShareConfig) {
     peerAction: PeerAction.SCREEN_SHARE,
     peerRoom,
     onReceive: (screenState, { peerId }: MessageContext) => {
-      setPeerList(peerList => {
-        const newPeerList = peerList.map(peer => {
-          const newPeer: Peer = { ...peer }
+      updatePeer(peerId, { screenShareState: screenState })
 
-          if (peer.peerId === peerId) {
-            newPeer.screenShareState = screenState
-
-            if (screenState === ScreenShareState.NOT_SHARING) {
-              deletePeerScreen(peerId)
-            }
-          }
-
-          return newPeer
-        })
-
-        return newPeerList
-      })
+      if (screenState === ScreenShareState.NOT_SHARING) {
+        deletePeerScreen(peerId)
+      }
     },
   })
 

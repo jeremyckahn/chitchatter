@@ -33,7 +33,7 @@ import { PeerDownloadFileButton } from './PeerDownloadFileButton'
 
 interface PeerListItemProps {
   peer: Peer
-  peerConnectionTypes: Record<string, PeerConnectionType>
+  peerConnectionTypes: Readonly<Record<string, PeerConnectionType>>
   peerAudioChannels: Record<string, AudioChannel>
   roomId: string
 }
