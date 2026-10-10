@@ -203,6 +203,7 @@ const RoomCore = ({
                   />
                   {showActiveTypingStatus ? (
                     <TypingStatusBar
+                      chatRoom={chatRoom}
                       isDirectMessageRoom={isDirectMessageRoom}
                     />
                   ) : null}

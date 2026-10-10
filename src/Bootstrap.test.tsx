@@ -1,7 +1,8 @@
-import { vi } from 'vitest'
+import { beforeEach, vi } from 'vitest'
 import { act, render } from '@testing-library/react'
 import persistedStorage from 'localforage'
 
+import { QueryParamKeys } from 'models/shell'
 import { userSettingsStorageKey } from 'core/settings/SettingsManager'
 import {
   mockSerialization,
@@ -17,6 +18,11 @@ import Bootstrap, { BootstrapProps } from './Bootstrap'
 vi.mock('localforage')
 
 const userSettingsStub = userSettingsStubFactory()
+
+beforeEach(() => {
+  vi.clearAllMocks()
+  window.history.replaceState({}, '', '/')
+})
 
 const renderBootstrap = async (overrides: Partial<BootstrapProps> = {}) => {
   render(
@@ -63,4 +69,17 @@ test('updates persisted user settings', async () => {
       selectedSound: DEFAULT_SOUND,
     }
   )
+})
+
+test('reads, but never writes, persisted user settings when embedded', async () => {
+  window.history.replaceState({}, '', `/?${QueryParamKeys.IS_EMBEDDED}`)
+
+  await renderBootstrap()
+
+  // An embedded instance is a guest in someone else's page. It still reads its
+  // own settings — without them it would mint a new identity and keypair on
+  // every load of the host page — but the host's configuration is not the
+  // user's own, so nothing it computes is saved.
+  expect(persistedStorage.getItem).toHaveBeenCalledWith(userSettingsStorageKey)
+  expect(persistedStorage.setItem).not.toHaveBeenCalled()
 })

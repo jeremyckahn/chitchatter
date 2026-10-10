@@ -123,10 +123,6 @@ export const useRoom = (
 
   const [isShowingMessages, setIsShowingMessages] = useState(true)
 
-  const { unreadMessages } = useChatRoomNotifications(chatRoom, {
-    isShowingMessages,
-  })
-
   const [selfVideoStream, setSelfVideoStream] = useState<MediaStream | null>(
     null
   )
@@ -142,6 +138,30 @@ export const useRoom = (
   const [peerOfferedFileMetadata, setPeerOfferedFileMetadata] = useState<
     Record<string, FileOfferMetadata>
   >({})
+
+  const showVideoDisplay = Boolean(
+    selfVideoStream ||
+      selfScreenStream ||
+      Object.values({ ...peerVideoStreams, ...peerScreenStreams }).length > 0
+  )
+
+  // Derived, not stored: there is nothing to show but messages when no video is
+  // on screen. The previous implementation set state during render to do this.
+  const isShowingMessagesResolved = showVideoDisplay ? isShowingMessages : true
+
+  // The stored flag is reset too, so that hiding the transcript during one call
+  // does not silently hide it again at the start of the next one — the control
+  // that would unhide it is not even on screen in between.
+  useEffect(() => {
+    if (!showVideoDisplay) setIsShowingMessages(true)
+  }, [showVideoDisplay])
+
+  // Given the resolved value, not the stored one: a transcript that is on
+  // screen and focused should not also announce itself with a sound or a
+  // desktop notification.
+  const { unreadMessages } = useChatRoomNotifications(chatRoom, {
+    isShowingMessages: isShowingMessagesResolved,
+  })
 
   useEffect(() => {
     // join() is idempotent, so a reused direct-message room is left alone.
@@ -204,16 +224,6 @@ export const useRoom = (
       setRoomId(undefined)
     }
   }, [roomId, setRoomId, isDirectMessageRoom])
-
-  const showVideoDisplay = Boolean(
-    selfVideoStream ||
-      selfScreenStream ||
-      Object.values({ ...peerVideoStreams, ...peerScreenStreams }).length > 0
-  )
-
-  // Derived, not stored: there is nothing to show but messages when no video is
-  // on screen. The previous implementation set state during render to do this.
-  const isShowingMessagesResolved = showVideoDisplay ? isShowingMessages : true
 
   const roomContextValue: RoomContextProps = useMemo(
     () => ({

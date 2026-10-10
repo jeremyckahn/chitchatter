@@ -110,25 +110,28 @@ const Bootstrap = ({
     useState<UserSettings>(initialUserSettings)
   const { userId } = userSettings
 
-  // An embedded instance is a guest in someone else's page, so it reads
-  // settings but never writes them. Expressing that as a write-only-nowhere
-  // storage adapter keeps the condition out of every save path.
   const isEmbedded = queryParams.has(QueryParamKeys.IS_EMBEDDED)
 
-  const settingsManager = useMemo(
-    () =>
-      new SettingsManager({
-        storage: isEmbedded
-          ? {
-              getItem: () => Promise.resolve(null),
-              setItem: <T,>(_key: string, value: T) => Promise.resolve(value),
-              removeItem: () => Promise.resolve(),
-            }
-          : createWebStorage(persistedStorageProp),
-        serializationService,
-      }),
-    [isEmbedded, persistedStorageProp, serializationService]
-  )
+  const settingsManager = useMemo(() => {
+    const storage = createWebStorage(persistedStorageProp)
+
+    return new SettingsManager({
+      // An embedded instance is a guest in someone else's page, so it reads
+      // persisted settings — it still needs its own identity and keypair to
+      // survive a reload — but never writes them, since the host's
+      // configuration is not the user's own. Expressing that as a storage
+      // adapter whose writes go nowhere keeps the condition out of every save
+      // path.
+      storage: isEmbedded
+        ? {
+            ...storage,
+            setItem: <T,>(_key: string, value: T) => Promise.resolve(value),
+            removeItem: () => Promise.resolve(),
+          }
+        : storage,
+      serializationService,
+    })
+  }, [isEmbedded, persistedStorageProp, serializationService])
 
   const persistUserSettings = useCallback(
     (newUserSettings: UserSettings) => settingsManager.save(newUserSettings),
