@@ -61,7 +61,11 @@ if (!roomId) {
   process.exit(1)
 }
 
-const userId = `tui-${Math.random().toString(36).slice(2, 10)}`
+// Crypto-grade, not Math.random(): this id becomes part of the
+// `${roomId}_${userId}` plaintext that peers sign to prove their identity, and
+// the generated nickname other peers verify is derived from it. The web app
+// uses a v4 uuid here for the same reason (see Init.tsx).
+const userId = `tui-${globalThis.crypto.randomUUID()}`
 const customUsername = process.env.CHITCHATTER_USERNAME ?? 'Terminal'
 
 // Must match the browser app's appId, or the two join different rooms.
