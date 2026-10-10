@@ -105,8 +105,10 @@ export const createInMemoryNetwork = () => new InMemoryNetwork()
  *
  * This exists so the chat core can be tested for real — two actual clients
  * exchanging actual messages — in a Node environment. It mirrors
- * `TrysteroTransport`'s semantics deliberately, including the single-handler
- * -per-`PeerHookType` fan-out and the connect/disconnect receiver indirection.
+ * `TrysteroTransport`'s semantics deliberately: one handler per
+ * `PeerHookType`, a join replayed once per hook type to a handler that
+ * registered late, and an action whose receivers are connected and
+ * disconnected independently of one another.
  */
 export class InMemoryTransport implements PeerTransport {
   readonly peerId: string
@@ -119,12 +121,18 @@ export class InMemoryTransport implements PeerTransport {
 
   private peerLeaveHandlers: Map<PeerHookType, PeerLeaveHandler> = new Map()
 
+  /**
+   * One action can have several receivers — a host keeps a direct-message room
+   * per peer, and every one of them listens on the `dm` namespace — so these
+   * are sets rather than single slots, as on the real transport.
+   */
   private receivers: Map<
     string,
-    ((data: DataPayload, peerId: string) => void) | null
+    Set<(data: DataPayload, peerId: string) => void>
   > = new Map()
 
-  private actions: Partial<Record<string, PeerRoomAction<any>>> = {}
+  /** @see TrysteroTransport.announcedJoins */
+  private announcedJoins: Map<PeerHookType, Set<string>> = new Map()
 
   constructor(network: InMemoryNetwork, peerId: string) {
     this.network = network
@@ -134,11 +142,18 @@ export class InMemoryTransport implements PeerTransport {
 
   /** @internal — called by the network, not by consumers. */
   receivePeerJoin = (peerId: string) => {
-    for (const [, handler] of this.peerJoinHandlers) handler(peerId)
+    for (const [peerHookType, handler] of this.peerJoinHandlers) {
+      this.markJoinAnnounced(peerHookType, peerId)
+      handler(peerId)
+    }
   }
 
   /** @internal — called by the network, not by consumers. */
   receivePeerLeave = (peerId: string) => {
+    for (const announced of this.announcedJoins.values()) {
+      announced.delete(peerId)
+    }
+
     for (const [, handler] of this.peerLeaveHandlers) handler(peerId)
   }
 
@@ -150,7 +165,11 @@ export class InMemoryTransport implements PeerTransport {
   ) => {
     if (this.hasLeft) return
 
-    this.receivers.get(actionName)?.(data, fromPeerId)
+    const receivers = this.receivers.get(actionName)
+
+    if (!receivers) return
+
+    for (const receiver of [...receivers]) receiver(data, fromPeerId)
   }
 
   makeAction = <T extends DataPayload>(
@@ -159,11 +178,11 @@ export class InMemoryTransport implements PeerTransport {
   ): PeerRoomAction<T> => {
     const actionName = `${namespace}.${peerAction}`
 
-    if (actionName in this.actions) {
-      return this.actions[actionName] as PeerRoomAction<T>
-    }
+    const receivers =
+      this.receivers.get(actionName) ??
+      new Set<(data: DataPayload, peerId: string) => void>()
 
-    this.receivers.set(actionName, null)
+    this.receivers.set(actionName, receivers)
 
     const sender: ActionSender<T> = async (data, options) => {
       if (this.hasLeft) return
@@ -171,30 +190,30 @@ export class InMemoryTransport implements PeerTransport {
       this.network.deliver(this.peerId, actionName, data, options?.target)
     }
 
+    // This caller's own receiver, so that disconnecting it leaves the other
+    // rooms on this action alone.
+    let receiver: ((data: DataPayload, peerId: string) => void) | null = null
+
     const connectReceiver: ActionReceiver<T> = callback => {
-      this.receivers.set(actionName, (data, peerId) => {
+      receiver = (data, peerId) => {
         callback(data as T, { peerId })
-      })
+      }
+
+      receivers.add(receiver)
     }
 
     const disconnectReceiver = () => {
-      this.receivers.set(actionName, null)
+      if (!receiver) return
+
+      receivers.delete(receiver)
+      receiver = null
     }
 
     // Progress reporting is a WebRTC chunking concern with no in-process
     // analogue, so this is intentionally inert.
     const progress: ActionProgress = () => {}
 
-    const action: PeerRoomAction<T> = [
-      sender,
-      connectReceiver,
-      progress,
-      disconnectReceiver,
-    ]
-
-    this.actions[actionName] = action
-
-    return action
+    return [sender, connectReceiver, progress, disconnectReceiver]
   }
 
   onPeerJoin = (peerHookType: PeerHookType, fn: PeerJoinHandler) => {
@@ -205,8 +224,21 @@ export class InMemoryTransport implements PeerTransport {
 
     // A handler registered after a connection was already established still
     // needs to hear about it — the media hooks register theirs well after the
-    // chat core registers its own.
-    for (const peerId of alreadyConnected) fn(peerId)
+    // chat core registers its own — but only once, however often it
+    // re-registers.
+    for (const peerId of alreadyConnected) {
+      if (this.announcedJoins.get(peerHookType)?.has(peerId)) continue
+
+      this.markJoinAnnounced(peerHookType, peerId)
+      fn(peerId)
+    }
+  }
+
+  private markJoinAnnounced = (peerHookType: PeerHookType, peerId: string) => {
+    const announced = this.announcedJoins.get(peerHookType) ?? new Set<string>()
+
+    announced.add(peerId)
+    this.announcedJoins.set(peerHookType, announced)
   }
 
   onPeerLeave = (peerHookType: PeerHookType, fn: PeerLeaveHandler) => {
@@ -234,9 +266,8 @@ export class InMemoryTransport implements PeerTransport {
   flush = () => {
     this.peerJoinHandlers = new Map()
     this.peerLeaveHandlers = new Map()
+    this.announcedJoins = new Map()
 
-    for (const actionName of this.receivers.keys()) {
-      this.receivers.set(actionName, null)
-    }
+    for (const receivers of this.receivers.values()) receivers.clear()
   }
 }

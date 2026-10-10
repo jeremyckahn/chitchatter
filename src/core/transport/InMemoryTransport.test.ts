@@ -63,11 +63,49 @@ describe('InMemoryTransport', () => {
     expect(onCarol).not.toHaveBeenCalled()
   })
 
-  it('memoizes an action so repeated makeAction calls share one receiver slot', () => {
+  it('delivers one action to every receiver connected to it', async () => {
     const network = createInMemoryNetwork()
     const alice = new InMemoryTransport(network, 'alice')
+    const bob = new InMemoryTransport(network, 'bob')
 
-    expect(makeAction(alice)).toBe(makeAction(alice))
+    // Several rooms can share one action — a host keeps a direct-message room
+    // per peer, and all of them listen on the `dm` namespace.
+    const [, connectFirst] = makeAction(bob)
+    const [, connectSecond] = makeAction(bob)
+    const onFirst = vi.fn()
+    const onSecond = vi.fn()
+
+    connectFirst(onFirst)
+    connectSecond(onSecond)
+
+    const [send] = makeAction(alice)
+
+    await send({ text: 'for everyone' })
+
+    expect(onFirst).toHaveBeenCalledTimes(1)
+    expect(onSecond).toHaveBeenCalledTimes(1)
+  })
+
+  it('disconnects only the receiver that asked to be disconnected', async () => {
+    const network = createInMemoryNetwork()
+    const alice = new InMemoryTransport(network, 'alice')
+    const bob = new InMemoryTransport(network, 'bob')
+
+    const [, connectFirst, , disconnectFirst] = makeAction(bob)
+    const [, connectSecond] = makeAction(bob)
+    const onFirst = vi.fn()
+    const onSecond = vi.fn()
+
+    connectFirst(onFirst)
+    connectSecond(onSecond)
+    disconnectFirst()
+
+    const [send] = makeAction(alice)
+
+    await send({ text: 'still listening?' })
+
+    expect(onFirst).not.toHaveBeenCalled()
+    expect(onSecond).toHaveBeenCalledTimes(1)
   })
 
   it('announces a pair to each other once both are listening, not before', () => {
@@ -136,6 +174,43 @@ describe('InMemoryTransport', () => {
     alice.onPeerJoin(PeerHookType.FILE_SHARE, fileShare)
 
     expect(fileShare).toHaveBeenCalledWith('bob')
+  })
+
+  it('does not re-announce a peer when the same hook type re-registers', () => {
+    const network = createInMemoryNetwork()
+    const alice = new InMemoryTransport(network, 'alice')
+    const bob = new InMemoryTransport(network, 'bob')
+    const audio = vi.fn()
+
+    alice.onPeerJoin(PeerHookType.NEW_PEER, vi.fn())
+    bob.onPeerJoin(PeerHookType.NEW_PEER, vi.fn())
+
+    // The media hooks re-register on every render, and re-announcing a
+    // connected peer there re-queues its media streams.
+    alice.onPeerJoin(PeerHookType.AUDIO, audio)
+    alice.onPeerJoin(PeerHookType.AUDIO, audio)
+    alice.onPeerJoin(PeerHookType.AUDIO, audio)
+
+    expect(audio).toHaveBeenCalledTimes(1)
+  })
+
+  it('announces a peer again once it has left and come back', () => {
+    const network = createInMemoryNetwork()
+    const alice = new InMemoryTransport(network, 'alice')
+    const bob = new InMemoryTransport(network, 'bob')
+    const aliceSawJoin = vi.fn()
+
+    alice.onPeerJoin(PeerHookType.NEW_PEER, aliceSawJoin)
+    bob.onPeerJoin(PeerHookType.NEW_PEER, vi.fn())
+    expect(aliceSawJoin).toHaveBeenCalledTimes(1)
+
+    bob.leaveRoom()
+
+    const bobAgain = new InMemoryTransport(network, 'bob')
+
+    bobAgain.onPeerJoin(PeerHookType.NEW_PEER, vi.fn())
+
+    expect(aliceSawJoin).toHaveBeenCalledTimes(2)
   })
 
   it('notifies remaining peers on leave and stops delivering to the leaver', async () => {

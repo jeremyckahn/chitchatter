@@ -95,6 +95,26 @@ const createClient = (
   return { chatRoom, transport, adapters, fileTransfer }
 }
 
+/**
+ * A direct-message room riding an existing client's transport, scoped to one
+ * peer — the shape the web app builds when a peer's dialog is opened.
+ */
+const createDirectMessageRoom = (
+  client: Client,
+  index: number,
+  targetPeerId: string
+) =>
+  new ChatRoom({
+    roomId,
+    userId: `user-${index}`,
+    customUsername: '',
+    publicKey: keyPairs[index].publicKey,
+    privateKey: keyPairs[index].privateKey,
+    transport: client.transport,
+    adapters: client.adapters,
+    targetPeerId,
+  })
+
 const tick = () => new Promise(resolve => setTimeout(resolve, 0))
 
 /**
@@ -727,36 +747,9 @@ describe('ChatRoom', () => {
 
       // A DM room rides the same transport as the group room, under a separate
       // action namespace.
-      const aliceToBob = new ChatRoom({
-        roomId,
-        userId: 'user-0',
-        customUsername: '',
-        publicKey: keyPairs[0].publicKey,
-        privateKey: keyPairs[0].privateKey,
-        transport: alice.transport,
-        adapters: alice.adapters,
-        targetPeerId: 'peer-1',
-      })
-      const bobFromAlice = new ChatRoom({
-        roomId,
-        userId: 'user-1',
-        customUsername: '',
-        publicKey: keyPairs[1].publicKey,
-        privateKey: keyPairs[1].privateKey,
-        transport: bob.transport,
-        adapters: bob.adapters,
-        targetPeerId: 'peer-0',
-      })
-      const carolDm = new ChatRoom({
-        roomId,
-        userId: 'user-2',
-        customUsername: '',
-        publicKey: keyPairs[2].publicKey,
-        privateKey: keyPairs[2].privateKey,
-        transport: carol.transport,
-        adapters: carol.adapters,
-        targetPeerId: 'peer-0',
-      })
+      const aliceToBob = createDirectMessageRoom(alice, 0, 'peer-1')
+      const bobFromAlice = createDirectMessageRoom(bob, 1, 'peer-0')
+      const carolDm = createDirectMessageRoom(carol, 2, 'peer-0')
 
       await aliceToBob.join()
       await bobFromAlice.join()
@@ -771,6 +764,66 @@ describe('ChatRoom', () => {
       // The group transcript is untouched by the DM.
       expect(bob.chatRoom.getMessageLog()).toHaveLength(0)
       expect(aliceToBob.isDirectMessageRoom).toBe(true)
+    })
+
+    it('keeps one conversation out of another conversation on the same host', async () => {
+      const alice = createClient(network, 0)
+      const bob = createClient(network, 1)
+      const carol = createClient(network, 2)
+
+      await joinAll(alice, bob, carol)
+
+      // Every peer dialog the host has opened keeps its room alive, and all of
+      // them listen on the one `dm` namespace. Each has to recognise its own
+      // correspondent or Bob's conversation leaks into Carol's.
+      const aliceToBob = createDirectMessageRoom(alice, 0, 'peer-1')
+      const aliceToCarol = createDirectMessageRoom(alice, 0, 'peer-2')
+      const bobToAlice = createDirectMessageRoom(bob, 1, 'peer-0')
+
+      await aliceToBob.join()
+      await aliceToCarol.join()
+      await bobToAlice.join()
+      await settle()
+
+      await bobToAlice.sendMessage('between you and me')
+      bobToAlice.notifyTyping()
+      await bobToAlice.offerFiles([
+        { name: 'secret.pdf', type: 'application/pdf', size: 1 },
+      ])
+      await settle()
+
+      expect(aliceToBob.getMessageLog()).toHaveLength(1)
+      expect(aliceToBob.getPeers().map(({ peerId }) => peerId)).toEqual([
+        'peer-1',
+      ])
+      expect(Object.keys(aliceToBob.getFileOffers())).toEqual(['peer-1'])
+
+      expect(aliceToCarol.getMessageLog()).toHaveLength(0)
+      expect(aliceToCarol.getPeers()).toHaveLength(0)
+      expect(aliceToCarol.getFileOffers()).toEqual({})
+    })
+
+    it('does not hand its history to the peer on the other side', async () => {
+      const alice = createClient(network, 0)
+      const bob = createClient(network, 1)
+
+      await joinAll(alice, bob)
+
+      const aliceToBob = createDirectMessageRoom(alice, 0, 'peer-1')
+
+      await aliceToBob.join()
+      await aliceToBob.sendMessage('said before you opened this')
+      await settle()
+
+      // Bob opens the conversation only now. A direct-message transcript is
+      // not backfilled: it belongs to the two people in it, and sending it
+      // would also publish it to every other DM room on the namespace.
+      const bobToAlice = createDirectMessageRoom(bob, 1, 'peer-0')
+
+      await bobToAlice.join()
+      await settle()
+
+      expect(bobToAlice.getMessageLog()).toHaveLength(0)
     })
   })
 
@@ -807,6 +860,25 @@ describe('ChatRoom', () => {
 
       expect(alice.chatRoom.getPeers()).toBe(peers)
     })
+
+    it('leaves the peers snapshot alone when an update repeats what a peer already says', async () => {
+      const alice = createClient(network, 0)
+      const bob = createClient(network, 1)
+
+      await joinAll(alice, bob)
+
+      const peers = alice.chatRoom.getPeers()
+      const onPeerListChange = vi.fn()
+
+      alice.chatRoom.on(ChatRoomEvent.PEER_LIST_CHANGE, onPeerListChange)
+
+      // Every received message clears a typing flag that is usually already
+      // clear. Re-rendering every subscriber for that is pure waste.
+      alice.chatRoom.updatePeer('peer-1', { isTypingGroupMessage: false })
+
+      expect(alice.chatRoom.getPeers()).toBe(peers)
+      expect(onPeerListChange).not.toHaveBeenCalled()
+    })
   })
 
   describe('leave', () => {
@@ -831,6 +903,37 @@ describe('ChatRoom', () => {
       await alice.chatRoom.leave()
 
       await expect(alice.chatRoom.leave()).resolves.toBeUndefined()
+    })
+
+    it('stops seeding the files it was offering', async () => {
+      const alice = createClient(network, 0)
+
+      await alice.chatRoom.join()
+      await alice.chatRoom.offerFiles([
+        { name: 'doc.pdf', type: 'application/pdf', size: 1 },
+      ])
+
+      await alice.chatRoom.leave()
+
+      // An offer is only reachable while we are in the room, so leaving it
+      // seeding forever achieves nothing.
+      expect(alice.fileTransfer.rescindAll).toHaveBeenCalled()
+    })
+
+    it('leaves the shared file transfer alone when a direct-message room closes', async () => {
+      const alice = createClient(network, 0)
+      const bob = createClient(network, 1)
+
+      await joinAll(alice, bob)
+
+      const aliceToBob = createDirectMessageRoom(alice, 0, 'peer-1')
+
+      await aliceToBob.join()
+      await aliceToBob.leave()
+
+      // The DM room shares the group room's file transfer; rescinding here
+      // would stop the group room's offers too.
+      expect(alice.fileTransfer.rescindAll).not.toHaveBeenCalled()
     })
   })
 

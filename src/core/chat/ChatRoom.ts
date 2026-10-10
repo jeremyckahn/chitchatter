@@ -300,6 +300,17 @@ export class ChatRoom extends EventTarget {
 
     this.disconnectReceivers = []
     this.senders = null
+
+    // Our file offers are only reachable while we are in the room, so leaving
+    // ends the seeding. A direct-message room shares the group room's file
+    // transfer, so only the group room may do this.
+    if (!this.isDirectMessageRoom) {
+      try {
+        await this.adapters.fileTransfer.rescindAll()
+      } catch (error) {
+        this.reportError(error, 'leave')
+      }
+    }
   }
 
   // ------------------------------------------------------------- state access
@@ -437,11 +448,21 @@ export class ChatRoom extends EventTarget {
    * video and screen-share hooks, which the core does not itself observe.
    */
   updatePeer = (peerId: string, updates: Partial<Peer>) => {
-    const next = applyPeerUpdate(this.peers, peerId, updates)
+    const existing = findPeer(this.peers, peerId)
 
-    if (next.every((peer, i) => peer === this.peers[i])) return
+    if (!existing) return
 
-    this.setPeers(next)
+    // Compared by value, not by reference: `applyPeerUpdate` always clones the
+    // peer it touches, so a reference check can never see a no-op. Most updates
+    // are no-ops — every received message clears a typing flag that is usually
+    // already clear — and each one would otherwise re-render every subscriber.
+    const isUnchanged = Object.entries(updates).every(
+      ([key, value]) => existing[key as keyof Peer] === value
+    )
+
+    if (isUnchanged) return
+
+    this.setPeers(applyPeerUpdate(this.peers, peerId, updates))
   }
 
   offerFiles = async (files: readonly FileHandle[]) => {
@@ -495,7 +516,7 @@ export class ChatRoom extends EventTarget {
     message: UnsentMessage,
     { peerId }: { peerId: string }
   ) => {
-    if (this.isDirectMessageRoom && peerId !== this.targetPeerId) return
+    if (!this.isFromRoomPeer(peerId)) return
 
     const received: ReceivedMessage = {
       ...message,
@@ -511,7 +532,7 @@ export class ChatRoom extends EventTarget {
     inlineMedia: UnsentInlineMedia,
     { peerId }: { peerId: string }
   ) => {
-    if (this.isDirectMessageRoom && peerId !== this.targetPeerId) return
+    if (!this.isFromRoomPeer(peerId)) return
 
     const received: ReceivedInlineMedia = {
       ...inlineMedia,
@@ -523,8 +544,11 @@ export class ChatRoom extends EventTarget {
   }
 
   private handleTranscript = (
-    transcript: Array<ReceivedMessage | ReceivedInlineMedia>
+    transcript: Array<ReceivedMessage | ReceivedInlineMedia>,
+    { peerId }: { peerId: string }
   ) => {
+    if (!this.isFromRoomPeer(peerId)) return
+
     // A transcript only backfills an empty log; it never overwrites messages
     // this peer already has.
     if (this.messageLog.length) return
@@ -541,6 +565,8 @@ export class ChatRoom extends EventTarget {
     }: UserMetadata,
     { peerId }: { peerId: string }
   ) => {
+    if (!this.isFromRoomPeer(peerId)) return
+
     const verified = await verifyPeerIdentity({
       encryptionService: this.encryptionService,
       publicKeyString,
@@ -615,6 +641,8 @@ export class ChatRoom extends EventTarget {
     { isTyping }: TypingStatus,
     { peerId }: { peerId: string }
   ) => {
+    if (!this.isFromRoomPeer(peerId)) return
+
     this.updatePeer(peerId, {
       isTypingGroupMessage: isTyping && !this.isDirectMessageRoom,
       isTypingDirectMessage: isTyping && this.isDirectMessageRoom,
@@ -627,6 +655,8 @@ export class ChatRoom extends EventTarget {
     metadata: FileOfferMetadata | null,
     { peerId }: { peerId: string }
   ) => {
+    if (!this.isFromRoomPeer(peerId)) return
+
     if (metadata) {
       this.fileOffers = applyFileOffer(this.fileOffers, peerId, metadata)
     } else {
@@ -674,7 +704,9 @@ export class ChatRoom extends EventTarget {
 
         // Public rooms backfill history for newcomers. Private rooms do not:
         // joining with the password should not hand over what was said before.
-        this.isPrivate
+        // Neither do direct-message rooms, whose history belongs to the two
+        // people in it and is already on both sides.
+        this.isPrivate || this.isDirectMessageRoom
           ? Promise.resolve()
           : this.senders?.transcript(
               this.messageLog.filter(isMessageReceived),
@@ -770,6 +802,18 @@ export class ChatRoom extends EventTarget {
     clearTimeout(this.typingExpiryTimer)
     this.typingExpiryTimer = null
   }
+
+  /**
+   * Whether an incoming action belongs to this room.
+   *
+   * Every room on a transport shares that transport's actions, and a
+   * direct-message room shares the `dm` namespace with every *other*
+   * direct-message room the host has open — so each one has to recognise its
+   * own correspondent. Without this, one conversation's transcript, metadata,
+   * typing status or file offer lands in another's.
+   */
+  private isFromRoomPeer = (peerId: string) =>
+    !this.isDirectMessageRoom || peerId === this.targetPeerId
 
   /** Scopes an action to one peer in a direct-message room, or broadcasts. */
   private sendOptions = () =>
