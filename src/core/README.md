@@ -48,3 +48,33 @@ peer's media is playing or stopped (`AudioState`, `VideoState`,
 
 Web-only types that would otherwise leak DOM objects into the domain model live
 in `src/models/media.ts`.
+
+## Running it headless
+
+```sh
+npx vitest run --project core   # the whole protocol, in Node, with no DOM
+npm run spike:tui -- <room-id>  # a terminal client built on this core
+```
+
+The Vitest `core` project is the authoritative proof: it runs several
+`ChatRoom`s against each other over `InMemoryTransport` with
+`environment: 'node'` and no setup files. `scripts/tui-spike.ts` is a
+demonstration rather than a test, and its header documents exactly how far it
+currently gets.
+
+## Map
+
+| Area                  | Entry point                   |
+| --------------------- | ----------------------------- |
+| The chat client       | `chat/ChatRoom.ts`            |
+| Event catalog         | `chat/events.ts`              |
+| Wire payloads         | `chat/protocol.ts`            |
+| Peer identity         | `chat/identity.ts`            |
+| Transcript policy     | `chat/transcript.ts`          |
+| Peer-list reducers    | `chat/peers.ts`               |
+| File offers           | `chat/fileOffers.ts`          |
+| Open-room bookkeeping | `chat/ChatRoomRegistry.ts`    |
+| Transport contract    | `transport/types.ts`          |
+| Platform adapters     | `adapters/types.ts`           |
+| Settings              | `settings/SettingsManager.ts` |
+| Name resolution       | `names/peerNames.ts`          |
