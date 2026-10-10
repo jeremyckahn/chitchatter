@@ -1,5 +1,5 @@
 import { vi } from 'vitest'
-import { encryption } from 'services/Encryption'
+import { encryption } from 'core/crypto/Encryption'
 
 export const mockEncryptionService = encryption
 

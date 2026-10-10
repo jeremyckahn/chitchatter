@@ -8,7 +8,7 @@ import {
   ConnectionTestEvents,
   TrackerConnection,
 } from 'lib/ConnectionTest'
-import { sleep } from 'lib/sleep'
+import { sleep } from 'core/lib/sleep'
 
 export interface ConnectionTestResults {
   hasHost: boolean

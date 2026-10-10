@@ -10,13 +10,13 @@ import Menu from '@mui/material/Menu'
 import MenuItem from '@mui/material/MenuItem'
 import Tooltip from '@mui/material/Tooltip'
 
-import { PeerRoom } from 'lib/PeerRoom'
+import { TrysteroTransport } from 'core/transport/TrysteroTransport'
 
 import { useRoomAudio } from './useRoomAudio'
 import { MediaButton } from './MediaButton'
 
 export interface RoomAudioControlsProps {
-  peerRoom: PeerRoom
+  peerRoom: TrysteroTransport
 }
 
 export function RoomAudioControls({ peerRoom }: RoomAudioControlsProps) {

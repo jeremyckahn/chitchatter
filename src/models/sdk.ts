@@ -1,4 +1,4 @@
-import { UserSettings } from 'models/settings'
+import { UserSettings } from 'core/models/settings'
 import { QueryParamKeys } from 'models/shell'
 
 export enum PostMessageEventName {

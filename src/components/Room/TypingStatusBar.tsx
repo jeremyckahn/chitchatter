@@ -1,18 +1,24 @@
-import { useContext } from 'react'
 import Box from '@mui/material/Box'
 import Typography from '@mui/material/Typography'
-import { ShellContext } from 'contexts/ShellContext'
+import { ChatRoom } from 'core/chat/ChatRoom'
+import { useChatRoomPeers } from 'hooks/useChatRoomState'
 import {
   PeerNameDisplay,
   PeerNameDisplayProps,
 } from 'components/PeerNameDisplay/PeerNameDisplay'
 
 export const TypingStatusBar = ({
+  chatRoom,
   isDirectMessageRoom,
 }: {
+  chatRoom: ChatRoom
   isDirectMessageRoom: boolean
 }) => {
-  const { peerList } = useContext(ShellContext)
+  // Read from the room being displayed rather than from the shell's peer list,
+  // which only ever holds the group room's peers: a direct-message room tracks
+  // its correspondent's typing status in its own peer list.
+  const peerList = useChatRoomPeers(chatRoom)
+
   const typingPeers = peerList.filter(
     ({ isTypingGroupMessage, isTypingDirectMessage }) =>
       isDirectMessageRoom ? isTypingDirectMessage : isTypingGroupMessage

@@ -14,8 +14,8 @@ import CloseIcon from '@mui/icons-material/Close'
 
 import { AlertOptions } from 'models/shell'
 import { useEffect, useState, SyntheticEvent } from 'react'
-import { sleep } from 'lib/sleep'
-import { encryption } from 'services/Encryption'
+import { sleep } from 'core/lib/sleep'
+import { encryption } from 'core/crypto/Encryption'
 
 export interface RoomShareDialogProps {
   isOpen: boolean

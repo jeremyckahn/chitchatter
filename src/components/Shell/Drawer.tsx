@@ -24,7 +24,7 @@ import GitInfo from 'react-git-info/macro'
 
 import { routes } from 'config/routes'
 import { SettingsContext } from 'contexts/SettingsContext'
-import { ColorMode } from 'models/settings'
+import { ColorMode } from 'core/models/settings'
 
 const { commit } = GitInfo()
 

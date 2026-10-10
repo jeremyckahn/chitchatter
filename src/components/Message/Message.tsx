@@ -15,7 +15,7 @@ import {
   Message as IMessage,
   isMessageReceived,
   isInlineMedia,
-} from 'models/chat'
+} from 'core/models/chat'
 import { PeerNameDisplay } from 'components/PeerNameDisplay'
 import { CopyableBlock } from 'components/CopyableBlock/CopyableBlock'
 

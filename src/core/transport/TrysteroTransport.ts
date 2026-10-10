@@ -2,59 +2,40 @@ import {
   joinRoom,
   Room,
   DataPayload,
-  ActionProgressHandler,
-  MessageContext,
   MessageAction,
+  MessageContext,
 } from '@trystero-p2p/torrent'
 import { joinRoom as baseJoinRoom } from 'trystero'
 
-import { sleep } from 'lib/sleep'
-import { PeerAction } from 'models/network'
-
-export enum PeerHookType {
-  NEW_PEER = 'NEW_PEER',
-  AUDIO = 'AUDIO',
-  VIDEO = 'VIDEO',
-  SCREEN = 'SCREEN',
-  FILE_SHARE = 'FILE_SHARE',
-}
-
-export enum PeerStreamType {
-  AUDIO = 'AUDIO',
-  VIDEO = 'VIDEO',
-  SCREEN = 'SCREEN',
-}
-
-export enum PeerConnectionType {
-  DIRECT = 'DIRECT',
-  RELAY = 'RELAY',
-}
-
-export enum ActionNamespace {
-  GROUP = 'g',
-  DIRECT_MESSAGE = 'dm',
-}
+import { sleep } from 'core/lib/sleep'
+import { PeerAction } from 'core/models/network'
+import {
+  ActionProgress,
+  ActionReceiver,
+  ActionSender,
+  PeerConnectionType,
+  PeerHookType,
+  PeerRoomAction,
+  PeerStreamType,
+  PeerTransport,
+} from 'core/transport/types'
 
 const streamQueueAddDelay = 1000
 
-export type ActionSender<T extends DataPayload> = MessageAction<T>['send']
-
-export type ActionReceiver<T extends DataPayload> = (
-  callback: NonNullable<MessageAction<T>['onMessage']>
-) => void
-
-export type ActionProgress = (fn: ActionProgressHandler) => void
-
-export type PeerRoomAction<T extends DataPayload> = [
-  ActionSender<T>,
-  ActionReceiver<T>,
-  ActionProgress,
-  () => void,
-]
-
 export type RoomConfig = Parameters<typeof baseJoinRoom>[0]
 
-export class PeerRoom {
+/**
+ * Trystero allows one action per name for the lifetime of the room, so the
+ * action and the dispatcher that fans its messages out are shared by every
+ * caller asking for that name. The receiver handles are not — see
+ * {@link TrysteroTransport.makeAction}.
+ */
+interface SharedAction {
+  actionObj: MessageAction<any>
+  eventTarget: EventTarget
+}
+
+export class TrysteroTransport implements PeerTransport {
   private room: Room
 
   private roomConfig: RoomConfig
@@ -74,6 +55,18 @@ export class PeerRoom {
     Exclude<Room['onPeerStream'], null>
   > = new Map()
 
+  /**
+   * Which peers each join-hook type has already been told about.
+   *
+   * Handlers register after the room is joined — `ChatRoom` in `join()`, the
+   * media hooks during render — so each one has to be given the peers that
+   * connected before it existed. Recording what a hook type has already seen is
+   * what keeps a re-registration from re-announcing them: the media hooks
+   * re-register on every render, and re-announcing a peer there re-queues its
+   * media streams.
+   */
+  private announcedJoins: Map<PeerHookType, Set<string>> = new Map()
+
   private streamQueue: (() => Promise<any>)[] = []
 
   private isProcessingPendingStreams = false
@@ -90,19 +83,30 @@ export class PeerRoom {
     this.isProcessingPendingStreams = false
   }
 
-  private actions: Partial<Record<string, PeerRoomAction<any>>> = {}
+  private actions: Partial<Record<string, SharedAction>> = {}
 
   constructor(config: RoomConfig, roomId: string) {
     this.roomConfig = config
     this.room = joinRoom(this.roomConfig, roomId)
 
     this.room.onPeerJoin = (...args) => {
-      for (const [, peerJoinHandler] of this.peerJoinHandlers) {
+      const [peerId] = args
+
+      for (const [peerHookType, peerJoinHandler] of this.peerJoinHandlers) {
+        this.markJoinAnnounced(peerHookType, peerId)
         peerJoinHandler(...args)
       }
     }
 
     this.room.onPeerLeave = (...args) => {
+      const [peerId] = args
+
+      // Forgotten on the way out, so that a peer which comes back is announced
+      // again rather than treated as one we have already greeted.
+      for (const announced of this.announcedJoins.values()) {
+        announced.delete(peerId)
+      }
+
       for (const [, peerLeaveHandler] of this.peerLeaveHandlers) {
         peerLeaveHandler(...args)
       }
@@ -130,11 +134,33 @@ export class PeerRoom {
     peerHookType: PeerHookType,
     fn: Exclude<Room['onPeerJoin'], null>
   ) => {
+    const alreadyConnected = this.getPeers()
+
     this.peerJoinHandlers.set(peerHookType, fn)
+
+    // The room is joined in this class's constructor, but handlers register
+    // later — ChatRoom registers its own in join(), and the media hooks later
+    // still. Without this replay a peer that connects in between fires into an
+    // empty handler map and is never announced to anyone, which costs the peer
+    // its metadata exchange and the newcomer its transcript backfill.
+    for (const peerId of alreadyConnected) {
+      if (this.announcedJoins.get(peerHookType)?.has(peerId)) continue
+
+      this.markJoinAnnounced(peerHookType, peerId)
+      fn(peerId)
+    }
+  }
+
+  private markJoinAnnounced = (peerHookType: PeerHookType, peerId: string) => {
+    const announced = this.announcedJoins.get(peerHookType) ?? new Set<string>()
+
+    announced.add(peerId)
+    this.announcedJoins.set(peerHookType, announced)
   }
 
   onPeerJoinFlush = () => {
     this.peerJoinHandlers = new Map()
+    this.announcedJoins = new Map()
   }
 
   onPeerLeave = (
@@ -204,12 +230,14 @@ export class PeerRoom {
     namespace: string
   ): PeerRoomAction<T> => {
     const actionName = `${namespace}.${peerAction}`
+    const eventName = `peerRoomAction.${actionName}`
 
-    if (actionName in this.actions) {
-      return this.actions[actionName] as PeerRoomAction<T>
-    }
+    const shared =
+      this.actions[actionName] ??
+      this.makeSharedAction<T>(actionName, eventName)
 
-    const actionObj = this.room.makeAction<T>(actionName)
+    const actionObj = shared.actionObj as MessageAction<T>
+    const { eventTarget } = shared
 
     const sender: ActionSender<T> = (data, options) => {
       return actionObj.send(data, options)
@@ -219,10 +247,12 @@ export class PeerRoom {
       actionObj.onReceiveProgress = fn
     }
 
-    const eventName = `peerRoomAction.${namespace}.${peerAction}`
-    const eventTarget = new EventTarget()
-
     type ActionParameters = [T, MessageContext]
+
+    // Each caller gets its own handle on the shared dispatcher. One namespace
+    // can carry several rooms — a host keeps a direct-message room per peer —
+    // and a single shared handle would let one room's disconnect detach
+    // another room's receiver.
     let handler: ((event: CustomEventInit<ActionParameters>) => void) | null =
       null
 
@@ -240,28 +270,34 @@ export class PeerRoom {
       eventTarget.addEventListener(eventName, handler)
     }
 
-    actionObj.onMessage = (data, context) => {
-      const customEvent = new CustomEvent(eventName, {
-        detail: [data, context],
-      })
-
-      eventTarget.dispatchEvent(customEvent)
-    }
-
     const detatchDispatchReceiver = () => {
+      if (!handler) return
+
       eventTarget.removeEventListener(eventName, handler)
+      handler = null
     }
 
-    const action: PeerRoomAction<T> = [
-      sender,
-      connectReceiver,
-      progress,
-      detatchDispatchReceiver,
-    ]
+    return [sender, connectReceiver, progress, detatchDispatchReceiver]
+  }
 
-    this.actions[actionName] = action
+  private makeSharedAction = <T extends DataPayload>(
+    actionName: string,
+    eventName: string
+  ): SharedAction => {
+    const actionObj = this.room.makeAction<T>(actionName)
+    const eventTarget = new EventTarget()
 
-    return action
+    actionObj.onMessage = (data, context) => {
+      eventTarget.dispatchEvent(
+        new CustomEvent(eventName, { detail: [data, context] })
+      )
+    }
+
+    const shared: SharedAction = { actionObj, eventTarget }
+
+    this.actions[actionName] = shared
+
+    return shared
   }
 
   addStream = (

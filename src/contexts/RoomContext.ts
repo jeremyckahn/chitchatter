@@ -1,4 +1,4 @@
-import { FileOfferMetadata } from 'models/chat'
+import { FileOfferMetadata } from 'core/models/chat'
 import { createContext, Dispatch, SetStateAction } from 'react'
 import { FileTransferService } from 'services/FileTransfer'
 

@@ -4,7 +4,11 @@
   "rules": {
     "@stylistic/padding-line-between-statements": [
       "error",
-      { "blankLine": "always", "prev": ["const", "let", "var"], "next": "*" },
+      {
+        "blankLine": "always",
+        "prev": ["const", "let", "var"],
+        "next": "*"
+      },
       {
         "blankLine": "any",
         "prev": ["const", "let", "var"],
@@ -13,7 +17,9 @@
     ],
     "import/order": [
       "error",
-      { "newlines-between": "always-and-inside-groups" }
+      {
+        "newlines-between": "always-and-inside-groups"
+      }
     ],
     "@typescript-eslint/no-shadow": "error",
     "@typescript-eslint/no-unused-vars": [
@@ -28,5 +34,49 @@
         "ignoreRestSiblings": true
       }
     ]
-  }
+  },
+  "overrides": [
+    {
+      "files": ["src/core/**/*.ts"],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "patterns": [
+              {
+                "group": [
+                  "react",
+                  "react-*",
+                  "@mui/*",
+                  "@emotion/*",
+                  "components/*",
+                  "contexts/*",
+                  "pages/*",
+                  "hooks/*",
+                  "services/*",
+                  "adapters/*",
+                  "localforage",
+                  "file-saver",
+                  "streamsaver",
+                  "secure-file-transfer"
+                ],
+                "message": "src/core must stay framework- and DOM-agnostic. Inject platform capabilities through src/core/adapters instead."
+              }
+            ]
+          }
+        ],
+        "no-restricted-globals": [
+          "error",
+          "window",
+          "document",
+          "navigator",
+          "localStorage",
+          "sessionStorage",
+          "alert",
+          "Notification",
+          "AudioContext"
+        ]
+      }
+    }
+  ]
 }

@@ -42,7 +42,7 @@ export class EncryptionService {
 
   // TODO: Make this configurable
   generateKeyPair = async (): Promise<CryptoKeyPair> => {
-    const keyPair = await window.crypto.subtle.generateKey(
+    const keyPair = await globalThis.crypto.subtle.generateKey(
       {
         name: algorithmName,
         hash: algorithmHash,
@@ -58,15 +58,15 @@ export class EncryptionService {
 
   encodePassword = async (roomId: string, password: string) => {
     const data = new TextEncoder().encode(`${roomId}_${password}`)
-    const digest = await window.crypto.subtle.digest('SHA-256', data)
+    const digest = await globalThis.crypto.subtle.digest('SHA-256', data)
     const bytes = new Uint8Array(digest)
-    const encodedPassword = window.btoa(String.fromCharCode(...bytes))
+    const encodedPassword = btoa(String.fromCharCode(...bytes))
 
     return encodedPassword
   }
 
   stringifyCryptoKey = async (cryptoKey: CryptoKey) => {
-    const exportedKey = await window.crypto.subtle.exportKey(
+    const exportedKey = await globalThis.crypto.subtle.exportKey(
       cryptoKey.type === 'public' ? 'spki' : 'pkcs8',
       cryptoKey
     )
@@ -81,7 +81,7 @@ export class EncryptionService {
     const format = type === AllowedKeyType.PUBLIC ? 'spki' : 'pkcs8'
     const keyData = EncryptionService.base64ToArrayBuffer(keyString)
 
-    return await window.crypto.subtle.importKey(
+    return await globalThis.crypto.subtle.importKey(
       format,
       keyData,
       {
@@ -100,7 +100,7 @@ export class EncryptionService {
     if (privateKey.algorithm.name === 'STUB-ALGORITHM')
       return new ArrayBuffer(0)
     const encodedText = new TextEncoder().encode(plaintext)
-    const signature = await window.crypto.subtle.sign(
+    const signature = await globalThis.crypto.subtle.sign(
       algorithmName,
       privateKey,
       encodedText
@@ -126,7 +126,7 @@ export class EncryptionService {
       return false
     }
     const encodedText = new TextEncoder().encode(plaintext)
-    const isVerified = await window.crypto.subtle.verify(
+    const isVerified = await globalThis.crypto.subtle.verify(
       algorithmName,
       publicKey,
       signature,

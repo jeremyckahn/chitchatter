@@ -21,6 +21,8 @@ export interface ReceivedInlineMedia extends UnsentInlineMedia {
 
 export type InlineMedia = UnsentInlineMedia | ReceivedInlineMedia
 
+export type MessageLog = (Message | InlineMedia)[]
+
 export enum AudioState {
   PLAYING = 'PLAYING',
   STOPPED = 'STOPPED',
@@ -53,8 +55,6 @@ export enum AudioChannelName {
   SCREEN_SHARE = 'screen-share',
 }
 
-export type AudioChannel = Partial<Record<AudioChannelName, HTMLAudioElement>>
-
 export type PeerAudioChannelState = Record<AudioChannelName, AudioState>
 
 export interface Peer {
@@ -68,10 +68,7 @@ export interface Peer {
   offeredFileId: string | null
   isTypingGroupMessage: boolean
   isTypingDirectMessage: boolean
-  verificationToken: string
-  encryptedVerificationToken: ArrayBuffer
   verificationState: PeerVerificationState
-  verificationTimer: NodeJS.Timeout | null
 }
 
 export const isMessageReceived = (

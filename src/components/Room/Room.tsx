@@ -14,8 +14,8 @@ import { RoomContext } from 'contexts/RoomContext'
 import { SettingsContext } from 'contexts/SettingsContext'
 import { ShellContext } from 'contexts/ShellContext'
 import { useTurnConfig } from 'hooks/useTurnConfig'
-import { time } from 'lib/Time'
-import { encryption } from 'services/Encryption'
+import { time } from 'core/lib/Time'
+import { encryption } from 'core/crypto/Encryption'
 
 import { RoomAudioControls } from './RoomAudioControls'
 import { RoomFileUploadControls } from './RoomFileUploadControls'
@@ -66,6 +66,7 @@ const RoomCore = ({
   )
 
   const {
+    chatRoom,
     isDirectMessageRoom,
     handleInlineMediaUpload,
     handleMessageChange,
@@ -151,7 +152,7 @@ const RoomCore = ({
                 <RoomVideoControls peerRoom={peerRoom} />
                 <RoomScreenShareControls peerRoom={peerRoom} />
                 <RoomFileUploadControls
-                  peerRoom={peerRoom}
+                  chatRoom={chatRoom}
                   onInlineMediaUpload={handleInlineMediaUpload}
                 />
                 <Zoom in={showVideoDisplay} mountOnEnter unmountOnExit>
@@ -202,6 +203,7 @@ const RoomCore = ({
                   />
                   {showActiveTypingStatus ? (
                     <TypingStatusBar
+                      chatRoom={chatRoom}
                       isDirectMessageRoom={isDirectMessageRoom}
                     />
                   ) : null}

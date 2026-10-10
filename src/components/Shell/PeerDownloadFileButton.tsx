@@ -6,8 +6,8 @@ import Tooltip from '@mui/material/Tooltip'
 import { useContext, useState } from 'react'
 
 import { ShellContext } from 'contexts/ShellContext'
-import { isError } from 'lib/type-guards'
-import { Peer } from 'models/chat'
+import { isError } from 'core/lib/type-guards'
+import { Peer } from 'core/models/chat'
 
 import { usePeerNameDisplay } from 'components/PeerNameDisplay/usePeerNameDisplay'
 import { RoomContext } from 'contexts/RoomContext'

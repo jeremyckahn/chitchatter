@@ -8,7 +8,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { userSettingsContextStubFactory } from 'test-utils/stubs/settingsContext'
 import { mockEncryptionService } from 'test-utils/mocks/mockEncryptionService'
 import { SettingsContext } from 'contexts/SettingsContext'
-import { Time } from 'lib/Time'
+import { Time } from 'core/lib/Time'
 
 import { Room, RoomProps } from './'
 

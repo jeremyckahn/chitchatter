@@ -4,7 +4,7 @@ import Paper from '@mui/material/Paper'
 
 import { RoomContext } from 'contexts/RoomContext'
 import { ShellContext } from 'contexts/ShellContext'
-import { Peer, StreamType } from 'models/chat'
+import { Peer, StreamType } from 'core/models/chat'
 
 import { PeerVideo } from './PeerVideo'
 

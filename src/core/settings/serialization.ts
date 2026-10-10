@@ -1,5 +1,5 @@
-import { ColorMode, UserSettings } from 'models/settings'
-import { AllowedKeyType, encryption } from 'services/Encryption'
+import { ColorMode, UserSettings } from 'core/models/settings'
+import { AllowedKeyType, encryption } from 'core/crypto/Encryption'
 
 export interface SerializedUserSettings
   extends Omit<UserSettings, 'publicKey' | 'privateKey'> {

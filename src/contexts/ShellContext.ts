@@ -6,29 +6,24 @@ import {
 } from 'react'
 
 import { ConnectionTestResults } from 'components/Shell/useConnectionTest'
-import { TrackerConnection } from 'lib/ConnectionTest'
-import { PeerConnectionType, PeerRoom } from 'lib/PeerRoom'
+import { ChatRoom } from 'core/chat/ChatRoom'
+import { ChatRoomRegistry } from 'core/chat/ChatRoomRegistry'
 import {
-  AudioChannel,
   AudioChannelName,
   AudioState,
-  InlineMedia,
-  Message,
   Peer,
   PeerAudioChannelState,
   ScreenShareState,
   VideoState,
-} from 'models/chat'
+} from 'core/models/chat'
+import { PeerConnectionType } from 'core/transport/types'
+import { TrysteroTransport } from 'core/transport/TrysteroTransport'
+import { TrackerConnection } from 'lib/ConnectionTest'
+import { AudioChannel } from 'models/media'
 import { AlertOptions } from 'models/shell'
 
-export type MessageLog = (Message | InlineMedia)[]
-
-export interface ShellMessageLog {
-  groupMessageLog: MessageLog
-  directMessageLog: Record<string, MessageLog>
-}
-
 export interface ShellContextProps {
+  // --- presentation state, owned here
   isEmbedded: boolean
   tabHasFocus: boolean
   showRoomControls: boolean
@@ -41,14 +36,14 @@ export interface ShellContextProps {
   setPassword: Dispatch<SetStateAction<string | undefined>>
   isPeerListOpen: boolean
   setIsPeerListOpen: Dispatch<SetStateAction<boolean>>
-  peerList: Peer[]
-  setPeerList: Dispatch<SetStateAction<Peer[]>>
   isServerConnectionFailureDialogOpen: boolean
   setIsServerConnectionFailureDialogOpen: Dispatch<SetStateAction<boolean>>
-  peerConnectionTypes: Record<string, PeerConnectionType>
-  setPeerConnectionTypes: Dispatch<
-    SetStateAction<Record<string, PeerConnectionType>>
-  >
+  connectionTestResults: ConnectionTestResults
+  customUsername: string
+  setCustomUsername: Dispatch<SetStateAction<string>>
+
+  // --- web-only media state, owned here because the core has no business with
+  // MediaStreams or HTMLAudioElements
   audioChannelState: PeerAudioChannelState
   setAudioChannelState: Dispatch<SetStateAction<PeerAudioChannelState>>
   videoState: VideoState
@@ -57,13 +52,17 @@ export interface ShellContextProps {
   setScreenState: Dispatch<SetStateAction<ScreenShareState>>
   peerAudioChannels: Record<string, AudioChannel>
   setPeerAudioChannels: Dispatch<SetStateAction<Record<string, AudioChannel>>>
-  customUsername: string
-  setCustomUsername: Dispatch<SetStateAction<string>>
-  connectionTestResults: ConnectionTestResults
+
+  // --- application state, read through the active ChatRoom rather than
+  // duplicated here. `peerList` and `peerConnectionTypes` are snapshots of the
+  // core's state, not React state of their own.
+  chatRoom: ChatRoom | null
+  registerChatRoom: (chatRoom: ChatRoom | null) => void
+  chatRoomRegistry: ChatRoomRegistry
+  transportRef: MutableRefObject<TrysteroTransport | null>
+  peerList: readonly Peer[]
   updatePeer: (peerId: string, updatedProperties: Partial<Peer>) => void
-  peerRoomRef: MutableRefObject<PeerRoom | null>
-  messageLog: ShellMessageLog
-  setMessageLog: (messageLog: MessageLog, targetPeerId: string | null) => void
+  peerConnectionTypes: Readonly<Record<string, PeerConnectionType>>
 }
 
 export const ShellContext = createContext<ShellContextProps>({
@@ -79,12 +78,15 @@ export const ShellContext = createContext<ShellContextProps>({
   setPassword: () => {},
   isPeerListOpen: false,
   setIsPeerListOpen: () => {},
-  peerList: [],
-  setPeerList: () => {},
   isServerConnectionFailureDialogOpen: false,
   setIsServerConnectionFailureDialogOpen: () => {},
-  peerConnectionTypes: {},
-  setPeerConnectionTypes: () => {},
+  connectionTestResults: {
+    hasHost: false,
+    hasTURNServer: false,
+    trackerConnection: TrackerConnection.SEARCHING,
+  },
+  customUsername: '',
+  setCustomUsername: () => {},
   audioChannelState: {
     [AudioChannelName.MICROPHONE]: AudioState.STOPPED,
     [AudioChannelName.SCREEN_SHARE]: AudioState.STOPPED,
@@ -96,15 +98,11 @@ export const ShellContext = createContext<ShellContextProps>({
   setScreenState: () => {},
   peerAudioChannels: {},
   setPeerAudioChannels: () => {},
-  customUsername: '',
-  setCustomUsername: () => {},
-  connectionTestResults: {
-    hasHost: false,
-    hasTURNServer: false,
-    trackerConnection: TrackerConnection.SEARCHING,
-  },
+  chatRoom: null,
+  registerChatRoom: () => {},
+  chatRoomRegistry: new ChatRoomRegistry(),
+  transportRef: { current: null },
+  peerList: [],
   updatePeer: () => {},
-  peerRoomRef: { current: null },
-  messageLog: { groupMessageLog: [], directMessageLog: {} },
-  setMessageLog: () => {},
+  peerConnectionTypes: {},
 })
