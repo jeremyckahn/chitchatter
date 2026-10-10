@@ -9,13 +9,13 @@ import Menu from '@mui/material/Menu'
 import MenuItem from '@mui/material/MenuItem'
 import Tooltip from '@mui/material/Tooltip'
 
-import { PeerRoom } from 'core/transport/TrysteroTransport'
+import { TrysteroTransport } from 'core/transport/TrysteroTransport'
 
 import { useRoomVideo } from './useRoomVideo'
 import { MediaButton } from './MediaButton'
 
 export interface RoomVideoControlsProps {
-  peerRoom: PeerRoom
+  peerRoom: TrysteroTransport
 }
 
 export function RoomVideoControls({ peerRoom }: RoomVideoControlsProps) {

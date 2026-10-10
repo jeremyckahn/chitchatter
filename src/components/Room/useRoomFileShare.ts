@@ -5,17 +5,14 @@ import { RoomContext } from 'contexts/RoomContext'
 import { ShellContext } from 'contexts/ShellContext'
 import { PeerAction } from 'core/models/network'
 import { FileOfferMetadata, Peer } from 'core/models/chat'
-import {
-  PeerRoom,
-  PeerHookType,
-  ActionNamespace,
-} from 'core/transport/TrysteroTransport'
+import { TrysteroTransport } from 'core/transport/TrysteroTransport'
+import { PeerHookType, ActionNamespace } from 'core/transport/types'
 import { usePeerAction } from 'hooks/usePeerAction'
 import { MessageContext } from 'trystero'
 
 interface UseRoomFileShareConfig {
   onInlineMediaUpload: (files: File[]) => void
-  peerRoom: PeerRoom
+  peerRoom: TrysteroTransport
 }
 
 const isInlineMediaFile = (file: File) => {

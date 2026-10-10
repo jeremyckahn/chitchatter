@@ -7,7 +7,8 @@ import {
 
 import { ConnectionTestResults } from 'components/Shell/useConnectionTest'
 import { TrackerConnection } from 'lib/ConnectionTest'
-import { PeerConnectionType, PeerRoom } from 'core/transport/TrysteroTransport'
+import { TrysteroTransport } from 'core/transport/TrysteroTransport'
+import { PeerConnectionType } from 'core/transport/types'
 import {
   AudioChannelName,
   AudioState,
@@ -61,7 +62,7 @@ export interface ShellContextProps {
   setCustomUsername: Dispatch<SetStateAction<string>>
   connectionTestResults: ConnectionTestResults
   updatePeer: (peerId: string, updatedProperties: Partial<Peer>) => void
-  peerRoomRef: MutableRefObject<PeerRoom | null>
+  peerRoomRef: MutableRefObject<TrysteroTransport | null>
   messageLog: ShellMessageLog
   setMessageLog: (messageLog: MessageLog, targetPeerId: string | null) => void
 }

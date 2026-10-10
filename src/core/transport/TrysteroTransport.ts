@@ -2,59 +2,28 @@ import {
   joinRoom,
   Room,
   DataPayload,
-  ActionProgressHandler,
   MessageContext,
-  MessageAction,
 } from '@trystero-p2p/torrent'
 import { joinRoom as baseJoinRoom } from 'trystero'
 
 import { sleep } from 'core/lib/sleep'
 import { PeerAction } from 'core/models/network'
-
-export enum PeerHookType {
-  NEW_PEER = 'NEW_PEER',
-  AUDIO = 'AUDIO',
-  VIDEO = 'VIDEO',
-  SCREEN = 'SCREEN',
-  FILE_SHARE = 'FILE_SHARE',
-}
-
-export enum PeerStreamType {
-  AUDIO = 'AUDIO',
-  VIDEO = 'VIDEO',
-  SCREEN = 'SCREEN',
-}
-
-export enum PeerConnectionType {
-  DIRECT = 'DIRECT',
-  RELAY = 'RELAY',
-}
-
-export enum ActionNamespace {
-  GROUP = 'g',
-  DIRECT_MESSAGE = 'dm',
-}
+import {
+  ActionProgress,
+  ActionReceiver,
+  ActionSender,
+  PeerConnectionType,
+  PeerHookType,
+  PeerRoomAction,
+  PeerStreamType,
+  PeerTransport,
+} from 'core/transport/types'
 
 const streamQueueAddDelay = 1000
 
-export type ActionSender<T extends DataPayload> = MessageAction<T>['send']
-
-export type ActionReceiver<T extends DataPayload> = (
-  callback: NonNullable<MessageAction<T>['onMessage']>
-) => void
-
-export type ActionProgress = (fn: ActionProgressHandler) => void
-
-export type PeerRoomAction<T extends DataPayload> = [
-  ActionSender<T>,
-  ActionReceiver<T>,
-  ActionProgress,
-  () => void,
-]
-
 export type RoomConfig = Parameters<typeof baseJoinRoom>[0]
 
-export class PeerRoom {
+export class TrysteroTransport implements PeerTransport {
   private room: Room
 
   private roomConfig: RoomConfig

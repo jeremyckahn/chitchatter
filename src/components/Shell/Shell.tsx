@@ -24,7 +24,8 @@ import {
   ShellContext,
   ShellMessageLog,
 } from 'contexts/ShellContext'
-import { PeerConnectionType, PeerRoom } from 'core/transport/TrysteroTransport'
+import { TrysteroTransport } from 'core/transport/TrysteroTransport'
+import { PeerConnectionType } from 'core/transport/types'
 import {
   AudioChannelName,
   AudioState,
@@ -69,7 +70,7 @@ export const Shell = ({ appNeedsUpdate, children, userPeerId }: ShellProps) => {
   const [windowWidth] = useWindowSize()
   const defaultSidebarsOpen = windowWidth >= theme.breakpoints.values.lg
 
-  const peerRoomRef = useRef<PeerRoom>(null)
+  const peerRoomRef = useRef<TrysteroTransport>(null)
   const [isAlertShowing, setIsAlertShowing] = useState(false)
   const [isDrawerOpen, setIsDrawerOpen] = useState(defaultSidebarsOpen)
   const [isQRCodeDialogOpen, setIsQRCodeDialogOpen] = useState(false)

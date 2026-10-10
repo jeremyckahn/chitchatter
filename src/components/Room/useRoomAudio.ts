@@ -9,17 +9,17 @@ import {
   PeerAudioChannelState,
   StreamType,
 } from 'core/models/chat'
+import { TrysteroTransport } from 'core/transport/TrysteroTransport'
 import {
-  PeerRoom,
   PeerHookType,
   PeerStreamType,
   ActionNamespace,
-} from 'core/transport/TrysteroTransport'
+} from 'core/transport/types'
 import { usePeerAction } from 'hooks/usePeerAction'
 import { MessageContext } from 'trystero'
 
 interface UseRoomAudioConfig {
-  peerRoom: PeerRoom
+  peerRoom: TrysteroTransport
 }
 
 export function useRoomAudio({ peerRoom }: UseRoomAudioConfig) {

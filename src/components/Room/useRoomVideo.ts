@@ -4,18 +4,18 @@ import { RoomContext } from 'contexts/RoomContext'
 import { ShellContext } from 'contexts/ShellContext'
 import { PeerAction } from 'core/models/network'
 import { VideoState, Peer, StreamType } from 'core/models/chat'
+import { TrysteroTransport } from 'core/transport/TrysteroTransport'
 import {
-  PeerRoom,
   PeerHookType,
   PeerStreamType,
   ActionNamespace,
-} from 'core/transport/TrysteroTransport'
+} from 'core/transport/types'
 import { isRecord } from 'core/lib/type-guards'
 import { usePeerAction } from 'hooks/usePeerAction'
 import { MessageContext } from 'trystero'
 
 interface UseRoomVideoConfig {
-  peerRoom: PeerRoom
+  peerRoom: TrysteroTransport
 }
 
 export function useRoomVideo({ peerRoom }: UseRoomVideoConfig) {

@@ -6,7 +6,7 @@ import Tooltip from '@mui/material/Tooltip'
 import CircularProgress from '@mui/material/CircularProgress'
 
 import { RoomContext } from 'contexts/RoomContext'
-import { PeerRoom } from 'core/transport/TrysteroTransport'
+import { TrysteroTransport } from 'core/transport/TrysteroTransport'
 
 import { Input } from 'components/Elements'
 
@@ -15,7 +15,7 @@ import { MediaButton } from './MediaButton'
 
 export interface RoomFileUploadControlsProps {
   onInlineMediaUpload: (files: File[]) => void
-  peerRoom: PeerRoom
+  peerRoom: TrysteroTransport
 }
 
 export function RoomFileUploadControls({

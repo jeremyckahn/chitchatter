@@ -16,7 +16,7 @@ import {
   PeerAudioChannelState,
 } from 'core/models/chat'
 import { AudioChannel } from 'models/media'
-import { PeerConnectionType } from 'core/transport/TrysteroTransport'
+import { PeerConnectionType } from 'core/transport/types'
 import { TrackerConnection } from 'lib/ConnectionTest'
 
 import { PeerListHeader } from './PeerListHeader'

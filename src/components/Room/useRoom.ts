@@ -9,12 +9,8 @@ import { ShellContext } from 'contexts/ShellContext'
 import { usePeerAction } from 'hooks/usePeerAction'
 import { MessageContext } from 'trystero'
 import { Audio } from 'lib/Audio'
-import {
-  ActionNamespace,
-  PeerHookType,
-  PeerRoom,
-  RoomConfig,
-} from 'core/transport/TrysteroTransport'
+import { TrysteroTransport, RoomConfig } from 'core/transport/TrysteroTransport'
+import { ActionNamespace, PeerHookType } from 'core/transport/types'
 import { time } from 'core/lib/Time'
 import {
   AudioChannelName,
@@ -108,7 +104,10 @@ export function useRoom(
   const [peerRoom] = useState(
     () =>
       peerRoomRef.current ??
-      new PeerRoom({ password: password ?? roomId, ...roomConfig }, roomId)
+      new TrysteroTransport(
+        { password: password ?? roomId, ...roomConfig },
+        roomId
+      )
   )
 
   peerRoomRef.current = peerRoom
