@@ -70,38 +70,53 @@ describe('InMemoryTransport', () => {
     expect(makeAction(alice)).toBe(makeAction(alice))
   })
 
-  it('announces existing peers to a joiner and the joiner to existing peers', () => {
+  it('announces a pair to each other once both are listening, not before', () => {
     const network = createInMemoryNetwork()
     const alice = new InMemoryTransport(network, 'alice')
-
     const aliceSawJoin = vi.fn()
 
     alice.onPeerJoin(PeerHookType.NEW_PEER, aliceSawJoin)
 
+    // Bob exists but is not listening yet, so there is no connection to
+    // announce — mirroring WebRTC, where neither side can be told about the
+    // other before both have joined the room.
     const bob = new InMemoryTransport(network, 'bob')
+
+    expect(aliceSawJoin).not.toHaveBeenCalled()
+
     const bobSawJoin = vi.fn()
 
     bob.onPeerJoin(PeerHookType.NEW_PEER, bobSawJoin)
-    new InMemoryTransport(network, 'carol')
 
     expect(aliceSawJoin).toHaveBeenCalledWith('bob')
-    expect(aliceSawJoin).toHaveBeenCalledWith('carol')
-    expect(bobSawJoin).toHaveBeenCalledWith('carol')
+    expect(bobSawJoin).toHaveBeenCalledWith('alice')
   })
 
-  it('fans a join out to every registered hook type', () => {
+  it('announces each peer to a given hook exactly once', () => {
     const network = createInMemoryNetwork()
     const alice = new InMemoryTransport(network, 'alice')
+    const bob = new InMemoryTransport(network, 'bob')
+    const aliceSawJoin = vi.fn()
 
-    const chat = vi.fn()
+    alice.onPeerJoin(PeerHookType.NEW_PEER, aliceSawJoin)
+    bob.onPeerJoin(PeerHookType.NEW_PEER, vi.fn())
+
+    expect(aliceSawJoin).toHaveBeenCalledTimes(1)
+  })
+
+  it('replays established connections to a hook registered later', () => {
+    const network = createInMemoryNetwork()
+    const alice = new InMemoryTransport(network, 'alice')
+    const bob = new InMemoryTransport(network, 'bob')
+
+    alice.onPeerJoin(PeerHookType.NEW_PEER, vi.fn())
+    bob.onPeerJoin(PeerHookType.NEW_PEER, vi.fn())
+
+    // The media hooks register theirs well after the chat core does.
     const fileShare = vi.fn()
 
-    alice.onPeerJoin(PeerHookType.NEW_PEER, chat)
     alice.onPeerJoin(PeerHookType.FILE_SHARE, fileShare)
 
-    new InMemoryTransport(network, 'bob')
-
-    expect(chat).toHaveBeenCalledWith('bob')
     expect(fileShare).toHaveBeenCalledWith('bob')
   })
 
@@ -149,7 +164,7 @@ describe('InMemoryTransport', () => {
     expect(onBob).toHaveBeenCalledWith({ text: 'heard' }, { peerId: 'alice' })
   })
 
-  it('reports peers excluding self', () => {
+  it('reports room members excluding self', () => {
     const network = createInMemoryNetwork()
     const alice = new InMemoryTransport(network, 'alice')
 

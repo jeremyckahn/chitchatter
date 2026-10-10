@@ -19,20 +19,59 @@ import {
 class InMemoryNetwork {
   private members: Map<string, InMemoryTransport> = new Map()
 
-  join = (peerId: string, transport: InMemoryTransport) => {
-    for (const [existingPeerId, existing] of this.members) {
-      existing.receivePeerJoin(peerId)
-      transport.receivePeerJoin(existingPeerId)
-    }
+  private listening: Set<string> = new Set()
 
+  private connections: Map<string, Set<string>> = new Map()
+
+  join = (peerId: string, transport: InMemoryTransport) => {
     this.members.set(peerId, transport)
+    this.connections.set(peerId, new Set())
   }
+
+  /**
+   * Marks a member as ready to receive peer-join notifications.
+   *
+   * Two members are only announced to each other once BOTH are listening,
+   * which is how the real transport behaves: Trystero fires onPeerJoin when a
+   * WebRTC connection establishes, and that cannot happen before both sides
+   * have joined the room and wired up their handlers.
+   */
+  startListening = (peerId: string) => {
+    if (this.listening.has(peerId)) return
+
+    this.listening.add(peerId)
+
+    for (const otherPeerId of this.listening) {
+      if (otherPeerId === peerId) continue
+
+      this.connect(peerId, otherPeerId)
+    }
+  }
+
+  private connect = (a: string, b: string) => {
+    if (this.connections.get(a)?.has(b)) return
+
+    this.connections.get(a)?.add(b)
+    this.connections.get(b)?.add(a)
+
+    this.members.get(a)?.receivePeerJoin(b)
+    this.members.get(b)?.receivePeerJoin(a)
+  }
+
+  /** The peers this member is connected to. */
+  getConnectedPeerIds = (peerId: string) => [
+    ...(this.connections.get(peerId) ?? []),
+  ]
 
   leave = (peerId: string) => {
     this.members.delete(peerId)
+    this.listening.delete(peerId)
+    this.connections.delete(peerId)
 
-    for (const [, member] of this.members) {
-      member.receivePeerLeave(peerId)
+    for (const [otherPeerId, connected] of this.connections) {
+      connected.delete(peerId)
+
+      this.members.get(otherPeerId)?.receivePeerLeave(peerId)
     }
   }
 
@@ -159,11 +198,20 @@ export class InMemoryTransport implements PeerTransport {
   }
 
   onPeerJoin = (peerHookType: PeerHookType, fn: PeerJoinHandler) => {
+    const alreadyConnected = this.network.getConnectedPeerIds(this.peerId)
+
     this.peerJoinHandlers.set(peerHookType, fn)
+    this.network.startListening(this.peerId)
+
+    // A handler registered after a connection was already established still
+    // needs to hear about it — the media hooks register theirs well after the
+    // chat core registers its own.
+    for (const peerId of alreadyConnected) fn(peerId)
   }
 
   onPeerLeave = (peerHookType: PeerHookType, fn: PeerLeaveHandler) => {
     this.peerLeaveHandlers.set(peerHookType, fn)
+    this.network.startListening(this.peerId)
   }
 
   getPeers = () => this.network.getPeerIds(this.peerId)
