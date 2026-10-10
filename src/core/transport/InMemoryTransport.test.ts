@@ -104,6 +104,24 @@ describe('InMemoryTransport', () => {
     expect(aliceSawJoin).toHaveBeenCalledTimes(1)
   })
 
+  it('replays a connection to a handler registered after it was established', () => {
+    const network = createInMemoryNetwork()
+    const alice = new InMemoryTransport(network, 'alice')
+    const bob = new InMemoryTransport(network, 'bob')
+
+    // Bob starts listening first, so the pair connects without Alice having a
+    // handler yet. This is the shape of the regression that broke PR #616:
+    // the transport is constructed during render but ChatRoom registers its
+    // handler later, in an effect.
+    bob.onPeerJoin(PeerHookType.NEW_PEER, vi.fn())
+
+    const aliceSawJoin = vi.fn()
+
+    alice.onPeerJoin(PeerHookType.NEW_PEER, aliceSawJoin)
+
+    expect(aliceSawJoin).toHaveBeenCalledWith('bob')
+  })
+
   it('replays established connections to a hook registered later', () => {
     const network = createInMemoryNetwork()
     const alice = new InMemoryTransport(network, 'alice')

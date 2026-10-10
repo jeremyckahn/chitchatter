@@ -99,7 +99,16 @@ export class TrysteroTransport implements PeerTransport {
     peerHookType: PeerHookType,
     fn: Exclude<Room['onPeerJoin'], null>
   ) => {
+    const alreadyConnected = this.getPeers()
+
     this.peerJoinHandlers.set(peerHookType, fn)
+
+    // The room is joined in this class's constructor, but handlers register
+    // later — ChatRoom registers its own in join(), and the media hooks later
+    // still. Without this replay a peer that connects in between fires into an
+    // empty handler map and is never announced to anyone, which costs the peer
+    // its metadata exchange and the newcomer its transcript backfill.
+    for (const peerId of alreadyConnected) fn(peerId)
   }
 
   onPeerJoinFlush = () => {

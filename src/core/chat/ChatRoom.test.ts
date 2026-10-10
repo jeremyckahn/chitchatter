@@ -20,7 +20,7 @@ import {
   createInMemoryNetwork,
   InMemoryTransport,
 } from 'core/transport/InMemoryTransport'
-import { ActionNamespace } from 'core/transport/types'
+import { ActionNamespace, PeerHookType } from 'core/transport/types'
 
 /**
  * These tests run two or three real ChatRooms against each other over
@@ -489,6 +489,97 @@ describe('ChatRoom', () => {
 
       expect(alice.chatRoom.getMessageLog()).toHaveLength(1)
       expect(alice.chatRoom.getMessageLog()[0]).toMatchObject({ text: 'mine' })
+    })
+  })
+
+  describe('joining after the transport has already connected', () => {
+    /**
+     * The regression that broke PR #616. TrysteroTransport joins the room in
+     * its constructor — which useRoom calls during render — while ChatRoom
+     * registers its peer-join handler later, in join(). A peer that connects in
+     * between must still be announced, or it gets no metadata exchange and the
+     * newcomer gets no transcript backfill.
+     */
+    it('still exchanges metadata when peers connected before join()', async () => {
+      const alice = createClient(network, 0)
+      const bob = createClient(network, 1)
+
+      // Force the transports to connect while neither ChatRoom is listening.
+      alice.transport.onPeerJoin(PeerHookType.AUDIO, () => {})
+      bob.transport.onPeerJoin(PeerHookType.AUDIO, () => {})
+
+      expect(alice.transport.getPeers()).toEqual(['peer-1'])
+
+      await joinAll(alice, bob)
+
+      expect(alice.chatRoom.getPeers()).toHaveLength(1)
+      expect(bob.chatRoom.getPeers()).toHaveLength(1)
+      expect(alice.chatRoom.getPeers()[0].verificationState).toBe(
+        PeerVerificationState.VERIFIED
+      )
+    })
+
+    it('still backfills the transcript to a peer that connected before join()', async () => {
+      const alice = createClient(network, 0)
+
+      await alice.chatRoom.join()
+      await alice.chatRoom.sendMessage('said before anyone could hear it')
+
+      const bob = createClient(network, 1)
+
+      // Bob's transport connects before his ChatRoom starts listening.
+      bob.transport.onPeerJoin(PeerHookType.AUDIO, () => {})
+
+      await bob.chatRoom.join()
+      await waitFor(
+        () => bob.chatRoom.getMessageLog().length === 1,
+        'the backfilled transcript'
+      )
+
+      expect(bob.chatRoom.getMessageLog()[0]).toMatchObject({
+        text: 'said before anyone could hear it',
+      })
+    })
+  })
+
+  describe('backfill of a message sent with no peers present', () => {
+    /**
+     * What room.test.ts:136 depends on: it sends a message without waiting for
+     * a peer connection, so the only way that message reaches the other
+     * browser is the transcript a joining peer is handed.
+     */
+    it('delivers a message sent before anyone joined, via backfill', async () => {
+      const alice = createClient(network, 0)
+
+      await alice.chatRoom.join()
+
+      expect(alice.chatRoom.getPeers()).toHaveLength(0)
+
+      await alice.chatRoom.sendMessage('hello, nobody')
+
+      const bob = createClient(network, 1)
+
+      await bob.chatRoom.join()
+      await waitFor(
+        () => bob.chatRoom.getMessageLog().length === 1,
+        'bob to receive the backfilled message'
+      )
+
+      expect(bob.chatRoom.getMessageLog()[0]).toMatchObject({
+        text: 'hello, nobody',
+        authorId: 'user-0',
+      })
+    })
+
+    it('marks an own message delivered so it is eligible for backfill', async () => {
+      const alice = createClient(network, 0)
+
+      await alice.chatRoom.join()
+      await alice.chatRoom.sendMessage('no peers yet')
+
+      // Only messages carrying timeReceived are backfilled, so a send with no
+      // peers present must still stamp its own message.
+      expect(alice.chatRoom.getMessageLog().every(isMessageReceived)).toBe(true)
     })
   })
 

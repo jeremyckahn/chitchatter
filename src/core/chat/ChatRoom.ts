@@ -133,6 +133,13 @@ export class ChatRoom extends EventTarget {
 
   private hasLeft = false
 
+  /**
+   * Peers known to have left. Verification is asynchronous, so metadata can
+   * still be in flight when its sender goes; without this the peer is
+   * resurrected into the list as a ghost that never leaves again.
+   */
+  private departedPeerIds: Set<string> = new Set()
+
   // Snapshots are cached so that repeated reads without an intervening change
   // return the same reference.
   private messageLogSnapshot: MessageLog = []
@@ -556,10 +563,10 @@ export class ChatRoom extends EventTarget {
       )
     }
 
-    // Verification is asynchronous, so a peer can leave while its metadata is
-    // still in flight. Without this guard that peer is resurrected into the
-    // list as a ghost that never leaves again.
-    if (this.hasLeft || !this.transport.getPeers().includes(peerId)) return
+    // Deliberately not `transport.getPeers().includes(peerId)`: that couples
+    // correctness to transport timing and drops metadata from a live peer whose
+    // connection has not yet surfaced in the transport's peer list.
+    if (this.hasLeft || this.departedPeerIds.has(peerId)) return
 
     const previousDisplayName = getDisplayUsername(userId, {
       selfUserId: this.userId,
@@ -583,6 +590,11 @@ export class ChatRoom extends EventTarget {
     })
 
     if (addedPeer) {
+      // This peer may not know us either — its transport could have connected
+      // before our room was listening, so the greeting we sent on its join
+      // went nowhere. Greet it now that we have proof it is there.
+      void this.greetPeer(peerId)
+
       // Tell the newcomer whether we are mid-sentence, so its typing indicator
       // starts out correct rather than waiting for our next keystroke.
       await this.sendTypingStatus(this.isTyping, peerId)
@@ -634,37 +646,59 @@ export class ChatRoom extends EventTarget {
   }
 
   private handlePeerJoin = (peerId: string) => {
+    this.departedPeerIds.delete(peerId)
     this.emit(ChatRoomEvent.PEER_JOIN, { peerId })
 
-    void (async () => {
-      try {
-        await this.announceSelf(peerId)
+    void this.greetPeer(peerId)
+  }
+
+  /**
+   * Introduces this peer to `peerId` and hands over whatever it is owed on
+   * arrival: our identity, the room's history, and any file we are offering.
+   *
+   * Called both when the transport reports a join and when a peer we did not
+   * know announces itself. Either trigger alone is insufficient: a peer's
+   * transport can connect — firing the other side's join handler — before its
+   * own room is listening, so the greeting it was sent is lost. Running this
+   * from both makes the exchange independent of who was ready first.
+   *
+   * It settles rather than looping: a greeting only provokes a greeting back
+   * when the recipient did not already know the sender.
+   */
+  private greetPeer = async (peerId: string) => {
+    try {
+      // Sent concurrently: signing the identity proof is slow enough that
+      // awaiting it first would delay the newcomer's transcript.
+      await Promise.all([
+        this.announceSelf(peerId),
 
         // Public rooms backfill history for newcomers. Private rooms do not:
         // joining with the password should not hand over what was said before.
-        if (!this.isPrivate) {
-          await this.senders?.transcript(
-            this.messageLog.filter(isMessageReceived),
-            { target: peerId }
-          )
-        }
+        this.isPrivate
+          ? Promise.resolve()
+          : this.senders?.transcript(
+              this.messageLog.filter(isMessageReceived),
+              { target: peerId }
+            ),
 
-        if (this.selfFileOfferMagnetUri) {
-          await this.senders?.fileOffer(
-            {
-              magnetURI: this.selfFileOfferMagnetUri,
-              isAllInlineMedia: isEveryFileInlineMedia(this.selfOfferedFiles),
-            },
-            { target: peerId }
-          )
-        }
-      } catch (error) {
-        this.reportError(error, 'handlePeerJoin')
-      }
-    })()
+        this.selfFileOfferMagnetUri
+          ? this.senders?.fileOffer(
+              {
+                magnetURI: this.selfFileOfferMagnetUri,
+                isAllInlineMedia: isEveryFileInlineMedia(this.selfOfferedFiles),
+              },
+              { target: peerId }
+            )
+          : Promise.resolve(),
+      ])
+    } catch (error) {
+      this.reportError(error, 'greetPeer')
+    }
   }
 
   private handlePeerLeave = (peerId: string) => {
+    this.departedPeerIds.add(peerId)
+
     const peer = findPeer(this.peers, peerId)
     const offer = this.fileOffers[peerId]
 
