@@ -7,6 +7,7 @@ import {
   PlatformAdapters,
 } from 'core/adapters/types'
 import { ChatRoom } from 'core/chat/ChatRoom'
+import { ChatRoomRegistry } from 'core/chat/ChatRoomRegistry'
 import { ChatRoomEvent } from 'core/chat/events'
 import { encryption } from 'core/crypto/Encryption'
 import { PeerAction } from 'core/models/network'
@@ -20,7 +21,11 @@ import {
   createInMemoryNetwork,
   InMemoryTransport,
 } from 'core/transport/InMemoryTransport'
-import { ActionNamespace, PeerHookType } from 'core/transport/types'
+import {
+  ActionNamespace,
+  DataPayload,
+  PeerHookType,
+} from 'core/transport/types'
 
 /**
  * These tests run two or three real ChatRooms against each other over
@@ -156,6 +161,37 @@ const joinAll = async (...clients: Client[]) => {
       ),
     `all ${clients.length} clients to see each other`
   )
+}
+
+/**
+ * Makes the file-offer broadcast reject, after letting `allowed` sends through.
+ *
+ * `ChatRoom` captures its senders during `join()`, so this has to be installed
+ * before the room joins — which is also why failing only the second send is how
+ * a *rescind* broadcast gets to fail while the original offer succeeds.
+ */
+const failFileOfferSend = (transport: InMemoryTransport, allowed = 0) => {
+  const makeAction = transport.makeAction
+  let sends = 0
+
+  transport.makeAction = (<T extends DataPayload>(
+    peerAction: PeerAction,
+    namespace: string
+  ) => {
+    const action = makeAction<T>(peerAction, namespace)
+
+    if (peerAction !== PeerAction.FILE_OFFER) return action
+
+    const [send, connect, progress, disconnect] = action
+
+    const failingSend: typeof send = async (data, options) => {
+      if (sends++ < allowed) return send(data, options)
+
+      throw new Error('send failed')
+    }
+
+    return [failingSend, connect, progress, disconnect]
+  }) as typeof transport.makeAction
 }
 
 describe('ChatRoom', () => {
@@ -735,6 +771,109 @@ describe('ChatRoom', () => {
       expect(alice.chatRoom.getFileOffers()).toEqual({})
       expect(alice.fileTransfer.rescind).toHaveBeenCalledWith('magnet:peer-1')
     })
+
+    it('tells subscribers an offer is gone when the peer leaves', async () => {
+      const alice = createClient(network, 0)
+      const bob = createClient(network, 1)
+
+      await joinAll(alice, bob)
+
+      await bob.chatRoom.offerFiles([
+        { name: 'doc.pdf', type: 'application/pdf', size: 10 },
+      ])
+      await settle()
+
+      const onOfferChange = vi.fn()
+
+      alice.chatRoom.on(ChatRoomEvent.FILE_OFFER_CHANGE, onOfferChange)
+
+      bob.transport.leaveRoom()
+      await settle()
+
+      // Every other mutation of this snapshot announces itself, and
+      // `useChatRoomFileOffers` re-reads on nothing else — removing an offer
+      // silently leaves a subscriber holding a departed peer's.
+      expect(onOfferChange).toHaveBeenCalledTimes(1)
+      expect(alice.chatRoom.getFileOffers()).toEqual({})
+    })
+
+    it('stops seeding a file the room was never told about', async () => {
+      const alice = createClient(network, 0)
+
+      failFileOfferSend(alice.transport)
+
+      await alice.chatRoom.join()
+
+      await expect(
+        alice.chatRoom.offerFiles([
+          { name: 'doc.pdf', type: 'application/pdf', size: 10 },
+        ])
+      ).rejects.toThrow('send failed')
+
+      // The torrent exists by the time the broadcast fails. Left seeding, it
+      // would be handed to every future joiner by `greetPeer` while the UI
+      // reports the share as failed and offers no way to stop it.
+      expect(alice.fileTransfer.rescind).toHaveBeenCalledWith('magnet:peer-0')
+      expect(alice.chatRoom.getSelfFileOfferMagnetUri()).toBeNull()
+
+      const bob = createClient(network, 1)
+
+      await bob.chatRoom.join()
+      await settle()
+
+      expect(bob.chatRoom.getFileOffers()).toEqual({})
+    })
+
+    it('stops offering locally even when the rescind cannot be announced', async () => {
+      const alice = createClient(network, 0)
+
+      failFileOfferSend(alice.transport, 1)
+
+      await alice.chatRoom.join()
+      await alice.chatRoom.offerFiles([
+        { name: 'doc.pdf', type: 'application/pdf', size: 10 },
+      ])
+
+      const onError = vi.fn()
+
+      alice.chatRoom.on(ChatRoomEvent.ERROR, onError)
+
+      await alice.chatRoom.rescindFileOffer()
+
+      // The user asked to stop sharing, so the file stops being offered and the
+      // stop control comes free again. A failure to announce it is the room's to
+      // report, not the caller's to be wedged by.
+      expect(alice.chatRoom.getSelfFileOfferMagnetUri()).toBeNull()
+      expect(alice.fileTransfer.rescind).toHaveBeenCalledWith('magnet:peer-0')
+      expect(onError).toHaveBeenCalledTimes(1)
+    })
+
+    it('reports a failure to stop seeding instead of letting it escape', async () => {
+      const alice = createClient(network, 0)
+      const bob = createClient(network, 1)
+
+      await joinAll(alice, bob)
+
+      await bob.chatRoom.offerFiles([
+        { name: 'doc.pdf', type: 'application/pdf', size: 10 },
+      ])
+      await settle()
+
+      const onError = vi.fn()
+
+      alice.chatRoom.on(ChatRoomEvent.ERROR, onError)
+      vi.mocked(alice.fileTransfer.rescind).mockRejectedValueOnce(
+        new Error('rescind failed')
+      )
+
+      bob.transport.leaveRoom()
+      await settle()
+
+      // Nothing awaits this rescind. In a browser an unhandled rejection is a
+      // console warning; in the Node host this core is built for, it ends the
+      // process by default.
+      expect(onError).toHaveBeenCalledTimes(1)
+    })
   })
 
   describe('direct message rooms', () => {
@@ -824,6 +963,45 @@ describe('ChatRoom', () => {
       await settle()
 
       expect(bobToAlice.getMessageLog()).toHaveLength(0)
+    })
+
+    it('forgets a correspondent who leaves the room', async () => {
+      const alice = createClient(network, 0)
+      const bob = createClient(network, 1)
+
+      await joinAll(alice, bob)
+
+      const registry = new ChatRoomRegistry()
+
+      registry.setGroup(alice.chatRoom)
+
+      const aliceToBob = createDirectMessageRoom(alice, 0, 'peer-1')
+
+      registry.setDirect('peer-1', aliceToBob)
+
+      await aliceToBob.join()
+
+      const bobToAlice = createDirectMessageRoom(bob, 1, 'peer-0')
+
+      await bobToAlice.join()
+      await waitFor(
+        () => aliceToBob.getPeers().length === 1,
+        'the conversation to see its correspondent'
+      )
+
+      bobToAlice.notifyTyping()
+      await settle()
+
+      expect(aliceToBob.getPeers()[0].isTypingDirectMessage).toBe(true)
+
+      bob.transport.leaveRoom()
+      await settle()
+
+      // A direct-message room cannot hear departures itself: the transport has
+      // one peer-leave slot per hook type and the group room holds it. Without
+      // the registry forwarding them, this conversation keeps its correspondent
+      // forever, "is typing..." and all.
+      expect(aliceToBob.getPeers()).toEqual([])
     })
   })
 

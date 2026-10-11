@@ -69,8 +69,15 @@ export const useRoomFileShare = ({
   }
 
   const handleFileShareStop = async () => {
-    await chatRoom.rescindFileOffer()
-    setIsSharingFile(false)
+    // The button has to come back whatever happens. The room has already
+    // stopped offering the file by the time anything in here can fail, so
+    // leaving the control on "stop sharing" would strand the user on a share
+    // that no longer exists.
+    try {
+      await chatRoom.rescindFileOffer()
+    } finally {
+      setIsSharingFile(false)
+    }
   }
 
   return {

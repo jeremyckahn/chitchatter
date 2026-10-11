@@ -473,10 +473,25 @@ export class ChatRoom extends EventTarget {
     this.selfFileOfferMagnetUri = magnetURI
     this.selfOfferedFiles = files
 
-    await this.senders?.fileOffer(
-      { magnetURI, isAllInlineMedia: isEveryFileInlineMedia(files) },
-      this.sendOptions()
-    )
+    try {
+      await this.senders?.fileOffer(
+        { magnetURI, isAllInlineMedia: isEveryFileInlineMedia(files) },
+        this.sendOptions()
+      )
+    } catch (error) {
+      // The torrent exists by now, but nobody was told about it. Left seeding
+      // it would still be handed to every future joiner by `greetPeer`, while
+      // the caller reports the share as failed and has no stop control left to
+      // undo it with. Unlike `rescindFileOffer` this does not spare inline
+      // media, because the transcript entry that would keep needing it is only
+      // created once this send has succeeded.
+      this.selfFileOfferMagnetUri = null
+      this.selfOfferedFiles = null
+
+      this.stopSeeding(magnetURI)
+
+      throw error
+    }
 
     return magnetURI
   }
@@ -486,15 +501,31 @@ export class ChatRoom extends EventTarget {
 
     if (!magnetURI) return
 
-    await this.senders?.fileOffer(null, this.sendOptions())
-
     const isAllInlineMedia = isEveryFileInlineMedia(this.selfOfferedFiles)
 
+    // Cleared before anything that can fail: the user asked to stop sharing, so
+    // the room stops offering whether or not the announcement gets through.
+    // Holding the state until it does would wedge the stop control while the
+    // file kept seeding, with nothing left able to rescind it.
     this.selfFileOfferMagnetUri = null
     this.selfOfferedFiles = null
 
-    if (!isAllInlineMedia && this.adapters.fileTransfer.isOffering(magnetURI)) {
+    try {
+      await this.senders?.fileOffer(null, this.sendOptions())
+    } catch (error) {
+      this.reportError(error, 'rescindFileOffer')
+    }
+
+    // Inline media stays seeded: it is still in the transcript on both sides,
+    // where it has to remain reachable.
+    if (isAllInlineMedia || !this.adapters.fileTransfer.isOffering(magnetURI)) {
+      return
+    }
+
+    try {
       await this.adapters.fileTransfer.rescind(magnetURI)
+    } catch (error) {
+      this.reportError(error, 'rescindFileOffer')
     }
   }
 
@@ -665,7 +696,7 @@ export class ChatRoom extends EventTarget {
       if (
         shouldRescindOffer(withdrawn, this.adapters.fileTransfer.isOffering)
       ) {
-        void this.adapters.fileTransfer.rescind(withdrawn.magnetURI)
+        this.stopSeeding(withdrawn.magnetURI)
       }
 
       this.fileOffers = removeFileOffer(this.fileOffers, peerId)
@@ -735,14 +766,33 @@ export class ChatRoom extends EventTarget {
     const offer = this.fileOffers[peerId]
 
     if (shouldRescindOffer(offer, this.adapters.fileTransfer.isOffering)) {
-      void this.adapters.fileTransfer.rescind(offer.magnetURI)
+      this.stopSeeding(offer.magnetURI)
     }
 
-    this.fileOffers = removeFileOffer(this.fileOffers, peerId)
+    // Announced like any other change to the offer snapshot: subscribers re-read
+    // it on this event and nothing else, so dropping the offer silently would
+    // leave them holding a departed peer's.
+    if (offer) {
+      this.fileOffers = removeFileOffer(this.fileOffers, peerId)
+      this.emit(ChatRoomEvent.FILE_OFFER_CHANGE, { peerId, metadata: null })
+    }
 
     if (peer) this.setPeers(removePeer(this.peers, peerId))
 
     this.emit(ChatRoomEvent.PEER_LEAVE, { peerId, peer })
+  }
+
+  /**
+   * Tells this room that `peerId` is gone.
+   *
+   * A direct-message room cannot learn this from the transport: there is one
+   * peer-leave slot per {@link PeerHookType} and the group room holds it, so
+   * registering a second handler would clobber the first. {@link
+   * ChatRoomRegistry} forwards the group room's departures instead. Without it
+   * a conversation keeps its correspondent indefinitely, typing status and all.
+   */
+  notifyPeerLeft = (peerId: string) => {
+    this.handlePeerLeave(peerId)
   }
 
   // ------------------------------------------------------------------ internals
@@ -847,7 +897,7 @@ export class ChatRoom extends EventTarget {
         isInlineMedia(message) &&
         this.adapters.fileTransfer.isOffering(message.magnetURI)
       ) {
-        void this.adapters.fileTransfer.rescind(message.magnetURI)
+        this.stopSeeding(message.magnetURI)
       }
     }
 
@@ -875,6 +925,20 @@ export class ChatRoom extends EventTarget {
       customUsername: this.customUsername,
       isTyping: this.isTyping,
     }
+  }
+
+  /**
+   * Stops seeding a file, reporting a failure rather than letting it escape.
+   *
+   * None of the callers have anything left to do with the outcome — the offer
+   * or the transcript entry that advertised the file is already gone — but an
+   * unhandled rejection is a console warning in a browser and, by default, the
+   * end of the process in the Node host this core is built for.
+   */
+  private stopSeeding = (magnetURI: string) => {
+    void this.adapters.fileTransfer
+      .rescind(magnetURI)
+      .catch(error => this.reportError(error, 'stopSeeding'))
   }
 
   private reportError = (error: unknown, context: string) => {
