@@ -172,7 +172,20 @@ npm install
 
 This will install all of the dependencies.
 
-#### Hash-based routing
+### Architecture
+
+Chitchatter's chat logic lives in [`src/core`](./src/core/README.md), separately from the React app that presents it. The core owns the transcript, the peer list, presence, typing status, identity verification and file offers, and speaks the peer protocol over an injected transport. It has no DOM and no framework, so the same logic runs in a browser, in Node and in a terminal.
+
+Two rules follow from that, and both are enforced rather than merely documented:
+
+- **Nothing under `src/core` may import React, MUI, a browser-only package, or anything from `components/`, `contexts/`, `pages/`, `hooks/`, `services/` or `adapters/`, and it may not touch `window`, `document`, `localStorage` or other DOM globals.** `npm run lint` fails on a violation, and the `core` test project (below) catches what lint cannot see through.
+- **Platform capabilities are passed in, not reached for.** Notifications, sound, storage, file transfer, the clock, id generation and logging all arrive through the adapter interfaces in `src/core/adapters/types.ts`. The browser implementations are in `src/adapters/web/`.
+
+Audio, video and screen share are deliberately _not_ in the core — they are inherently web-only and stay in `src/components/Room/`. The core tracks that a peer's media is playing, but never touches a `MediaStream`.
+
+[`src/core/README.md`](./src/core/README.md) is the full reference: the boundary rule, how adapters get in, how the React app consumes the core, and a map from each concern to its entry point.
+
+### Hash-based routing
 
 By default, Chitchatter uses [`BrowserRouter`](https://api.reactrouter.com/v7/functions/react_router.BrowserRouter.html) for handling routing. If you need to support environments where server-side routing configuration is neither possible (like some static site hosts) nor desirable (to prevent the server from seeing the room name), you can enable hash-based routing.
 
@@ -202,7 +215,15 @@ The page will reload when you make changes. You may also see any lint errors in 
 
 #### `npm test`
 
-Launches the test runner in the interactive watch mode.
+Launches the test runner in the interactive watch mode. The suite is split into two [Vitest projects](https://vitest.dev/guide/projects): `web`, which runs in a jsdom environment, and `core`, which runs in Node with no setup files.
+
+#### `npx vitest run --project core`
+
+Runs the `src/core` suite on its own, in Node, with no DOM available. This is the authoritative check that the application logic is still platform-agnostic: anything that reaches for a browser API — directly or through a transitive import that lint cannot see — fails here. Run it after any change under `src/core`.
+
+#### `npm run spike:tui`
+
+Runs `scripts/tui-spike.ts`, a terminal chat client built on `src/core` with no React, MUI or DOM code. It is a demonstration that the core boots and joins a room outside a browser, not a supported client; its file header documents exactly how far it currently gets.
 
 #### `npm run build`
 

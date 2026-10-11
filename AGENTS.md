@@ -1,5 +1,29 @@
 # LLM Rules for Chitchatter Project
 
+## The `src/core` Boundary
+
+Chitchatter's chat logic lives in `src/core`, decoupled from the React app that presents it, so that it can also run in Node or a terminal. **Read [`src/core/README.md`](./src/core/README.md) before changing anything under `src/core`.**
+
+The rule that matters most: **nothing under `src/core` may depend on React or on a browser.** Concretely, no file under `src/core` may:
+
+- import `react`, `react-*`, `@mui/*` or `@emotion/*`
+- import from `components/`, `contexts/`, `pages/`, `hooks/`, `services/` or `adapters/`
+- import a browser-only package (`localforage`, `file-saver`, `streamsaver`, `secure-file-transfer`)
+- touch `window`, `document`, `navigator`, `localStorage`, `sessionStorage`, `alert`, `Notification` or `AudioContext`
+- read `import.meta.env` — build-time configuration is passed in, not read
+
+ESLint enforces the first four through the `src/core/**/*.ts` override in `.eslintrc.json`, so `npm run lint` fails on a violation. Lint cannot see through a transitive import that itself reaches for the DOM, so the real backstop is the `core` Vitest project, which runs in a Node environment with no setup files:
+
+```sh
+npx vitest run --project core
+```
+
+**Run that command after any change under `src/core`**, in addition to `npm test`. A change that passes the `web` project but fails `core` has broken the boundary.
+
+When the core needs a platform capability — notifications, sound, storage, file transfer, the current time, a UUID, logging — add it to the adapter interfaces in `src/core/adapters/types.ts` and implement it in `src/adapters/web/` and `src/core/adapters/noop.ts`. Never reach for the browser API directly.
+
+Audio, video and screen share are intentionally outside the core and belong in `src/components/Room/`. The core may track _that_ a peer's media is playing, but must never handle a `MediaStream`.
+
 ## TypeScript Function Definitions
 
 When writing TypeScript functions in this project, always use the arrow function assignment form:

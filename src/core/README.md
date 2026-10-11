@@ -49,6 +49,59 @@ peer's media is playing or stopped (`AudioState`, `VideoState`,
 Web-only types that would otherwise leak DOM objects into the domain model live
 in `src/models/media.ts`.
 
+## How the web app consumes it
+
+The React side owns three things the core does not: when rooms are created, how
+long they live, and how components read their state.
+
+### One transport, many rooms
+
+`src/components/Room/useRoom.ts` creates a `TrysteroTransport` for the group
+room and parks it on `ShellContext.transportRef`. A direct-message room does
+**not** join the room a second time — it reuses that same transport under a
+different action namespace (`ActionNamespace.GROUP = 'g'` vs
+`DIRECT_MESSAGE = 'dm'` in `transport/types.ts`). One underlying WebRTC room
+therefore carries group chat plus every DM.
+
+The consequence is the single sharpest edge in this design: **every room on a
+transport shares that transport's actions, and every direct-message room shares
+the `dm` namespace with every other one.** A DM room's receivers are called for
+traffic from peers it has nothing to do with, so each one has to recognise its
+own correspondent — which is what `ChatRoom.isFromRoomPeer` is for. A new
+`dm.*` receiver that forgets to apply it will put one conversation's messages,
+metadata, typing status or file offers into another's.
+
+This is the normal case, not an edge case: `PeerListItem` renders its peer
+dialog with MUI's `keepMounted`, so in any room with two or more peers every
+peer already has a live DM `ChatRoom` attached to those shared actions.
+
+### Lifetime
+
+`ChatRoomRegistry` (`chat/ChatRoomRegistry.ts`) holds the open rooms: one group
+room plus a DM room per peer. Rooms are registered there rather than owned by
+the components that render them, because a DM conversation has to survive the
+dialog closing and reopening with its transcript intact. Only the group room is
+published to the shell (`registerChatRoom`); when it unmounts it clears the
+registry's DM rooms, leaves, and drops the transport.
+
+### Reading state
+
+Components do not hold copies of core state. `useChatRoomSnapshot`
+(`src/hooks/useChatRoomSnapshot.ts`) subscribes to a room's events through
+`useSyncExternalStore`, and `src/hooks/useChatRoomState.ts` wraps it as
+`useChatRoomPeers`, `useChatRoomMessageLog`, `useChatRoomFileOffers`,
+`useChatRoomIsMessageSending` and `useChatRoomConnectionTypes`.
+
+`useSyncExternalStore` requires `getSnapshot` to return an identical reference
+until the data actually changes, which is why `ChatRoom` caches its snapshots
+instead of building a fresh array per read. **A `get*` method that returns a new
+object every call will spin the renderer**, so any new snapshot accessor must
+cache the same way, and a mutation that changes nothing must not emit its event.
+
+One corollary worth knowing: `ShellContext.peerList` is a snapshot of the
+**group** room only. Per-room state — a DM's roster, its typing status — has to
+be read from that room via these hooks, not from the shell.
+
 ## Running it headless
 
 ```sh
