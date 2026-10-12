@@ -32,6 +32,31 @@ export enum ChatRoomEvent {
   ERROR = 'error',
 }
 
+/**
+ * Which {@link ChatRoom} operation an error came out of.
+ *
+ * The room reports failures it cannot hand back to a caller instead of
+ * throwing them, and a host listening on {@link ChatRoomEvent.ERROR} needs to
+ * know *which* operation failed to decide what to say about it. The set of
+ * reporting sites is fixed and known at build time, so it is an enum: a typo
+ * cannot reach a listener, adding a site is a deliberate edit here, and a
+ * consumer can exhaustively switch on it.
+ *
+ * The values are the method names, which is what the logger prefixes with
+ * `ChatRoom.`.
+ */
+export enum ChatRoomErrorContext {
+  ANNOUNCE_SELF = 'announceSelf',
+  GREET_PEER = 'greetPeer',
+  LEAVE = 'leave',
+  REFRESH_CONNECTION_TYPES = 'refreshConnectionTypes',
+  RESCIND_FILE_OFFER = 'rescindFileOffer',
+  SEND_INLINE_MEDIA = 'sendInlineMedia',
+  SEND_MESSAGE = 'sendMessage',
+  SEND_TYPING_STATUS = 'sendTypingStatus',
+  STOP_SEEDING = 'stopSeeding',
+}
+
 export interface ChatRoomEventPayloads {
   [ChatRoomEvent.MESSAGE_LOG_CHANGE]: { messageLog: MessageLog }
   [ChatRoomEvent.MESSAGE_RECEIVED]: {
@@ -59,7 +84,7 @@ export interface ChatRoomEventPayloads {
   [ChatRoomEvent.CONNECTION_TYPES_CHANGE]: {
     connectionTypes: Readonly<Record<string, PeerConnectionType>>
   }
-  [ChatRoomEvent.ERROR]: { error: Error; context: string }
+  [ChatRoomEvent.ERROR]: { error: Error; context: ChatRoomErrorContext }
 }
 
 export type ChatRoomEventListener<T extends ChatRoomEvent> = (

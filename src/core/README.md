@@ -102,6 +102,16 @@ One corollary worth knowing: `ShellContext.peerList` is a snapshot of the
 **group** room only. Per-room state — a DM's roster, its typing status — has to
 be read from that room via these hooks, not from the shell.
 
+### Errors
+
+A room does not throw out of the operations nothing can be done about — a failed
+broadcast, a rescind that cannot be announced, a teardown that half-succeeds.
+It reports them on `ChatRoomEvent.ERROR` and carries on, so a host decides
+whether that is a snackbar, a log line or nothing at all. The payload's
+`context` is a `ChatRoomErrorContext`, not a string, so a host can switch on
+which operation failed. Nothing in the web app subscribes to it today; the
+adapter's logger is the only consumer.
+
 ## Running it headless
 
 ```sh

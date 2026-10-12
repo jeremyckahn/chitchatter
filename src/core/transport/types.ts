@@ -78,7 +78,7 @@ export type PeerLeaveHandler = (peerId: string) => void
 export interface PeerTransport {
   makeAction: <T extends DataPayload>(
     peerAction: PeerAction,
-    namespace: string
+    namespace: ActionNamespace
   ) => PeerRoomAction<T>
   onPeerJoin: (peerHookType: PeerHookType, fn: PeerJoinHandler) => void
   onPeerLeave: (peerHookType: PeerHookType, fn: PeerLeaveHandler) => void

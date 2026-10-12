@@ -1,5 +1,6 @@
 import { PeerAction } from 'core/models/network'
 import {
+  ActionNamespace,
   ActionProgress,
   ActionReceiver,
   ActionSender,
@@ -174,7 +175,7 @@ export class InMemoryTransport implements PeerTransport {
 
   makeAction = <T extends DataPayload>(
     peerAction: PeerAction,
-    namespace: string
+    namespace: ActionNamespace
   ): PeerRoomAction<T> => {
     const actionName = `${namespace}.${peerAction}`
 

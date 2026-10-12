@@ -58,6 +58,65 @@ The only exceptions to this rule are:
 
 This consistent style improves code readability and maintains uniformity across the codebase.
 
+## Enums for Bounded Values
+
+**Whenever a value can only ever be one of a set known at build time, model it
+as a TypeScript `enum`** — not a bare `string`, not a `number`, and not a string
+literal union. Bias towards an enum whenever you catch yourself writing the same
+literal in two places, or typing a parameter `string` when only a handful of
+words are valid.
+
+```typescript
+export enum ChatRoomErrorContext {
+  SEND_MESSAGE = 'sendMessage',
+  GREET_PEER = 'greetPeer',
+}
+
+const reportError = (error: unknown, context: ChatRoomErrorContext) => {}
+```
+
+Instead of:
+
+```typescript
+const reportError = (error: unknown, context: string) => {}
+```
+
+Applies to: event and error identifiers, protocol and action names, state
+machine states, modes and variants, adapter and transport keys, and anything
+else a consumer might reasonably want to `switch` on. `PeerHookType`,
+`ActionNamespace`, `PeerAction`, `ChatRoomEvent`, `ColorMode`, `AudioState` and
+`RoomNameType` are existing examples to follow.
+
+A parameter typed `string` where an enum exists is a bug even when every caller
+happens to pass the enum: propagate the enum through the signature — including
+the interfaces in `src/core/transport/types.ts` and `src/core/adapters/types.ts`
+and the React hooks that wrap them — so the compiler, not a reviewer, is what
+keeps them honest.
+
+Conventions:
+
+- `SCREAMING_SNAKE_CASE` members.
+- Give string values when the value is serialized, logged or compared against
+  the wire; they make a transcript or a log line readable. Omit them only for
+  purely internal ordinals.
+- Declare the enum next to the contract it belongs to (the event payload map,
+  the model, the transport types), and export it so hosts can switch on it.
+
+### Exceptions
+
+- Values that come from outside this codebase keep their upstream type — a
+  third-party library's own union (MUI's `AlertProps['severity']`), a Web
+  platform constant (`'spki'`, `'candidate-pair'`), or a runtime-derived string
+  such as a URL or a peer id. Do not invent a parallel enum for those.
+- A single well-named constant (`userSettingsStorageKey`) does not need an enum
+  to hold one member.
+
+### Rationale
+
+An enum gives the set a name, a single place to change it, exhaustiveness
+checking in a `switch`, and autocomplete at every call site. A `string` gives a
+typo that type-checks.
+
 ## Code Quality Requirements
 
 ### Testing

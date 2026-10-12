@@ -2,7 +2,11 @@ import { PeerTransport } from 'core/transport/types'
 import { PeerAction } from 'core/models/network'
 import { useEffect, useState } from 'react'
 import { DataPayload, MessageContext } from 'trystero'
-import { ActionProgress, ActionSender } from 'core/transport/types'
+import {
+  ActionNamespace,
+  ActionProgress,
+  ActionSender,
+} from 'core/transport/types'
 
 export const usePeerAction = <T extends DataPayload>({
   peerRoom,
@@ -13,7 +17,7 @@ export const usePeerAction = <T extends DataPayload>({
   peerRoom: PeerTransport
   peerAction: PeerAction
   onReceive: (data: T, context: MessageContext) => void | Promise<void>
-  namespace: string
+  namespace: ActionNamespace
 }): [ActionSender<T>, ActionProgress] => {
   const [[sender, connectReceiver, progress, disconnectReceiver]] = useState(
     () => peerRoom.makeAction<T>(peerAction, namespace)

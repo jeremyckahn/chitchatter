@@ -8,7 +8,7 @@ import {
 } from 'core/adapters/types'
 import { ChatRoom } from 'core/chat/ChatRoom'
 import { ChatRoomRegistry } from 'core/chat/ChatRoomRegistry'
-import { ChatRoomEvent } from 'core/chat/events'
+import { ChatRoomErrorContext, ChatRoomEvent } from 'core/chat/events'
 import { encryption } from 'core/crypto/Encryption'
 import { PeerAction } from 'core/models/network'
 import {
@@ -176,7 +176,7 @@ const failFileOfferSend = (transport: InMemoryTransport, allowed = 0) => {
 
   transport.makeAction = (<T extends DataPayload>(
     peerAction: PeerAction,
-    namespace: string
+    namespace: ActionNamespace
   ) => {
     const action = makeAction<T>(peerAction, namespace)
 
@@ -846,6 +846,9 @@ describe('ChatRoom', () => {
       expect(alice.chatRoom.getSelfFileOfferMagnetUri()).toBeNull()
       expect(alice.fileTransfer.rescind).toHaveBeenCalledWith('magnet:peer-0')
       expect(onError).toHaveBeenCalledTimes(1)
+      expect(onError.mock.calls[0][0]).toMatchObject({
+        context: ChatRoomErrorContext.RESCIND_FILE_OFFER,
+      })
     })
 
     it('reports a failure to stop seeding instead of letting it escape', async () => {
@@ -873,6 +876,9 @@ describe('ChatRoom', () => {
       // console warning; in the Node host this core is built for, it ends the
       // process by default.
       expect(onError).toHaveBeenCalledTimes(1)
+      expect(onError.mock.calls[0][0]).toMatchObject({
+        context: ChatRoomErrorContext.STOP_SEEDING,
+      })
     })
   })
 
@@ -1122,7 +1128,10 @@ describe('ChatRoom', () => {
       const realMakeAction = transport.makeAction
 
       // Break only the MESSAGE sender, leaving the rest of the protocol intact.
-      transport.makeAction = ((peerAction: PeerAction, namespace: string) => {
+      transport.makeAction = ((
+        peerAction: PeerAction,
+        namespace: ActionNamespace
+      ) => {
         const action = realMakeAction(peerAction, namespace)
 
         if (peerAction !== PeerAction.MESSAGE) return action
@@ -1158,7 +1167,9 @@ describe('ChatRoom', () => {
       ).resolves.toBeUndefined()
 
       expect(onError).toHaveBeenCalledTimes(1)
-      expect(onError.mock.calls[0][0]).toMatchObject({ context: 'sendMessage' })
+      expect(onError.mock.calls[0][0]).toMatchObject({
+        context: ChatRoomErrorContext.SEND_MESSAGE,
+      })
       expect(onError.mock.calls[0][0].error.message).toBe('transport is gone')
       // The sending flag is released even on failure, so the UI does not wedge.
       expect(chatRoom.getIsMessageSending()).toBe(false)

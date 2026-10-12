@@ -1,5 +1,9 @@
 import { PlatformAdapters } from 'core/adapters/types'
-import { ChatRoomEvent, ChatRoomEventPayloads } from 'core/chat/events'
+import {
+  ChatRoomErrorContext,
+  ChatRoomEvent,
+  ChatRoomEventPayloads,
+} from 'core/chat/events'
 import {
   FileHandle,
   FileOffers,
@@ -308,7 +312,7 @@ export class ChatRoom extends EventTarget {
       try {
         await this.adapters.fileTransfer.rescindAll()
       } catch (error) {
-        this.reportError(error, 'leave')
+        this.reportError(error, ChatRoomErrorContext.LEAVE)
       }
     }
   }
@@ -374,7 +378,7 @@ export class ChatRoom extends EventTarget {
       await this.senders?.message(unsentMessage, this.sendOptions())
       this.markOwnMessageDelivered(unsentMessage.id)
     } catch (error) {
-      this.reportError(error, 'sendMessage')
+      this.reportError(error, ChatRoomErrorContext.SEND_MESSAGE)
     } finally {
       this.setIsMessageSending(false)
     }
@@ -407,7 +411,7 @@ export class ChatRoom extends EventTarget {
       await this.senders?.inlineMedia(unsentInlineMedia, this.sendOptions())
       this.markOwnMessageDelivered(unsentInlineMedia.id)
     } catch (error) {
-      this.reportError(error, 'sendInlineMedia')
+      this.reportError(error, ChatRoomErrorContext.SEND_INLINE_MEDIA)
     } finally {
       this.setIsMessageSending(false)
     }
@@ -513,7 +517,7 @@ export class ChatRoom extends EventTarget {
     try {
       await this.senders?.fileOffer(null, this.sendOptions())
     } catch (error) {
-      this.reportError(error, 'rescindFileOffer')
+      this.reportError(error, ChatRoomErrorContext.RESCIND_FILE_OFFER)
     }
 
     // Inline media stays seeded: it is still in the transcript on both sides,
@@ -525,7 +529,7 @@ export class ChatRoom extends EventTarget {
     try {
       await this.adapters.fileTransfer.rescind(magnetURI)
     } catch (error) {
-      this.reportError(error, 'rescindFileOffer')
+      this.reportError(error, ChatRoomErrorContext.RESCIND_FILE_OFFER)
     }
   }
 
@@ -537,7 +541,7 @@ export class ChatRoom extends EventTarget {
       this.connectionTypesSnapshot = { ...connectionTypes }
       this.emit(ChatRoomEvent.CONNECTION_TYPES_CHANGE, { connectionTypes })
     } catch (error) {
-      this.reportError(error, 'refreshConnectionTypes')
+      this.reportError(error, ChatRoomErrorContext.REFRESH_CONNECTION_TYPES)
     }
   }
 
@@ -755,7 +759,7 @@ export class ChatRoom extends EventTarget {
           : Promise.resolve(),
       ])
     } catch (error) {
-      this.reportError(error, 'greetPeer')
+      this.reportError(error, ChatRoomErrorContext.GREET_PEER)
     }
   }
 
@@ -818,7 +822,7 @@ export class ChatRoom extends EventTarget {
         targetPeerId ? { target: targetPeerId } : this.sendOptions()
       )
     } catch (error) {
-      this.reportError(error, 'announceSelf')
+      this.reportError(error, ChatRoomErrorContext.ANNOUNCE_SELF)
     }
   }
 
@@ -832,7 +836,7 @@ export class ChatRoom extends EventTarget {
         targetPeerId ? { target: targetPeerId } : this.sendOptions()
       )
     } catch (error) {
-      this.reportError(error, 'sendTypingStatus')
+      this.reportError(error, ChatRoomErrorContext.SEND_TYPING_STATUS)
     }
   }
 
@@ -938,10 +942,12 @@ export class ChatRoom extends EventTarget {
   private stopSeeding = (magnetURI: string) => {
     void this.adapters.fileTransfer
       .rescind(magnetURI)
-      .catch(error => this.reportError(error, 'stopSeeding'))
+      .catch(error =>
+        this.reportError(error, ChatRoomErrorContext.STOP_SEEDING)
+      )
   }
 
-  private reportError = (error: unknown, context: string) => {
+  private reportError = (error: unknown, context: ChatRoomErrorContext) => {
     const wrapped = error instanceof Error ? error : new Error(String(error))
 
     this.adapters.logger.error(`ChatRoom.${context}`, wrapped)
