@@ -1,4 +1,4 @@
-import { FileOfferMetadata } from 'models/chat'
+import { FileOffers } from 'core/chat/fileOffers'
 import { createContext, Dispatch, SetStateAction } from 'react'
 import { FileTransferService } from 'services/FileTransfer'
 
@@ -16,10 +16,10 @@ export interface RoomContextProps {
   setSelfScreenStream: Dispatch<SetStateAction<MediaStream | null>>
   peerScreenStreams: Record<string, MediaStream>
   setPeerScreenStreams: Dispatch<SetStateAction<Record<string, MediaStream>>>
-  peerOfferedFileMetadata: Record<string, FileOfferMetadata>
-  setPeerOfferedFileMetadata: Dispatch<
-    SetStateAction<Record<string, FileOfferMetadata>>
-  >
+  // The core's own snapshot type, carried through unchanged: it is `Readonly`
+  // so that a consumer cannot write into the offers the room is still holding.
+  peerOfferedFileMetadata: FileOffers
+  setPeerOfferedFileMetadata: Dispatch<SetStateAction<FileOffers>>
   fileTransferService: FileTransferService
 }
 

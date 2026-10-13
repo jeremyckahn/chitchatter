@@ -2,20 +2,20 @@ import { useContext, useEffect, useCallback, useState } from 'react'
 
 import { RoomContext } from 'contexts/RoomContext'
 import { ShellContext } from 'contexts/ShellContext'
-import { PeerAction } from 'models/network'
-import { VideoState, Peer, StreamType } from 'models/chat'
+import { PeerAction } from 'core/models/network'
+import { VideoState, StreamType } from 'core/models/chat'
+import { TrysteroTransport } from 'core/transport/TrysteroTransport'
 import {
-  PeerRoom,
   PeerHookType,
   PeerStreamType,
   ActionNamespace,
-} from 'lib/PeerRoom'
-import { isRecord } from 'lib/type-guards'
+} from 'core/transport/types'
+import { isRecord } from 'core/lib/type-guards'
 import { usePeerAction } from 'hooks/usePeerAction'
 import { MessageContext } from 'trystero'
 
 interface UseRoomVideoConfig {
-  peerRoom: PeerRoom
+  peerRoom: TrysteroTransport
 }
 
 export function useRoomVideo({ peerRoom }: UseRoomVideoConfig) {
@@ -27,7 +27,7 @@ export function useRoomVideo({ peerRoom }: UseRoomVideoConfig) {
     string | null
   >(null)
 
-  const { setPeerList, setVideoState } = shellContext
+  const { updatePeer, setVideoState } = shellContext
 
   const {
     peerVideoStreams,
@@ -80,23 +80,11 @@ export function useRoomVideo({ peerRoom }: UseRoomVideoConfig) {
     peerAction: PeerAction.VIDEO_CHANGE,
     peerRoom,
     onReceive: (videoState, { peerId }: MessageContext) => {
-      setPeerList(peerList => {
-        const newPeerList = peerList.map(peer => {
-          const newPeer: Peer = { ...peer }
+      updatePeer(peerId, { videoState })
 
-          if (peer.peerId === peerId) {
-            newPeer.videoState = videoState
-
-            if (videoState === VideoState.STOPPED) {
-              deletePeerVideo(peerId)
-            }
-          }
-
-          return newPeer
-        })
-
-        return newPeerList
-      })
+      if (videoState === VideoState.STOPPED) {
+        deletePeerVideo(peerId)
+      }
     },
   })
 

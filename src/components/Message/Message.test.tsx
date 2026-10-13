@@ -2,7 +2,7 @@ import { render, screen } from '@testing-library/react'
 import { SettingsContext } from 'contexts/SettingsContext'
 import { funAnimalName } from 'fun-animal-names'
 
-import { ReceivedMessage, UnsentMessage } from 'models/chat'
+import { ReceivedMessage, UnsentMessage } from 'core/models/chat'
 import { userSettingsContextStubFactory } from 'test-utils/stubs/settingsContext'
 
 import { Message, MessageProps } from './Message'

@@ -1,27 +1,26 @@
 import { useContext, useEffect, useCallback, useState } from 'react'
 
-import { isRecord } from 'lib/type-guards'
+import { isRecord } from 'core/lib/type-guards'
 import { RoomContext } from 'contexts/RoomContext'
 import { ShellContext } from 'contexts/ShellContext'
-import { PeerAction } from 'models/network'
+import { PeerAction } from 'core/models/network'
 import {
   ScreenShareState,
-  Peer,
   StreamType,
   AudioChannelName,
   AudioState,
-} from 'models/chat'
+} from 'core/models/chat'
+import { TrysteroTransport } from 'core/transport/TrysteroTransport'
 import {
-  PeerRoom,
   PeerHookType,
   PeerStreamType,
   ActionNamespace,
-} from 'lib/PeerRoom'
+} from 'core/transport/types'
 import { usePeerAction } from 'hooks/usePeerAction'
 import { MessageContext } from 'trystero'
 
 interface UseRoomScreenShareConfig {
-  peerRoom: PeerRoom
+  peerRoom: TrysteroTransport
 }
 
 export function useRoomScreenShare({ peerRoom }: UseRoomScreenShareConfig) {
@@ -30,7 +29,7 @@ export function useRoomScreenShare({ peerRoom }: UseRoomScreenShareConfig) {
   const [isSharingScreen, setIsSharingScreen] = useState(false)
 
   const {
-    setPeerList,
+    updatePeer,
     setScreenState,
     setAudioChannelState,
     setPeerAudioChannels,
@@ -48,23 +47,11 @@ export function useRoomScreenShare({ peerRoom }: UseRoomScreenShareConfig) {
     peerAction: PeerAction.SCREEN_SHARE,
     peerRoom,
     onReceive: (screenState, { peerId }: MessageContext) => {
-      setPeerList(peerList => {
-        const newPeerList = peerList.map(peer => {
-          const newPeer: Peer = { ...peer }
+      updatePeer(peerId, { screenShareState: screenState })
 
-          if (peer.peerId === peerId) {
-            newPeer.screenShareState = screenState
-
-            if (screenState === ScreenShareState.NOT_SHARING) {
-              deletePeerScreen(peerId)
-            }
-          }
-
-          return newPeer
-        })
-
-        return newPeerList
-      })
+      if (screenState === ScreenShareState.NOT_SHARING) {
+        deletePeerScreen(peerId)
+      }
     },
   })
 

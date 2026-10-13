@@ -1,25 +1,24 @@
 import { useContext, useEffect, useCallback, useState } from 'react'
 
 import { ShellContext } from 'contexts/ShellContext'
-import { PeerAction } from 'models/network'
+import { PeerAction } from 'core/models/network'
 import {
   AudioState,
-  Peer,
   AudioChannelName,
   PeerAudioChannelState,
   StreamType,
-} from 'models/chat'
+} from 'core/models/chat'
+import { TrysteroTransport } from 'core/transport/TrysteroTransport'
 import {
-  PeerRoom,
   PeerHookType,
   PeerStreamType,
   ActionNamespace,
-} from 'lib/PeerRoom'
+} from 'core/transport/types'
 import { usePeerAction } from 'hooks/usePeerAction'
 import { MessageContext } from 'trystero'
 
 interface UseRoomAudioConfig {
-  peerRoom: PeerRoom
+  peerRoom: TrysteroTransport
 }
 
 export function useRoomAudio({ peerRoom }: UseRoomAudioConfig) {
@@ -32,7 +31,7 @@ export function useRoomAudio({ peerRoom }: UseRoomAudioConfig) {
     string | null
   >(null)
 
-  const { setPeerList, setAudioChannelState, setPeerAudioChannels } =
+  const { peerList, updatePeer, setAudioChannelState, setPeerAudioChannels } =
     shellContext
 
   useEffect(() => {
@@ -53,29 +52,25 @@ export function useRoomAudio({ peerRoom }: UseRoomAudioConfig) {
     peerAction: PeerAction.AUDIO_CHANGE,
     peerRoom,
     onReceive: (peerAudioChannelState, { peerId }: MessageContext) => {
-      setPeerList(peerList => {
-        return peerList.map(peer => {
-          const newPeer: Peer = { ...peer }
+      const microphoneAudioChannel =
+        peerAudioChannelState[AudioChannelName.MICROPHONE]
 
-          const microphoneAudioChannel =
-            peerAudioChannelState[AudioChannelName.MICROPHONE]
+      if (!microphoneAudioChannel) return
 
-          if (microphoneAudioChannel) {
-            if (peer.peerId === peerId) {
-              newPeer.audioChannelState = {
-                ...newPeer.audioChannelState,
-                ...peerAudioChannelState,
-              }
+      const peer = peerList.find(({ peerId: id }) => id === peerId)
 
-              if (microphoneAudioChannel === AudioState.STOPPED) {
-                deletePeerAudio(peerId)
-              }
-            }
-          }
+      if (!peer) return
 
-          return newPeer
-        })
+      updatePeer(peerId, {
+        audioChannelState: {
+          ...peer.audioChannelState,
+          ...peerAudioChannelState,
+        },
       })
+
+      if (microphoneAudioChannel === AudioState.STOPPED) {
+        deletePeerAudio(peerId)
+      }
     },
   })
 

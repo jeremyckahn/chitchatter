@@ -8,7 +8,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { userSettingsContextStubFactory } from 'test-utils/stubs/settingsContext'
 import { mockEncryptionService } from 'test-utils/mocks/mockEncryptionService'
 import { SettingsContext } from 'contexts/SettingsContext'
-import { Time } from 'lib/Time'
+import { Time } from 'core/lib/Time'
 
 import { Room, RoomProps } from './'
 
@@ -51,6 +51,30 @@ const queryClient = new QueryClient({
 })
 
 vi.mock('../../lib/Audio')
+
+/**
+ * Counts how many WebTorrent-backed file-transfer clients a room builds. The
+ * real one is expensive and talks to trackers; what matters here is only how
+ * many of it a render produces.
+ */
+const { fileTransferConstructions } = vi.hoisted(() => ({
+  fileTransferConstructions: vi.fn(),
+}))
+
+vi.mock('services/FileTransfer', () => ({
+  FileTransferService: class {
+    fileTransfer = {
+      offer: vi.fn(async () => 'magnet:a'),
+      rescind: vi.fn(async () => {}),
+      rescindAll: vi.fn(async () => {}),
+      isOffering: vi.fn(() => false),
+    }
+
+    constructor() {
+      fileTransferConstructions()
+    }
+  },
+}))
 
 vi.mock('@trystero-p2p/torrent', () => ({
   joinRoom: () => ({
@@ -148,6 +172,30 @@ describe('Room', () => {
     await userEvent.click(sendButton)
 
     expect(textInput).toHaveValue('')
+  })
+
+  test('builds one file-transfer client for the room, not one per render', async () => {
+    fileTransferConstructions.mockClear()
+
+    render(
+      <RouteStub>
+        <RoomStub userId={mockUserId} roomId={mockRoomId} />
+      </RouteStub>
+    )
+
+    const sendButton = screen.getByLabelText('Send')
+    const textInput = screen.getByPlaceholderText('Your message')
+
+    await userEvent.type(textInput, 'hello')
+    await userEvent.click(sendButton)
+
+    // The room re-renders on every peer-list change, typing event, sending
+    // state change and connection refresh. Keying the file transfer on an
+    // `rtcConfig` object literal rebuilt during render meant a fresh
+    // WebTorrent client for each one — while the core held on to the first,
+    // so every later one was both dead weight and a split source of truth
+    // about what is being seeded.
+    expect(fileTransferConstructions).toHaveBeenCalledTimes(1)
   })
 
   test('message is sent to peers', async () => {

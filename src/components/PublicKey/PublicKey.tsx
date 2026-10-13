@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { materialDark } from 'react-syntax-highlighter/dist/esm/styles/prism'
 import { PrismAsyncLight as SyntaxHighlighter } from 'react-syntax-highlighter'
 import { CopyableBlock } from 'components/CopyableBlock/CopyableBlock'
-import { encryption } from 'services/Encryption/Encryption'
+import { encryption } from 'core/crypto/Encryption'
 
 interface PeerPublicKeyProps {
   publicKey: CryptoKey

@@ -12,11 +12,11 @@ import { UserInfo } from 'components/UserInfo'
 import {
   AudioState,
   Peer,
-  AudioChannel,
   AudioChannelName,
   PeerAudioChannelState,
-} from 'models/chat'
-import { PeerConnectionType } from 'lib/PeerRoom'
+} from 'core/models/chat'
+import { AudioChannel } from 'models/media'
+import { PeerConnectionType } from 'core/transport/types'
 import { TrackerConnection } from 'lib/ConnectionTest'
 
 import { PeerListHeader } from './PeerListHeader'
@@ -29,8 +29,8 @@ export interface PeerListProps extends PropsWithChildren {
   userId: string
   roomId: string | undefined
   onPeerListClose: () => void
-  peerList: Peer[]
-  peerConnectionTypes: Record<string, PeerConnectionType>
+  peerList: readonly Peer[]
+  peerConnectionTypes: Readonly<Record<string, PeerConnectionType>>
   peerAudioChannelState: PeerAudioChannelState
   peerAudioChannels: Record<string, AudioChannel>
   connectionTestResults: IConnectionTestResults

@@ -19,21 +19,23 @@ import {
 
 import { ErrorBoundary } from 'components/ErrorBoundary'
 import { SettingsContext } from 'contexts/SettingsContext'
+import { ShellContext } from 'contexts/ShellContext'
+import { ChatRoom } from 'core/chat/ChatRoom'
+import { ChatRoomRegistry } from 'core/chat/ChatRoomRegistry'
+import { TrysteroTransport } from 'core/transport/TrysteroTransport'
 import {
-  MessageLog,
-  ShellContext,
-  ShellMessageLog,
-} from 'contexts/ShellContext'
-import { PeerConnectionType, PeerRoom } from 'lib/PeerRoom'
-import {
-  AudioChannel,
   AudioChannelName,
   AudioState,
   Peer,
   PeerAudioChannelState,
   ScreenShareState,
   VideoState,
-} from 'models/chat'
+} from 'core/models/chat'
+import {
+  useChatRoomConnectionTypes,
+  useChatRoomPeers,
+} from 'hooks/useChatRoomState'
+import { AudioChannel } from 'models/media'
 import { AlertOptions, QueryParamKeys } from 'models/shell'
 
 import { allowAdvancedRoomLinkSharing } from './constants'
@@ -69,7 +71,11 @@ export const Shell = ({ appNeedsUpdate, children, userPeerId }: ShellProps) => {
   const [windowWidth] = useWindowSize()
   const defaultSidebarsOpen = windowWidth >= theme.breakpoints.values.lg
 
-  const peerRoomRef = useRef<PeerRoom>(null)
+  const transportRef = useRef<TrysteroTransport | null>(null)
+  const chatRoomRegistryRef = useRef<ChatRoomRegistry>(new ChatRoomRegistry())
+  // The active group room, as React state rather than a ref, so that the tree
+  // re-renders when the Room mounts and registers it.
+  const [chatRoom, setChatRoom] = useState<ChatRoom | null>(null)
   const [isAlertShowing, setIsAlertShowing] = useState(false)
   const [isDrawerOpen, setIsDrawerOpen] = useState(defaultSidebarsOpen)
   const [isQRCodeDialogOpen, setIsQRCodeDialogOpen] = useState(false)
@@ -83,14 +89,10 @@ export const Shell = ({ appNeedsUpdate, children, userPeerId }: ShellProps) => {
   const [roomId, setRoomId] = useState<string | undefined>(undefined)
   const [password, setPassword] = useState<string | undefined>(undefined)
   const [isPeerListOpen, setIsPeerListOpen] = useState(defaultSidebarsOpen)
-  const [peerList, setPeerList] = useState<Peer[]>([]) // except self
   const [
     isServerConnectionFailureDialogOpen,
     setIsServerConnectionFailureDialogOpen,
   ] = useState(false)
-  const [peerConnectionTypes, setPeerConnectionTypes] = useState<
-    Record<string, PeerConnectionType>
-  >({})
   const [tabHasFocus, setTabHasFocus] = useState(true)
   const [audioChannelState, setAudioChannelState] =
     useState<PeerAudioChannelState>({
@@ -108,35 +110,15 @@ export const Shell = ({ appNeedsUpdate, children, userPeerId }: ShellProps) => {
     Record<string, AudioChannel>
   >({})
 
-  const [shellMessageLog, setShellMessageLog] = useState<ShellMessageLog>({
-    groupMessageLog: [],
-    directMessageLog: {},
-  })
+  // The peer list and connection classifications are snapshots of the active
+  // room's state, not copies kept in sync with it.
+  const peerList = useChatRoomPeers(chatRoom)
+  const peerConnectionTypes = useChatRoomConnectionTypes(chatRoom)
 
-  const messageLog = shellMessageLog
-
-  const setMessageLog = useCallback(
-    (newMessageLog: MessageLog, targetPeerId: string | null) => {
-      setShellMessageLog(prev => {
-        const isDirectMessageLog = typeof targetPeerId === 'string'
-
-        const newShellMessageLog: ShellMessageLog = {
-          groupMessageLog: isDirectMessageLog
-            ? prev.groupMessageLog
-            : newMessageLog,
-          directMessageLog: {
-            ...prev.directMessageLog,
-            ...(isDirectMessageLog && {
-              [targetPeerId]: newMessageLog,
-            }),
-          },
-        }
-
-        return newShellMessageLog
-      })
-    },
-    []
-  )
+  const registerChatRoom = useCallback((newChatRoom: ChatRoom | null) => {
+    chatRoomRegistryRef.current.setGroup(newChatRoom)
+    setChatRoom(newChatRoom)
+  }, [])
 
   const showAlert = useCallback((message: string, options?: AlertOptions) => {
     setAlertText(message)
@@ -148,18 +130,9 @@ export const Shell = ({ appNeedsUpdate, children, userPeerId }: ShellProps) => {
 
   const updatePeer = useCallback(
     (peerId: string, updatedProperties: Partial<Peer>) => {
-      setPeerList(prev => {
-        const peerIndex = prev.findIndex(peer => peer.peerId === peerId)
-        const doesPeerExist = peerIndex !== -1
-
-        if (!doesPeerExist) return prev
-
-        const peerListClone = [...prev]
-        const peer = prev[peerIndex]
-
-        peerListClone[peerIndex] = { ...peer, ...updatedProperties }
-        return peerListClone
-      })
+      chatRoomRegistryRef.current
+        .getGroup()
+        ?.updatePeer(peerId, updatedProperties)
     },
     []
   )
@@ -180,11 +153,9 @@ export const Shell = ({ appNeedsUpdate, children, userPeerId }: ShellProps) => {
       setPassword,
       setIsPeerListOpen,
       peerList,
-      setPeerList,
       isServerConnectionFailureDialogOpen,
       setIsServerConnectionFailureDialogOpen,
       peerConnectionTypes,
-      setPeerConnectionTypes,
       audioChannelState,
       setAudioChannelState,
       videoState,
@@ -197,9 +168,10 @@ export const Shell = ({ appNeedsUpdate, children, userPeerId }: ShellProps) => {
       setCustomUsername,
       connectionTestResults,
       updatePeer,
-      peerRoomRef,
-      messageLog,
-      setMessageLog,
+      chatRoom,
+      registerChatRoom,
+      chatRoomRegistry: chatRoomRegistryRef.current,
+      transportRef,
     }),
     [
       isEmbedded,
@@ -230,9 +202,8 @@ export const Shell = ({ appNeedsUpdate, children, userPeerId }: ShellProps) => {
       setCustomUsername,
       connectionTestResults,
       updatePeer,
-      peerRoomRef,
-      messageLog,
-      setMessageLog,
+      chatRoom,
+      registerChatRoom,
     ]
   )
 

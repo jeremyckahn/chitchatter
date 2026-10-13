@@ -1,7 +1,7 @@
 import { ShellContext } from 'contexts/ShellContext'
 import React, { useContext, useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { RoomNameGenerator, RoomNameType } from 'lib/RoomNameGenerator'
+import { RoomNameGenerator, RoomNameType } from 'core/config/roomNames'
 import { routerType } from 'config/router'
 import { RouterType } from 'models/router'
 

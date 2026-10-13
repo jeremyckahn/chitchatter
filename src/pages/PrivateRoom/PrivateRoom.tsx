@@ -7,7 +7,7 @@ import { PasswordPrompt } from 'components/PasswordPrompt'
 import { allowAdvancedRoomLinkSharing } from 'components/Shell/constants'
 import { ShellContext } from 'contexts/ShellContext'
 import { useThrottledRoomMount } from 'hooks/useThrottledRoomMount'
-import { encryption } from 'services/Encryption'
+import { encryption } from 'core/crypto/Encryption'
 import { notification } from 'services/Notification'
 
 interface PublicRoomProps {

@@ -1,5 +1,5 @@
-import { ColorMode, UserSettings } from 'models/settings'
-import { encryption } from 'services/Encryption'
+import { ColorMode, UserSettings } from 'core/models/settings'
+import { encryption } from 'core/crypto/Encryption'
 
 import { DEFAULT_SOUND } from 'config/soundNames'
 

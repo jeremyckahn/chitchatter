@@ -23,7 +23,7 @@ import { PeerNameDisplay } from 'components/PeerNameDisplay'
 import { EnhancedConnectivityControl } from 'components/EnhancedConnectivityControl'
 import { SettingsContext } from 'contexts/SettingsContext'
 import { routes } from 'config/routes'
-import { RoomNameType } from 'lib/RoomNameGenerator'
+import { RoomNameType } from 'core/config/roomNames'
 
 import { isEnhancedConnectivityAvailable } from '../../config/enhancedConnectivity'
 

@@ -26,38 +26,17 @@
 import { useMemo } from 'react'
 import { useQuery } from '@tanstack/react-query'
 
+import { consoleLogger } from 'adapters/web'
 import {
   isEnhancedConnectivityAvailable,
   getValidatedRtcConfigEndpoint,
 } from 'config/enhancedConnectivity'
+import {
+  fetchTurnServer,
+  isRetriableTurnServerError,
+} from 'core/config/turnConfig'
 
 import { QueryKey } from './types'
-
-/**
- * Type guard to validate if an object is a valid RTCIceServer
- *
- * @param obj - Object to validate
- * @returns true if object is a valid RTCIceServer, false otherwise
- */
-const isRTCIceServer = (obj: any): obj is RTCIceServer => {
-  if (!obj || typeof obj !== 'object') {
-    return false
-  }
-
-  if (typeof obj.urls !== 'string' && !Array.isArray(obj.urls)) {
-    return false
-  }
-
-  if (obj.username && typeof obj.username !== 'string') {
-    return false
-  }
-
-  if (obj.credential && typeof obj.credential !== 'string') {
-    return false
-  }
-
-  return true
-}
 
 /**
  * Gets the configurable RTC config endpoint from environment variable
@@ -69,10 +48,10 @@ const getRtcConfigEndpoint = (): string => {
 }
 
 /**
- * Constructs the API URL based on environment configuration
+ * Constructs the API URL based on environment configuration.
  *
- * @param endpoint - The API endpoint path (e.g., '/api/get-config')
- * @returns The complete URL to use for the API request
+ * This stays in the web layer: where the endpoint lives is a Vite/Vercel
+ * deployment detail, and `src/core` may not read `import.meta.env`.
  */
 const getApiUrl = (endpoint: string): string => {
   // In development, use environment variable if available, otherwise fall back to relative URL
@@ -83,84 +62,6 @@ const getApiUrl = (endpoint: string): string => {
   // In production or when no base URL is specified, use relative URL
   // This works with Vite's proxy in development and direct serving in production
   return endpoint
-}
-
-/**
- * Fetches TURN server configuration from the API endpoint
- *
- * @returns Promise resolving to RTCIceServer object (TURN server)
- * @throws Error if the API request fails or returns invalid data
- */
-const fetchTurnServer = async (): Promise<RTCIceServer> => {
-  const endpoint = getRtcConfigEndpoint()
-  const apiUrl = getApiUrl(endpoint)
-
-  try {
-    const controller = new AbortController()
-    const timeoutId = setTimeout(() => controller.abort(), 10000) // 10 second timeout
-
-    const response = await fetch(apiUrl, {
-      signal: controller.signal,
-      headers: {
-        Accept: 'application/json',
-      },
-    })
-
-    clearTimeout(timeoutId)
-
-    if (!response.ok) {
-      const errorMessage = `TURN server API request failed: ${response.status} ${response.statusText}`
-
-      console.error(errorMessage)
-
-      // Provide more specific error information
-      if (response.status >= 400 && response.status < 500) {
-        throw new Error(`Client error: ${errorMessage}`)
-      } else if (response.status >= 500) {
-        throw new Error(`Server error: ${errorMessage}`)
-      }
-
-      throw new Error(errorMessage)
-    }
-
-    const contentType = response.headers.get('content-type')
-
-    if (!contentType || !contentType.includes('application/json')) {
-      const text = await response.text()
-
-      console.error(
-        `TURN server API returned unexpected content type: ${contentType}`
-      )
-      console.error('Response body:', text.substring(0, 500))
-      throw new Error(
-        `Invalid response format: expected JSON, got ${contentType}`
-      )
-    }
-
-    const data = await response.json()
-
-    // Validate the response structure using type guard
-    if (!isRTCIceServer(data)) {
-      throw new Error(
-        'Invalid TURN server response: malformed RTCIceServer object'
-      )
-    }
-
-    return data
-  } catch (error) {
-    if (error instanceof TypeError && error.message.includes('fetch')) {
-      console.error('Network error fetching TURN server:', error.message)
-      throw new Error('Network error: Unable to connect to TURN server API')
-    }
-
-    if (error instanceof Error && error.name === 'AbortError') {
-      console.error('TURN server request timed out')
-      throw new Error('Request timeout: TURN server API did not respond')
-    }
-
-    console.error('Error fetching TURN server:', error)
-    throw error
-  }
 }
 
 /**
@@ -193,23 +94,15 @@ export const useTurnConfig = (
     error,
   } = useQuery({
     queryKey: [QueryKey.TURN_SERVER],
-    queryFn: fetchTurnServer,
+    queryFn: () =>
+      fetchTurnServer(getApiUrl(getRtcConfigEndpoint()), {
+        logger: consoleLogger,
+      }),
     enabled: enableApiRequest && isEnhancedConnectivityAvailable,
     staleTime: Infinity,
     gcTime: Infinity,
-    retry: (failureCount, retryError) => {
-      // Don't retry for client errors (4xx) or timeout errors
-      if (
-        retryError instanceof Error &&
-        (retryError.message.includes('Client error:') ||
-          retryError.message.includes('Request timeout:'))
-      ) {
-        return false
-      }
-
-      // Only retry once for other errors
-      return failureCount < 1
-    },
+    retry: (failureCount, retryError) =>
+      isRetriableTurnServerError(retryError) && failureCount < 1,
     retryDelay: 1000, // 1 second delay before retry
   })
 

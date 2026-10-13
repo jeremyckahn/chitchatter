@@ -3,13 +3,13 @@ import Box from '@mui/material/Box'
 import Typography from '@mui/material/Typography'
 import { v4 as uuid } from 'uuid'
 
-import { encryption } from 'services/Encryption'
+import { encryption } from 'core/crypto/Encryption'
 import {
   EnvironmentUnsupportedDialog,
   isEnvironmentSupported,
 } from 'components/Shell/EnvironmentUnsupportedDialog'
 import { WholePageLoading } from 'components/Loading/Loading'
-import { ColorMode, UserSettings } from 'models/settings'
+import { ColorMode, UserSettings } from 'core/models/settings'
 
 import { DEFAULT_SOUND } from 'config/soundNames'
 

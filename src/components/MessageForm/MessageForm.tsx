@@ -12,7 +12,7 @@ import TextField from '@mui/material/TextField'
 import Fab from '@mui/material/Fab'
 import ArrowUpward from '@mui/icons-material/ArrowUpward'
 
-import { messageCharacterSizeLimit } from 'config/messaging'
+import { messageCharacterSizeLimit } from 'core/config/messaging'
 import { SettingsContext } from 'contexts/SettingsContext'
 import { Form } from 'components/Elements'
 

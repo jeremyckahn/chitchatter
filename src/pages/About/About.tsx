@@ -7,7 +7,7 @@ import { ShellContext } from 'contexts/ShellContext'
 import {
   messageTranscriptSizeLimit,
   messageCharacterSizeLimit,
-} from 'config/messaging'
+} from 'core/config/messaging'
 
 const messageTranscriptSizeLimitFormatted = Intl.NumberFormat().format(
   messageTranscriptSizeLimit

@@ -1,6 +1,9 @@
-import { UserSettings } from 'models/settings'
-import { encryption } from 'services/Encryption'
-import { serialization, SerializedUserSettings } from 'services/Serialization'
+import { UserSettings } from 'core/models/settings'
+import { encryption } from 'core/crypto/Encryption'
+import {
+  serialization,
+  SerializedUserSettings,
+} from 'core/settings/serialization'
 
 export const mockSerializedPublicKey = 'public key'
 export const mockSerializedPrivateKey = 'private key'
