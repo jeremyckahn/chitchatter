@@ -9,42 +9,49 @@ import { ChatRoomEvent } from 'core/chat/events'
  * UI that shows it — closing and reopening a DM should not lose the transcript
  * — so the rooms cannot be owned by whatever renders them.
  *
- * It also relays peer departures to the conversations that cannot hear them
- * themselves; see {@link setGroup}.
+ * It also relays peer arrivals and departures to the conversations that cannot
+ * hear them themselves; see {@link setGroup}.
  */
 export class ChatRoomRegistry {
   private group: ChatRoom | null = null
 
   private direct: Map<string, ChatRoom> = new Map()
 
-  private unsubscribeGroupPeerLeave: (() => void) | null = null
+  private unsubscribeGroupMembership: (() => void)[] = []
 
   getGroup = () => this.group
 
   /**
-   * Adopts `chatRoom` as the group room and forwards its peer departures to the
-   * matching direct-message conversation.
+   * Adopts `chatRoom` as the group room and forwards its peer arrivals and
+   * departures to the matching direct-message conversation.
    *
-   * The forwarding is here because the transport has one peer-leave slot per
-   * `PeerHookType` and the group room holds it, so a direct-message room cannot
-   * register for departures without clobbering the group room's handler. Only
-   * the group room hears them, and only this registry knows which conversation
-   * each one concerns.
+   * The forwarding is here because the transport has one peer-join and one
+   * peer-leave slot per `PeerHookType` and the group room holds both, so a
+   * direct-message room cannot register for membership changes without
+   * clobbering the group room's handlers. Only the group room hears them, and
+   * only this registry knows which conversation each one concerns.
+   *
+   * Both directions are forwarded, not just departures: a conversation that is
+   * told its correspondent left will otherwise discard everything that peer
+   * sends for the rest of the session, because only an arrival lifts that.
    */
   setGroup = (chatRoom: ChatRoom | null) => {
-    this.unsubscribeGroupPeerLeave?.()
-    this.unsubscribeGroupPeerLeave = null
+    for (const unsubscribe of this.unsubscribeGroupMembership) unsubscribe()
 
+    this.unsubscribeGroupMembership = []
     this.group = chatRoom
 
     if (!chatRoom) return
 
-    this.unsubscribeGroupPeerLeave = chatRoom.on(
-      ChatRoomEvent.PEER_LEAVE,
-      ({ peerId }) => {
+    this.unsubscribeGroupMembership = [
+      chatRoom.on(ChatRoomEvent.PEER_JOIN, ({ peerId }) => {
+        this.direct.get(peerId)?.notifyPeerJoined(peerId)
+      }),
+
+      chatRoom.on(ChatRoomEvent.PEER_LEAVE, ({ peerId }) => {
         this.direct.get(peerId)?.notifyPeerLeft(peerId)
-      }
-    )
+      }),
+    ]
   }
 
   getDirect = (targetPeerId: string) => this.direct.get(targetPeerId) ?? null

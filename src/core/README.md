@@ -35,6 +35,13 @@ storage, file transfer, clock, ids and logging. The web implementations live in
 `src/adapters/web/`; `src/core/adapters/noop.ts` provides inert versions for
 tests and headless consumers.
 
+Of those, `fileTransfer`, `clock`, `ids` and `logger` are the ones the core
+actually calls. `notifier`, `sound` and `storage` are declared and implemented
+but unused from here: the web app decides what to announce in
+`useChatRoomNotifications`, from the room's events, because wording an alert is
+presentation. They are the slot a host without such a layer would use — not a
+path the core takes.
+
 `src/core/transport/TrysteroTransport.ts` is the one deliberate exception — it
 owns the WebRTC/Trystero stack, so it is _not_ exported from `src/core/index.ts`.
 Import it explicitly when you want it, and use `InMemoryTransport` in tests.
@@ -84,13 +91,38 @@ dialog closing and reopening with its transcript intact. Only the group room is
 published to the shell (`registerChatRoom`); when it unmounts it clears the
 registry's DM rooms, leaves, and drops the transport.
 
+The registry also forwards the group room's `PEER_JOIN` and `PEER_LEAVE` to the
+DM room for that peer, because the transport has one join and one leave slot per
+`PeerHookType` and the group room holds both. **Both directions have to be
+forwarded.** A room that is told a peer left remembers it, so that metadata
+still in flight cannot resurrect a peer that has gone — and only a join lifts
+that, so forwarding the departure alone leaves a conversation that can never
+take its correspondent back.
+
+Because that forwarding makes DM rooms emit membership events too, the web app
+only announces them for the group room: `useChatRoomNotifications` takes an
+`isDirectMessageRoom` flag and subscribes to `PEER_JOIN`, `PEER_LEAVE` and
+`PEER_RENAME` only when it is false. Otherwise one departure raises a snackbar
+per open conversation, which — see `keepMounted` above — is per peer in the
+room.
+
 ### Reading state
 
 Components do not hold copies of core state. `useChatRoomSnapshot`
 (`src/hooks/useChatRoomSnapshot.ts`) subscribes to a room's events through
 `useSyncExternalStore`, and `src/hooks/useChatRoomState.ts` wraps it as
 `useChatRoomPeers`, `useChatRoomMessageLog`, `useChatRoomFileOffers`,
-`useChatRoomIsMessageSending` and `useChatRoomConnectionTypes`.
+`useChatRoomSelfFileOffer`, `useChatRoomIsMessageSending` and
+`useChatRoomConnectionTypes`. Each takes the slice of the room it reads
+(`ChatRoomPeerSource` and friends) rather than a whole `ChatRoom`, so a
+component can declare what it needs and a test stub is checked against the real
+members.
+
+This extends to state the host might be tempted to keep itself. The
+stop-sharing control is a view of `getSelfFileOfferMagnetUri` through
+`useChatRoomSelfFileOffer`, not a `useState` the handlers write: the room
+refuses an offer outright once it has been left, and clears its own before a
+rescind can fail, so a second copy of the answer can only disagree with it.
 
 `useSyncExternalStore` requires `getSnapshot` to return an identical reference
 until the data actually changes, which is why `ChatRoom` caches its snapshots

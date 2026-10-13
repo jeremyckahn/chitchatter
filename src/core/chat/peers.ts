@@ -36,7 +36,35 @@ export const createPeer = ({
   verificationState,
 })
 
-/** Merges `updates` into the named peer. Unknown peers are ignored. */
+/**
+ * The peer fields that may change after a peer is in the list: media state,
+ * typing status and the file it is offering.
+ *
+ * Identity is deliberately absent. `peerId`, `userId`, `publicKey` and
+ * `verificationState` are established once, by the signed metadata exchange,
+ * and reconciled only by {@link reconcilePeerMetadata}. A media hook reaching
+ * for `Partial<Peer>` could otherwise mark a peer verified or swap its public
+ * key, in an app where that check is the only trust boundary there is.
+ */
+export type PeerStateUpdate = Partial<
+  Pick<
+    Peer,
+    | 'audioChannelState'
+    | 'isTypingDirectMessage'
+    | 'isTypingGroupMessage'
+    | 'offeredFileId'
+    | 'screenShareState'
+    | 'videoState'
+  >
+>
+
+/**
+ * Merges `updates` into the named peer. Unknown peers are ignored.
+ *
+ * This is the internal primitive, so it takes any field: the metadata
+ * reconciliation above it is what owns identity. Hosts go through
+ * `ChatRoom.updatePeer`, which accepts only a {@link PeerStateUpdate}.
+ */
 export const applyPeerUpdate = (
   peers: readonly Peer[],
   peerId: string,

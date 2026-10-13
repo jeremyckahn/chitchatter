@@ -4,6 +4,7 @@ import {
   applyPeerUpdate,
   createPeer,
   findPeer,
+  PeerStateUpdate,
   reconcilePeerMetadata,
   removePeer,
 } from 'core/chat/peers'
@@ -205,5 +206,52 @@ describe('reconcilePeerMetadata', () => {
     expect(peers[0].videoState).toBe(VideoState.PLAYING)
     expect(peers[0].isTypingGroupMessage).toBe(true)
     expect(peers[0].offeredFileId).toBe('magnet:a')
+  })
+})
+
+describe('PeerStateUpdate', () => {
+  it('accepts the state a host owns and refuses the identity it does not', () => {
+    // Each `@ts-expect-error` below *is* the assertion: `tsc` fails on an
+    // unused directive, so widening this type back to `Partial<Peer>` breaks
+    // the build rather than quietly reopening a path for a media hook to
+    // forge a peer's verified identity.
+    const mediaState: PeerStateUpdate = {
+      videoState: VideoState.PLAYING,
+      screenShareState: ScreenShareState.NOT_SHARING,
+      audioChannelState: {
+        [AudioChannelName.MICROPHONE]: AudioState.PLAYING,
+        [AudioChannelName.SCREEN_SHARE]: AudioState.STOPPED,
+      },
+    }
+
+    const chatState: PeerStateUpdate = {
+      isTypingGroupMessage: true,
+      isTypingDirectMessage: false,
+      offeredFileId: 'magnet:a',
+    }
+
+    const forgedVerification: PeerStateUpdate = {
+      // @ts-expect-error — verification is established by the signed metadata
+      // exchange, never by an update
+      verificationState: PeerVerificationState.VERIFIED,
+    }
+
+    const forgedKey: PeerStateUpdate = {
+      // @ts-expect-error — nor is the public key a host's to set
+      publicKey: {} as CryptoKey,
+    }
+
+    const forgedIdentity: PeerStateUpdate = {
+      // @ts-expect-error — nor the user id
+      userId: 'somebody-else',
+    }
+
+    expect([
+      mediaState,
+      chatState,
+      forgedVerification,
+      forgedKey,
+      forgedIdentity,
+    ]).toHaveLength(5)
   })
 })

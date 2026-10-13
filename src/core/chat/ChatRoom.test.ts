@@ -8,13 +8,20 @@ import {
 } from 'core/adapters/types'
 import { ChatRoom } from 'core/chat/ChatRoom'
 import { ChatRoomRegistry } from 'core/chat/ChatRoomRegistry'
-import { ChatRoomErrorContext, ChatRoomEvent } from 'core/chat/events'
+import {
+  ChatRoomErrorContext,
+  ChatRoomEvent,
+  ChatRoomEventPayloads,
+} from 'core/chat/events'
+import { signIdentity } from 'core/chat/identity'
+import { UserMetadata } from 'core/chat/protocol'
 import { encryption } from 'core/crypto/Encryption'
 import { PeerAction } from 'core/models/network'
 import {
   isMessageReceived,
   PeerVerificationState,
   ReceivedMessage,
+  VideoState,
 } from 'core/models/chat'
 import { getPeerName } from 'core/names/peerNames'
 import {
@@ -328,7 +335,6 @@ describe('ChatRoom', () => {
       )
 
       // Advertise key 1 but sign with key 2.
-      const { signIdentity } = await import('core/chat/identity')
       const forged = await signIdentity({
         encryptionService: encryption,
         publicKey: keyPairs[2].publicKey,
@@ -381,6 +387,47 @@ describe('ChatRoom', () => {
         previousDisplayName: `Bob (${getPeerName('user-1')})`,
         displayName: `Roberta (${getPeerName('user-1')})`,
       })
+    })
+
+    it('names the peer the user saw when a rename changes the user id too', async () => {
+      const alice = createClient(network, 0)
+      const bob = createClient(network, 1)
+
+      await joinAll(alice, bob)
+
+      const renames: ChatRoomEventPayloads[ChatRoomEvent.PEER_RENAME][] = []
+
+      alice.chatRoom.on(ChatRoomEvent.PEER_RENAME, payload => {
+        renames.push(payload)
+      })
+
+      // Importing settings changes a peer's user id, not only its display
+      // name. Announced straight through the transport because a `ChatRoom`
+      // fixes its own user id at construction — this is what a reimported
+      // peer's next announcement looks like on the wire.
+      const renamedUserId = 'user-1-reimported'
+
+      const proof = await signIdentity({
+        encryptionService: encryption,
+        publicKey: keyPairs[1].publicKey,
+        privateKey: keyPairs[1].privateKey,
+        roomId,
+        userId: renamedUserId,
+      })
+
+      const [announce] = bob.transport.makeAction<UserMetadata>(
+        PeerAction.PEER_METADATA,
+        ActionNamespace.GROUP
+      )
+
+      await announce({ userId: renamedUserId, customUsername: '', ...proof })
+      await waitFor(() => renames.length === 1, 'the rename to be announced')
+
+      // Resolved from the peer found by `peerId`. Looking the previous name up
+      // by the *incoming* user id finds nobody, so the alert named the new
+      // identity on both sides of "is now".
+      expect(renames[0].previousDisplayName).toBe(getPeerName('user-1'))
+      expect(renames[0].displayName).toBe(getPeerName(renamedUserId))
     })
 
     it('removes a peer and reports it on leave', async () => {
@@ -1009,6 +1056,62 @@ describe('ChatRoom', () => {
       // forever, "is typing..." and all.
       expect(aliceToBob.getPeers()).toEqual([])
     })
+
+    it('takes a correspondent back when they rejoin the room', async () => {
+      const alice = createClient(network, 0)
+      const bob = createClient(network, 1)
+
+      await joinAll(alice, bob)
+
+      const registry = new ChatRoomRegistry()
+
+      registry.setGroup(alice.chatRoom)
+
+      const aliceToBob = createDirectMessageRoom(alice, 0, 'peer-1')
+
+      registry.setDirect('peer-1', aliceToBob)
+
+      await aliceToBob.join()
+
+      const bobToAlice = createDirectMessageRoom(bob, 1, 'peer-0')
+
+      await bobToAlice.join()
+      await waitFor(
+        () => aliceToBob.getPeers().length === 1,
+        'the conversation to see its correspondent'
+      )
+
+      bob.transport.leaveRoom()
+      await waitFor(
+        () => aliceToBob.getPeers().length === 0,
+        'the conversation to let its correspondent go'
+      )
+
+      // Trystero's peer id is the page-load identity, so a connection that
+      // drops and re-establishes brings the same peer back under the same id.
+      const bobAgain = createClient(network, 1)
+
+      await bobAgain.chatRoom.join()
+
+      const bobAgainToAlice = createDirectMessageRoom(bobAgain, 1, 'peer-0')
+
+      await bobAgainToAlice.join()
+
+      // A departure is remembered so that metadata still in flight cannot
+      // resurrect a peer that has gone, and only an arrival lifts that. The
+      // conversation never hears one from the transport, so without the
+      // registry forwarding it this correspondent would be discarded for the
+      // rest of the session.
+      await waitFor(
+        () => aliceToBob.getPeers().length === 1,
+        'the conversation to take its correspondent back'
+      )
+
+      bobAgainToAlice.notifyTyping()
+      await settle()
+
+      expect(aliceToBob.getPeers()[0].isTypingDirectMessage).toBe(true)
+    })
   })
 
   describe('snapshots', () => {
@@ -1040,7 +1143,9 @@ describe('ChatRoom', () => {
 
       const peers = alice.chatRoom.getPeers()
 
-      alice.chatRoom.updatePeer('nobody-here', { customUsername: 'x' })
+      alice.chatRoom.updatePeer('nobody-here', {
+        videoState: VideoState.PLAYING,
+      })
 
       expect(alice.chatRoom.getPeers()).toBe(peers)
     })

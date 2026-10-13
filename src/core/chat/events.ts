@@ -27,6 +27,13 @@ export enum ChatRoomEvent {
   PEER_VERIFICATION = 'peerVerification',
   TYPING_STATUS_CHANGE = 'typingStatusChange',
   FILE_OFFER_CHANGE = 'fileOfferChange',
+  /**
+   * What *this* client is offering changed. Separate from FILE_OFFER_CHANGE,
+   * which is about peers: the host's stop-sharing control is a view of our own
+   * offer, and deriving it from this is what keeps it from disagreeing with the
+   * room about whether a share exists.
+   */
+  SELF_FILE_OFFER_CHANGE = 'selfFileOfferChange',
   SENDING_STATE_CHANGE = 'sendingStateChange',
   CONNECTION_TYPES_CHANGE = 'connectionTypesChange',
   ERROR = 'error',
@@ -80,6 +87,7 @@ export interface ChatRoomEventPayloads {
     peerId: string
     metadata: FileOfferMetadata | null
   }
+  [ChatRoomEvent.SELF_FILE_OFFER_CHANGE]: { magnetURI: string | null }
   [ChatRoomEvent.SENDING_STATE_CHANGE]: { isMessageSending: boolean }
   [ChatRoomEvent.CONNECTION_TYPES_CHANGE]: {
     connectionTypes: Readonly<Record<string, PeerConnectionType>>

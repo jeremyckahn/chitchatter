@@ -16,6 +16,7 @@ import { signIdentity, verifyPeerIdentity } from 'core/chat/identity'
 import {
   applyPeerUpdate,
   findPeer,
+  PeerStateUpdate,
   reconcilePeerMetadata,
   removePeer,
 } from 'core/chat/peers'
@@ -42,7 +43,7 @@ import {
   UnsentMessage,
 } from 'core/models/chat'
 import { PeerAction } from 'core/models/network'
-import { getDisplayUsername } from 'core/names/peerNames'
+import { getDisplayUsername, getPeerDisplayName } from 'core/names/peerNames'
 import {
   ActionNamespace,
   ActionSender,
@@ -323,7 +324,7 @@ export class ChatRoom extends EventTarget {
 
   getPeers = (): readonly Peer[] => this.peersSnapshot
 
-  getSelf = (): SelfState => this.selfSnapshot
+  getSelf = (): Readonly<SelfState> => this.selfSnapshot
 
   getConnectionTypes = (): Readonly<Record<string, PeerConnectionType>> =>
     this.connectionTypesSnapshot
@@ -333,6 +334,26 @@ export class ChatRoom extends EventTarget {
   getFileOffers = (): FileOffers => this.fileOffers
 
   getSelfFileOfferMagnetUri = () => this.selfFileOfferMagnetUri
+
+  /**
+   * The one place our own offer is recorded, so that every change announces
+   * itself. A host's stop-sharing control reads
+   * {@link getSelfFileOfferMagnetUri} on this event; writing the field
+   * directly would leave it showing a share that no longer exists, or none
+   * where one does.
+   */
+  private setSelfFileOffer = (
+    magnetURI: string | null,
+    files: readonly FileHandle[] | null
+  ) => {
+    const hasChanged = this.selfFileOfferMagnetUri !== magnetURI
+
+    this.selfFileOfferMagnetUri = magnetURI
+    this.selfOfferedFiles = files
+
+    if (hasChanged)
+      this.emit(ChatRoomEvent.SELF_FILE_OFFER_CHANGE, { magnetURI })
+  }
 
   // ------------------------------------------------------------------ typed events
 
@@ -451,7 +472,7 @@ export class ChatRoom extends EventTarget {
    * Applies host-owned state to a peer — media status from the web app's audio,
    * video and screen-share hooks, which the core does not itself observe.
    */
-  updatePeer = (peerId: string, updates: Partial<Peer>) => {
+  updatePeer = (peerId: string, updates: PeerStateUpdate) => {
     const existing = findPeer(this.peers, peerId)
 
     if (!existing) return
@@ -461,7 +482,7 @@ export class ChatRoom extends EventTarget {
     // are no-ops — every received message clears a typing flag that is usually
     // already clear — and each one would otherwise re-render every subscriber.
     const isUnchanged = Object.entries(updates).every(
-      ([key, value]) => existing[key as keyof Peer] === value
+      ([key, value]) => existing[key as keyof PeerStateUpdate] === value
     )
 
     if (isUnchanged) return
@@ -469,13 +490,20 @@ export class ChatRoom extends EventTarget {
     this.setPeers(applyPeerUpdate(this.peers, peerId, updates))
   }
 
-  offerFiles = async (files: readonly FileHandle[]) => {
+  /**
+   * Offers `files` to the room and returns the magnet URI peers can fetch them
+   * by — or `undefined` when the room has already been left and there was
+   * nothing to offer them to. A caller showing a "stop sharing" control has to
+   * tell those apart: `undefined` means no share exists to stop.
+   */
+  offerFiles = async (
+    files: readonly FileHandle[]
+  ): Promise<string | undefined> => {
     if (this.hasLeft) return
 
     const magnetURI = await this.adapters.fileTransfer.offer(files, this.roomId)
 
-    this.selfFileOfferMagnetUri = magnetURI
-    this.selfOfferedFiles = files
+    this.setSelfFileOffer(magnetURI, files)
 
     try {
       await this.senders?.fileOffer(
@@ -489,8 +517,7 @@ export class ChatRoom extends EventTarget {
       // undo it with. Unlike `rescindFileOffer` this does not spare inline
       // media, because the transcript entry that would keep needing it is only
       // created once this send has succeeded.
-      this.selfFileOfferMagnetUri = null
-      this.selfOfferedFiles = null
+      this.setSelfFileOffer(null, null)
 
       this.stopSeeding(magnetURI)
 
@@ -511,8 +538,7 @@ export class ChatRoom extends EventTarget {
     // the room stops offering whether or not the announcement gets through.
     // Holding the state until it does would wedge the stop control while the
     // file kept seeding, with nothing left able to rescind it.
-    this.selfFileOfferMagnetUri = null
-    this.selfOfferedFiles = null
+    this.setSelfFileOffer(null, null)
 
     try {
       await this.senders?.fileOffer(null, this.sendOptions())
@@ -629,11 +655,11 @@ export class ChatRoom extends EventTarget {
     // connection has not yet surfaced in the transport's peer list.
     if (this.hasLeft || this.departedPeerIds.has(peerId)) return
 
-    const previousDisplayName = getDisplayUsername(userId, {
-      selfUserId: this.userId,
-      selfCustomUsername: this.customUsername,
-      peers: this.peers,
-    })
+    // Resolved from the peer this metadata belongs to, found by `peerId`. The
+    // incoming `userId` is the *new* identity, so looking the previous name up
+    // by it reports a name the user has never seen — `Breezy Bear is now Alice
+    // (Breezy Bear)` — whenever a settings import changes the user id.
+    const previousPeer = findPeer(this.peers, peerId)
 
     const { peers, addedPeer, rename } = reconcilePeerMetadata(this.peers, {
       peerId,
@@ -659,10 +685,10 @@ export class ChatRoom extends EventTarget {
       // Tell the newcomer whether we are mid-sentence, so its typing indicator
       // starts out correct rather than waiting for our next keystroke.
       await this.sendTypingStatus(this.isTyping, peerId)
-    } else if (rename) {
+    } else if (rename && previousPeer) {
       this.emit(ChatRoomEvent.PEER_RENAME, {
         peerId,
-        previousDisplayName,
+        previousDisplayName: getPeerDisplayName(previousPeer),
         displayName: getDisplayUsername(userId, {
           selfUserId: this.userId,
           selfCustomUsername: this.customUsername,
@@ -797,6 +823,22 @@ export class ChatRoom extends EventTarget {
    */
   notifyPeerLeft = (peerId: string) => {
     this.handlePeerLeave(peerId)
+  }
+
+  /**
+   * Tells this room that `peerId` is back — the mirror of {@link
+   * notifyPeerLeft}, forwarded by {@link ChatRoomRegistry} for the same reason.
+   *
+   * It has to exist because {@link notifyPeerLeft} is a one-way door otherwise:
+   * a departure is remembered so that metadata still in flight cannot
+   * resurrect a peer that has gone, and only a join clears that. A
+   * direct-message room never hears a join from the transport, so without this
+   * a correspondent whose connection blips returns under the same peer id and
+   * has their metadata discarded for the rest of the session — the conversation
+   * keeps working but loses its peer, and with it the typing indicator.
+   */
+  notifyPeerJoined = (peerId: string) => {
+    this.handlePeerJoin(peerId)
   }
 
   // ------------------------------------------------------------------ internals

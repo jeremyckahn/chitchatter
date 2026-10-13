@@ -1,10 +1,11 @@
 import { render, screen } from '@testing-library/react'
 
 import { SettingsContext } from 'contexts/SettingsContext'
-import { ChatRoom } from 'core/chat/ChatRoom'
 import { createPeer } from 'core/chat/peers'
+import { encryption } from 'core/crypto/Encryption'
 import { Peer, PeerVerificationState } from 'core/models/chat'
 import { getPeerName } from 'core/names/peerNames'
+import { ChatRoomPeerSource } from 'hooks/useChatRoomState'
 import { userSettingsContextStubFactory } from 'test-utils/stubs/settingsContext'
 
 import { TypingStatusBar } from './TypingStatusBar'
@@ -16,7 +17,7 @@ const createTypingPeer = (userId: string, updates: Partial<Peer>): Peer => ({
     peerId: `peer-${userId}`,
     userId,
     customUsername: '',
-    publicKey: {} as CryptoKey,
+    publicKey: encryption.cryptoKeyStub,
     verificationState: PeerVerificationState.VERIFIED,
   }),
   ...updates,
@@ -26,12 +27,15 @@ const createTypingPeer = (userId: string, updates: Partial<Peer>): Peer => ({
  * The bar reads from the room it is rendered for, not from the shell's peer
  * list: the shell only ever holds the group room's peers, so a direct-message
  * room's typing status would be invisible if it read from there.
+ *
+ * Typed as the slice the bar declares, so that the compiler checks the stub
+ * against the real `ChatRoom` members rather than letting an assertion hide a
+ * signature that has moved on.
  */
-const createChatRoomStub = (peers: readonly Peer[]) =>
-  ({
-    getPeers: () => peers,
-    on: () => () => {},
-  }) as unknown as ChatRoom
+const createChatRoomStub = (peers: readonly Peer[]): ChatRoomPeerSource => ({
+  getPeers: () => peers,
+  on: () => () => {},
+})
 
 const renderStatusBar = (
   peers: readonly Peer[],

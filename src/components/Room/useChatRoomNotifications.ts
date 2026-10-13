@@ -6,7 +6,7 @@ import { ChatRoomEvent } from 'core/chat/events'
 import { isInlineMedia } from 'core/models/chat'
 import { SettingsContext } from 'contexts/SettingsContext'
 import { ShellContext } from 'contexts/ShellContext'
-import { Audio } from 'lib/Audio'
+import { getSharedAudio } from 'lib/Audio'
 import { notification } from 'services/Notification'
 
 /**
@@ -19,7 +19,10 @@ import { notification } from 'services/Notification'
  */
 export const useChatRoomNotifications = (
   chatRoom: ChatRoom | null,
-  { isShowingMessages }: { isShowingMessages: boolean }
+  {
+    isShowingMessages,
+    isDirectMessageRoom,
+  }: { isShowingMessages: boolean; isDirectMessageRoom: boolean }
 ) => {
   const { showAlert, tabHasFocus } = useContext(ShellContext)
   const { getUserSettings } = useContext(SettingsContext)
@@ -27,13 +30,11 @@ export const useChatRoomNotifications = (
   const [unreadMessages, setUnreadMessages] = useState(0)
 
   const { selectedSound } = getUserSettings()
-  const [newMessageAudio, setNewMessageAudio] = useState(
-    () => new Audio(selectedSound)
-  )
 
-  useEffect(() => {
-    setNewMessageAudio(new Audio(selectedSound))
-  }, [selectedSound])
+  // Looked up per render rather than held in state: the lookup is a map read
+  // after the first call for a sound, and holding it would mean rebuilding an
+  // `AudioContext` whenever the setting changed.
+  const newMessageAudio = getSharedAudio(selectedSound)
 
   // Kept in a ref so that changing settings or focus does not resubscribe the
   // listeners, which would risk dropping an event mid-flight.
@@ -91,36 +92,44 @@ export const useChatRoomNotifications = (
         }
       }),
 
-      chatRoom.on(ChatRoomEvent.PEER_JOIN, () => {
-        latest.current.showAlert('Someone has joined the room', {
-          severity: 'success',
-        })
-      }),
+      // Who is in the room is a property of the room, not of a conversation
+      // within it, and every peer has a direct-message room open behind its
+      // dialog. Announcing membership from those too would show one snackbar
+      // per departure *per* open conversation.
+      ...(isDirectMessageRoom
+        ? []
+        : [
+            chatRoom.on(ChatRoomEvent.PEER_JOIN, () => {
+              latest.current.showAlert('Someone has joined the room', {
+                severity: 'success',
+              })
+            }),
 
-      chatRoom.on(ChatRoomEvent.PEER_LEAVE, ({ peer }) => {
-        const who = peer
-          ? latest.current.getDisplayUsername(peer.userId)
-          : 'Someone'
+            chatRoom.on(ChatRoomEvent.PEER_LEAVE, ({ peer }) => {
+              const who = peer
+                ? latest.current.getDisplayUsername(peer.userId)
+                : 'Someone'
 
-        latest.current.showAlert(`${who} has left the room`, {
-          severity: 'warning',
-        })
-      }),
+              latest.current.showAlert(`${who} has left the room`, {
+                severity: 'warning',
+              })
+            }),
 
-      chatRoom.on(
-        ChatRoomEvent.PEER_RENAME,
-        ({ previousDisplayName, displayName }) => {
-          latest.current.showAlert(
-            `${previousDisplayName} is now ${displayName}`
-          )
-        }
-      ),
+            chatRoom.on(
+              ChatRoomEvent.PEER_RENAME,
+              ({ previousDisplayName, displayName }) => {
+                latest.current.showAlert(
+                  `${previousDisplayName} is now ${displayName}`
+                )
+              }
+            ),
+          ]),
     ]
 
     return () => {
       for (const unsubscribe of unsubscribers) unsubscribe()
     }
-  }, [chatRoom])
+  }, [chatRoom, isDirectMessageRoom])
 
   return { unreadMessages }
 }

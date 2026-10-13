@@ -1,17 +1,31 @@
 import { useContext, useEffect, useState } from 'react'
 
 import { ChatRoom } from 'core/chat/ChatRoom'
-import {
-  getInlineMediaFiles,
-  isEveryFileInlineMedia,
-} from 'core/chat/fileOffers'
+import { getInlineMediaFiles } from 'core/chat/fileOffers'
 import { RoomContext } from 'contexts/RoomContext'
 import { ShellContext } from 'contexts/ShellContext'
-import { useChatRoomFileOffers } from 'hooks/useChatRoomState'
+import {
+  useChatRoomFileOffers,
+  useChatRoomSelfFileOffer,
+} from 'hooks/useChatRoomState'
+
+/**
+ * The part of a room these controls use. Narrower than `ChatRoom` on purpose,
+ * so that a test can stand in a stub the compiler checks against the real
+ * members rather than asserting a partial object into the whole class.
+ */
+export type FileShareChatRoom = Pick<
+  ChatRoom,
+  | 'getFileOffers'
+  | 'getSelfFileOfferMagnetUri'
+  | 'offerFiles'
+  | 'on'
+  | 'rescindFileOffer'
+>
 
 interface UseRoomFileShareConfig {
   onInlineMediaUpload: (files: File[]) => void
-  chatRoom: ChatRoom
+  chatRoom: FileShareChatRoom
 }
 
 /**
@@ -29,9 +43,15 @@ export const useRoomFileShare = ({
   const { setPeerOfferedFileMetadata } = useContext(RoomContext)
   const [sharedFiles, setSharedFiles] = useState<FileList | null>(null)
   const [isFileSharingEnabled, setIsFileSharingEnabled] = useState(true)
-  const [isSharingFile, setIsSharingFile] = useState(false)
 
   const peerOfferedFileMetadata = useChatRoomFileOffers(chatRoom)
+
+  // Read from the room rather than tracked here. The room is what decides
+  // whether an offer exists — it refuses one outright after `leave()`, and
+  // clears its own before a rescind can fail — so a second copy of the answer
+  // could only ever disagree with it and leave the control stuck.
+  const selfFileOfferMagnetUri = useChatRoomSelfFileOffer(chatRoom)
+  const isSharingFile = Boolean(selfFileOfferMagnetUri)
 
   useEffect(() => {
     setPeerOfferedFileMetadata(peerOfferedFileMetadata)
@@ -39,7 +59,7 @@ export const useRoomFileShare = ({
 
   const handleFileShareStart = async (files: FileList) => {
     const fileArray = [...files]
-    const inlineMediaFiles = getInlineMediaFiles(fileArray) as File[]
+    const inlineMediaFiles = getInlineMediaFiles(fileArray)
 
     setSharedFiles(files)
     setIsFileSharingEnabled(false)
@@ -52,15 +72,23 @@ export const useRoomFileShare = ({
     )
 
     try {
-      await chatRoom.offerFiles(fileArray)
+      // A room that has already been left resolves without offering anything,
+      // so the magnet URI is what distinguishes a real share from a refused
+      // one. Reporting success for the latter would put a "stop sharing"
+      // control on screen with nothing behind it to stop.
+      const magnetURI = await chatRoom.offerFiles(fileArray)
+
+      if (!magnetURI) {
+        showAlert('The file could not be shared', { severity: 'error' })
+
+        return
+      }
 
       showAlert('Encryption complete', { severity: 'success' })
 
       if (inlineMediaFiles.length > 0) {
         onInlineMediaUpload(inlineMediaFiles)
       }
-
-      setIsSharingFile(true)
     } catch (_error) {
       showAlert('The file could not be shared', { severity: 'error' })
     } finally {
@@ -68,16 +96,14 @@ export const useRoomFileShare = ({
     }
   }
 
-  const handleFileShareStop = async () => {
-    // The button has to come back whatever happens. The room has already
-    // stopped offering the file by the time anything in here can fail, so
-    // leaving the control on "stop sharing" would strand the user on a share
-    // that no longer exists.
-    try {
-      await chatRoom.rescindFileOffer()
-    } finally {
-      setIsSharingFile(false)
-    }
+  /**
+   * Nothing to await and nothing to undo: the room clears its own offer before
+   * anything that can fail, reports a failed announcement on its error event
+   * rather than throwing, and `isSharingFile` above reads the result back from
+   * it.
+   */
+  const handleFileShareStop = () => {
+    void chatRoom.rescindFileOffer()
   }
 
   return {
@@ -86,6 +112,5 @@ export const useRoomFileShare = ({
     isFileSharingEnabled,
     isSharingFile,
     sharedFiles,
-    isEveryFileInlineMedia: isEveryFileInlineMedia([...(sharedFiles ?? [])]),
   }
 }

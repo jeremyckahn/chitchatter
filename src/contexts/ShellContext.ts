@@ -8,6 +8,7 @@ import {
 import { ConnectionTestResults } from 'components/Shell/useConnectionTest'
 import { ChatRoom } from 'core/chat/ChatRoom'
 import { ChatRoomRegistry } from 'core/chat/ChatRoomRegistry'
+import { PeerStateUpdate } from 'core/chat/peers'
 import {
   AudioChannelName,
   AudioState,
@@ -61,7 +62,7 @@ export interface ShellContextProps {
   chatRoomRegistry: ChatRoomRegistry
   transportRef: MutableRefObject<TrysteroTransport | null>
   peerList: readonly Peer[]
-  updatePeer: (peerId: string, updatedProperties: Partial<Peer>) => void
+  updatePeer: (peerId: string, updatedProperties: PeerStateUpdate) => void
   peerConnectionTypes: Readonly<Record<string, PeerConnectionType>>
 }
 

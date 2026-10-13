@@ -9,11 +9,20 @@ import { FileHandle } from 'core/chat/fileOffers'
  * inert versions in ./noop.
  */
 
-/** Out-of-band alerting — a desktop notification on the web, nothing in a TUI. */
+/**
+ * Out-of-band alerting — a desktop notification on the web, nothing in a TUI.
+ *
+ * Nothing in `src/core` calls this yet: the web app decides what to announce in
+ * `useChatRoomNotifications`, off the room's events, because wording an alert
+ * is presentation. The adapter stays because that decision is the host's, and
+ * a host without a `useChatRoomNotifications` of its own needs somewhere to
+ * put it — but do not assume the core routes notifications through it.
+ */
 export interface NotifierAdapter {
   notify: (message: string) => void
 }
 
+/** @see NotifierAdapter — the same applies: the host plays the sound today. */
 export interface SoundAdapter {
   playNewMessageSound: () => void
 }

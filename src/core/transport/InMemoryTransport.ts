@@ -64,6 +64,18 @@ class InMemoryNetwork {
     ...(this.connections.get(peerId) ?? []),
   ]
 
+  /**
+   * Announces the departure to every remaining member, not only to the ones
+   * `connections` holds an edge for.
+   *
+   * `listening` gates *join* announcements, because a transport with no handler
+   * cannot observe one and the replay in `onPeerJoin` covers a late
+   * registration. Membership, not that gate, is what stands in for WebRTC
+   * connectivity here — `getPeers` reports every member, and the real
+   * transport's replay reads from its own `getPeers` — so a member is told
+   * about a departure whether or not it had got around to listening. A member
+   * with no peer-leave handler simply has nothing to deliver it to.
+   */
   leave = (peerId: string) => {
     this.members.delete(peerId)
     this.listening.delete(peerId)

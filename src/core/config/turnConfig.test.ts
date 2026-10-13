@@ -10,15 +10,19 @@ import {
 const apiUrl = '/api/get-config'
 const logger = silentLogger
 
+/**
+ * Real `Response`s, so that the content-type sniffing and JSON parsing under
+ * test run against the platform's own implementation rather than a stub that
+ * agrees with whatever the code happens to do.
+ */
 const jsonResponse = (body: unknown, status = 200) =>
-  ({
-    ok: status >= 200 && status < 300,
+  new Response(JSON.stringify(body), {
     status,
-    statusText: 'Mocked',
-    headers: { get: () => 'application/json' },
-    json: async () => body,
-    text: async () => JSON.stringify(body),
-  }) as unknown as Response
+    headers: { 'content-type': 'application/json' },
+  })
+
+const htmlResponse = (body: string) =>
+  new Response(body, { headers: { 'content-type': 'text/html' } })
 
 afterEach(() => {
   vi.unstubAllGlobals()
@@ -85,16 +89,7 @@ describe('fetchTurnServer', () => {
   it('rejects a non-JSON response', async () => {
     vi.stubGlobal(
       'fetch',
-      vi.fn(
-        async () =>
-          ({
-            ok: true,
-            status: 200,
-            statusText: 'OK',
-            headers: { get: () => 'text/html' },
-            text: async () => '<html>nope</html>',
-          }) as unknown as Response
-      )
+      vi.fn(async () => htmlResponse('<html>nope</html>'))
     )
 
     await expect(fetchTurnServer(apiUrl, { logger })).rejects.toThrow(

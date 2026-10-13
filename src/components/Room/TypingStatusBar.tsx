@@ -1,7 +1,6 @@
 import Box from '@mui/material/Box'
 import Typography from '@mui/material/Typography'
-import { ChatRoom } from 'core/chat/ChatRoom'
-import { useChatRoomPeers } from 'hooks/useChatRoomState'
+import { ChatRoomPeerSource, useChatRoomPeers } from 'hooks/useChatRoomState'
 import {
   PeerNameDisplay,
   PeerNameDisplayProps,
@@ -11,7 +10,9 @@ export const TypingStatusBar = ({
   chatRoom,
   isDirectMessageRoom,
 }: {
-  chatRoom: ChatRoom
+  // Only the peer list is read, so that is all this asks for — a whole
+  // `ChatRoom` satisfies it, and so does a stub the compiler has checked.
+  chatRoom: ChatRoomPeerSource
   isDirectMessageRoom: boolean
 }) => {
   // Read from the room being displayed rather than from the shell's peer list,

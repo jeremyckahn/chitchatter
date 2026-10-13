@@ -1,7 +1,7 @@
 import { useContext, useEffect, useMemo, useState } from 'react'
 import { v4 as uuid } from 'uuid'
 
-import { createWebAdapters } from 'adapters/web'
+import { consoleLogger, createWebAdapters } from 'adapters/web'
 import { ChatRoom } from 'core/chat/ChatRoom'
 import { FileHandle } from 'core/chat/fileOffers'
 import { encryption } from 'core/crypto/Encryption'
@@ -63,8 +63,12 @@ export const useRoom = (
 
   const isDirectMessageRoom = typeof targetPeerId === 'string'
 
+  // One per room, and only one: the core captures this instance for the
+  // lifetime of its `ChatRoom`, so a second one would offer files the room
+  // cannot rescind and seed torrents nothing ever stops. `rtcConfig` has to be
+  // a stable reference for that to hold — see `Room.tsx`.
   const fileTransferService = useMemo(
-    () => new FileTransferService(roomConfig.rtcConfig!),
+    () => new FileTransferService(roomConfig.rtcConfig ?? {}),
     [roomConfig.rtcConfig]
   )
 
@@ -161,6 +165,7 @@ export const useRoom = (
   // desktop notification.
   const { unreadMessages } = useChatRoomNotifications(chatRoom, {
     isShowingMessages: isShowingMessagesResolved,
+    isDirectMessageRoom,
   })
 
   useEffect(() => {
@@ -179,12 +184,27 @@ export const useRoom = (
     return () => {
       registerChatRoom(null)
 
-      void (async () => {
-        await chatRoomRegistry.clearDirect()
-        await chatRoom.leave()
-        transport.leaveRoom()
-        transportRef.current = null
-      })()
+      // Cleared synchronously. React can run the next room's `useState`
+      // initialiser — which adopts `transportRef.current` whenever it is set —
+      // before an awaited teardown would have resumed, and that room would
+      // then be bound to the transport this cleanup is about to leave.
+      transportRef.current = null
+
+      // Started here but deliberately not awaited before `leaveRoom()`. Each
+      // `leave()` dispatches its final typing status and detaches its
+      // receivers synchronously, which is all it needs the transport for; what
+      // it goes on to await is WebTorrent releasing our file offers. Gating
+      // the room exit on that would leave us joined and visible to peers long
+      // after the user navigated away, and joined for good if it never
+      // settles.
+      const leaving = Promise.all([
+        chatRoomRegistry.clearDirect(),
+        chatRoom.leave(),
+      ])
+
+      transport.leaveRoom()
+
+      void leaving.catch(error => consoleLogger.error(error))
     }
   }, [
     chatRoom,
@@ -207,13 +227,19 @@ export const useRoom = (
     void chatRoom.refreshConnectionTypes()
   }, [chatRoom, peerList])
 
+  // Guarded like the room id below. A direct-message room is rendered with no
+  // password of its own — one dialog per peer, all mounted — so without this
+  // it publishes `undefined` over the private room's password and the shell
+  // loses the secret its share dialog is built from.
   useEffect(() => {
+    if (isDirectMessageRoom) return
+
     setPassword(password)
 
     return () => {
       setPassword(undefined)
     }
-  }, [password, setPassword])
+  }, [password, setPassword, isDirectMessageRoom])
 
   useEffect(() => {
     if (isDirectMessageRoom) return

@@ -12,7 +12,7 @@ import {
 } from 'core/adapters/types'
 import { FileHandle } from 'core/chat/fileOffers'
 import { time } from 'core/lib/Time'
-import { Audio } from 'lib/Audio'
+import { getSharedAudio } from 'lib/Audio'
 import { FileTransferService } from 'services/FileTransfer'
 import { notification } from 'services/Notification'
 
@@ -28,12 +28,16 @@ export const webNotifier: NotifierAdapter = {
   notify: message => notification.showNotification(message),
 }
 
-/** Plays the user's chosen notification sound through the Web Audio API. */
-export const createWebSound = (audioDataUrl: string): SoundAdapter => {
-  const audio = new Audio(audioDataUrl)
-
-  return { playNewMessageSound: () => audio.play() }
-}
+/**
+ * Plays the user's chosen notification sound through the Web Audio API.
+ *
+ * The underlying `Audio` is shared per sound rather than owned here: this is
+ * built once per room, including the direct-message room each peer gets, and an
+ * `AudioContext` apiece would exhaust the browser's cap.
+ */
+export const createWebSound = (audioDataUrl: string): SoundAdapter => ({
+  playNewMessageSound: () => getSharedAudio(audioDataUrl).play(),
+})
 
 export const createWebStorage = (
   persistedStorage: typeof localforage

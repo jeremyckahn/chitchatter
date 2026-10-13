@@ -4,10 +4,11 @@
  * Framework- and DOM-agnostic: everything here runs in a browser, in Node and
  * in a terminal. See ./README.md for the boundary rule.
  *
- * `TrysteroTransport` is deliberately NOT re-exported — it owns the
- * WebRTC/Trystero stack, so importing this barrel should not drag that in.
- * Import it explicitly from 'core/transport/TrysteroTransport' when you want
- * it, and use `InMemoryTransport` in tests.
+ * Transports are deliberately NOT re-exported. `TrysteroTransport` owns the
+ * WebRTC/Trystero stack, so importing this barrel should not drag that in, and
+ * `InMemoryTransport` is an in-process test double that has no business in a
+ * host-facing surface. Import either explicitly from
+ * 'core/transport/TrysteroTransport' or 'core/transport/InMemoryTransport'.
  */
 
 export * from 'core/adapters/noop'
@@ -33,5 +34,4 @@ export * from 'core/models/settings'
 export * from 'core/names/peerNames'
 export * from 'core/settings/serialization'
 export * from 'core/settings/SettingsManager'
-export * from 'core/transport/InMemoryTransport'
 export * from 'core/transport/types'

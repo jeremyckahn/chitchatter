@@ -3,6 +3,7 @@ import { describe, expect, it, vi } from 'vitest'
 import {
   applyFileOffer,
   FileHandle,
+  FileOffers,
   getInlineMediaFiles,
   isEveryFileInlineMedia,
   isInlineMediaFile,
@@ -139,5 +140,39 @@ describe('shouldRescindOffer', () => {
   it('tolerates a missing offer', () => {
     expect(shouldRescindOffer(null, isOffering)).toBe(false)
     expect(shouldRescindOffer(undefined, isOffering)).toBe(false)
+  })
+})
+
+describe('the offers snapshot type', () => {
+  it('rejects a write at compile time', () => {
+    // Each `@ts-expect-error` below *is* the assertion: `tsc` fails on an
+    // unused directive, so dropping the `Readonly` breaks the build. It
+    // matters because `ChatRoom.getFileOffers` hands this very object out, and
+    // writing into it changes core state without the event subscribers re-read
+    // on — the reference does not change, so nothing re-renders.
+    const offers: FileOffers = {
+      'peer-1': { magnetURI: 'magnet:a', isAllInlineMedia: false },
+    }
+
+    // @ts-expect-error — a snapshot is not a place to add an offer
+    offers['peer-2'] = { magnetURI: 'magnet:b', isAllInlineMedia: false }
+
+    // @ts-expect-error — nor to replace one
+    offers['peer-1'] = { magnetURI: 'magnet:c', isAllInlineMedia: true }
+
+    // `readonly` leaves no runtime trace, so both writes above really land —
+    // which is the point: the compiler is the only thing standing between a
+    // consumer and the room's own state, so the type has to carry it.
+    expect(Object.keys(offers)).toEqual(['peer-1', 'peer-2'])
+  })
+
+  it('hands a File[] back to a caller that passed File[]', () => {
+    // No assertion needed at the call site: the generic parameter carries the
+    // caller's own file type through, so a web caller holding real `File`s
+    // does not have to widen the core's structural `FileHandle` back.
+    const files = [file('a.png', 'image/png'), file('b.pdf', 'application/pdf')]
+    const inline: FileHandle[] = getInlineMediaFiles(files)
+
+    expect(inline).toEqual([files[0]])
   })
 })

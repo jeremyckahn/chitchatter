@@ -40,13 +40,25 @@ export const getFriendlyName = (
  * which is the only identifier other peers can independently verify — stays
  * visible. A user without one is shown as just their generated name.
  */
+const formatDisplayName = (customUsername: string, userId: string) =>
+  customUsername
+    ? `${customUsername} (${getPeerName(userId)})`
+    : getPeerName(userId)
+
 export const getDisplayUsername = (
   userId: string,
   context: NameResolutionContext
-) => {
-  const customUsername = getCustomUsername(userId, context)
+) => formatDisplayName(getCustomUsername(userId, context), userId)
 
-  return customUsername
-    ? `${customUsername} (${getPeerName(userId)})`
-    : getPeerName(userId)
-}
+/**
+ * The display name of a peer already in hand, resolved from the peer itself
+ * rather than by searching the list for its user id.
+ *
+ * {@link getDisplayUsername} is the wrong tool once the peer is known. It finds
+ * the peer by user id, which fails in exactly the case the name is most needed:
+ * a rename can change the user id, so the incoming one matches nobody and the
+ * custom username is lost. Two peers can also share a user id — the same
+ * account in two tabs — and then the search picks whichever comes first.
+ */
+export const getPeerDisplayName = (peer: Peer) =>
+  formatDisplayName(peer.customUsername, peer.userId)

@@ -4,6 +4,15 @@ import { ChatRoom } from 'core/chat/ChatRoom'
 import { ChatRoomEvent } from 'core/chat/events'
 
 /**
+ * The only thing this needs of a room: something to subscribe to.
+ *
+ * Kept as a `Pick` rather than `ChatRoom` so that a consumer can declare the
+ * handful of members it reads and have the compiler check a test stub against
+ * them, instead of asserting a partial object into a whole class.
+ */
+export type ChatRoomSubscribable = Pick<ChatRoom, 'on'>
+
+/**
  * Subscribes a component to one slice of a {@link ChatRoom}'s state.
  *
  * `useSyncExternalStore` is the right primitive here: ChatRoom is an external
@@ -11,10 +20,10 @@ import { ChatRoomEvent } from 'core/chat/events'
  * requires `getSnapshot` to return a stable reference between changes, which is
  * why ChatRoom caches its snapshots instead of building fresh arrays per read.
  */
-export const useChatRoomSnapshot = <T>(
-  chatRoom: ChatRoom | null,
+export const useChatRoomSnapshot = <TRoom extends ChatRoomSubscribable, T>(
+  chatRoom: TRoom | null,
   events: readonly ChatRoomEvent[],
-  getSnapshot: (chatRoom: ChatRoom) => T,
+  getSnapshot: (chatRoom: TRoom) => T,
   fallback: T
 ): T => {
   // Held in a ref so that `subscribe` and `read` depend only on the room

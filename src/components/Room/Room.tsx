@@ -65,6 +65,22 @@ const RoomCore = ({
     []
   )
 
+  // Memoised because it is a room-scoped identity, not just a value: `useRoom`
+  // keys its `FileTransferService` — and so its WebTorrent client — on this
+  // reference, and a fresh object per render built a new one on every
+  // peer-list change, typing event and connection refresh.
+  const rtcConfig = useMemo(
+    () =>
+      // NOTE: Avoid using STUN servers in the E2E tests in order to make them
+      // run faster
+      import.meta.env.VITE_IS_E2E_TEST
+        ? { iceServers: [] }
+        : turnConfig.iceServers
+          ? { iceServers: turnConfig.iceServers }
+          : undefined,
+    [turnConfig]
+  )
+
   const {
     chatRoom,
     isDirectMessageRoom,
@@ -81,16 +97,7 @@ const RoomCore = ({
       appId,
       relayConfig,
       password,
-      rtcConfig: turnConfig.iceServers
-        ? { iceServers: turnConfig.iceServers }
-        : undefined,
-      // NOTE: Avoid using STUN severs in the E2E tests in order to make them
-      // run faster
-      ...(import.meta.env.VITE_IS_E2E_TEST && {
-        rtcConfig: {
-          iceServers: [],
-        },
-      }),
+      rtcConfig,
     },
     {
       roomId,

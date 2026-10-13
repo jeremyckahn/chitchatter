@@ -20,10 +20,24 @@ export const isEveryFileInlineMedia = (
   files: readonly FileHandle[] | null | undefined
 ) => Boolean(files && files.length > 0 && files.every(isInlineMediaFile))
 
-export const getInlineMediaFiles = (files: readonly FileHandle[]) =>
-  files.filter(isInlineMediaFile)
+/**
+ * Generic over the file type so that a caller holding real DOM `File`s gets
+ * `File[]` back rather than the structural `FileHandle[]`, which it would
+ * otherwise have to assert its way out of.
+ */
+export const getInlineMediaFiles = <T extends FileHandle>(
+  files: readonly T[]
+): T[] => files.filter(isInlineMediaFile)
 
-export type FileOffers = Record<string, FileOfferMetadata>
+/**
+ * Who is offering what, keyed by peer id.
+ *
+ * `Readonly` because `ChatRoom.getFileOffers` hands this very object to
+ * subscribers: the offers only change through an event they re-read on, so a
+ * caller writing into the snapshot would change core state invisibly — the
+ * reference stays the same, and `useSyncExternalStore` never re-renders.
+ */
+export type FileOffers = Readonly<Record<string, FileOfferMetadata>>
 
 export const applyFileOffer = (
   offers: FileOffers,
