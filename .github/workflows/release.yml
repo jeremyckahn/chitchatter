@@ -1,0 +1,54 @@
+name: Release
+
+# Releasing is merging develop into main. Pushing to main is what triggers
+# deploy.yml, so this workflow does not deploy anything itself.
+on:
+  workflow_dispatch:
+
+# Two overlapping releases would race to push the same ref.
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+
+    steps:
+      # main is protected (pull request required, linear history), which the
+      # default GITHUB_TOKEN cannot push through. RELEASE_TOKEN must belong to
+      # an identity that can bypass those rules. A push made with it also
+      # triggers deploy.yml, which a push made with GITHUB_TOKEN would not.
+      - name: Check for RELEASE_TOKEN
+        env:
+          RELEASE_TOKEN: ${{ secrets.RELEASE_TOKEN }}
+        run: |
+          if [ -z "$RELEASE_TOKEN" ]; then
+            echo "::error::The RELEASE_TOKEN secret is not set. See the comment in .github/workflows/release.yml."
+            exit 1
+          fi
+
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+          token: ${{ secrets.RELEASE_TOKEN }}
+
+      - name: Configure git identity
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+      # --ff-only keeps main's history linear, as its branch protection
+      # requires, and keeps main and develop on identical commits. It fails
+      # (rather than creating a merge commit) if main has commits develop lacks.
+      - name: Merge develop into main
+        run: |
+          git fetch origin develop
+          git merge --ff-only origin/develop
+
+      - name: Push main
+        run: git push origin main
