@@ -100,7 +100,7 @@ export class ConnectionTest extends EventTarget {
         offerToReceiveAudio: true,
       })
 
-      this.rtcPeerConnection.setLocalDescription(rtcSessionDescription)
+      await this.rtcPeerConnection.setLocalDescription(rtcSessionDescription)
     } catch (_e) {}
   }
 
