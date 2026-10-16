@@ -39,10 +39,18 @@ export const useConnectionTest = () => {
       return
     }
 
+    let isCancelled = false
+    let activeRtcTest: ConnectionTest | null = null
+    const timeoutIds = new Set<ReturnType<typeof setTimeout>>()
+
     const checkRtcConnection = async () => {
       const connectionTest = new ConnectionTest(turnConfig)
 
+      activeRtcTest = connectionTest
+
       const handleHasHostChanged = ((event: ConnectionTestEvent) => {
+        if (isCancelled) return
+
         setHasHost(event.detail.hasHost)
 
         connectionTest.removeEventListener(
@@ -57,6 +65,8 @@ export const useConnectionTest = () => {
       )
 
       const handleHasRelayChanged = ((event: ConnectionTestEvent) => {
+        if (isCancelled) return
+
         setHasTURNServer(event.detail.hasTURNServer)
 
         connectionTest.removeEventListener(
@@ -70,7 +80,8 @@ export const useConnectionTest = () => {
         handleHasRelayChanged
       )
 
-      setTimeout(() => {
+      const listenerTimeoutId = setTimeout(() => {
+        timeoutIds.delete(listenerTimeoutId)
         connectionTest.removeEventListener(
           ConnectionTestEvents.HAS_HOST_CHANGED,
           handleHasHostChanged
@@ -81,11 +92,16 @@ export const useConnectionTest = () => {
         )
       }, rtcPollInterval)
 
+      timeoutIds.add(listenerTimeoutId)
+
       try {
         await connectionTest.initRtcPeerConnectionTest()
       } catch (e) {
-        setHasHost(false)
-        setHasTURNServer(false)
+        if (!isCancelled) {
+          setHasHost(false)
+          setHasTURNServer(false)
+        }
+
         console.error(e)
       }
 
@@ -93,28 +109,37 @@ export const useConnectionTest = () => {
     }
 
     ;(async () => {
-      while (true) {
+      while (!isCancelled) {
         const connectionTest = await checkRtcConnection()
 
         await sleep(rtcPollInterval)
         connectionTest.destroyRtcPeerConnectionTest()
+
+        if (activeRtcTest === connectionTest) activeRtcTest = null
       }
     })()
     ;(async () => {
-      while (true) {
+      while (!isCancelled) {
         try {
           const connectionTest = new ConnectionTest(turnConfig)
           const trackerConnectionTestResult =
             connectionTest.testTrackerConnection()
 
-          setTrackerConnection(trackerConnectionTestResult)
+          if (!isCancelled) setTrackerConnection(trackerConnectionTestResult)
         } catch (_e) {
-          setTrackerConnection(TrackerConnection.FAILED)
+          if (!isCancelled) setTrackerConnection(TrackerConnection.FAILED)
         }
 
         await sleep(trackerPollInterval)
       }
     })()
+
+    return () => {
+      isCancelled = true
+      timeoutIds.forEach(clearTimeout)
+      activeRtcTest?.destroyRtcPeerConnectionTest()
+      activeRtcTest = null
+    }
   }, [turnConfig, isConfigLoading])
 
   return {
