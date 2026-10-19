@@ -37,11 +37,6 @@ jobs:
           fetch-depth: 0
           token: ${{ secrets.RELEASE_TOKEN }}
 
-      - name: Configure git identity
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-
       # --ff-only keeps main's history linear, as its branch protection
       # requires, and keeps main and develop on identical commits. It fails
       # (rather than creating a merge commit) if main has commits develop lacks.
