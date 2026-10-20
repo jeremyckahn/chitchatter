@@ -1,10 +1,11 @@
 import CloseIcon from '@mui/icons-material/Close'
 import Box from '@mui/material/Box'
+import ButtonBase from '@mui/material/ButtonBase'
 import CircularProgress from '@mui/material/CircularProgress'
 import Dialog from '@mui/material/Dialog'
 import IconButton from '@mui/material/IconButton'
 import Typography from '@mui/material/Typography'
-import { KeyboardEvent, useContext, useEffect, useRef, useState } from 'react'
+import { useContext, useEffect, useState } from 'react'
 import { TorrentFile } from 'webtorrent'
 
 import { RoomContext } from 'contexts/RoomContext'
@@ -17,15 +18,14 @@ interface InlineMediaProps {
 }
 
 interface InlineFileProps {
-  file: Pick<TorrentFile, 'name' | 'appendTo'>
-}
-
-interface ImagePreview {
-  src: string
-  alt: string
+  file: Pick<TorrentFile, 'name' | 'getBlobURL'>
 }
 
 const thumbnailMaxHeight = '300px'
+
+// Twice the default MUI Dialog margin (32px), so the full-size image never
+// touches the edges of the viewport.
+const imagePreviewViewportInset = '64px'
 
 // NOTE: These filename extensions are copied from render-media, the upstream
 // library used to embed media files:
@@ -46,86 +46,96 @@ const supportedMediaExtensions = [
   ...supportedAudioExtensions,
 ]
 
-export const InlineFile = ({ file }: InlineFileProps) => {
-  const containerRef = useRef(null)
-  const [didRenderingMediaFail, setDidRenderingMediaFail] = useState(false)
-  const [isMediaSupported, setIsMediaSupported] = useState(true)
-  const [imagePreview, setImagePreview] = useState<ImagePreview>()
-  const [isImagePreviewOpen, setIsImagePreviewOpen] = useState(false)
-  const shellContext = useContext(ShellContext)
+const useBlobUrl = (
+  file: Pick<TorrentFile, 'getBlobURL'>,
+  isEnabled: boolean
+) => {
+  const [url, setUrl] = useState<string>()
+  const [didFail, setDidFail] = useState(false)
 
   useEffect(() => {
-    const { current: container } = containerRef
+    if (!isEnabled) return undefined
 
-    if (!container) return
+    let isCurrent = true
+    let blobUrl: string | undefined
 
-    const { name } = file
-    const fileNameExtension = name.split('.').pop() ?? ''
+    file.getBlobURL((err, createdUrl) => {
+      if (err || !createdUrl) {
+        if (isCurrent) setDidFail(true)
+        return
+      }
 
-    if (!supportedMediaExtensions.includes(`.${fileNameExtension}`)) {
-      setIsMediaSupported(false)
-      return
+      // The component went away while the blob was being built
+      if (!isCurrent) {
+        URL.revokeObjectURL(createdUrl)
+        return
+      }
+
+      blobUrl = createdUrl
+      setUrl(createdUrl)
+    })
+
+    return () => {
+      isCurrent = false
+
+      if (blobUrl) URL.revokeObjectURL(blobUrl)
     }
+  }, [file, isEnabled])
 
-    try {
-      file.appendTo(container, (err, element) => {
-        if (err || !(element instanceof HTMLImageElement)) return
+  return { url, didFail }
+}
 
-        // render-media creates the <img> outside of React, so it is made
-        // operable as a button here. Activation is handled by the container.
-        element.tabIndex = 0
-        element.setAttribute('role', 'button')
-        element.setAttribute('aria-label', `View ${name} full size`)
-      })
-    } catch (e) {
-      console.error(e)
-      setDidRenderingMediaFail(true)
-    }
-  }, [file, containerRef, shellContext.roomId])
+export const InlineFile = ({ file }: InlineFileProps) => {
+  const [isImagePreviewOpen, setIsImagePreviewOpen] = useState(false)
 
-  const openImagePreview = ({ src, alt }: HTMLImageElement) => {
-    setImagePreview({ src, alt })
-    setIsImagePreviewOpen(true)
+  const { name } = file
+  const fileNameExtension = `.${name.split('.').pop() ?? ''}`
+  const isImage = supportedImageExtensions.includes(fileNameExtension)
+  const isMediaSupported = supportedMediaExtensions.includes(fileNameExtension)
+
+  const { url, didFail } = useBlobUrl(file, isMediaSupported)
+
+  if (!isMediaSupported) {
+    return (
+      <Typography sx={{ fontStyle: 'italic' }}>
+        Media preview not supported
+      </Typography>
+    )
   }
 
-  const handleKeyDown = (event: KeyboardEvent<HTMLElement>) => {
-    if (event.key !== 'Enter' && event.key !== ' ') return
-    if (!(event.target instanceof HTMLImageElement)) return
-
-    // Stops Space from scrolling the transcript
-    event.preventDefault()
-    openImagePreview(event.target)
+  if (didFail) {
+    return (
+      <Typography sx={{ fontStyle: 'italic' }}>
+        Media failed to render
+      </Typography>
+    )
   }
+
+  if (!url) return null
+
+  if (!isImage) return <audio controls src={url} />
 
   return (
-    <Box
-      ref={containerRef}
-      onClick={({ target }) => {
-        if (target instanceof HTMLImageElement) openImagePreview(target)
-      }}
-      onKeyDown={handleKeyDown}
-      sx={{
-        '& img': {
-          maxWidth: '100%',
-          maxHeight: thumbnailMaxHeight,
-          cursor: 'zoom-in',
-        },
-      }}
-    >
-      {!isMediaSupported && (
-        <Typography sx={{ fontStyle: 'italic' }}>
-          Media preview not supported
-        </Typography>
-      )}
-      {didRenderingMediaFail && (
-        <Typography sx={{ fontStyle: 'italic' }}>
-          Media failed to render
-        </Typography>
-      )}
+    <>
+      <ButtonBase
+        onClick={() => setIsImagePreviewOpen(true)}
+        aria-label={`View ${name} full size`}
+        sx={{ cursor: 'zoom-in' }}
+      >
+        <Box
+          component="img"
+          src={url}
+          alt={name}
+          sx={{ maxWidth: '100%', maxHeight: thumbnailMaxHeight }}
+        />
+      </ButtonBase>
       <Dialog
         open={isImagePreviewOpen}
         onClose={() => setIsImagePreviewOpen(false)}
         maxWidth={false}
+        // MUI puts aria-label on the wrapper, so it goes on the paper, which
+        // has role="dialog"
+        PaperProps={{ 'aria-label': `${name} preview` }}
       >
         <IconButton
           aria-label="close"
@@ -136,16 +146,16 @@ export const InlineFile = ({ file }: InlineFileProps) => {
         </IconButton>
         <Box
           component="img"
-          src={imagePreview?.src}
-          alt={imagePreview?.alt}
+          src={url}
+          alt={name}
           sx={{
             display: 'block',
-            maxWidth: 'calc(100vw - 64px)',
-            maxHeight: 'calc(100vh - 64px)',
+            maxWidth: `calc(100vw - ${imagePreviewViewportInset})`,
+            maxHeight: `calc(100vh - ${imagePreviewViewportInset})`,
           }}
         />
       </Dialog>
-    </Box>
+    </>
   )
 }
 

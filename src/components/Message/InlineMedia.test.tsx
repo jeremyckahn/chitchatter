@@ -10,58 +10,53 @@ import { InlineFile } from './InlineMedia'
 
 type InlineFileSource = Parameters<typeof InlineFile>[0]['file']
 
-type AppendToCallback = (err: Error | undefined, element: HTMLElement) => void
-
 const blobUrl = 'blob:http://localhost/photo'
 
-// Mimics render-media: the file's <img> is created outside of React, appended
-// to the container, and handed to the callback once its blob URL is set.
-const imageFileStub = (name: string): InlineFileSource => ({
-  name,
-  appendTo: (
-    container: HTMLElement | string,
-    optionsOrCallback?: unknown,
-    callback?: unknown
-  ) => {
-    if (!(container instanceof HTMLElement)) return
+const revokeObjectURL = vi.fn()
 
-    const onAppended = [optionsOrCallback, callback].find(
-      (arg): arg is AppendToCallback => typeof arg === 'function'
-    )
-    const image = document.createElement('img')
-
-    image.src = blobUrl
-    image.alt = name
-    container.appendChild(image)
-    onAppended?.(undefined, image)
-  },
+// jsdom does not implement revokeObjectURL, which the component calls when it
+// is done with a blob URL.
+beforeAll(() => {
+  URL.revokeObjectURL = revokeObjectURL
 })
 
-const audioFileStub = (name: string): InlineFileSource => ({
-  name,
-  appendTo: (container: HTMLElement | string) => {
-    if (!(container instanceof HTMLElement)) return
-
-    container.appendChild(document.createElement('audio'))
-  },
+beforeEach(() => {
+  revokeObjectURL.mockClear()
 })
 
-const getThumbnail = () => screen.getByRole('button', { name: /photo\.png/ })
+// Mimics WebTorrent: the blob URL is built asynchronously.
+const fileStub = (name: string): InlineFileSource => ({
+  name,
+  getBlobURL: vi.fn(callback => {
+    queueMicrotask(() => callback(undefined, blobUrl))
+  }),
+})
+
+const failingFileStub = (name: string): InlineFileSource => ({
+  name,
+  getBlobURL: vi.fn(callback => {
+    queueMicrotask(() => callback(new Error('Could not read the file')))
+  }),
+})
+
+const findThumbnail = () => screen.findByRole('button', { name: /photo\.png/ })
 
 describe('InlineFile image preview', () => {
-  test('renders the image as a keyboard-focusable thumbnail button', () => {
-    render(<InlineFile file={imageFileStub('photo.png')} />)
+  test('renders the image as a thumbnail button', async () => {
+    render(<InlineFile file={fileStub('photo.png')} />)
 
-    expect(getThumbnail()).toHaveAttribute('tabindex', '0')
+    const thumbnail = await findThumbnail()
+
+    expect(within(thumbnail).getByRole('img')).toHaveAttribute('src', blobUrl)
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
   })
 
   test('opens the full-size image when the thumbnail is clicked', async () => {
-    render(<InlineFile file={imageFileStub('photo.png')} />)
+    render(<InlineFile file={fileStub('photo.png')} />)
 
-    await userEvent.click(getThumbnail())
+    await userEvent.click(await findThumbnail())
 
-    const dialog = screen.getByRole('dialog')
+    const dialog = screen.getByRole('dialog', { name: 'photo.png preview' })
 
     expect(within(dialog).getByRole('img')).toHaveAttribute('src', blobUrl)
   })
@@ -69,9 +64,11 @@ describe('InlineFile image preview', () => {
   test.each(['{Enter}', ' '])(
     'opens the full-size image when the thumbnail is activated with %j',
     async key => {
-      render(<InlineFile file={imageFileStub('photo.png')} />)
+      render(<InlineFile file={fileStub('photo.png')} />)
 
-      getThumbnail().focus()
+      const thumbnail = await findThumbnail()
+
+      thumbnail.focus()
       await userEvent.keyboard(key)
 
       expect(screen.getByRole('dialog')).toBeInTheDocument()
@@ -79,41 +76,87 @@ describe('InlineFile image preview', () => {
   )
 
   test('closes the full-size image with the close button', async () => {
-    render(<InlineFile file={imageFileStub('photo.png')} />)
+    render(<InlineFile file={fileStub('photo.png')} />)
 
-    await userEvent.click(getThumbnail())
+    await userEvent.click(await findThumbnail())
     await userEvent.click(screen.getByRole('button', { name: /close/i }))
 
     await waitForElementToBeRemoved(() => screen.queryByRole('dialog'))
   })
 
   test('closes the full-size image with the Escape key', async () => {
-    render(<InlineFile file={imageFileStub('photo.png')} />)
+    render(<InlineFile file={fileStub('photo.png')} />)
 
-    await userEvent.click(getThumbnail())
+    await userEvent.click(await findThumbnail())
     await userEvent.keyboard('{Escape}')
 
     await waitForElementToBeRemoved(() => screen.queryByRole('dialog'))
   })
 
-  test('does not open a preview for audio files', async () => {
-    const { container } = render(
-      <InlineFile file={audioFileStub('clip.ogg')} />
-    )
+  test('keeps the dialog open when the full-size image is clicked', async () => {
+    render(<InlineFile file={fileStub('photo.png')} />)
+
+    await userEvent.click(await findThumbnail())
+
+    const dialog = screen.getByRole('dialog')
+
+    await userEvent.click(within(dialog).getByRole('img'))
+
+    expect(screen.getByRole('dialog')).toBeInTheDocument()
+  })
+})
+
+describe('InlineFile audio', () => {
+  test('renders audio with controls and no image preview', async () => {
+    const { container } = render(<InlineFile file={fileStub('clip.ogg')} />)
+
+    await vi.waitFor(() => {
+      expect(container.querySelector('audio')).not.toBeNull()
+    })
 
     const audio = container.querySelector('audio')
 
-    if (!audio) throw new Error('The audio element was not rendered')
-
-    await userEvent.click(audio)
-
-    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+    expect(audio).toHaveAttribute('src', blobUrl)
+    expect(audio).toHaveAttribute('controls')
+    expect(screen.queryByRole('button')).not.toBeInTheDocument()
   })
+})
 
-  test('shows a message for unsupported file types', () => {
-    render(<InlineFile file={imageFileStub('notes.txt')} />)
+describe('InlineFile unsupported and failing files', () => {
+  test('shows a message and does not read unsupported file types', () => {
+    const file = fileStub('notes.txt')
+
+    render(<InlineFile file={file} />)
 
     screen.getByText('Media preview not supported')
+    expect(file.getBlobURL).not.toHaveBeenCalled()
+  })
+
+  test('shows a message when the file cannot be read', async () => {
+    render(<InlineFile file={failingFileStub('photo.png')} />)
+
+    await screen.findByText('Media failed to render')
     expect(screen.queryByRole('button')).not.toBeInTheDocument()
+  })
+})
+
+describe('InlineFile blob URL cleanup', () => {
+  test('revokes the blob URL when unmounted', async () => {
+    const { unmount } = render(<InlineFile file={fileStub('photo.png')} />)
+
+    await findThumbnail()
+    unmount()
+
+    expect(revokeObjectURL).toHaveBeenCalledWith(blobUrl)
+  })
+
+  test('revokes a blob URL that arrives after unmount', async () => {
+    const file = fileStub('photo.png')
+    const { unmount } = render(<InlineFile file={file} />)
+
+    unmount()
+    await vi.waitFor(() => {
+      expect(revokeObjectURL).toHaveBeenCalledWith(blobUrl)
+    })
   })
 })
