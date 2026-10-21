@@ -18,7 +18,7 @@ interface InlineMediaProps {
 }
 
 interface InlineFileProps {
-  file: Pick<TorrentFile, 'name' | 'getBlobURL'>
+  file: Pick<TorrentFile, 'name' | 'length' | 'getBlobURL'>
 }
 
 const thumbnailMaxHeight = '300px'
@@ -45,6 +45,10 @@ const supportedMediaExtensions = [
   ...supportedImageExtensions,
   ...supportedAudioExtensions,
 ]
+
+// Matches render-media's MAX_BLOB_LENGTH, which this component used to
+// inherit through appendTo
+const maxInlineMediaBytes = 200 * 1000 * 1000
 
 const useBlobUrl = (
   file: Pick<TorrentFile, 'getBlobURL'>,
@@ -91,7 +95,9 @@ export const InlineFile = ({ file }: InlineFileProps) => {
   const { name } = file
   const fileNameExtension = `.${name.split('.').pop() ?? ''}`
   const isImage = supportedImageExtensions.includes(fileNameExtension)
-  const isMediaSupported = supportedMediaExtensions.includes(fileNameExtension)
+  const isMediaSupported =
+    supportedMediaExtensions.includes(fileNameExtension) &&
+    file.length <= maxInlineMediaBytes
 
   const { url, didFail } = useBlobUrl(file, isMediaSupported)
 

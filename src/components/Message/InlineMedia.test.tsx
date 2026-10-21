@@ -12,6 +12,9 @@ type InlineFileSource = Parameters<typeof InlineFile>[0]['file']
 
 const blobUrl = 'blob:http://localhost/photo'
 
+// Matches render-media's MAX_BLOB_LENGTH
+const maxInlineMediaBytes = 200 * 1000 * 1000
+
 const revokeObjectURL = vi.fn()
 
 // jsdom does not implement revokeObjectURL, which the component calls when it
@@ -25,8 +28,9 @@ beforeEach(() => {
 })
 
 // Mimics WebTorrent: the blob URL is built asynchronously.
-const fileStub = (name: string): InlineFileSource => ({
+const fileStub = (name: string, length = 1024): InlineFileSource => ({
   name,
+  length,
   getBlobURL: vi.fn(callback => {
     queueMicrotask(() => callback(undefined, blobUrl))
   }),
@@ -34,6 +38,7 @@ const fileStub = (name: string): InlineFileSource => ({
 
 const failingFileStub = (name: string): InlineFileSource => ({
   name,
+  length: 1024,
   getBlobURL: vi.fn(callback => {
     queueMicrotask(() => callback(new Error('Could not read the file')))
   }),
@@ -130,6 +135,21 @@ describe('InlineFile unsupported and failing files', () => {
 
     screen.getByText('Media preview not supported')
     expect(file.getBlobURL).not.toHaveBeenCalled()
+  })
+
+  test('shows a message and does not read files over the size limit', () => {
+    const file = fileStub('photo.png', maxInlineMediaBytes + 1)
+
+    render(<InlineFile file={file} />)
+
+    screen.getByText('Media preview not supported')
+    expect(file.getBlobURL).not.toHaveBeenCalled()
+  })
+
+  test('still previews a file exactly at the size limit', async () => {
+    render(<InlineFile file={fileStub('photo.png', maxInlineMediaBytes)} />)
+
+    await findThumbnail()
   })
 
   test('shows a message when the file cannot be read', async () => {
