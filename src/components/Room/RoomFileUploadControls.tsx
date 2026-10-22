@@ -56,6 +56,12 @@ export function RoomFileUploadControls({
     if (!files || files.length < 1) return
 
     handleFileShareStart(files)
+
+    // Reset the input so picking the same file again fires `change`;
+    // browsers skip the event while the value matches the previous pick.
+    // Safe to clear after the call: `handleFileShareStart` has already
+    // stored its own copy of the selection.
+    e.target.value = ''
   }
 
   const shareFileLabel =

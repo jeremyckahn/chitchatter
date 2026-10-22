@@ -150,6 +150,27 @@ describe('useRoomFileShare', () => {
     expect(result.current.isSharingFile).toBe(false)
   })
 
+  test('keeps the selected file name after the source list is emptied in place', async () => {
+    const { chatRoom } = createRoom()
+    const { result } = renderFileShare(chatRoom)
+
+    // A real `<input>` keeps returning the same `FileList` object and empties
+    // it in place when the input is reset after selection. State has to hold
+    // a copy: storing the live list leaves the stop-sharing label without
+    // the file's name as soon as the input is cleared.
+    const liveList = [
+      { name: 'hello.txt', type: 'text/plain', size: 5 },
+    ] as unknown as FileList
+
+    await act(async () => {
+      await result.current.handleFileShareStart(liveList)
+    })
+    ;(liveList as unknown as File[]).length = 0
+
+    expect(result.current.sharedFiles?.length).toBe(1)
+    expect(result.current.sharedFiles?.[0].name).toBe('hello.txt')
+  })
+
   test('releases the stop control when the room stops offering', async () => {
     const { chatRoom } = createRoom()
     const { result } = renderFileShare(chatRoom)

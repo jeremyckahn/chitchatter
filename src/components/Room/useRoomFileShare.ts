@@ -41,7 +41,7 @@ export const useRoomFileShare = ({
 }: UseRoomFileShareConfig) => {
   const { showAlert } = useContext(ShellContext)
   const { setPeerOfferedFileMetadata } = useContext(RoomContext)
-  const [sharedFiles, setSharedFiles] = useState<FileList | null>(null)
+  const [sharedFiles, setSharedFiles] = useState<File[] | null>(null)
   const [isFileSharingEnabled, setIsFileSharingEnabled] = useState(true)
 
   const peerOfferedFileMetadata = useChatRoomFileOffers(chatRoom)
@@ -61,7 +61,10 @@ export const useRoomFileShare = ({
     const fileArray = [...files]
     const inlineMediaFiles = getInlineMediaFiles(fileArray)
 
-    setSharedFiles(files)
+    // State holds the copy, not the live `FileList`: the input empties that
+    // list in place when it is reset after selection, and the stop-sharing
+    // label still needs the file's name.
+    setSharedFiles(fileArray)
     setIsFileSharingEnabled(false)
 
     showAlert(
