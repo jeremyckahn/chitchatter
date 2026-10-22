@@ -1,4 +1,4 @@
-import { render } from '@testing-library/react'
+import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { PropsWithChildren, useContext, useMemo } from 'react'
 import { describe, expect, test, vi } from 'vitest'
@@ -62,7 +62,7 @@ const Wrapper = ({ children }: PropsWithChildren) => {
 }
 
 describe('RoomFileUploadControls', () => {
-  test('clears the file input after a selection so the same file can be picked again', async () => {
+  test('clears the file input after a selection', async () => {
     const { chatRoom } = createRoom()
 
     const { container } = render(
@@ -79,16 +79,51 @@ describe('RoomFileUploadControls', () => {
       throw new Error('file input not rendered')
     }
 
-    // jsdom fires `change` on every `userEvent.upload`, but a real browser
-    // skips the event when the picked file matches the input's current
-    // value. The input therefore has to be reset after each selection, or
-    // picking the same file twice in a row silently does nothing (#107).
-    // Pin the reset directly.
+    // This pins only the reset itself. jsdom fires `change` on every
+    // `userEvent.upload`, so it cannot show that re-selecting the same file
+    // fires again; a real browser skips the event while the value matches
+    // the previous pick, which is what the reset is for (#107).
     await userEvent.upload(
       input,
       new File(['hello'], 'hello.txt', { type: 'text/plain' })
     )
 
     expect(input.value).toBe('')
+  })
+
+  test('keeps the shared file name for the stop-sharing tooltip after the input reset', async () => {
+    const { chatRoom } = createRoom()
+
+    const { container } = render(
+      <RoomFileUploadControls
+        chatRoom={chatRoom}
+        onInlineMediaUpload={vi.fn()}
+      />,
+      { wrapper: Wrapper }
+    )
+
+    const input = container.querySelector('input[type="file"]')
+
+    if (!(input instanceof HTMLInputElement)) {
+      throw new Error('file input not rendered')
+    }
+
+    await userEvent.upload(
+      input,
+      new File(['hello'], 'hello.txt', { type: 'text/plain' })
+    )
+
+    // jsdom replaces the input's `FileList` object on reset instead of
+    // emptying it in place as real browsers do, so this only pins the label
+    // wiring; the copy contract itself is pinned in `useRoomFileShare`.
+    const button = screen.getByRole('button', { name: 'share screen' })
+
+    await userEvent.hover(button)
+
+    await waitFor(() =>
+      expect(screen.getByRole('tooltip')).toHaveTextContent(
+        'Stop sharing hello.txt'
+      )
+    )
   })
 })
