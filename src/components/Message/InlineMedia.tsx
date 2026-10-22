@@ -1,7 +1,11 @@
+import CloseIcon from '@mui/icons-material/Close'
 import Box from '@mui/material/Box'
+import ButtonBase from '@mui/material/ButtonBase'
 import CircularProgress from '@mui/material/CircularProgress'
+import Dialog from '@mui/material/Dialog'
+import IconButton from '@mui/material/IconButton'
 import Typography from '@mui/material/Typography'
-import { useContext, useEffect, useRef, useState } from 'react'
+import { useContext, useEffect, useState } from 'react'
 import { TorrentFile } from 'webtorrent'
 
 import { RoomContext } from 'contexts/RoomContext'
@@ -14,8 +18,14 @@ interface InlineMediaProps {
 }
 
 interface InlineFileProps {
-  file: TorrentFile
+  file: Pick<TorrentFile, 'name' | 'length' | 'getBlobURL'>
 }
+
+const thumbnailMaxHeight = '300px'
+
+// Twice the default MUI Dialog margin (32px), so the full-size image never
+// touches the edges of the viewport.
+const imagePreviewViewportInset = '64px'
 
 // NOTE: These filename extensions are copied from render-media, the upstream
 // library used to embed media files:
@@ -36,46 +46,122 @@ const supportedMediaExtensions = [
   ...supportedAudioExtensions,
 ]
 
-export const InlineFile = ({ file }: InlineFileProps) => {
-  const containerRef = useRef(null)
-  const [didRenderingMediaFail, setDidRenderingMediaFail] = useState(false)
-  const [isMediaSupported, setIsMediaSupported] = useState(true)
-  const shellContext = useContext(ShellContext)
+// Matches render-media's MAX_BLOB_LENGTH, which this component used to
+// inherit through appendTo
+const maxInlineMediaBytes = 200 * 1000 * 1000
+
+const useBlobUrl = (
+  file: Pick<TorrentFile, 'getBlobURL'>,
+  isEnabled: boolean
+) => {
+  const [url, setUrl] = useState<string>()
+  const [didFail, setDidFail] = useState(false)
 
   useEffect(() => {
-    const { current: container } = containerRef
+    if (!isEnabled) return undefined
 
-    if (!container) return
+    let isCurrent = true
+    let blobUrl: string | undefined
 
-    const { name } = file
-    const fileNameExtension = name.split('.').pop() ?? ''
+    file.getBlobURL((err, createdUrl) => {
+      if (err || !createdUrl) {
+        if (isCurrent) setDidFail(true)
+        return
+      }
 
-    if (!supportedMediaExtensions.includes(`.${fileNameExtension}`)) {
-      setIsMediaSupported(false)
-      return
+      // The component went away while the blob was being built
+      if (!isCurrent) {
+        URL.revokeObjectURL(createdUrl)
+        return
+      }
+
+      blobUrl = createdUrl
+      setUrl(createdUrl)
+    })
+
+    return () => {
+      isCurrent = false
+
+      if (blobUrl) URL.revokeObjectURL(blobUrl)
     }
+  }, [file, isEnabled])
 
-    try {
-      file.appendTo(container)
-    } catch (e) {
-      console.error(e)
-      setDidRenderingMediaFail(true)
-    }
-  }, [file, containerRef, shellContext.roomId])
+  return { url, didFail }
+}
+
+export const InlineFile = ({ file }: InlineFileProps) => {
+  const [isImagePreviewOpen, setIsImagePreviewOpen] = useState(false)
+
+  const { name } = file
+  const fileNameExtension = `.${name.split('.').pop() ?? ''}`
+  const isImage = supportedImageExtensions.includes(fileNameExtension)
+  const isMediaSupported =
+    supportedMediaExtensions.includes(fileNameExtension) &&
+    file.length <= maxInlineMediaBytes
+
+  const { url, didFail } = useBlobUrl(file, isMediaSupported)
+
+  if (!isMediaSupported) {
+    return (
+      <Typography sx={{ fontStyle: 'italic' }}>
+        Media preview not supported
+      </Typography>
+    )
+  }
+
+  if (didFail) {
+    return (
+      <Typography sx={{ fontStyle: 'italic' }}>
+        Media failed to render
+      </Typography>
+    )
+  }
+
+  if (!url) return null
+
+  if (!isImage) return <audio controls src={url} />
 
   return (
-    <Box ref={containerRef} sx={{ '& img': { maxWidth: '100%' } }}>
-      {!isMediaSupported && (
-        <Typography sx={{ fontStyle: 'italic' }}>
-          Media preview not supported
-        </Typography>
-      )}
-      {didRenderingMediaFail && (
-        <Typography sx={{ fontStyle: 'italic' }}>
-          Media failed to render
-        </Typography>
-      )}
-    </Box>
+    <>
+      <ButtonBase
+        onClick={() => setIsImagePreviewOpen(true)}
+        aria-label={`View ${name} full size`}
+        sx={{ cursor: 'zoom-in' }}
+      >
+        <Box
+          component="img"
+          src={url}
+          alt={name}
+          sx={{ maxWidth: '100%', maxHeight: thumbnailMaxHeight }}
+        />
+      </ButtonBase>
+      <Dialog
+        open={isImagePreviewOpen}
+        onClose={() => setIsImagePreviewOpen(false)}
+        maxWidth={false}
+        // MUI puts aria-label on the wrapper, so it goes on the paper, which
+        // has role="dialog"
+        PaperProps={{ 'aria-label': `${name} preview` }}
+      >
+        <IconButton
+          aria-label="close"
+          onClick={() => setIsImagePreviewOpen(false)}
+          sx={{ position: 'absolute', right: 8, top: 8 }}
+        >
+          <CloseIcon />
+        </IconButton>
+        <Box
+          component="img"
+          src={url}
+          alt={name}
+          sx={{
+            display: 'block',
+            maxWidth: `calc(100vw - ${imagePreviewViewportInset})`,
+            maxHeight: `calc(100vh - ${imagePreviewViewportInset})`,
+          }}
+        />
+      </Dialog>
+    </>
   )
 }
 
