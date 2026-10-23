@@ -5,7 +5,6 @@ import { consoleLogger, createWebAdapters } from 'adapters/web'
 import { ChatRoom } from 'core/chat/ChatRoom'
 import { FileHandle } from 'core/chat/fileOffers'
 import { encryption } from 'core/crypto/Encryption'
-import { FileOfferMetadata } from 'core/models/chat'
 import { RoomConfig, TrysteroTransport } from 'core/transport/TrysteroTransport'
 import { RoomContextProps } from 'contexts/RoomContext'
 import { SettingsContext } from 'contexts/SettingsContext'
@@ -139,9 +138,6 @@ export const useRoom = (
   const [peerScreenStreams, setPeerScreenStreams] = useState<
     Record<string, MediaStream>
   >({})
-  const [peerOfferedFileMetadata, setPeerOfferedFileMetadata] = useState<
-    Record<string, FileOfferMetadata>
-  >({})
 
   const showVideoDisplay = Boolean(
     selfVideoStream ||
@@ -266,8 +262,6 @@ export const useRoom = (
       setSelfScreenStream,
       peerScreenStreams,
       setPeerScreenStreams,
-      peerOfferedFileMetadata,
-      setPeerOfferedFileMetadata,
       fileTransferService,
     }),
     [
@@ -279,7 +273,6 @@ export const useRoom = (
       peerVideoStreams,
       selfScreenStream,
       peerScreenStreams,
-      peerOfferedFileMetadata,
       fileTransferService,
     ]
   )
