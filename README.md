@@ -390,9 +390,7 @@ Chitchatter is designed to be forked and self-hosted. If you would like to chang
 Assuming you are hosting Chitchatter on [GitHub Pages](https://pages.github.com/):
 
 1. Change the [`homepage` property in `package.json`](https://github.com/jeremyckahn/chitchatter/blob/1ea67e2c3a45115e054ebfe3457f2c3572c6213b/package.json#L4) to whatever URL your Chitchatter instance will be hosted from. This will be something like `https://github_user_or_org_name.github.io/chitchatter/`. **This string must contain a trailing slash**.
-2. Define a [`DEPLOY_KEY` GitHub Action secret](https://github.com/jeremyckahn/chitchatter/blob/e2bac732cf1288f7b5d0bec151098f18e8b1d0d6/.github/workflows/deploy.yml#L28-L31) (at `https://github.com/github_user_or_org_name/chitchatter/settings/secrets/actions`). See the docs for [`peaceiris/actions-gh-pages`](https://github.com/peaceiris/actions-gh-pages#%EF%B8%8F-set-ssh-private-key-deploy_key) for more information.
-3. In the Pages section of your fork's Settings tab, ensure that "Deploy from a branch" is selected for Source, and that the branch source is `gh-pages` with `/ (root)`.
-4. If you're using GitHub Pages [without a custom domain](https://github.com/sitek94/vite-deploy-demo?tab=readme-ov-file#fix-assets-links), you'll need to define the repo name as the `base` property [in `vite.config.ts`](https://github.com/jeremyckahn/chitchatter/blob/df6d10868e12ad13036a44f959796f4da35adc28/vite.config.ts#L35-L38). Here's an example of how that might look:
+2. If you're using GitHub Pages [without a custom domain](https://github.com/sitek94/vite-deploy-demo?tab=readme-ov-file#fix-assets-links), uncomment the `base` property [in `vite.config.ts`](https://github.com/jeremyckahn/chitchatter/blob/df6d10868e12ad13036a44f959796f4da35adc28/vite.config.ts#L35-L38) and set it to your repo name, with leading and trailing slashes. Without this, the deployed site is likely to show a blank page because its assets are requested from the wrong path. Here's an example of how that might look:
 
 ```js
 const config = () => {
@@ -402,6 +400,17 @@ const config = () => {
       // ...
 }
 ```
+
+3. Create an SSH key pair that the deploy workflow will use to publish the built site (for example with `ssh-keygen -t ed25519 -C "chitchatter-deploy" -f chitchatter_deploy -N ""`), then:
+   - Add the **public** key (`chitchatter_deploy.pub`) as a deploy key with **write access** at `https://github.com/github_user_or_org_name/chitchatter/settings/keys`.
+   - Add the **private** key (`chitchatter_deploy`) as a [`DEPLOY_KEY` GitHub Action secret](https://github.com/jeremyckahn/chitchatter/blob/e2bac732cf1288f7b5d0bec151098f18e8b1d0d6/.github/workflows/deploy.yml#L28-L31) at `https://github.com/github_user_or_org_name/chitchatter/settings/secrets/actions`.
+
+   See the docs for [`peaceiris/actions-gh-pages`](https://github.com/peaceiris/actions-gh-pages#%EF%B8%8F-set-ssh-private-key-deploy_key) for more information.
+
+4. Make sure your fork has a `main` branch. The [deploy workflow](.github/workflows/deploy.yml) only runs when `main` is pushed to (or when started manually), but the default branch of this repo is `develop`, and GitHub's fork dialog copies only the default branch by default. If your fork has no `main` branch, create it from `develop`. (The [Release workflow](.github/workflows/release.yml) is how the upstream project merges `develop` into its protected `main`; it needs a `RELEASE_TOKEN` secret and is not needed for a fork.)
+5. Enable GitHub Actions for your fork (forks have workflows disabled until you enable them in the Actions tab).
+6. Push to `main`, or start the "Deploy to Github Pages" workflow manually from the Actions tab, and wait for it to finish. This creates the `gh-pages` branch.
+7. In the Pages section of your fork's Settings tab, ensure that "Deploy from a branch" is selected for Source, and that the branch source is `gh-pages` with `/ (root)`. The `gh-pages` branch only exists after the workflow in the previous step has run successfully.
 
 #### Deployment
 
