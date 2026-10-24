@@ -19,6 +19,8 @@ import {
 import { usePeerAction } from 'hooks/usePeerAction'
 import { MessageContext } from 'trystero'
 
+import { usePeerMediaHandlers, PeerStreamHandler } from './usePeerMediaHandlers'
+
 interface UseRoomScreenShareConfig {
   peerRoom: TrysteroTransport
 }
@@ -55,7 +57,7 @@ export function useRoomScreenShare({ peerRoom }: UseRoomScreenShareConfig) {
     },
   })
 
-  peerRoom.onPeerStream(PeerStreamType.SCREEN, (stream, peerId, metadata) => {
+  const handlePeerStream: PeerStreamHandler = (stream, peerId, metadata) => {
     const isScreenShareStream =
       isRecord(metadata) &&
       'type' in metadata &&
@@ -95,7 +97,7 @@ export function useRoomScreenShare({ peerRoom }: UseRoomScreenShareConfig) {
         })
       }
     }
-  })
+  }
 
   const cleanupScreenStream = useCallback(() => {
     if (!selfScreenStream) return
@@ -197,12 +199,13 @@ export function useRoomScreenShare({ peerRoom }: UseRoomScreenShareConfig) {
     deletePeerScreen(peerId)
   }
 
-  peerRoom.onPeerJoin(PeerHookType.SCREEN, (peerId: string) => {
-    handleScreenForNewPeer(peerId)
-  })
-
-  peerRoom.onPeerLeave(PeerHookType.SCREEN, (peerId: string) => {
-    handleScreenForLeavingPeer(peerId)
+  usePeerMediaHandlers({
+    peerRoom,
+    peerHookType: PeerHookType.SCREEN,
+    peerStreamType: PeerStreamType.SCREEN,
+    onPeerJoin: handleScreenForNewPeer,
+    onPeerLeave: handleScreenForLeavingPeer,
+    onPeerStream: handlePeerStream,
   })
 
   return {
