@@ -19,7 +19,7 @@ interface State {
 
 // Adapted from https://react-typescript-cheatsheet.netlify.app/docs/basic/getting-started/error_boundaries/
 export class ErrorBoundary extends Component<Props, State> {
-  public state: State = {
+  public override state: State = {
     error: null,
     showError: false,
   }
@@ -28,11 +28,11 @@ export class ErrorBoundary extends Component<Props, State> {
     return { error, showError: true }
   }
 
-  public componentDidCatch(error: Error, errorInfo: ErrorInfo) {
+  public override componentDidCatch(error: Error, errorInfo: ErrorInfo) {
     console.error('Uncaught error:', error, errorInfo)
   }
 
-  public render() {
+  public override render() {
     if (this.state.error && this.state.showError) {
       const { name, message, stack } = this.state.error
 

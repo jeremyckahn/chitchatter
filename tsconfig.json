@@ -19,6 +19,7 @@
     "baseUrl": "src",
     "noUnusedLocals": true,
     "noUnusedParameters": true,
+    "noImplicitOverride": true,
     "paths": {
       "trystero/torrent": ["../node_modules/trystero/src/torrent.d.ts"]
     },
