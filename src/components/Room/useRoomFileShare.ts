@@ -1,13 +1,9 @@
-import { useContext, useEffect, useState } from 'react'
+import { useContext, useState } from 'react'
 
 import { ChatRoom } from 'core/chat/ChatRoom'
 import { getInlineMediaFiles } from 'core/chat/fileOffers'
-import { RoomContext } from 'contexts/RoomContext'
 import { ShellContext } from 'contexts/ShellContext'
-import {
-  useChatRoomFileOffers,
-  useChatRoomSelfFileOffer,
-} from 'hooks/useChatRoomState'
+import { useChatRoomSelfFileOffer } from 'hooks/useChatRoomState'
 
 /**
  * The part of a room these controls use. Narrower than `ChatRoom` on purpose,
@@ -40,11 +36,8 @@ export const useRoomFileShare = ({
   chatRoom,
 }: UseRoomFileShareConfig) => {
   const { showAlert } = useContext(ShellContext)
-  const { setPeerOfferedFileMetadata } = useContext(RoomContext)
   const [sharedFiles, setSharedFiles] = useState<File[] | null>(null)
   const [isFileSharingEnabled, setIsFileSharingEnabled] = useState(true)
-
-  const peerOfferedFileMetadata = useChatRoomFileOffers(chatRoom)
 
   // Read from the room rather than tracked here. The room is what decides
   // whether an offer exists — it refuses one outright after `leave()`, and
@@ -52,10 +45,6 @@ export const useRoomFileShare = ({
   // could only ever disagree with it and leave the control stuck.
   const selfFileOfferMagnetUri = useChatRoomSelfFileOffer(chatRoom)
   const isSharingFile = Boolean(selfFileOfferMagnetUri)
-
-  useEffect(() => {
-    setPeerOfferedFileMetadata(peerOfferedFileMetadata)
-  }, [peerOfferedFileMetadata, setPeerOfferedFileMetadata])
 
   const handleFileShareStart = async (files: FileList) => {
     const fileArray = [...files]
