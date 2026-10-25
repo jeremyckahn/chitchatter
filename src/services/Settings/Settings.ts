@@ -7,7 +7,7 @@ import {
 } from 'core/settings/serialization'
 
 class InvalidFileError extends Error {
-  message = 'InvalidFileError: File could not be imported'
+  override message = 'InvalidFileError: File could not be imported'
 }
 
 export class SettingsService {
