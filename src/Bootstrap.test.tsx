@@ -1,8 +1,9 @@
-import { beforeEach, vi } from 'vitest'
-import { act, render } from '@testing-library/react'
+import { afterEach, beforeEach, vi } from 'vitest'
+import { act, render, waitFor } from '@testing-library/react'
 import persistedStorage from 'localforage'
 
 import { QueryParamKeys } from 'models/shell'
+import { isPostMessageEvent, PostMessageEventName } from 'models/sdk'
 import { userSettingsStorageKey } from 'core/settings/SettingsManager'
 import {
   mockSerialization,
@@ -22,6 +23,11 @@ const userSettingsStub = userSettingsStubFactory()
 beforeEach(() => {
   vi.clearAllMocks()
   window.history.replaceState({}, '', '/')
+})
+
+afterEach(() => {
+  vi.restoreAllMocks()
+  document.body.innerHTML = ''
 })
 
 const renderBootstrap = async (overrides: Partial<BootstrapProps> = {}) => {
@@ -82,4 +88,133 @@ test('reads, but never writes, persisted user settings when embedded', async () 
   // user's own, so nothing it computes is saved.
   expect(persistedStorage.getItem).toHaveBeenCalledWith(userSettingsStorageKey)
   expect(persistedStorage.setItem).not.toHaveBeenCalled()
+})
+
+describe('SDK configuration', () => {
+  const parentOrigin = 'https://host.example'
+
+  const sdkQueryString = new URLSearchParams({
+    [QueryParamKeys.IS_EMBEDDED]: '',
+    [QueryParamKeys.GET_SDK_CONFIG]: '',
+    [QueryParamKeys.PARENT_DOMAIN]: encodeURIComponent(parentOrigin),
+  }).toString()
+
+  // A real, distinct Window stands in for the embedding page.
+  const createParentWindow = (): Window => {
+    const iframe = document.createElement('iframe')
+
+    document.body.appendChild(iframe)
+
+    const { contentWindow } = iframe
+
+    if (contentWindow === null) throw new Error('iframe has no window')
+
+    return contentWindow
+  }
+
+  const postConfig = (source: Window, payload: unknown) => {
+    window.dispatchEvent(
+      new MessageEvent('message', {
+        data: { name: PostMessageEventName.CONFIG, payload },
+        origin: parentOrigin,
+        source,
+      })
+    )
+  }
+
+  // Answers the app's configRequested message with the given payload, the
+  // way the SDK's <chat-room /> element does.
+  const respondToConfigRequests = (parentWindow: Window, payload: unknown) => {
+    vi.spyOn(parentWindow, 'postMessage').mockImplementation(
+      (message: unknown) => {
+        const event = new MessageEvent('message', { data: message })
+
+        if (!isPostMessageEvent(event)) return
+        if (event.data.name !== PostMessageEventName.CONFIG_REQUESTED) return
+
+        postConfig(parentWindow, payload)
+      }
+    )
+  }
+
+  test('applies the allowlisted config from the parent frame', async () => {
+    const parentWindow = createParentWindow()
+
+    vi.spyOn(window, 'parent', 'get').mockReturnValue(parentWindow)
+    window.history.replaceState({}, '', `/?${sdkQueryString}`)
+    respondToConfigRequests(parentWindow, {
+      customUsername: 'Alice',
+      userId: 'sdk-user',
+    })
+    const serializeSpy = vi.spyOn(mockSerialization, 'serializeUserSettings')
+
+    await renderBootstrap()
+
+    await waitFor(() => {
+      expect(serializeSpy).toHaveBeenCalledWith(
+        expect.objectContaining({ customUsername: 'Alice', userId: 'sdk-user' })
+      )
+    })
+  })
+
+  test('never takes identity keys from the parent frame', async () => {
+    const parentWindow = createParentWindow()
+
+    vi.spyOn(window, 'parent', 'get').mockReturnValue(parentWindow)
+    window.history.replaceState({}, '', `/?${sdkQueryString}`)
+    const attackerKeys = await crypto.subtle.generateKey(
+      { name: 'ECDSA', namedCurve: 'P-256' },
+      true,
+      ['sign', 'verify']
+    )
+
+    respondToConfigRequests(parentWindow, {
+      customUsername: 'Alice',
+      publicKey: attackerKeys.publicKey,
+      privateKey: attackerKeys.privateKey,
+    })
+    const serializeSpy = vi.spyOn(mockSerialization, 'serializeUserSettings')
+
+    await renderBootstrap()
+
+    await waitFor(() => {
+      expect(serializeSpy).toHaveBeenCalledWith(
+        expect.objectContaining({ customUsername: 'Alice' })
+      )
+    })
+
+    for (const [settings] of serializeSpy.mock.calls) {
+      expect(settings.publicKey).not.toBe(attackerKeys.publicKey)
+      expect(settings.privateKey).not.toBe(attackerKeys.privateKey)
+    }
+  })
+
+  test('ignores config posted to a top-level window', async () => {
+    // A page that opens Chitchatter in a new window controls its URL and can
+    // post to it, but must not be able to configure it: without the embed
+    // param, the instance persists its settings as the user's own.
+    const queryParams = new URLSearchParams(sdkQueryString)
+
+    queryParams.delete(QueryParamKeys.IS_EMBEDDED)
+    window.history.replaceState({}, '', `/?${queryParams}`)
+    const postMessageSpy = vi.spyOn(window, 'postMessage')
+    const sendConfig = () => postConfig(window, { customUsername: 'Mallory' })
+    const configInterval = setInterval(sendConfig, 0)
+
+    try {
+      await renderBootstrap()
+
+      await waitFor(() => {
+        expect(persistedStorage.setItem).toHaveBeenCalled()
+      })
+    } finally {
+      clearInterval(configInterval)
+    }
+
+    expect(postMessageSpy).not.toHaveBeenCalled()
+    expect(persistedStorage.setItem).not.toHaveBeenCalledWith(
+      userSettingsStorageKey,
+      expect.objectContaining({ customUsername: 'Mallory' })
+    )
+  })
 })

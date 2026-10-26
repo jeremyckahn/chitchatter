@@ -2,10 +2,11 @@ import {
   ChatEmbedAttributes,
   PostMessageEvent,
   PostMessageEventName,
+  SdkConfig,
   isPostMessageEvent,
 } from '../src/models/sdk'
 import { QueryParamKeys } from '../src/models/shell'
-import { isColorMode, UserSettings } from '../src/core/models/settings'
+import { isColorMode } from '../src/core/models/settings'
 import { iframeFeatureAllowList } from '../src/config/iframeFeatureAllowList'
 
 export const defaultRoot =
@@ -35,7 +36,7 @@ class ChatEmbed extends HTMLElement {
   }
 
   get chatConfig() {
-    const chatConfig: Partial<UserSettings> = {}
+    const chatConfig: SdkConfig = {}
 
     if (this.hasAttribute(ChatEmbedAttributes.USER_ID)) {
       chatConfig.userId = this.getAttribute(ChatEmbedAttributes.USER_ID) ?? ''

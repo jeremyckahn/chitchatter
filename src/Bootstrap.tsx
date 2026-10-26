@@ -17,9 +17,12 @@ import { homepageUrl, routes } from 'config/routes'
 import { SettingsContext } from 'contexts/SettingsContext'
 import { StorageContext } from 'contexts/StorageContext'
 import {
-  isConfigMessageEvent,
+  getParentFrameOrigin,
+  getSdkConfigFromMessage,
+  isSdkConfigurable,
   PostMessageEvent,
   PostMessageEventName,
+  SdkConfig,
 } from 'models/sdk'
 import { RouterType } from 'models/router'
 import { UserSettings } from 'core/models/settings'
@@ -55,13 +58,14 @@ const queryClient = new QueryClient({
 })
 
 const getConfigFromSdk = () => {
-  const queryParams = new URLSearchParams(window.location.search)
+  const parentFrameOrigin = getParentFrameOrigin()
 
-  const { origin: parentFrameOrigin } = new URL(
-    decodeURIComponent(queryParams.get(QueryParamKeys.PARENT_DOMAIN) ?? '')
-  )
+  return new Promise<SdkConfig>((resolve, reject) => {
+    if (parentFrameOrigin === null) {
+      reject()
+      return
+    }
 
-  return new Promise<Partial<UserSettings>>((resolve, reject) => {
     let expireTimout: NodeJS.Timeout
 
     const expireListener = () => {
@@ -73,9 +77,11 @@ const getConfigFromSdk = () => {
     expireTimout = setTimeout(expireListener, configListenerTimeout)
 
     const handleMessage = (event: MessageEvent) => {
-      if (!isConfigMessageEvent(event)) return
+      const sdkConfig = getSdkConfigFromMessage(event)
 
-      resolve(event.data.payload)
+      if (sdkConfig === null) return
+
+      resolve(sdkConfig)
       expireListener()
     }
 
@@ -158,7 +164,7 @@ const Bootstrap = ({
           ...persistedUserSettings,
         }
 
-        if (queryParams.has(QueryParamKeys.GET_SDK_CONFIG)) {
+        if (isSdkConfigurable()) {
           try {
             const configFromSdk = await getConfigFromSdk()
 
@@ -193,15 +199,14 @@ const Bootstrap = ({
   ])
 
   useEffect(() => {
-    const freshQueryParams = new URLSearchParams(window.location.search)
-
-    if (!freshQueryParams.has(QueryParamKeys.IS_EMBEDDED)) return
+    if (!isSdkConfigurable()) return
 
     const handleConfigMessage = (event: MessageEvent) => {
       if (!hasLoadedSettings) return
-      if (!isConfigMessageEvent(event)) return
 
-      const overrideConfig: Partial<UserSettings> = event.data.payload
+      const overrideConfig = getSdkConfigFromMessage(event)
+
+      if (overrideConfig === null) return
 
       setUserSettings({
         ...userSettings,
