@@ -42,7 +42,7 @@ interface RoomInnerProps extends RoomProps {
 }
 
 const RoomCore = ({
-  appId = `${encodeURI(window.location.origin)}_${process.env.VITE_NAME}`,
+  appId = `${encodeURI(window.location.origin)}_${process.env['VITE_NAME']}`,
   getUuid = uuid,
   encryptionService = encryption,
   timeService = time,

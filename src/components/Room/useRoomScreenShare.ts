@@ -59,7 +59,7 @@ export function useRoomScreenShare({ peerRoom }: UseRoomScreenShareConfig) {
     const isScreenShareStream =
       isRecord(metadata) &&
       'type' in metadata &&
-      metadata.type === StreamType.SCREEN_SHARE
+      metadata['type'] === StreamType.SCREEN_SHARE
 
     if (!isScreenShareStream) return
 

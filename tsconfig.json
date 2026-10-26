@@ -20,6 +20,7 @@
     "noUnusedLocals": true,
     "noUnusedParameters": true,
     "noImplicitOverride": true,
+    "noPropertyAccessFromIndexSignature": true,
     "paths": {
       "trystero/torrent": ["../node_modules/trystero/src/torrent.d.ts"]
     },

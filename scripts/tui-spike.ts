@@ -66,12 +66,12 @@ if (!roomId) {
 // the generated nickname other peers verify is derived from it. The web app
 // uses a v4 uuid here for the same reason (see Init.tsx).
 const userId = `tui-${globalThis.crypto.randomUUID()}`
-const customUsername = process.env.CHITCHATTER_USERNAME ?? 'Terminal'
+const customUsername = process.env['CHITCHATTER_USERNAME'] ?? 'Terminal'
 
 // Must match the browser app's appId, or the two join different rooms.
 // See the `appId` default in src/components/Room/Room.tsx.
 const appId =
-  process.env.CHITCHATTER_APP_ID ??
+  process.env['CHITCHATTER_APP_ID'] ??
   `${encodeURI('http://localhost:3000')}_chitchatter`
 
 console.log(`Generating a keypair…`)
@@ -80,7 +80,7 @@ const { publicKey, privateKey } = await encryption.generateKeyPair()
 
 // Mirrors src/config/trackerUrls.ts, which the core may not import because it
 // reads import.meta.env.
-const trackerUrl = process.env.CHITCHATTER_TRACKER_URL
+const trackerUrl = process.env['CHITCHATTER_TRACKER_URL']
 
 const transport = new TrysteroTransport(
   {

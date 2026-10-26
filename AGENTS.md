@@ -44,7 +44,8 @@ must report zero errors. `tsconfig.json` has `strict: true` — which brings
 `noImplicitAny`, `strictNullChecks`, `strictFunctionTypes`,
 `strictPropertyInitialization` and `useUnknownInCatchVariables` — plus
 `noFallthroughCasesInSwitch`, `noImplicitReturns`, `noImplicitOverride`,
-`noUnusedLocals` and `noUnusedParameters`.
+`noPropertyAccessFromIndexSignature`, `noUnusedLocals` and
+`noUnusedParameters`.
 
 **Do not weaken any of these.** If a change needs a flag relaxed, the change is
 wrong.
@@ -54,11 +55,10 @@ wrong.
 Ratcheting strictness up is welcome and tracked. Measured error counts as of
 this writing, so you know what you are signing up for:
 
-| Flag                                 | Errors if enabled | Notes                                                                |
-| ------------------------------------ | ----------------- | -------------------------------------------------------------------- |
-| `noUncheckedIndexedAccess`           | 55                | 16 production (3 in `src/core`), 39 in tests. The highest-value one. |
-| `noPropertyAccessFromIndexSignature` | 29                | Mostly `import.meta.env.VITE_*` noise.                               |
-| `exactOptionalPropertyTypes`         | 24                | Mostly MUI props. Lowest priority.                                   |
+| Flag                         | Errors if enabled | Notes                                                                |
+| ---------------------------- | ----------------- | -------------------------------------------------------------------- |
+| `noUncheckedIndexedAccess`   | 55                | 16 production (3 in `src/core`), 39 in tests. The highest-value one. |
+| `exactOptionalPropertyTypes` | 24                | Mostly MUI props. Lowest priority.                                   |
 
 Re-measure before quoting these — `npx tsc --noEmit --<flag>` — rather than
 trusting the table.

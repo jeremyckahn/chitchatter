@@ -1,17 +1,12 @@
 import { vi, describe, test, expect, beforeEach, afterEach } from 'vitest'
 
 describe('enhancedConnectivity', () => {
-  let originalEnv: any
-
   beforeEach(() => {
-    // Store original environment
-    originalEnv = import.meta.env
     vi.clearAllMocks()
   })
 
   afterEach(() => {
-    // Restore original environment
-    Object.assign(import.meta.env, originalEnv)
+    vi.unstubAllEnvs()
     vi.resetModules()
   })
 
@@ -105,38 +100,40 @@ describe('enhancedConnectivity', () => {
 
   describe('getRtcConfigEndpoint', () => {
     test('returns null when environment variable is not set', async () => {
-      import.meta.env.VITE_RTC_CONFIG_ENDPOINT = undefined
+      vi.stubEnv('VITE_RTC_CONFIG_ENDPOINT', undefined)
       const { getRtcConfigEndpoint } = await import('./enhancedConnectivity')
 
       expect(getRtcConfigEndpoint()).toBe(null)
     })
 
     test('returns validated endpoint when set to valid path', async () => {
-      import.meta.env.VITE_RTC_CONFIG_ENDPOINT = '/api/get-config'
+      vi.stubEnv('VITE_RTC_CONFIG_ENDPOINT', '/api/get-config')
       const { getRtcConfigEndpoint } = await import('./enhancedConnectivity')
 
       expect(getRtcConfigEndpoint()).toBe('/api/get-config')
     })
 
     test('returns validated endpoint when set to valid URL', async () => {
-      import.meta.env.VITE_RTC_CONFIG_ENDPOINT =
+      vi.stubEnv(
+        'VITE_RTC_CONFIG_ENDPOINT',
         'https://api.example.com/get-config'
+      )
       const { getRtcConfigEndpoint } = await import('./enhancedConnectivity')
 
       expect(getRtcConfigEndpoint()).toBe('https://api.example.com/get-config')
     })
 
     test('trims whitespace from endpoint', async () => {
-      import.meta.env.VITE_RTC_CONFIG_ENDPOINT = '  /api/get-config  '
+      vi.stubEnv('VITE_RTC_CONFIG_ENDPOINT', '  /api/get-config  ')
       const { getRtcConfigEndpoint } = await import('./enhancedConnectivity')
 
       expect(getRtcConfigEndpoint()).toBe('/api/get-config')
     })
 
-    test('logs error and returns null for non-string value', async () => {
+    test('logs error and returns null for a numeric value', async () => {
       const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
 
-      import.meta.env.VITE_RTC_CONFIG_ENDPOINT = 123 as any
+      vi.stubEnv('VITE_RTC_CONFIG_ENDPOINT', '123')
       vi.resetModules()
       const { getRtcConfigEndpoint } = await import('./enhancedConnectivity')
 
@@ -150,7 +147,7 @@ describe('enhancedConnectivity', () => {
     test('logs error and returns null for empty string', async () => {
       const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
 
-      import.meta.env.VITE_RTC_CONFIG_ENDPOINT = ''
+      vi.stubEnv('VITE_RTC_CONFIG_ENDPOINT', '')
       vi.resetModules()
       const { getRtcConfigEndpoint } = await import('./enhancedConnectivity')
 
@@ -164,7 +161,7 @@ describe('enhancedConnectivity', () => {
     test('logs error and returns null for invalid endpoint', async () => {
       const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
 
-      import.meta.env.VITE_RTC_CONFIG_ENDPOINT = 'invalid-endpoint'
+      vi.stubEnv('VITE_RTC_CONFIG_ENDPOINT', 'invalid-endpoint')
       vi.resetModules()
       const { getRtcConfigEndpoint } = await import('./enhancedConnectivity')
 
@@ -178,7 +175,7 @@ describe('enhancedConnectivity', () => {
 
   describe('module-level constants', () => {
     test('isEnhancedConnectivityAvailable is true when valid endpoint is set', async () => {
-      import.meta.env.VITE_RTC_CONFIG_ENDPOINT = '/api/get-config'
+      vi.stubEnv('VITE_RTC_CONFIG_ENDPOINT', '/api/get-config')
       vi.resetModules()
       const { isEnhancedConnectivityAvailable } = await import(
         './enhancedConnectivity'
@@ -188,7 +185,7 @@ describe('enhancedConnectivity', () => {
     })
 
     test('isEnhancedConnectivityAvailable is false when no endpoint is set', async () => {
-      import.meta.env.VITE_RTC_CONFIG_ENDPOINT = undefined
+      vi.stubEnv('VITE_RTC_CONFIG_ENDPOINT', undefined)
       vi.resetModules()
       const { isEnhancedConnectivityAvailable } = await import(
         './enhancedConnectivity'
@@ -198,7 +195,7 @@ describe('enhancedConnectivity', () => {
     })
 
     test('isEnhancedConnectivityAvailable is false when invalid endpoint is set', async () => {
-      import.meta.env.VITE_RTC_CONFIG_ENDPOINT = 'invalid-endpoint'
+      vi.stubEnv('VITE_RTC_CONFIG_ENDPOINT', 'invalid-endpoint')
       vi.resetModules()
       const { isEnhancedConnectivityAvailable } = await import(
         './enhancedConnectivity'
@@ -208,7 +205,7 @@ describe('enhancedConnectivity', () => {
     })
 
     test('getValidatedRtcConfigEndpoint returns endpoint when enhanced connectivity is available', async () => {
-      import.meta.env.VITE_RTC_CONFIG_ENDPOINT = '/api/get-config'
+      vi.stubEnv('VITE_RTC_CONFIG_ENDPOINT', '/api/get-config')
       vi.resetModules()
       const { getValidatedRtcConfigEndpoint } = await import(
         './enhancedConnectivity'
@@ -218,7 +215,7 @@ describe('enhancedConnectivity', () => {
     })
 
     test('getValidatedRtcConfigEndpoint returns null when enhanced connectivity is not available', async () => {
-      import.meta.env.VITE_RTC_CONFIG_ENDPOINT = undefined
+      vi.stubEnv('VITE_RTC_CONFIG_ENDPOINT', undefined)
       vi.resetModules()
       const { getValidatedRtcConfigEndpoint } = await import(
         './enhancedConnectivity'
@@ -230,7 +227,7 @@ describe('enhancedConnectivity', () => {
     test('logs warning when enhanced connectivity is not available', async () => {
       const consoleSpy = vi.spyOn(console, 'warn').mockImplementation(() => {})
 
-      import.meta.env.VITE_RTC_CONFIG_ENDPOINT = undefined
+      vi.stubEnv('VITE_RTC_CONFIG_ENDPOINT', undefined)
       vi.resetModules()
       await import('./enhancedConnectivity')
       expect(consoleSpy).toHaveBeenCalledWith(

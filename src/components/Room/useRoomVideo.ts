@@ -92,7 +92,7 @@ export function useRoomVideo({ peerRoom }: UseRoomVideoConfig) {
     const isWebcamStream =
       isRecord(metadata) &&
       'type' in metadata &&
-      metadata.type === StreamType.WEBCAM
+      metadata['type'] === StreamType.WEBCAM
 
     if (!isWebcamStream) return
 
