@@ -1,10 +1,11 @@
 import { afterEach, beforeEach, vi } from 'vitest'
-import { act, render, waitFor } from '@testing-library/react'
+import { act, render, screen, waitFor } from '@testing-library/react'
 import persistedStorage from 'localforage'
 
 import { QueryParamKeys } from 'models/shell'
 import { isPostMessageEvent, PostMessageEventName } from 'models/sdk'
 import { userSettingsStorageKey } from 'core/settings/SettingsManager'
+import { getPeerName } from 'core/names/peerNames'
 import {
   mockSerialization,
   mockSerializedPrivateKey,
@@ -187,6 +188,31 @@ describe('SDK configuration', () => {
       expect(settings.publicKey).not.toBe(attackerKeys.publicKey)
       expect(settings.privateKey).not.toBe(attackerKeys.privateKey)
     }
+  })
+
+  test('applies live config to a framed embed without getSdkConfig', async () => {
+    // getSdkConfig only requests config at startup. A hand-built embed that
+    // omits it still takes live config updates from its parent frame.
+    const parentWindow = createParentWindow()
+
+    vi.spyOn(window, 'parent', 'get').mockReturnValue(parentWindow)
+    const queryParams = new URLSearchParams(sdkQueryString)
+
+    queryParams.delete(QueryParamKeys.GET_SDK_CONFIG)
+    window.history.replaceState({}, '', `/?${queryParams}`)
+    const parentPostMessageSpy = vi.spyOn(parentWindow, 'postMessage')
+
+    await renderBootstrap()
+    await screen.findAllByText(getPeerName(userSettingsStub.userId))
+
+    act(() => {
+      postConfig(parentWindow, { userId: 'sdk-user' })
+    })
+
+    expect(
+      await screen.findAllByText(getPeerName('sdk-user'))
+    ).not.toHaveLength(0)
+    expect(parentPostMessageSpy).not.toHaveBeenCalled()
   })
 
   test('ignores config posted to a top-level window', async () => {

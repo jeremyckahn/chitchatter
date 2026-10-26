@@ -164,7 +164,10 @@ const Bootstrap = ({
           ...persistedUserSettings,
         }
 
-        if (isSdkConfigurable()) {
+        if (
+          queryParams.has(QueryParamKeys.GET_SDK_CONFIG) &&
+          isSdkConfigurable()
+        ) {
           try {
             const configFromSdk = await getConfigFromSdk()
 

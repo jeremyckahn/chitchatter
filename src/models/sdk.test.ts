@@ -150,17 +150,25 @@ describe('isSdkConfigurable', () => {
     expect(isSdkConfigurable()).toBe(false)
   })
 
-  test.each([QueryParamKeys.IS_EMBEDDED, QueryParamKeys.GET_SDK_CONFIG])(
-    'is false without the %s query param',
-    queryParamKey => {
-      const queryParams = new URLSearchParams(sdkQueryString)
+  test('is false without the embed query param', () => {
+    const queryParams = new URLSearchParams(sdkQueryString)
 
-      queryParams.delete(queryParamKey)
-      window.history.replaceState({}, '', `/?${queryParams}`)
+    queryParams.delete(QueryParamKeys.IS_EMBEDDED)
+    window.history.replaceState({}, '', `/?${queryParams}`)
 
-      expect(isSdkConfigurable()).toBe(false)
-    }
-  )
+    expect(isSdkConfigurable()).toBe(false)
+  })
+
+  test('does not require the getSdkConfig query param', () => {
+    // getSdkConfig only requests configuration at startup; a framed embed
+    // without it may still receive live config updates from its parent.
+    const queryParams = new URLSearchParams(sdkQueryString)
+
+    queryParams.delete(QueryParamKeys.GET_SDK_CONFIG)
+    window.history.replaceState({}, '', `/?${queryParams}`)
+
+    expect(isSdkConfigurable()).toBe(true)
+  })
 })
 
 describe('getParentFrameOrigin', () => {

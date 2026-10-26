@@ -20,6 +20,12 @@ export enum ChatEmbedAttributes {
  * deliberately an allowlist: the host page is untrusted — anyone can embed
  * Chitchatter and name their own origin as the parent — so it must never be
  * able to set identity material such as the keypair.
+ *
+ * `userId` is allowed on purpose: it backs the documented `user-id` SDK
+ * attribute, and it is a public, self-asserted label rather than a credential.
+ * Every peer already sees it, and any peer can already claim any `userId`, so
+ * letting the host choose one grants nothing new. Binding a `userId` to a key
+ * is the job of peer key pinning (#634), not of this allowlist.
  */
 export type SdkConfig = Partial<
   Pick<
@@ -100,22 +106,20 @@ export const parseSdkConfig = (payload: unknown): SdkConfig => {
 }
 
 /**
- * Whether this window is an embedded Chitchatter instance that should take
- * configuration from its parent frame. Both query params must be present (the
- * SDK always sets them together) and the window must actually be framed. A
- * top-level window has no parent to take configuration from, which is what
- * keeps a page that merely opens Chitchatter from configuring it — and,
- * because only embedded instances are framed, from writing to the user's
- * persisted settings.
+ * Whether this window is an embedded Chitchatter instance that may take
+ * configuration from its parent frame: the `embed` query param must be present
+ * and the window must actually be framed. A top-level window has no parent to
+ * take configuration from, which is what keeps a page that merely opens
+ * Chitchatter from configuring it — and, because embedded instances never
+ * persist settings, from writing to the user's own.
+ *
+ * This does not require `getSdkConfig`. That param only asks for configuration
+ * at startup; a framed embed may still receive live updates without it.
  */
 export const isSdkConfigurable = (): boolean => {
   const queryParams = new URLSearchParams(window.location.search)
 
-  return (
-    queryParams.has(QueryParamKeys.IS_EMBEDDED) &&
-    queryParams.has(QueryParamKeys.GET_SDK_CONFIG) &&
-    window.parent !== window
-  )
+  return queryParams.has(QueryParamKeys.IS_EMBEDDED) && window.parent !== window
 }
 
 /**
