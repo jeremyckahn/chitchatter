@@ -79,7 +79,7 @@ export function useRoomAudio({ peerRoom }: UseRoomAudioConfig) {
       typeof metadata === 'object' &&
       metadata !== null &&
       'type' in metadata &&
-      metadata.type !== StreamType.MICROPHONE
+      metadata['type'] !== StreamType.MICROPHONE
     ) {
       return
     }

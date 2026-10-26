@@ -77,8 +77,8 @@ describe('SettingsManager', () => {
     )
 
     // CryptoKeys cannot be structured-cloned, so they must be at rest as strings.
-    expect(typeof stored?.publicKey).toBe('string')
-    expect(typeof stored?.privateKey).toBe('string')
+    expect(typeof stored?.['publicKey']).toBe('string')
+    expect(typeof stored?.['privateKey']).toBe('string')
     expect(() => structuredClone(stored)).not.toThrow()
   })
 
@@ -92,7 +92,7 @@ describe('SettingsManager', () => {
       userSettingsStorageKey
     )
 
-    delete stored?.showActiveTypingStatus
+    delete stored?.['showActiveTypingStatus']
     await storage.setItem(userSettingsStorageKey, stored)
 
     const loaded = await manager.load(defaults)
