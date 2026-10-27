@@ -240,6 +240,30 @@ describe('SDK configuration', () => {
     ).not.toHaveLength(0)
   })
 
+  test('logs why config could not be loaded when parentDomain is invalid', async () => {
+    const parentWindow = createParentWindow()
+
+    vi.spyOn(window, 'parent', 'get').mockReturnValue(parentWindow)
+    const queryParams = new URLSearchParams(sdkQueryString)
+
+    queryParams.set(QueryParamKeys.PARENT_DOMAIN, 'not-a-url')
+    window.history.replaceState({}, '', `/?${queryParams}`)
+    const consoleErrorSpy = vi
+      .spyOn(console, 'error')
+      .mockImplementation(() => {})
+
+    await renderBootstrap()
+
+    await waitFor(() => {
+      expect(consoleErrorSpy).toHaveBeenCalledWith(
+        expect.stringContaining('could not be loaded'),
+        expect.objectContaining({
+          message: expect.stringContaining(QueryParamKeys.PARENT_DOMAIN),
+        })
+      )
+    })
+  })
+
   test('ignores config posted to a top-level window', async () => {
     // A page that opens Chitchatter in a new window controls its URL and can
     // post to it, but must not be able to configure it: without the embed

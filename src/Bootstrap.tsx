@@ -62,27 +62,37 @@ const getConfigFromSdk = () => {
 
   return new Promise<SdkConfig>((resolve, reject) => {
     if (parentFrameOrigin === null) {
-      reject()
+      reject(
+        new Error(
+          `The ${QueryParamKeys.PARENT_DOMAIN} query param is missing or not a valid URL`
+        )
+      )
       return
     }
 
     let expireTimout: NodeJS.Timeout
 
-    const expireListener = () => {
+    const stopListening = () => {
       window.removeEventListener('message', handleMessage)
       clearTimeout(expireTimout)
-      reject()
     }
 
-    expireTimout = setTimeout(expireListener, configListenerTimeout)
+    expireTimout = setTimeout(() => {
+      stopListening()
+      reject(
+        new Error(
+          `No configuration received from the parent frame within ${configListenerTimeout}ms`
+        )
+      )
+    }, configListenerTimeout)
 
     const handleMessage = (event: MessageEvent) => {
       const sdkConfig = getSdkConfigFromMessage(event)
 
       if (sdkConfig === null) return
 
+      stopListening()
       resolve(sdkConfig)
-      expireListener()
     }
 
     window.addEventListener('message', handleMessage)
@@ -175,9 +185,10 @@ const Bootstrap = ({
               ...finalSettings,
               ...configFromSdk,
             }
-          } catch (_e) {
+          } catch (error) {
             console.error(
-              'Chitchatter configuration from parent frame could not be loaded'
+              'Chitchatter configuration from parent frame could not be loaded:',
+              error
             )
           }
         }
