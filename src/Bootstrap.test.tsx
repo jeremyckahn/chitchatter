@@ -243,4 +243,63 @@ describe('SDK configuration', () => {
       expect.objectContaining({ customUsername: 'Mallory' })
     )
   })
+
+  // Posts config from `source` until settings have been computed, then
+  // returns every settings object the app computed along the way.
+  const renderWhilePostingConfig = async (source: Window) => {
+    const serializeSpy = vi.spyOn(mockSerialization, 'serializeUserSettings')
+    const sendConfig = () => postConfig(source, { customUsername: 'Mallory' })
+    const configInterval = setInterval(sendConfig, 0)
+
+    try {
+      await renderBootstrap()
+
+      await waitFor(() => {
+        expect(serializeSpy).toHaveBeenCalled()
+      })
+    } finally {
+      clearInterval(configInterval)
+    }
+
+    return serializeSpy.mock.calls.map(([settings]) => settings)
+  }
+
+  test('ignores config in a top-level window even with every SDK param', async () => {
+    // Isolates the framed-window check: the URL carries embed, getSdkConfig
+    // and parentDomain, but there is no parent frame to take config from.
+    window.history.replaceState({}, '', `/?${sdkQueryString}`)
+    const postMessageSpy = vi.spyOn(window, 'postMessage')
+
+    const computedSettings = await renderWhilePostingConfig(window)
+
+    expect(postMessageSpy).not.toHaveBeenCalled()
+    for (const settings of computedSettings) {
+      expect(settings.customUsername).not.toBe('Mallory')
+    }
+  })
+
+  test('ignores config in a framed window without the embed param', async () => {
+    // Isolates the embed check: the window is framed and the message comes
+    // from its parent, but without embed the instance persists its settings
+    // as the user's own, so the parent must not configure it.
+    const parentWindow = createParentWindow()
+
+    vi.spyOn(window, 'parent', 'get').mockReturnValue(parentWindow)
+    const queryParams = new URLSearchParams(sdkQueryString)
+
+    queryParams.delete(QueryParamKeys.IS_EMBEDDED)
+    window.history.replaceState({}, '', `/?${queryParams}`)
+    const parentPostMessageSpy = vi.spyOn(parentWindow, 'postMessage')
+
+    const computedSettings = await renderWhilePostingConfig(parentWindow)
+
+    expect(parentPostMessageSpy).not.toHaveBeenCalled()
+    for (const settings of computedSettings) {
+      expect(settings.customUsername).not.toBe('Mallory')
+    }
+    expect(persistedStorage.setItem).not.toHaveBeenCalledWith(
+      userSettingsStorageKey,
+      expect.objectContaining({ customUsername: 'Mallory' })
+    )
+  })
 })
