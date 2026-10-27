@@ -157,8 +157,10 @@ export const getParentFrameOrigin = (): string | null => {
 export const getSdkConfigFromMessage = (
   event: MessageEvent
 ): SdkConfig | null => {
-  if (!isSdkConfigurable()) return null
+  // The source check is first because it is the cheapest, and it rejects most
+  // unrelated messages before any URL parsing.
   if (event.source !== window.parent) return null
+  if (!isSdkConfigurable()) return null
 
   const parentFrameOrigin = getParentFrameOrigin()
 
