@@ -215,6 +215,31 @@ describe('SDK configuration', () => {
     expect(parentPostMessageSpy).not.toHaveBeenCalled()
   })
 
+  test('ignores live config from a window other than the parent', async () => {
+    const parentWindow = createParentWindow()
+
+    vi.spyOn(window, 'parent', 'get').mockReturnValue(parentWindow)
+    window.history.replaceState({}, '', `/?${sdkQueryString}`)
+    respondToConfigRequests(parentWindow, {})
+
+    await renderBootstrap()
+    await screen.findAllByText(getPeerName(userSettingsStub.userId))
+
+    // E.g. a sibling frame on the host page that knows the parent's origin.
+    const otherWindow = createParentWindow()
+
+    // dispatchEvent runs listeners synchronously, so by the time act returns
+    // the message has been handled and any resulting render has flushed.
+    act(() => {
+      postConfig(otherWindow, { userId: 'impostor' })
+    })
+
+    expect(screen.queryAllByText(getPeerName('impostor'))).toHaveLength(0)
+    expect(
+      screen.queryAllByText(getPeerName(userSettingsStub.userId))
+    ).not.toHaveLength(0)
+  })
+
   test('ignores config posted to a top-level window', async () => {
     // A page that opens Chitchatter in a new window controls its URL and can
     // post to it, but must not be able to configure it: without the embed
