@@ -43,9 +43,8 @@ class ChatEmbed extends HTMLElement {
     }
 
     if (this.hasAttribute(ChatEmbedAttributes.USER_NAME)) {
-      chatConfig.customUsername = this.getAttribute(
-        ChatEmbedAttributes.USER_NAME
-      )!
+      chatConfig.customUsername =
+        this.getAttribute(ChatEmbedAttributes.USER_NAME) ?? ''
     }
 
     chatConfig.playSoundOnNewMessage = Boolean(
