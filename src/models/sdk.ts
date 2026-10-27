@@ -1,4 +1,4 @@
-import { isColorMode, UserSettings } from 'core/models/settings'
+import { ColorMode, isColorMode, UserSettings } from 'core/models/settings'
 import { QueryParamKeys } from 'models/shell'
 
 export enum PostMessageEventName {
@@ -27,12 +27,31 @@ export enum ChatEmbedAttributes {
  * letting the host choose one grants nothing new. Binding a `userId` to a key
  * is the job of peer key pinning (#634), not of this allowlist.
  */
-export type SdkConfig = Partial<
-  Pick<
-    UserSettings,
-    'colorMode' | 'customUsername' | 'playSoundOnNewMessage' | 'userId'
-  >
->
+const sdkConfigKeys = [
+  'colorMode',
+  'customUsername',
+  'playSoundOnNewMessage',
+  'userId',
+] as const satisfies readonly (keyof UserSettings)[]
+
+type SdkConfigKey = (typeof sdkConfigKeys)[number]
+
+export type SdkConfig = Partial<Pick<UserSettings, SdkConfigKey>>
+
+const isString = (value: unknown): value is string => typeof value === 'string'
+
+// Keyed by every SdkConfigKey, so adding a key to sdkConfigKeys does not
+// compile until it has a validator here.
+const sdkConfigValidators: {
+  [K in SdkConfigKey]: (value: unknown) => value is UserSettings[K]
+} = {
+  colorMode: (value): value is ColorMode =>
+    isString(value) && isColorMode(value),
+  customUsername: isString,
+  playSoundOnNewMessage: (value): value is boolean =>
+    typeof value === 'boolean',
+  userId: isString,
+}
 
 export interface PostMessageEvent extends MessageEvent {
   data: {
@@ -60,6 +79,21 @@ export const isPostMessageEvent = (
   return true
 }
 
+const copySdkConfigField = <K extends SdkConfigKey>(
+  config: SdkConfig,
+  payload: object,
+  key: K
+) => {
+  // getOwnPropertyDescriptor types `value` as any; it is confined here by
+  // annotating it unknown, and only the validator below narrows it. Reading
+  // own properties only also ignores anything on the prototype chain.
+  const value: unknown = Object.getOwnPropertyDescriptor(payload, key)?.value
+
+  if (sdkConfigValidators[key](value)) {
+    config[key] = value
+  }
+}
+
 /**
  * Copies only the allowlisted, correctly typed fields out of an untrusted
  * config payload. Anything else — unknown fields, identity keys, or allowlisted
@@ -70,36 +104,8 @@ export const parseSdkConfig = (payload: unknown): SdkConfig => {
 
   if (typeof payload !== 'object' || payload === null) return config
 
-  if ('colorMode' in payload) {
-    const { colorMode } = payload
-
-    if (typeof colorMode === 'string' && isColorMode(colorMode)) {
-      config.colorMode = colorMode
-    }
-  }
-
-  if ('customUsername' in payload) {
-    const { customUsername } = payload
-
-    if (typeof customUsername === 'string') {
-      config.customUsername = customUsername
-    }
-  }
-
-  if ('playSoundOnNewMessage' in payload) {
-    const { playSoundOnNewMessage } = payload
-
-    if (typeof playSoundOnNewMessage === 'boolean') {
-      config.playSoundOnNewMessage = playSoundOnNewMessage
-    }
-  }
-
-  if ('userId' in payload) {
-    const { userId } = payload
-
-    if (typeof userId === 'string') {
-      config.userId = userId
-    }
+  for (const key of sdkConfigKeys) {
+    copySdkConfigField(config, payload, key)
   }
 
   return config
