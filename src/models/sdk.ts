@@ -1,4 +1,5 @@
 import { ColorMode, isColorMode, UserSettings } from 'core/models/settings'
+import { isBoolean, isString } from 'core/lib/type-guards'
 import { QueryParamKeys } from 'models/shell'
 
 export enum PostMessageEventName {
@@ -38,8 +39,6 @@ type SdkConfigKey = (typeof sdkConfigKeys)[number]
 
 export type SdkConfig = Partial<Pick<UserSettings, SdkConfigKey>>
 
-const isString = (value: unknown): value is string => typeof value === 'string'
-
 // Keyed by every SdkConfigKey, so adding a key to sdkConfigKeys does not
 // compile until it has a validator here.
 const sdkConfigValidators: {
@@ -48,8 +47,7 @@ const sdkConfigValidators: {
   colorMode: (value): value is ColorMode =>
     isString(value) && isColorMode(value),
   customUsername: isString,
-  playSoundOnNewMessage: (value): value is boolean =>
-    typeof value === 'boolean',
+  playSoundOnNewMessage: isBoolean,
   userId: isString,
 }
 
