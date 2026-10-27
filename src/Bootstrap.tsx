@@ -174,21 +174,24 @@ const Bootstrap = ({
           ...persistedUserSettings,
         }
 
-        if (
-          queryParams.has(QueryParamKeys.GET_SDK_CONFIG) &&
-          isSdkConfigurable()
-        ) {
-          try {
-            const configFromSdk = await getConfigFromSdk()
+        if (queryParams.has(QueryParamKeys.GET_SDK_CONFIG)) {
+          if (isSdkConfigurable()) {
+            try {
+              const configFromSdk = await getConfigFromSdk()
 
-            finalSettings = {
-              ...finalSettings,
-              ...configFromSdk,
+              finalSettings = {
+                ...finalSettings,
+                ...configFromSdk,
+              }
+            } catch (error) {
+              console.error(
+                'Chitchatter configuration from parent frame could not be loaded:',
+                error
+              )
             }
-          } catch (error) {
-            console.error(
-              'Chitchatter configuration from parent frame could not be loaded:',
-              error
+          } else {
+            console.warn(
+              `Chitchatter configuration from the parent frame was not requested: ${QueryParamKeys.GET_SDK_CONFIG} only applies to a framed window with the ${QueryParamKeys.IS_EMBEDDED} query param`
             )
           }
         }

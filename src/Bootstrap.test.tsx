@@ -327,6 +327,29 @@ describe('SDK configuration', () => {
     }
   })
 
+  test('says why config was not requested when the window is not configurable', async () => {
+    window.history.replaceState({}, '', `/?${sdkQueryString}`)
+    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {})
+
+    await renderBootstrap()
+
+    await waitFor(() => {
+      expect(warnSpy).toHaveBeenCalledWith(
+        expect.stringContaining(QueryParamKeys.GET_SDK_CONFIG)
+      )
+    })
+  })
+
+  test('does not warn about config when getSdkConfig is absent', async () => {
+    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {})
+
+    await renderBootstrap()
+
+    expect(warnSpy).not.toHaveBeenCalledWith(
+      expect.stringContaining(QueryParamKeys.GET_SDK_CONFIG)
+    )
+  })
+
   test('ignores config in a framed window without the embed param', async () => {
     // Isolates the embed check: the window is framed and the message comes
     // from its parent, but without embed the instance persists its settings
