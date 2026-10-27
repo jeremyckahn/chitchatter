@@ -7,6 +7,7 @@ import {
   getParentFrameOrigin,
   getSdkConfigFromMessage,
   isPostMessageEvent,
+  IgnoredSdkConfigReason,
   isSdkConfigurable,
   parseSdkConfig,
   PostMessageEventName,
@@ -75,10 +76,13 @@ describe('parseSdkConfig', () => {
         userId: 'user-1',
       })
     ).toEqual({
-      colorMode: ColorMode.LIGHT,
-      customUsername: 'Alice',
-      playSoundOnNewMessage: true,
-      userId: 'user-1',
+      config: {
+        colorMode: ColorMode.LIGHT,
+        customUsername: 'Alice',
+        playSoundOnNewMessage: true,
+        userId: 'user-1',
+      },
+      ignored: [],
     })
   })
 
@@ -97,7 +101,21 @@ describe('parseSdkConfig', () => {
         isEnhancedConnectivityEnabled: true,
         selectedSound: 'evil.mp3',
       })
-    ).toEqual({ customUsername: 'Alice' })
+    ).toEqual({
+      config: { customUsername: 'Alice' },
+      ignored: [
+        { key: 'publicKey', reason: IgnoredSdkConfigReason.KEY_NOT_ALLOWED },
+        { key: 'privateKey', reason: IgnoredSdkConfigReason.KEY_NOT_ALLOWED },
+        {
+          key: 'isEnhancedConnectivityEnabled',
+          reason: IgnoredSdkConfigReason.KEY_NOT_ALLOWED,
+        },
+        {
+          key: 'selectedSound',
+          reason: IgnoredSdkConfigReason.KEY_NOT_ALLOWED,
+        },
+      ],
+    })
   })
 
   test('drops allowlisted fields of the wrong type', () => {
@@ -108,13 +126,28 @@ describe('parseSdkConfig', () => {
         playSoundOnNewMessage: 'yes',
         userId: { id: 'user-1' },
       })
-    ).toEqual({})
+    ).toEqual({
+      config: {},
+      ignored: [
+        { key: 'colorMode', reason: IgnoredSdkConfigReason.INVALID_VALUE },
+        { key: 'customUsername', reason: IgnoredSdkConfigReason.INVALID_VALUE },
+        {
+          key: 'playSoundOnNewMessage',
+          reason: IgnoredSdkConfigReason.INVALID_VALUE,
+        },
+        { key: 'userId', reason: IgnoredSdkConfigReason.INVALID_VALUE },
+      ],
+    })
+  })
+
+  test('does not report allowlisted fields that are simply absent', () => {
+    expect(parseSdkConfig({}).ignored).toEqual([])
   })
 
   test.each([null, undefined, 'config', 7])(
     'returns an empty config for a non-object payload (%s)',
     payload => {
-      expect(parseSdkConfig(payload)).toEqual({})
+      expect(parseSdkConfig(payload)).toEqual({ config: {}, ignored: [] })
     }
   )
 })
@@ -219,6 +252,34 @@ describe('getSdkConfigFromMessage', () => {
         })
       )
     ).toEqual({ userId: 'user-1' })
+  })
+
+  test('warns, by key and never value, about the fields it ignored', () => {
+    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {})
+
+    expect(
+      getSdkConfigFromMessage(
+        createConfigEvent({
+          source: parentWindow,
+          payload: { colorMode: 'Dark', publicKey: 'secret-value' },
+        })
+      )
+    ).toEqual({})
+
+    expect(warnSpy).toHaveBeenCalledTimes(1)
+    const warning = warnSpy.mock.calls[0].join(' ')
+
+    expect(warning).toContain('colorMode (invalid value)')
+    expect(warning).toContain('publicKey (key not allowed)')
+    expect(warning).not.toContain('secret-value')
+  })
+
+  test('does not warn when every field is accepted', () => {
+    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {})
+
+    getSdkConfigFromMessage(createConfigEvent({ source: parentWindow }))
+
+    expect(warnSpy).not.toHaveBeenCalled()
   })
 
   test('ignores a message from a window other than the parent', () => {

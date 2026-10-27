@@ -77,36 +77,69 @@ export const isPostMessageEvent = (
   return true
 }
 
+export enum IgnoredSdkConfigReason {
+  KEY_NOT_ALLOWED = 'key not allowed',
+  INVALID_VALUE = 'invalid value',
+}
+
+export interface IgnoredSdkConfigField {
+  key: string
+  reason: IgnoredSdkConfigReason
+}
+
+export interface ParsedSdkConfig {
+  config: SdkConfig
+  ignored: readonly IgnoredSdkConfigField[]
+}
+
+const allowedSdkConfigKeys: readonly string[] = sdkConfigKeys
+
 const copySdkConfigField = <K extends SdkConfigKey>(
   config: SdkConfig,
   payload: object,
   key: K
-) => {
+): boolean => {
   // getOwnPropertyDescriptor types `value` as any; it is confined here by
   // annotating it unknown, and only the validator below narrows it. Reading
   // own properties only also ignores anything on the prototype chain.
   const value: unknown = Object.getOwnPropertyDescriptor(payload, key)?.value
 
-  if (sdkConfigValidators[key](value)) {
-    config[key] = value
-  }
+  if (!sdkConfigValidators[key](value)) return false
+
+  config[key] = value
+
+  return true
 }
 
 /**
  * Copies only the allowlisted, correctly typed fields out of an untrusted
  * config payload. Anything else — unknown fields, identity keys, or allowlisted
- * fields of the wrong type — is dropped.
+ * fields of the wrong type — is dropped, and reported in `ignored` (by key
+ * only, never value) so the caller can say why a setting did not apply.
  */
-export const parseSdkConfig = (payload: unknown): SdkConfig => {
+export const parseSdkConfig = (payload: unknown): ParsedSdkConfig => {
   const config: SdkConfig = {}
+  const ignored: IgnoredSdkConfigField[] = []
 
-  if (typeof payload !== 'object' || payload === null) return config
-
-  for (const key of sdkConfigKeys) {
-    copySdkConfigField(config, payload, key)
+  if (typeof payload !== 'object' || payload === null) {
+    return { config, ignored }
   }
 
-  return config
+  for (const key of Object.keys(payload)) {
+    if (!allowedSdkConfigKeys.includes(key)) {
+      ignored.push({ key, reason: IgnoredSdkConfigReason.KEY_NOT_ALLOWED })
+    }
+  }
+
+  for (const key of sdkConfigKeys) {
+    if (!Object.hasOwn(payload, key)) continue
+
+    if (!copySdkConfigField(config, payload, key)) {
+      ignored.push({ key, reason: IgnoredSdkConfigReason.INVALID_VALUE })
+    }
+  }
+
+  return { config, ignored }
 }
 
 /**
@@ -167,5 +200,14 @@ export const getSdkConfigFromMessage = (
   if (!isPostMessageEvent(event)) return null
   if (event.data.name !== PostMessageEventName.CONFIG) return null
 
-  return parseSdkConfig(event.data.payload)
+  const { config, ignored } = parseSdkConfig(event.data.payload)
+
+  if (ignored.length > 0) {
+    console.warn(
+      'Chitchatter ignored fields of the configuration from the parent frame:',
+      ignored.map(({ key, reason }) => `${key} (${reason})`).join(', ')
+    )
+  }
+
+  return config
 }
