@@ -17,9 +17,12 @@ import { homepageUrl, routes } from 'config/routes'
 import { SettingsContext } from 'contexts/SettingsContext'
 import { StorageContext } from 'contexts/StorageContext'
 import {
-  isConfigMessageEvent,
+  getParentFrameOrigin,
+  getSdkConfigFromMessage,
+  isSdkConfigurable,
   PostMessageEvent,
   PostMessageEventName,
+  SdkConfig,
 } from 'models/sdk'
 import { RouterType } from 'models/router'
 import { UserSettings } from 'core/models/settings'
@@ -55,28 +58,41 @@ const queryClient = new QueryClient({
 })
 
 const getConfigFromSdk = () => {
-  const queryParams = new URLSearchParams(window.location.search)
+  const parentFrameOrigin = getParentFrameOrigin()
 
-  const { origin: parentFrameOrigin } = new URL(
-    decodeURIComponent(queryParams.get(QueryParamKeys.PARENT_DOMAIN) ?? '')
-  )
-
-  return new Promise<Partial<UserSettings>>((resolve, reject) => {
-    let expireTimout: NodeJS.Timeout
-
-    const expireListener = () => {
-      window.removeEventListener('message', handleMessage)
-      clearTimeout(expireTimout)
-      reject()
+  return new Promise<SdkConfig>((resolve, reject) => {
+    if (parentFrameOrigin === null) {
+      reject(
+        new Error(
+          `The ${QueryParamKeys.PARENT_DOMAIN} query param is missing or not a valid URL`
+        )
+      )
+      return
     }
 
-    expireTimout = setTimeout(expireListener, configListenerTimeout)
+    let expireTimout: NodeJS.Timeout
+
+    const stopListening = () => {
+      window.removeEventListener('message', handleMessage)
+      clearTimeout(expireTimout)
+    }
+
+    expireTimout = setTimeout(() => {
+      stopListening()
+      reject(
+        new Error(
+          `No configuration received from the parent frame within ${configListenerTimeout}ms`
+        )
+      )
+    }, configListenerTimeout)
 
     const handleMessage = (event: MessageEvent) => {
-      if (!isConfigMessageEvent(event)) return
+      const sdkConfig = getSdkConfigFromMessage(event)
 
-      resolve(event.data.payload)
-      expireListener()
+      if (sdkConfig === null) return
+
+      stopListening()
+      resolve(sdkConfig)
     }
 
     window.addEventListener('message', handleMessage)
@@ -159,16 +175,23 @@ const Bootstrap = ({
         }
 
         if (queryParams.has(QueryParamKeys.GET_SDK_CONFIG)) {
-          try {
-            const configFromSdk = await getConfigFromSdk()
+          if (isSdkConfigurable()) {
+            try {
+              const configFromSdk = await getConfigFromSdk()
 
-            finalSettings = {
-              ...finalSettings,
-              ...configFromSdk,
+              finalSettings = {
+                ...finalSettings,
+                ...configFromSdk,
+              }
+            } catch (error) {
+              console.error(
+                'Chitchatter configuration from parent frame could not be loaded:',
+                error
+              )
             }
-          } catch (_e) {
-            console.error(
-              'Chitchatter configuration from parent frame could not be loaded'
+          } else {
+            console.warn(
+              `Chitchatter configuration from the parent frame was not requested: ${QueryParamKeys.GET_SDK_CONFIG} only applies to a framed window with the ${QueryParamKeys.IS_EMBEDDED} query param`
             )
           }
         }
@@ -193,15 +216,14 @@ const Bootstrap = ({
   ])
 
   useEffect(() => {
-    const freshQueryParams = new URLSearchParams(window.location.search)
-
-    if (!freshQueryParams.has(QueryParamKeys.IS_EMBEDDED)) return
+    if (!isSdkConfigurable()) return
 
     const handleConfigMessage = (event: MessageEvent) => {
       if (!hasLoadedSettings) return
-      if (!isConfigMessageEvent(event)) return
 
-      const overrideConfig: Partial<UserSettings> = event.data.payload
+      const overrideConfig = getSdkConfigFromMessage(event)
+
+      if (overrideConfig === null) return
 
       setUserSettings({
         ...userSettings,

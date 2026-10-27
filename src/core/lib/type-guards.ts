@@ -18,3 +18,9 @@ export const isErrorWithMessage = (e: unknown): e is { message: string } => {
     typeof e.message === 'string'
   )
 }
+
+export const isString = (value: unknown): value is string =>
+  typeof value === 'string'
+
+export const isBoolean = (value: unknown): value is boolean =>
+  typeof value === 'boolean'

@@ -421,7 +421,9 @@ describe('ChatRoom', () => {
       )
 
       await announce({ userId: renamedUserId, customUsername: '', ...proof })
-      await waitFor(() => renames.length === 1, 'the rename to be announced')
+      // `>= 1`, not `=== 1`: a late duplicate greeting from bob can rename the
+      // peer a second time within the same poll, so an exact count is racy.
+      await waitFor(() => renames.length >= 1, 'the rename to be announced')
 
       // Resolved from the peer found by `peerId`. Looking the previous name up
       // by the *incoming* user id finds nobody, so the alert named the new
