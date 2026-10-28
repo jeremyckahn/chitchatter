@@ -10,14 +10,6 @@ import { getSharedAudio } from 'lib/Audio'
 import { notification } from 'services/Notification'
 
 /**
- * The presentation response to chat events: snackbars, sounds, desktop
- * notifications and the unread counter.
- *
- * All of this used to live inside the protocol handlers, which is why the
- * protocol could not run without a DOM. The core now reports *what happened*
- * and this decides what the user should see or hear about it.
- */
-/**
  * What to tell the user when a ChatRoom operation fails, keyed by the failing
  * operation. `null` means the failure is logged but not shown: background,
  * ephemeral and teardown paths the user did not initiate or has already left.
@@ -27,7 +19,7 @@ import { notification } from 'services/Notification'
 const userFacingErrorMessages: Record<ChatRoomErrorContext, string | null> = {
   [ChatRoomErrorContext.SEND_MESSAGE]: 'Your message could not be sent',
   [ChatRoomErrorContext.SEND_INLINE_MEDIA]: 'Your media could not be sent',
-  [ChatRoomErrorContext.RESCIND_FILE_OFFER]: 'The file could not be unshared',
+  [ChatRoomErrorContext.RESCIND_FILE_OFFER]: 'Stopping the file share did not fully succeed',
   [ChatRoomErrorContext.ANNOUNCE_SELF]: null,
   [ChatRoomErrorContext.GREET_PEER]: null,
   [ChatRoomErrorContext.REFRESH_CONNECTION_TYPES]: null,
@@ -36,6 +28,14 @@ const userFacingErrorMessages: Record<ChatRoomErrorContext, string | null> = {
   [ChatRoomErrorContext.LEAVE]: null,
 }
 
+/**
+ * The presentation response to chat events: snackbars, sounds, desktop
+ * notifications and the unread counter.
+ *
+ * All of this used to live inside the protocol handlers, which is why the
+ * protocol could not run without a DOM. The core now reports *what happened*
+ * and this decides what the user should see or hear about it.
+ */
 export const useChatRoomNotifications = (
   chatRoom: ChatRoom | null,
   {

@@ -540,22 +540,28 @@ export class ChatRoom extends EventTarget {
     // file kept seeding, with nothing left able to rescind it.
     this.setSelfFileOffer(null, null)
 
+    // Two things can fail here, telling the peers and stopping the seed, but
+    // they are one action to the user, so only the first failure is reported.
+    let failure: unknown = null
+
     try {
       await this.senders?.fileOffer(null, this.sendOptions())
     } catch (error) {
-      this.reportError(error, ChatRoomErrorContext.RESCIND_FILE_OFFER)
+      failure = error
     }
 
     // Inline media stays seeded: it is still in the transcript on both sides,
     // where it has to remain reachable.
-    if (isAllInlineMedia || !this.adapters.fileTransfer.isOffering(magnetURI)) {
-      return
+    if (!isAllInlineMedia && this.adapters.fileTransfer.isOffering(magnetURI)) {
+      try {
+        await this.adapters.fileTransfer.rescind(magnetURI)
+      } catch (error) {
+        failure ??= error
+      }
     }
 
-    try {
-      await this.adapters.fileTransfer.rescind(magnetURI)
-    } catch (error) {
-      this.reportError(error, ChatRoomErrorContext.RESCIND_FILE_OFFER)
+    if (failure !== null) {
+      this.reportError(failure, ChatRoomErrorContext.RESCIND_FILE_OFFER)
     }
   }
 
