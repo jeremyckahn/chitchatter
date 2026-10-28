@@ -7,6 +7,7 @@ import { ShellContext } from 'contexts/ShellContext'
 import { createPlatformAdapters } from 'core/adapters/noop'
 import { ChatRoom } from 'core/chat/ChatRoom'
 import { encryption } from 'core/crypto/Encryption'
+import { PeerAction } from 'core/models/network'
 import {
   createInMemoryNetwork,
   InMemoryTransport,
@@ -21,14 +22,20 @@ vi.mock('../../lib/Audio')
 const userSettingsStub = userSettingsContextStubFactory({ userId: 'self' })
 
 /** A real room, so the events under test are the ones the core really emits. */
-const createRoom = (targetPeerId?: string) =>
+const createRoom = (
+  targetPeerId?: string,
+  transport: InMemoryTransport = new InMemoryTransport(
+    createInMemoryNetwork(),
+    'peer-self'
+  )
+) =>
   new ChatRoom({
     roomId: 'room-123',
     userId: 'self',
     customUsername: '',
     publicKey: encryption.cryptoKeyStub,
     privateKey: encryption.cryptoKeyStub,
-    transport: new InMemoryTransport(createInMemoryNetwork(), 'peer-self'),
+    transport,
     encryptionService: mockEncryptionService,
     adapters: createPlatformAdapters({ uuid: () => 'id-1' }),
     targetPeerId,
@@ -95,6 +102,66 @@ describe('useChatRoomNotifications', () => {
     // list has a conversation mounted behind its dialog.
     await act(async () => {
       chatRoom.notifyPeerLeft('peer-1')
+    })
+
+    expect(showAlert).not.toHaveBeenCalled()
+  })
+
+  test('alerts the user when a message they sent fails', async () => {
+    const transport = new InMemoryTransport(
+      createInMemoryNetwork(),
+      'peer-self'
+    )
+    const realMakeAction = transport.makeAction
+
+    // Break only the MESSAGE sender, leaving the rest of the protocol intact.
+    transport.makeAction = ((peerAction, namespace) => {
+      const action = realMakeAction(peerAction, namespace)
+
+      if (peerAction !== PeerAction.MESSAGE) return action
+
+      return [
+        async () => {
+          throw new Error('transport is gone')
+        },
+        action[1],
+        action[2],
+        action[3],
+      ]
+    }) as typeof transport.makeAction
+
+    const chatRoom = createRoom(undefined, transport)
+
+    await chatRoom.join()
+
+    const { showAlert } = renderNotifications(chatRoom, false)
+
+    await act(async () => {
+      await chatRoom.sendMessage('nope')
+    })
+
+    expect(showAlert).toHaveBeenCalledTimes(1)
+    expect(showAlert).toHaveBeenCalledWith(
+      expect.stringContaining('could not be sent'),
+      { severity: 'error' }
+    )
+  })
+
+  test('stays silent when a background refresh fails', async () => {
+    const transport = new InMemoryTransport(
+      createInMemoryNetwork(),
+      'peer-self'
+    )
+
+    vi.spyOn(transport, 'getPeerConnectionTypes').mockRejectedValue(
+      new Error('boom')
+    )
+
+    const chatRoom = createRoom(undefined, transport)
+    const { showAlert } = renderNotifications(chatRoom, false)
+
+    await act(async () => {
+      await chatRoom.refreshConnectionTypes()
     })
 
     expect(showAlert).not.toHaveBeenCalled()
