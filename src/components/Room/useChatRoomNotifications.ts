@@ -19,7 +19,8 @@ import { notification } from 'services/Notification'
 const userFacingErrorMessages: Record<ChatRoomErrorContext, string | null> = {
   [ChatRoomErrorContext.SEND_MESSAGE]: 'Your message could not be sent',
   [ChatRoomErrorContext.SEND_INLINE_MEDIA]: 'Your media could not be sent',
-  [ChatRoomErrorContext.RESCIND_FILE_OFFER]: 'Stopping the file share did not fully succeed',
+  [ChatRoomErrorContext.RESCIND_FILE_OFFER]:
+    'Stopping the file share did not fully succeed',
   [ChatRoomErrorContext.ANNOUNCE_SELF]: null,
   [ChatRoomErrorContext.GREET_PEER]: null,
   [ChatRoomErrorContext.REFRESH_CONNECTION_TYPES]: null,

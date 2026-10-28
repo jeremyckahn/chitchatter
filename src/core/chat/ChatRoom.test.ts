@@ -900,6 +900,37 @@ describe('ChatRoom', () => {
       })
     })
 
+    it('reports once when both the announcement and the rescind fail', async () => {
+      const alice = createClient(network, 0)
+
+      failFileOfferSend(alice.transport, 1)
+
+      await alice.chatRoom.join()
+      await alice.chatRoom.offerFiles([
+        { name: 'doc.pdf', type: 'application/pdf', size: 10 },
+      ])
+
+      vi.mocked(alice.fileTransfer.rescind).mockRejectedValueOnce(
+        new Error('rescind failed')
+      )
+
+      const onError = vi.fn()
+
+      alice.chatRoom.on(ChatRoomEvent.ERROR, onError)
+
+      await alice.chatRoom.rescindFileOffer()
+
+      // One action for the user, one report. The first failure wins, so the
+      // announcement is what gets reported and the seed failure adds nothing.
+      expect(alice.chatRoom.getSelfFileOfferMagnetUri()).toBeNull()
+      expect(alice.fileTransfer.rescind).toHaveBeenCalledWith('magnet:peer-0')
+      expect(onError).toHaveBeenCalledTimes(1)
+      expect(onError.mock.calls[0][0]).toMatchObject({
+        context: ChatRoomErrorContext.RESCIND_FILE_OFFER,
+        error: expect.objectContaining({ message: 'send failed' }),
+      })
+    })
+
     it('reports a failure to stop seeding instead of letting it escape', async () => {
       const alice = createClient(network, 0)
       const bob = createClient(network, 1)
