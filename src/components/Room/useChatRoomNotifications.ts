@@ -2,12 +2,32 @@ import { useContext, useEffect, useRef, useState } from 'react'
 
 import { usePeerNameDisplay } from 'components/PeerNameDisplay'
 import { ChatRoom } from 'core/chat/ChatRoom'
-import { ChatRoomEvent } from 'core/chat/events'
+import { ChatRoomEvent, ChatRoomErrorContext } from 'core/chat/events'
 import { isInlineMedia } from 'core/models/chat'
 import { SettingsContext } from 'contexts/SettingsContext'
 import { ShellContext } from 'contexts/ShellContext'
 import { getSharedAudio } from 'lib/Audio'
 import { notification } from 'services/Notification'
+
+/**
+ * What to tell the user when a ChatRoom operation fails, keyed by the failing
+ * operation. `null` means the failure is logged but not shown: background,
+ * ephemeral and teardown paths the user did not initiate or has already left.
+ * The record is complete, so adding a ChatRoomErrorContext without deciding
+ * show-or-suppress here fails to compile.
+ */
+const userFacingErrorMessages: Record<ChatRoomErrorContext, string | null> = {
+  [ChatRoomErrorContext.SEND_MESSAGE]: 'Your message could not be sent',
+  [ChatRoomErrorContext.SEND_INLINE_MEDIA]: 'Your media could not be sent',
+  [ChatRoomErrorContext.RESCIND_FILE_OFFER]:
+    'Stopping the file share did not fully succeed',
+  [ChatRoomErrorContext.ANNOUNCE_SELF]: null,
+  [ChatRoomErrorContext.GREET_PEER]: null,
+  [ChatRoomErrorContext.REFRESH_CONNECTION_TYPES]: null,
+  [ChatRoomErrorContext.SEND_TYPING_STATUS]: null,
+  [ChatRoomErrorContext.STOP_SEEDING]: null,
+  [ChatRoomErrorContext.LEAVE]: null,
+}
 
 /**
  * The presentation response to chat events: snackbars, sounds, desktop
@@ -90,6 +110,17 @@ export const useChatRoomNotifications = (
               : `${displayUsername}: ${message.text}`
           )
         }
+      }),
+
+      // Operations the user just performed on purpose report their failures
+      // here instead of throwing; surface those so a failed send is not silent.
+      // Background, ephemeral and teardown failures stay logger-only.
+      chatRoom.on(ChatRoomEvent.ERROR, ({ context }) => {
+        const message = userFacingErrorMessages[context]
+
+        if (message === null) return
+
+        latest.current.showAlert(message, { severity: 'error' })
       }),
 
       // Who is in the room is a property of the room, not of a conversation
