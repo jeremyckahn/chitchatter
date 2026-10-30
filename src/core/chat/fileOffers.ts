@@ -12,9 +12,24 @@ export interface FileHandle {
 
 const inlineMediaTypes = ['image', 'audio', 'video']
 
+/**
+ * Formats that sit under an inline media type but can carry script. A host that
+ * renders them from its own origin lets a peer run code there, so they are
+ * always shared as plain downloads. These are Web platform MIME types, so they
+ * are not modelled as an enum.
+ */
+const activeContentTypes = ['image/svg+xml']
+
 /** Whether a file can be rendered inline in the transcript rather than downloaded. */
-export const isInlineMediaFile = ({ type }: FileHandle) =>
-  inlineMediaTypes.includes(type.split('/')[0])
+export const isInlineMediaFile = ({ type }: FileHandle) => {
+  // Drop any parameters ("; charset=...") so they cannot dodge the denylist
+  const bareMimeType = type.split(';')[0].trim().toLowerCase()
+
+  return (
+    inlineMediaTypes.includes(bareMimeType.split('/')[0]) &&
+    !activeContentTypes.includes(bareMimeType)
+  )
+}
 
 export const isEveryFileInlineMedia = (
   files: readonly FileHandle[] | null | undefined
