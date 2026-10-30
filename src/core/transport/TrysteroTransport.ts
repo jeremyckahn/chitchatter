@@ -60,11 +60,12 @@ export class TrysteroTransport implements PeerTransport {
    * Which peers each join-hook type has already been told about.
    *
    * Handlers register after the room is joined — `ChatRoom` in `join()`, the
-   * media hooks during render — so each one has to be given the peers that
+   * media hooks in an effect — so each one has to be given the peers that
    * connected before it existed. Recording what a hook type has already seen is
-   * what keeps a re-registration from re-announcing them: the media hooks
-   * re-register on every render, and re-announcing a peer there re-queues its
-   * media streams.
+   * what keeps a re-registration from re-announcing them: an effect can run
+   * again (StrictMode runs every effect twice in development, and a changed
+   * dependency re-runs it), and re-announcing a peer there re-queues its media
+   * streams. Unregistering a handler deliberately leaves this record alone.
    */
   private announcedJoins: Map<PeerHookType, Set<string>> = new Map()
 
@@ -139,6 +140,12 @@ export class TrysteroTransport implements PeerTransport {
 
     this.peerJoinHandlers.set(peerHookType, fn)
 
+    const unregister = () => {
+      if (this.peerJoinHandlers.get(peerHookType) === fn) {
+        this.peerJoinHandlers.delete(peerHookType)
+      }
+    }
+
     // The room is joined in this class's constructor, but handlers register
     // later — ChatRoom registers its own in join(), and the media hooks later
     // still. Without this replay a peer that connects in between fires into an
@@ -150,6 +157,8 @@ export class TrysteroTransport implements PeerTransport {
       this.markJoinAnnounced(peerHookType, peerId)
       fn(peerId)
     }
+
+    return unregister
   }
 
   private markJoinAnnounced = (peerHookType: PeerHookType, peerId: string) => {
@@ -169,6 +178,12 @@ export class TrysteroTransport implements PeerTransport {
     fn: Exclude<Room['onPeerLeave'], null>
   ) => {
     this.peerLeaveHandlers.set(peerHookType, fn)
+
+    return () => {
+      if (this.peerLeaveHandlers.get(peerHookType) === fn) {
+        this.peerLeaveHandlers.delete(peerHookType)
+      }
+    }
   }
 
   onPeerLeaveFlush = () => {
@@ -180,6 +195,12 @@ export class TrysteroTransport implements PeerTransport {
     fn: Exclude<Room['onPeerStream'], null>
   ) => {
     this.peerStreamHandlers.set(peerStreamType, fn)
+
+    return () => {
+      if (this.peerStreamHandlers.get(peerStreamType) === fn) {
+        this.peerStreamHandlers.delete(peerStreamType)
+      }
+    }
   }
 
   onPeerStreamFlush = () => {

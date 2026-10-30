@@ -235,6 +235,12 @@ export class InMemoryTransport implements PeerTransport {
     this.peerJoinHandlers.set(peerHookType, fn)
     this.network.startListening(this.peerId)
 
+    const unregister = () => {
+      if (this.peerJoinHandlers.get(peerHookType) === fn) {
+        this.peerJoinHandlers.delete(peerHookType)
+      }
+    }
+
     // A handler registered after a connection was already established still
     // needs to hear about it — the media hooks register theirs well after the
     // chat core registers its own — but only once, however often it
@@ -245,6 +251,8 @@ export class InMemoryTransport implements PeerTransport {
       this.markJoinAnnounced(peerHookType, peerId)
       fn(peerId)
     }
+
+    return unregister
   }
 
   private markJoinAnnounced = (peerHookType: PeerHookType, peerId: string) => {
@@ -257,6 +265,12 @@ export class InMemoryTransport implements PeerTransport {
   onPeerLeave = (peerHookType: PeerHookType, fn: PeerLeaveHandler) => {
     this.peerLeaveHandlers.set(peerHookType, fn)
     this.network.startListening(this.peerId)
+
+    return () => {
+      if (this.peerLeaveHandlers.get(peerHookType) === fn) {
+        this.peerLeaveHandlers.delete(peerHookType)
+      }
+    }
   }
 
   getPeers = () => this.network.getPeerIds(this.peerId)

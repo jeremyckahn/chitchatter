@@ -68,6 +68,13 @@ export type PeerJoinHandler = (peerId: string) => void
 export type PeerLeaveHandler = (peerId: string) => void
 
 /**
+ * Returned by the handler registration methods. Removes the handler it was
+ * returned for, unless a newer handler has since replaced it under the same
+ * hook type.
+ */
+export type UnregisterHandler = () => void
+
+/**
  * The transport surface the chat core depends on — deliberately narrower than
  * {@link TrysteroTransport}, which also carries the media-stream methods that
  * only the web app uses.
@@ -80,8 +87,14 @@ export interface PeerTransport {
     peerAction: PeerAction,
     namespace: ActionNamespace
   ) => PeerRoomAction<T>
-  onPeerJoin: (peerHookType: PeerHookType, fn: PeerJoinHandler) => void
-  onPeerLeave: (peerHookType: PeerHookType, fn: PeerLeaveHandler) => void
+  onPeerJoin: (
+    peerHookType: PeerHookType,
+    fn: PeerJoinHandler
+  ) => UnregisterHandler
+  onPeerLeave: (
+    peerHookType: PeerHookType,
+    fn: PeerLeaveHandler
+  ) => UnregisterHandler
   getPeers: () => string[]
   getPeerConnectionTypes: () => Promise<Record<string, PeerConnectionType>>
   leaveRoom: () => void
