@@ -21,7 +21,9 @@ const file = (name: string, type: string): FileHandle => ({
 describe('isInlineMediaFile', () => {
   it.each([
     ['image/png', true],
-    ['image/svg+xml', true],
+    ['image/svg+xml', false],
+    ['IMAGE/SVG+XML', false],
+    ['image/svg+xml; charset=utf-8', false],
     ['audio/mpeg', true],
     ['video/mp4', true],
     ['application/pdf', false],
@@ -29,6 +31,12 @@ describe('isInlineMediaFile', () => {
     ['', false],
   ])('treats %s as inline media: %s', (type, expected) => {
     expect(isInlineMediaFile(file('f', type))).toBe(expected)
+  })
+
+  it('does not treat an SVG as inline media, so it is shared as a download', () => {
+    expect(isEveryFileInlineMedia([file('poc.svg', 'image/svg+xml')])).toBe(
+      false
+    )
   })
 })
 

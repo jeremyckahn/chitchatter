@@ -137,6 +137,21 @@ describe('InlineFile unsupported and failing files', () => {
     expect(file.getBlobURL).not.toHaveBeenCalled()
   })
 
+  // Regression test: a peer-supplied SVG rendered from a same-origin blob: URL
+  // runs script when opened in its own tab (stored XSS). Active-content
+  // formats must never get a blob URL, regardless of extension casing.
+  test.each(['poc.svg', 'poc.SVG', 'poc.Svg', 'poc.html', 'poc.xml'])(
+    'does not render or read %s because it can carry script',
+    file => {
+      const stub = fileStub(file)
+      const { container } = render(<InlineFile file={stub} />)
+
+      screen.getByText('Media preview not supported')
+      expect(container.querySelector('img')).toBeNull()
+      expect(stub.getBlobURL).not.toHaveBeenCalled()
+    }
+  )
+
   test('shows a message and does not read files over the size limit', () => {
     const file = fileStub('photo.png', maxInlineMediaBytes + 1)
 

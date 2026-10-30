@@ -27,17 +27,17 @@ const thumbnailMaxHeight = '300px'
 // touches the edges of the viewport.
 const imagePreviewViewportInset = '64px'
 
-// NOTE: These filename extensions are copied from render-media, the upstream
+// NOTE: These filename extensions are based on render-media, the upstream
 // library used to embed media files:
 // https://github.com/feross/render-media/blob/a445b2ab90fcd4a248552d32027b2bc6a02600c8/index.js#L15-L72
-const supportedImageExtensions = [
-  '.bmp',
-  '.gif',
-  '.jpeg',
-  '.jpg',
-  '.png',
-  '.svg',
-]
+//
+// SECURITY: This is an allowlist of inert raster formats, and it must stay
+// one. Files come from untrusted peers and their blob URLs live in the app's
+// own origin, so a format that can carry script runs with full access to the
+// app's storage when the user opens the image in its own tab. That is why
+// `.svg` (and `.html`, `.xml`, `.pdf`, ...) is deliberately absent: such files
+// are treated like any other non-previewable file instead.
+const supportedImageExtensions = ['.bmp', '.gif', '.jpeg', '.jpg', '.png']
 
 const supportedAudioExtensions = ['.aac', '.oga', '.ogg', '.wav', '.flac']
 
