@@ -140,17 +140,11 @@ export function Home({ userId }: HomeProps) {
                 Passphrase
               </ToggleButton>
             </ToggleButtonGroup>
-            {roomNameType === RoomNameType.PASSPHRASE && (
-              <Typography
-                role="note"
-                variant="body2"
-                sx={{ mt: 1, color: theme.palette.warning.main }}
-              >
-                A room name is the only thing protecting a public room: anyone
-                who learns it can join. For sensitive conversations, use a
-                private room.
-              </Typography>
-            )}
+            <Typography variant="body2" sx={{ mt: 1 }}>
+              A room name is the only thing protecting a public room. Anyone who
+              learns it can join. For sensitive conversations, use a private
+              room.
+            </Typography>
           </Box>
           <Box
             sx={{
