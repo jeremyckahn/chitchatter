@@ -26,10 +26,19 @@ const PASSPHRASE_WORD_PATTERN = [
 export const PASSPHRASE_SUFFIX_LENGTH = 7
 
 /**
- * 32 characters, so that a random byte masked with 31 selects one uniformly
- * (256 is a multiple of 32; there is no modulo bias).
+ * Exactly 32 characters (5 bits each). A random byte has 256 possible values,
+ * which divides evenly by 32, so taking its low 5 bits picks every character
+ * with equal probability (no modulo bias). If the alphabet length changes,
+ * `PASSPHRASE_SUFFIX_INDEX_MASK` has to change with it, and the length must
+ * stay a power of two.
  */
 const PASSPHRASE_SUFFIX_ALPHABET = 'abcdefghijklmnopqrstuvwxyz234567'
+
+/**
+ * Keeps only the low 5 bits of a random byte (`0b11111` is 31), turning it
+ * into an index from 0 to 31 into `PASSPHRASE_SUFFIX_ALPHABET`.
+ */
+const PASSPHRASE_SUFFIX_INDEX_MASK = 0b11111
 
 const PASSPHRASE_SUFFIX_BITS_PER_CHARACTER = Math.log2(
   PASSPHRASE_SUFFIX_ALPHABET.length
@@ -45,14 +54,16 @@ const getSecureRandomIndex = (exclusiveMax: number): number => {
   const unbiasedLimit = UINT32_RANGE - (UINT32_RANGE % exclusiveMax)
   const buffer = new Uint32Array(1)
 
-  for (;;) {
-    globalThis.crypto.getRandomValues(buffer)
-    const value = buffer[0]
+  let value: number
 
-    if (value < unbiasedLimit) {
-      return value % exclusiveMax
-    }
-  }
+  // Values at or above the limit would make the lowest indices more likely
+  // than the rest, so they are discarded and a fresh value is drawn.
+  do {
+    globalThis.crypto.getRandomValues(buffer)
+    value = buffer[0]
+  } while (value >= unbiasedLimit)
+
+  return value % exclusiveMax
 }
 
 const getSecureRandomSuffix = (): string => {
@@ -61,7 +72,7 @@ const getSecureRandomSuffix = (): string => {
   )
 
   return Array.from(bytes, byte =>
-    PASSPHRASE_SUFFIX_ALPHABET.charAt(byte & 0b11111)
+    PASSPHRASE_SUFFIX_ALPHABET.charAt(byte & PASSPHRASE_SUFFIX_INDEX_MASK)
   ).join('')
 }
 
