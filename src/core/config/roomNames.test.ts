@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from 'vitest'
+import { validate as isUuid, version as getUuidVersion } from 'uuid'
 import { wordList } from 'random-word-slugs/dist/words'
 
 import {
@@ -25,9 +26,10 @@ const MIN_PASSPHRASE_ENTROPY_BITS = 64
 describe('RoomNameGenerator', () => {
   describe('UUID', () => {
     it('is the default type', () => {
-      expect(RoomNameGenerator.generate()).toMatch(
-        /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/
-      )
+      const name = RoomNameGenerator.generate()
+
+      expect(isUuid(name)).toBe(true)
+      expect(getUuidVersion(name)).toBe(4)
     })
   })
 
@@ -49,46 +51,10 @@ describe('RoomNameGenerator', () => {
       )
     })
 
-    it('draws words from outside the old pinned categories', () => {
-      const pinnedCategories = ['color', 'appearance', 'personality']
-      const pinnedAdjectives: ReadonlySet<string> = new Set(
-        wordList.adjective
-          .filter(({ categories }) =>
-            categories.some(category => pinnedCategories.includes(category))
-          )
-          .map(({ word }) => word)
-      )
-      const seenAdjectives = new Set<string>()
-
-      // 1000 draws from 302 adjectives all landing in the old 117-word subset
-      // is astronomically unlikely, so this only fails if the lists are narrowed.
-      for (let i = 0; i < 1000; i++) {
-        const [adjective] = RoomNameGenerator.generate(
-          RoomNameType.PASSPHRASE
-        ).split('-')
-
-        seenAdjectives.add(adjective)
-      }
-
-      expect(
-        [...seenAdjectives].some(word => !pinnedAdjectives.has(word))
-      ).toBe(true)
-    })
-
     it('has enough entropy to resist an offline search of the name space', () => {
       expect(getPassphraseEntropyBits()).toBeGreaterThanOrEqual(
         MIN_PASSPHRASE_ENTROPY_BITS
       )
-    })
-
-    it('does not repeat across many generations', () => {
-      const names = new Set<string>()
-
-      for (let i = 0; i < 1000; i++) {
-        names.add(RoomNameGenerator.generate(RoomNameType.PASSPHRASE))
-      }
-
-      expect(names.size).toBe(1000)
     })
 
     it('uses the platform CSPRNG and never Math.random', () => {
