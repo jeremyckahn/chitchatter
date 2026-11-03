@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from 'vitest'
 
 import {
   applyFileOffer,
+  canPeerClaimOffer,
   FileHandle,
   FileOffers,
   getInlineMediaFiles,
@@ -117,12 +118,14 @@ describe('applyFileOffer / removeFileOffer', () => {
 
 describe('shouldRescindOffer', () => {
   const isOffering = vi.fn(() => true)
+  const notProtected = () => false
 
   it('rescinds a non-inline offer that is still being seeded', () => {
     expect(
       shouldRescindOffer(
         { magnetURI: 'magnet:a', isAllInlineMedia: false },
-        isOffering
+        isOffering,
+        notProtected
       )
     ).toBe(true)
   })
@@ -131,7 +134,20 @@ describe('shouldRescindOffer', () => {
     expect(
       shouldRescindOffer(
         { magnetURI: 'magnet:a', isAllInlineMedia: true },
-        isOffering
+        isOffering,
+        notProtected
+      )
+    ).toBe(false)
+  })
+
+  it('spares a protected magnet even when the peer says it is not inline media', () => {
+    // The flag is written by the withdrawing peer, so it cannot be what keeps
+    // the receiver's own files and transcript media alive.
+    expect(
+      shouldRescindOffer(
+        { magnetURI: 'magnet:a', isAllInlineMedia: false },
+        isOffering,
+        magnetURI => magnetURI === 'magnet:a'
       )
     ).toBe(false)
   })
@@ -140,14 +156,55 @@ describe('shouldRescindOffer', () => {
     expect(
       shouldRescindOffer(
         { magnetURI: 'magnet:a', isAllInlineMedia: false },
-        () => false
+        () => false,
+        notProtected
       )
     ).toBe(false)
   })
 
   it('tolerates a missing offer', () => {
-    expect(shouldRescindOffer(null, isOffering)).toBe(false)
-    expect(shouldRescindOffer(undefined, isOffering)).toBe(false)
+    expect(shouldRescindOffer(null, isOffering, notProtected)).toBe(false)
+    expect(shouldRescindOffer(undefined, isOffering, notProtected)).toBe(false)
+  })
+})
+
+describe('canPeerClaimOffer', () => {
+  const none = new Set<string>()
+
+  it('lets a peer claim a magnet nobody else has', () => {
+    expect(
+      canPeerClaimOffer('peer-1', 'magnet:a', {
+        originatedMagnetUris: none,
+        offerOwners: new Map(),
+      })
+    ).toBe(true)
+  })
+
+  it('lets the owner re-announce its own magnet', () => {
+    expect(
+      canPeerClaimOffer('peer-1', 'magnet:a', {
+        originatedMagnetUris: none,
+        offerOwners: new Map([['magnet:a', 'peer-1']]),
+      })
+    ).toBe(true)
+  })
+
+  it('refuses a magnet another peer announced first', () => {
+    expect(
+      canPeerClaimOffer('peer-2', 'magnet:a', {
+        originatedMagnetUris: none,
+        offerOwners: new Map([['magnet:a', 'peer-1']]),
+      })
+    ).toBe(false)
+  })
+
+  it('refuses a magnet this client originated', () => {
+    expect(
+      canPeerClaimOffer('peer-2', 'magnet:a', {
+        originatedMagnetUris: new Set(['magnet:a']),
+        offerOwners: new Map(),
+      })
+    ).toBe(false)
   })
 })
 

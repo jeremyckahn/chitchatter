@@ -70,17 +70,62 @@ export const removeFileOffer = (
 }
 
 /**
+ * Who first announced each magnet URI, for the peers still in the room.
+ *
+ * A magnet URI is a bearer identifier: the app broadcasts every file's to the
+ * whole room, so anyone can replay one as their own. Recording who announced it
+ * first is what stops a replay from borrowing the real owner's torrent.
+ */
+export type MagnetOwners = ReadonlyMap<string, string>
+
+/**
+ * Whether `peerId` may announce `magnetURI` as its own file.
+ *
+ * Refused when this client started the torrent itself, or when another peer
+ * that is still in the room announced it first. Without this a peer could name
+ * someone else's file as its own offer and then withdraw it, and
+ * {@link shouldRescindOffer} would destroy the torrent on every holder.
+ *
+ * An owner that has left no longer holds the claim, so a rejoining peer (which
+ * arrives under a new peer id) can offer its file again.
+ */
+export const canPeerClaimOffer = (
+  peerId: string,
+  magnetURI: string,
+  {
+    originatedMagnetUris,
+    offerOwners,
+  }: {
+    originatedMagnetUris: ReadonlySet<string>
+    offerOwners: MagnetOwners
+  }
+): boolean => {
+  if (originatedMagnetUris.has(magnetURI)) return false
+
+  const owner = offerOwners.get(magnetURI)
+
+  return owner === undefined || owner === peerId
+}
+
+/**
  * Whether an offer should be rescinded now that it has been withdrawn or its
  * peer has left.
  *
  * Offers made up entirely of inline media are exempt: that content is rendered
  * in the transcript and stays reachable after the offer itself is gone, so
- * rescinding it would break already-delivered messages.
+ * rescinding it would break already-delivered messages. That flag is written by
+ * the offering peer, so it cannot be the only protection: `isProtected` is the
+ * receiver's own knowledge of what must stay seeded (files it originated, and
+ * anything its transcript refers to) and always wins.
  */
 export const shouldRescindOffer = (
   metadata: FileOfferMetadata | undefined | null,
-  isOffering: (magnetURI: string) => boolean
+  isOffering: (magnetURI: string) => boolean,
+  isProtected: (magnetURI: string) => boolean
 ): boolean =>
   Boolean(
-    metadata && !metadata.isAllInlineMedia && isOffering(metadata.magnetURI)
+    metadata &&
+      !metadata.isAllInlineMedia &&
+      !isProtected(metadata.magnetURI) &&
+      isOffering(metadata.magnetURI)
   )
