@@ -80,4 +80,18 @@ describe('Shell', () => {
       })
     })
   })
+
+  describe('layout', () => {
+    // Regression test for https://github.com/jeremyckahn/chitchatter/issues/57
+    test('sizes the shell to the dynamic viewport height', () => {
+      render(<ShellStub />)
+
+      const styles = Array.from(document.head.querySelectorAll('style'))
+        .map(style => style.textContent)
+        .join('')
+
+      expect(styles).toContain('@supports (height: 100dvh)')
+      expect(styles).toContain('height:100dvh')
+    })
+  })
 })
