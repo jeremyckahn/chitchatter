@@ -789,12 +789,21 @@ export class ChatRoom extends EventTarget {
    * stop seeding it. Decided from this client's own records, not from anything
    * the peer wrote: see {@link shouldRescindOffer}.
    */
-  private shouldStopSeedingOffer = (offer: FileOfferMetadata | undefined) =>
-    shouldRescindOffer(
+  private shouldStopSeedingOffer = (offer: FileOfferMetadata | undefined) => {
+    // A direct-message room cannot tell which torrents its peer's offer made
+    // this client seed: downloads happen outside the core, and the file
+    // transfer it would rescind through is shared with the group room, so a
+    // magnet the peer names may well be one this client re-seeds for the group.
+    // Stopping on its say-so would hand every DM peer a way to destroy those.
+    // Leaving the group room still ends all seeding.
+    if (this.isDirectMessageRoom) return false
+
+    return shouldRescindOffer(
       offer,
       this.adapters.fileTransfer.isOffering,
       this.isProtectedFromPeerRescind
     )
+  }
 
   private isProtectedFromPeerRescind = (magnetURI: string) =>
     this.adapters.fileTransfer.isOriginated(magnetURI) ||

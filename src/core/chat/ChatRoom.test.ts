@@ -1032,6 +1032,34 @@ describe('ChatRoom', () => {
         })
       })
 
+      describe("the accepted cost of not rescinding on a direct-message peer's say-so", () => {
+        it('drops a withdrawn direct-message offer from the room without stopping the seed', async () => {
+          const alice = createClient(network, 0)
+          const bob = createClient(network, 1)
+          const aliceToBob = createDirectMessageRoom(alice, 0, 'peer-1')
+          const bobToAlice = createDirectMessageRoom(bob, 1, 'peer-0')
+
+          await joinAll(alice, bob)
+          await aliceToBob.join()
+          await bobToAlice.join()
+
+          await aliceToBob.offerFiles([
+            { name: 'doc.pdf', type: 'application/pdf', size: 10 },
+          ])
+          await settle()
+
+          expect(Object.keys(bobToAlice.getFileOffers())).toEqual(['peer-0'])
+
+          await aliceToBob.rescindFileOffer()
+          await settle()
+
+          // The offer is gone for the UI, but Bob keeps seeding what he may
+          // have downloaded until he leaves the group room.
+          expect(bobToAlice.getFileOffers()).toEqual({})
+          expect(bob.fileTransfer.rescind).not.toHaveBeenCalled()
+        })
+      })
+
       it('ignores the claim rather than recording it as an offer', async () => {
         const alice = createClient(network, 0)
         const bob = createClient(network, 1)
