@@ -852,11 +852,14 @@ describe('ChatRoom', () => {
        * Sends raw file-offer frames the way a hostile client would: nothing in
        * the protocol stops a peer writing any magnet URI it has seen.
        */
-      const createForger = async (index: number) => {
+      const createForger = async (
+        index: number,
+        namespace: ActionNamespace = ActionNamespace.GROUP
+      ) => {
         const transport = new InMemoryTransport(network, `peer-${index}`)
         const [send] = transport.makeAction<FileOfferMetadata | null>(
           PeerAction.FILE_OFFER,
-          ActionNamespace.GROUP
+          namespace
         )
 
         return {
@@ -947,6 +950,73 @@ describe('ChatRoom', () => {
         await settle()
 
         expect(alice.fileTransfer.rescind).not.toHaveBeenCalled()
+      })
+
+      // A direct-message room is a separate ChatRoom with its own state, but it
+      // shares the group room's file transfer, so a `rescind` it issues
+      // destroys the same torrent. The protections have to hold across rooms.
+      describe('through a direct-message room', () => {
+        it('does not destroy a torrent the group room is sharing', async () => {
+          const alice = createClient(network, 0)
+          const aliceToMallory = createDirectMessageRoom(alice, 0, 'peer-2')
+
+          await alice.chatRoom.join()
+          await aliceToMallory.join()
+          await alice.chatRoom.offerFiles([
+            { name: 'doc.pdf', type: 'application/pdf', size: 10 },
+          ])
+
+          const mallory = await createForger(2, ActionNamespace.DIRECT_MESSAGE)
+
+          await mallory.offer('magnet:peer-0')
+          await mallory.withdraw()
+          await settle()
+
+          expect(alice.fileTransfer.rescind).not.toHaveBeenCalled()
+        })
+
+        it('does not destroy a torrent a direct-message room is sharing, when claimed in the group room', async () => {
+          const alice = createClient(network, 0)
+          const aliceToMallory = createDirectMessageRoom(alice, 0, 'peer-1')
+
+          await alice.chatRoom.join()
+          await aliceToMallory.join()
+          await aliceToMallory.offerFiles([
+            { name: 'doc.pdf', type: 'application/pdf', size: 10 },
+          ])
+
+          const mallory = await createForger(1)
+
+          await mallory.offer('magnet:peer-0')
+          await mallory.withdraw()
+          await settle()
+
+          expect(alice.fileTransfer.rescind).not.toHaveBeenCalled()
+        })
+
+        it("does not stop re-seeding a file the client downloaded, on a direct-message peer's say-so", async () => {
+          const alice = createClient(network, 0)
+          const bob = createClient(network, 1)
+          const bobToMallory = createDirectMessageRoom(bob, 1, 'peer-2')
+
+          await joinAll(alice, bob)
+          await bobToMallory.join()
+
+          // Bob downloaded Alice's file, so his client is seeding it too: the
+          // mock reports every magnet as being offered.
+          await alice.chatRoom.offerFiles([
+            { name: 'doc.pdf', type: 'application/pdf', size: 10 },
+          ])
+          await settle()
+
+          const mallory = await createForger(2, ActionNamespace.DIRECT_MESSAGE)
+
+          await mallory.offer('magnet:peer-0')
+          await mallory.withdraw()
+          await settle()
+
+          expect(bob.fileTransfer.rescind).not.toHaveBeenCalled()
+        })
       })
 
       it('ignores the claim rather than recording it as an offer', async () => {
