@@ -47,6 +47,28 @@ export const createWebStorage = (
   removeItem: (key: string) => persistedStorage.removeItem(key),
 })
 
+const originatedByService = new WeakMap<FileTransferService, Set<string>>()
+
+/**
+ * The magnet URIs this client started seeding, per file transfer service.
+ *
+ * `createWebAdapters` runs once per room, but every room of a session shares
+ * one service (and so one WebTorrent client). Keeping the record on the service
+ * rather than in each adapter's closure is what lets a direct-message room see
+ * the torrents the group room started, and the other way round.
+ */
+const getOriginatedMagnetUris = (service: FileTransferService) => {
+  const existing = originatedByService.get(service)
+
+  if (existing) return existing
+
+  const created = new Set<string>()
+
+  originatedByService.set(service, created)
+
+  return created
+}
+
 /**
  * Encrypted file transfer over WebTorrent.
  *
@@ -58,17 +80,31 @@ export const createWebFileTransfer = (
   fileTransferService: FileTransferService
 ): FileTransferAdapter => {
   const { fileTransfer } = fileTransferService
+  const originatedMagnetUris = getOriginatedMagnetUris(fileTransferService)
 
   return {
-    offer: (files: readonly FileHandle[], roomId: string) =>
-      fileTransfer.offer(files as unknown as File[], roomId),
+    offer: async (files: readonly FileHandle[], roomId: string) => {
+      const magnetURI = await fileTransfer.offer(
+        files as unknown as File[],
+        roomId
+      )
+
+      originatedMagnetUris.add(magnetURI)
+
+      return magnetURI
+    },
     rescind: async (magnetURI: string) => {
+      originatedMagnetUris.delete(magnetURI)
+
       await fileTransfer.rescind(magnetURI)
     },
     rescindAll: async () => {
+      originatedMagnetUris.clear()
+
       await fileTransfer.rescindAll()
     },
     isOffering: (magnetURI: string) => fileTransfer.isOffering(magnetURI),
+    isOriginated: (magnetURI: string) => originatedMagnetUris.has(magnetURI),
   }
 }
 

@@ -134,12 +134,6 @@ export class ChatRoom extends EventTarget {
   private selfFileOfferMagnetUri: string | null = null
 
   /**
-   * Torrents this client started, as opposed to ones it re-seeds after
-   * downloading. A peer's say-so never stops these: only this client does.
-   */
-  private originatedMagnetUris: Set<string> = new Set()
-
-  /**
    * Magnets a peer announced as all inline media. Their torrents outlive the
    * offer, so a later claim on the same magnet cannot be used to destroy them.
    */
@@ -436,8 +430,6 @@ export class ChatRoom extends EventTarget {
         this.roomId
       )
 
-      this.originatedMagnetUris.add(magnetURI)
-
       const unsentInlineMedia: UnsentInlineMedia = {
         authorId: this.userId,
         magnetURI,
@@ -521,7 +513,6 @@ export class ChatRoom extends EventTarget {
 
     const magnetURI = await this.adapters.fileTransfer.offer(files, this.roomId)
 
-    this.originatedMagnetUris.add(magnetURI)
     this.setSelfFileOffer(magnetURI, files)
 
     try {
@@ -572,8 +563,6 @@ export class ChatRoom extends EventTarget {
     // Inline media stays seeded: it is still in the transcript on both sides,
     // where it has to remain reachable.
     if (!isAllInlineMedia && this.adapters.fileTransfer.isOffering(magnetURI)) {
-      this.originatedMagnetUris.delete(magnetURI)
-
       try {
         await this.adapters.fileTransfer.rescind(magnetURI)
       } catch (error) {
@@ -752,7 +741,7 @@ export class ChatRoom extends EventTarget {
       // real owner's seed.
       if (
         !canPeerClaimOffer(peerId, metadata.magnetURI, {
-          originatedMagnetUris: this.originatedMagnetUris,
+          isOriginated: this.adapters.fileTransfer.isOriginated,
           offerOwners: this.offerOwners,
         })
       ) {
@@ -808,7 +797,7 @@ export class ChatRoom extends EventTarget {
     )
 
   private isProtectedFromPeerRescind = (magnetURI: string) =>
-    this.originatedMagnetUris.has(magnetURI) ||
+    this.adapters.fileTransfer.isOriginated(magnetURI) ||
     this.retainedMagnetUris.has(magnetURI) ||
     getInlineMediaUris(this.messageLog).includes(magnetURI)
 
@@ -1060,7 +1049,6 @@ export class ChatRoom extends EventTarget {
    * end of the process in the Node host this core is built for.
    */
   private stopSeeding = (magnetURI: string) => {
-    this.originatedMagnetUris.delete(magnetURI)
     this.retainedMagnetUris.delete(magnetURI)
 
     void this.adapters.fileTransfer

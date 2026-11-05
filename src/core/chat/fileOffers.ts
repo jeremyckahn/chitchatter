@@ -93,14 +93,14 @@ export const canPeerClaimOffer = (
   peerId: string,
   magnetURI: string,
   {
-    originatedMagnetUris,
+    isOriginated,
     offerOwners,
   }: {
-    originatedMagnetUris: ReadonlySet<string>
+    isOriginated: (magnetURI: string) => boolean
     offerOwners: MagnetOwners
   }
 ): boolean => {
-  if (originatedMagnetUris.has(magnetURI)) return false
+  if (isOriginated(magnetURI)) return false
 
   const owner = offerOwners.get(magnetURI)
 

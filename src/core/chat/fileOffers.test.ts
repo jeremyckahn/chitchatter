@@ -169,12 +169,12 @@ describe('shouldRescindOffer', () => {
 })
 
 describe('canPeerClaimOffer', () => {
-  const none = new Set<string>()
+  const noneOriginated = () => false
 
   it('lets a peer claim a magnet nobody else has', () => {
     expect(
       canPeerClaimOffer('peer-1', 'magnet:a', {
-        originatedMagnetUris: none,
+        isOriginated: noneOriginated,
         offerOwners: new Map(),
       })
     ).toBe(true)
@@ -183,7 +183,7 @@ describe('canPeerClaimOffer', () => {
   it('lets the owner re-announce its own magnet', () => {
     expect(
       canPeerClaimOffer('peer-1', 'magnet:a', {
-        originatedMagnetUris: none,
+        isOriginated: noneOriginated,
         offerOwners: new Map([['magnet:a', 'peer-1']]),
       })
     ).toBe(true)
@@ -192,7 +192,7 @@ describe('canPeerClaimOffer', () => {
   it('refuses a magnet another peer announced first', () => {
     expect(
       canPeerClaimOffer('peer-2', 'magnet:a', {
-        originatedMagnetUris: none,
+        isOriginated: noneOriginated,
         offerOwners: new Map([['magnet:a', 'peer-1']]),
       })
     ).toBe(false)
@@ -201,7 +201,7 @@ describe('canPeerClaimOffer', () => {
   it('refuses a magnet this client originated', () => {
     expect(
       canPeerClaimOffer('peer-2', 'magnet:a', {
-        originatedMagnetUris: new Set(['magnet:a']),
+        isOriginated: magnetURI => magnetURI === 'magnet:a',
         offerOwners: new Map(),
       })
     ).toBe(false)

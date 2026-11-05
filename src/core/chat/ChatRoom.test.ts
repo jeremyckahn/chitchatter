@@ -82,11 +82,23 @@ const createClient = (
 ): Client => {
   const peerId = `peer-${index}`
   const transport = new InMemoryTransport(network, peerId)
+  // Mirrors the web adapter, which is shared by a group room and every
+  // direct-message room on one host and so remembers what any of them started.
+  const originated = new Set<string>()
   const fileTransfer: FileTransferAdapter = {
-    offer: vi.fn(async () => `magnet:${peerId}`),
-    rescind: vi.fn(async () => {}),
-    rescindAll: vi.fn(async () => {}),
+    offer: vi.fn(async () => {
+      originated.add(`magnet:${peerId}`)
+
+      return `magnet:${peerId}`
+    }),
+    rescind: vi.fn(async (magnetURI: string) => {
+      originated.delete(magnetURI)
+    }),
+    rescindAll: vi.fn(async () => {
+      originated.clear()
+    }),
     isOffering: vi.fn(() => true),
+    isOriginated: vi.fn((magnetURI: string) => originated.has(magnetURI)),
   }
   const adapters = createPlatformAdapters(makeIds(), {
     fileTransfer,
@@ -698,6 +710,7 @@ describe('ChatRoom', () => {
         rescind: vi.fn(async () => {}),
         rescindAll: vi.fn(async () => {}),
         isOffering: vi.fn(() => true),
+        isOriginated: vi.fn(() => false),
       }
 
       const chatRoom = new ChatRoom({
