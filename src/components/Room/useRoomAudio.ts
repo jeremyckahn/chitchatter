@@ -17,6 +17,8 @@ import {
 import { usePeerAction } from 'hooks/usePeerAction'
 import { MessageContext } from 'trystero'
 
+import { usePeerMediaHandlers, PeerStreamHandler } from './usePeerMediaHandlers'
+
 interface UseRoomAudioConfig {
   peerRoom: TrysteroTransport
 }
@@ -74,7 +76,7 @@ export function useRoomAudio({ peerRoom }: UseRoomAudioConfig) {
     },
   })
 
-  peerRoom.onPeerStream(PeerStreamType.AUDIO, (stream, peerId, metadata) => {
+  const handlePeerStream: PeerStreamHandler = (stream, peerId, metadata) => {
     if (
       typeof metadata === 'object' &&
       metadata !== null &&
@@ -100,7 +102,7 @@ export function useRoomAudio({ peerRoom }: UseRoomAudioConfig) {
         [AudioChannelName.MICROPHONE]: audio,
       },
     }))
-  })
+  }
 
   const cleanupAudio = useCallback(() => {
     if (!audioStream) return
@@ -236,12 +238,13 @@ export function useRoomAudio({ peerRoom }: UseRoomAudioConfig) {
     deletePeerAudio(peerId)
   }
 
-  peerRoom.onPeerJoin(PeerHookType.AUDIO, (peerId: string) => {
-    handleAudioForNewPeer(peerId)
-  })
-
-  peerRoom.onPeerLeave(PeerHookType.AUDIO, (peerId: string) => {
-    handleAudioForLeavingPeer(peerId)
+  usePeerMediaHandlers({
+    peerRoom,
+    peerHookType: PeerHookType.AUDIO,
+    peerStreamType: PeerStreamType.AUDIO,
+    onPeerJoin: handleAudioForNewPeer,
+    onPeerLeave: handleAudioForLeavingPeer,
+    onPeerStream: handlePeerStream,
   })
 
   return {

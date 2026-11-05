@@ -14,6 +14,8 @@ import { isRecord } from 'core/lib/type-guards'
 import { usePeerAction } from 'hooks/usePeerAction'
 import { MessageContext } from 'trystero'
 
+import { usePeerMediaHandlers, PeerStreamHandler } from './usePeerMediaHandlers'
+
 interface UseRoomVideoConfig {
   peerRoom: TrysteroTransport
 }
@@ -88,7 +90,7 @@ export function useRoomVideo({ peerRoom }: UseRoomVideoConfig) {
     },
   })
 
-  peerRoom.onPeerStream(PeerStreamType.VIDEO, (stream, peerId, metadata) => {
+  const handlePeerStream: PeerStreamHandler = (stream, peerId, metadata) => {
     const isWebcamStream =
       isRecord(metadata) &&
       'type' in metadata &&
@@ -100,7 +102,7 @@ export function useRoomVideo({ peerRoom }: UseRoomVideoConfig) {
       ...peerVideoStreams,
       [peerId]: stream,
     })
-  })
+  }
 
   const cleanupVideo = useCallback(() => {
     if (!selfVideoStream) return
@@ -224,12 +226,13 @@ export function useRoomVideo({ peerRoom }: UseRoomVideoConfig) {
     deletePeerVideo(peerId)
   }
 
-  peerRoom.onPeerJoin(PeerHookType.VIDEO, (peerId: string) => {
-    handleVideoForNewPeer(peerId)
-  })
-
-  peerRoom.onPeerLeave(PeerHookType.VIDEO, (peerId: string) => {
-    handleVideoForLeavingPeer(peerId)
+  usePeerMediaHandlers({
+    peerRoom,
+    peerHookType: PeerHookType.VIDEO,
+    peerStreamType: PeerStreamType.VIDEO,
+    onPeerJoin: handleVideoForNewPeer,
+    onPeerLeave: handleVideoForLeavingPeer,
+    onPeerStream: handlePeerStream,
   })
 
   return {
