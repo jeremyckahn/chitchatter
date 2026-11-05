@@ -355,7 +355,14 @@ export const Shell = ({ appNeedsUpdate, children, userPeerId }: ShellProps) => {
             <Box
               className="Chitchatter"
               sx={{
+                // NOTE: 100vh on mobile Safari includes the area behind the
+                // browser toolbar, which pushes the message input off screen.
+                // 100dvh tracks the visible viewport instead. 100vh stays as
+                // the fallback for browsers without dynamic viewport units.
                 height: '100vh',
+                '@supports (height: 100dvh)': {
+                  height: '100dvh',
+                },
                 display: 'flex',
                 overflow: 'hidden',
               }}
