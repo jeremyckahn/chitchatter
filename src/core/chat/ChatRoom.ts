@@ -8,8 +8,8 @@ import {
   FileHandle,
   FileOffers,
   applyFileOffer,
-  canPeerClaimOffer,
   isEveryFileInlineMedia,
+  isOfferedByAnotherPeer,
   removeFileOffer,
   shouldRescindOffer,
 } from 'core/chat/fileOffers'
@@ -138,9 +138,6 @@ export class ChatRoom extends EventTarget {
    * offer, so a later claim on the same magnet cannot be used to destroy them.
    */
   private retainedMagnetUris: Set<string> = new Set()
-
-  /** The peer that first announced each magnet it currently offers. */
-  private offerOwners: Map<string, string> = new Map()
 
   private selfOfferedFiles: readonly FileHandle[] | null = null
 
@@ -735,26 +732,6 @@ export class ChatRoom extends EventTarget {
     if (!this.isFromRoomPeer(peerId)) return
 
     if (metadata) {
-      // A magnet URI is public to the whole room, so naming one proves nothing
-      // about owning it. Ignore an offer for a file somebody else is already
-      // sharing: accepting it would let this peer's later withdrawal stop the
-      // real owner's seed.
-      if (
-        !canPeerClaimOffer(peerId, metadata.magnetURI, {
-          isOriginated: this.adapters.fileTransfer.isOriginated,
-          offerOwners: this.offerOwners,
-        })
-      ) {
-        this.adapters.logger.warn(
-          `Ignoring file offer from peer ${peerId}: its magnet URI belongs to another peer`
-        )
-
-        return
-      }
-
-      this.releaseOfferOwnership(peerId)
-      this.offerOwners.set(metadata.magnetURI, peerId)
-
       if (metadata.isAllInlineMedia) {
         this.retainedMagnetUris.add(metadata.magnetURI)
       }
@@ -763,11 +740,10 @@ export class ChatRoom extends EventTarget {
     } else {
       const withdrawn = this.fileOffers[peerId]
 
-      if (this.shouldStopSeedingOffer(withdrawn)) {
+      if (this.shouldStopSeedingOffer(peerId, withdrawn)) {
         this.stopSeeding(withdrawn.magnetURI)
       }
 
-      this.releaseOfferOwnership(peerId)
       this.fileOffers = removeFileOffer(this.fileOffers, peerId)
     }
 
@@ -775,21 +751,15 @@ export class ChatRoom extends EventTarget {
     this.emit(ChatRoomEvent.FILE_OFFER_CHANGE, { peerId, metadata })
   }
 
-  /** Forgets the magnet `peerId` currently owns, if any. */
-  private releaseOfferOwnership = (peerId: string) => {
-    const current = this.fileOffers[peerId]
-
-    if (current && this.offerOwners.get(current.magnetURI) === peerId) {
-      this.offerOwners.delete(current.magnetURI)
-    }
-  }
-
   /**
    * Whether a peer's withdrawn (or departed) offer means this client should
    * stop seeding it. Decided from this client's own records, not from anything
    * the peer wrote: see {@link shouldRescindOffer}.
    */
-  private shouldStopSeedingOffer = (offer: FileOfferMetadata | undefined) => {
+  private shouldStopSeedingOffer = (
+    peerId: string,
+    offer: FileOfferMetadata | undefined
+  ) => {
     // A direct-message room cannot tell which torrents its peer's offer made
     // this client seed: downloads happen outside the core, and the file
     // transfer it would rescind through is shared with the group room, so a
@@ -801,7 +771,9 @@ export class ChatRoom extends EventTarget {
     return shouldRescindOffer(
       offer,
       this.adapters.fileTransfer.isOffering,
-      this.isProtectedFromPeerRescind
+      magnetURI =>
+        this.isProtectedFromPeerRescind(magnetURI) ||
+        isOfferedByAnotherPeer(this.fileOffers, peerId, magnetURI)
     )
   }
 
@@ -869,11 +841,9 @@ export class ChatRoom extends EventTarget {
     const peer = findPeer(this.peers, peerId)
     const offer = this.fileOffers[peerId]
 
-    if (this.shouldStopSeedingOffer(offer)) {
+    if (this.shouldStopSeedingOffer(peerId, offer)) {
       this.stopSeeding(offer.magnetURI)
     }
-
-    this.releaseOfferOwnership(peerId)
 
     // Announced like any other change to the offer snapshot: subscribers re-read
     // it on this event and nothing else, so dropping the offer silently would

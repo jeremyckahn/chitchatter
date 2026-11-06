@@ -1060,24 +1060,65 @@ describe('ChatRoom', () => {
         })
       })
 
-      it('ignores the claim rather than recording it as an offer', async () => {
+      it('does not stop a re-seed while the real owner still offers the file', async () => {
         const alice = createClient(network, 0)
         const bob = createClient(network, 1)
 
         await joinAll(alice, bob)
 
-        await alice.chatRoom.offerFiles([
+        // Alice re-seeds Bob's file (the mock reports every magnet as being
+        // offered), so nothing but the ownership rules stands between Mallory
+        // and her copy.
+        await bob.chatRoom.offerFiles([
           { name: 'doc.pdf', type: 'application/pdf', size: 10 },
         ])
         await settle()
 
         const mallory = await createForger(2)
 
-        await mallory.offer('magnet:peer-0')
+        await mallory.offer('magnet:peer-1')
         await settle()
 
-        expect(Object.keys(bob.chatRoom.getFileOffers())).toEqual(['peer-0'])
-        expect(bob.adapters.logger.warn).toHaveBeenCalled()
+        // The claim is shown like any offer: it cannot be told apart from the
+        // owner announcing again, and downloading it works either way.
+        expect(Object.keys(alice.chatRoom.getFileOffers()).sort()).toEqual([
+          'peer-1',
+          'peer-2',
+        ])
+
+        await mallory.withdraw()
+        await settle()
+
+        expect(Object.keys(alice.chatRoom.getFileOffers())).toEqual(['peer-1'])
+        expect(alice.fileTransfer.rescind).not.toHaveBeenCalled()
+      })
+
+      it('stops the re-seed once the last peer offering the file is gone', async () => {
+        const alice = createClient(network, 0)
+        const bob = createClient(network, 1)
+
+        await joinAll(alice, bob)
+
+        await bob.chatRoom.offerFiles([
+          { name: 'doc.pdf', type: 'application/pdf', size: 10 },
+        ])
+        await settle()
+
+        const mallory = await createForger(2)
+
+        await mallory.offer('magnet:peer-1')
+        await settle()
+
+        bob.transport.leaveRoom()
+        await settle()
+
+        // Mallory still stands behind the file, so the seed stays.
+        expect(alice.fileTransfer.rescind).not.toHaveBeenCalled()
+
+        await mallory.withdraw()
+        await settle()
+
+        expect(alice.fileTransfer.rescind).toHaveBeenCalledWith('magnet:peer-1')
       })
 
       it('keeps the file available when its owner reconnects under a new peer id before the old one is gone', async () => {

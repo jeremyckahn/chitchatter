@@ -2,12 +2,12 @@ import { describe, expect, it, vi } from 'vitest'
 
 import {
   applyFileOffer,
-  canPeerClaimOffer,
   FileHandle,
   FileOffers,
   getInlineMediaFiles,
   isEveryFileInlineMedia,
   isInlineMediaFile,
+  isOfferedByAnotherPeer,
   removeFileOffer,
   shouldRescindOffer,
 } from 'core/chat/fileOffers'
@@ -168,43 +168,36 @@ describe('shouldRescindOffer', () => {
   })
 })
 
-describe('canPeerClaimOffer', () => {
-  const noneOriginated = () => false
+describe('isOfferedByAnotherPeer', () => {
+  const offers: FileOffers = {
+    'peer-1': { magnetURI: 'magnet:a', isAllInlineMedia: false },
+    'peer-2': { magnetURI: 'magnet:b', isAllInlineMedia: false },
+  }
 
-  it('lets a peer claim a magnet nobody else has', () => {
+  it('is false when only the peer itself offers the magnet', () => {
+    expect(isOfferedByAnotherPeer(offers, 'peer-1', 'magnet:a')).toBe(false)
+  })
+
+  it('is true when a different peer offers the same magnet', () => {
     expect(
-      canPeerClaimOffer('peer-1', 'magnet:a', {
-        isOriginated: noneOriginated,
-        offerOwners: new Map(),
-      })
+      isOfferedByAnotherPeer(
+        {
+          ...offers,
+          'peer-3': { magnetURI: 'magnet:a', isAllInlineMedia: false },
+        },
+        'peer-1',
+        'magnet:a'
+      )
     ).toBe(true)
   })
 
-  it('lets the owner re-announce its own magnet', () => {
-    expect(
-      canPeerClaimOffer('peer-1', 'magnet:a', {
-        isOriginated: noneOriginated,
-        offerOwners: new Map([['magnet:a', 'peer-1']]),
-      })
-    ).toBe(true)
+  it('judges each magnet on its own', () => {
+    expect(isOfferedByAnotherPeer(offers, 'peer-1', 'magnet:b')).toBe(true)
+    expect(isOfferedByAnotherPeer(offers, 'peer-1', 'magnet:z')).toBe(false)
   })
 
-  it('refuses a magnet another peer announced first', () => {
-    expect(
-      canPeerClaimOffer('peer-2', 'magnet:a', {
-        isOriginated: noneOriginated,
-        offerOwners: new Map([['magnet:a', 'peer-1']]),
-      })
-    ).toBe(false)
-  })
-
-  it('refuses a magnet this client originated', () => {
-    expect(
-      canPeerClaimOffer('peer-2', 'magnet:a', {
-        isOriginated: magnetURI => magnetURI === 'magnet:a',
-        offerOwners: new Map(),
-      })
-    ).toBe(false)
+  it('is false when nobody offers anything', () => {
+    expect(isOfferedByAnotherPeer({}, 'peer-1', 'magnet:a')).toBe(false)
   })
 })
 

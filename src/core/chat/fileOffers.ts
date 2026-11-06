@@ -70,42 +70,24 @@ export const removeFileOffer = (
 }
 
 /**
- * Who first announced each magnet URI, for the peers still in the room.
+ * Whether a peer other than `peerId` is currently offering `magnetURI`.
  *
  * A magnet URI is a bearer identifier: the app broadcasts every file's to the
- * whole room, so anyone can replay one as their own. Recording who announced it
- * first is what stops a replay from borrowing the real owner's torrent.
+ * whole room, so anyone can name one as their own offer, and nothing in the
+ * protocol distinguishes that from the real owner announcing it again (for one
+ * who reconnected under a new peer id, say). So a withdrawal is not trusted to
+ * end the seed while somebody else still stands behind the same file; the seed
+ * ends with the last offerer.
  */
-export type MagnetOwners = ReadonlyMap<string, string>
-
-/**
- * Whether `peerId` may announce `magnetURI` as its own file.
- *
- * Refused when this client started the torrent itself, or when another peer
- * that is still in the room announced it first. Without this a peer could name
- * someone else's file as its own offer and then withdraw it, and
- * {@link shouldRescindOffer} would destroy the torrent on every holder.
- *
- * An owner that has left no longer holds the claim, so a rejoining peer (which
- * arrives under a new peer id) can offer its file again.
- */
-export const canPeerClaimOffer = (
+export const isOfferedByAnotherPeer = (
+  offers: FileOffers,
   peerId: string,
-  magnetURI: string,
-  {
-    isOriginated,
-    offerOwners,
-  }: {
-    isOriginated: (magnetURI: string) => boolean
-    offerOwners: MagnetOwners
-  }
-): boolean => {
-  if (isOriginated(magnetURI)) return false
-
-  const owner = offerOwners.get(magnetURI)
-
-  return owner === undefined || owner === peerId
-}
+  magnetURI: string
+): boolean =>
+  Object.entries(offers).some(
+    ([offeringPeerId, offer]) =>
+      offeringPeerId !== peerId && offer.magnetURI === magnetURI
+  )
 
 /**
  * Whether an offer should be rescinded now that it has been withdrawn or its
