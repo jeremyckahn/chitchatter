@@ -9,6 +9,7 @@ import {
   FileOffers,
   applyFileOffer,
   isEveryFileInlineMedia,
+  isOfferedByAnotherPeer,
   removeFileOffer,
   shouldRescindOffer,
 } from 'core/chat/fileOffers'
@@ -21,7 +22,7 @@ import {
   removePeer,
 } from 'core/chat/peers'
 import { UserMetadata } from 'core/chat/protocol'
-import { applyTranscriptLimit } from 'core/chat/transcript'
+import { applyTranscriptLimit, getInlineMediaUris } from 'core/chat/transcript'
 import {
   messageTranscriptSizeLimit,
   typingStatusExpiry,
@@ -131,6 +132,12 @@ export class ChatRoom extends EventTarget {
   private typingExpiryTimer: ReturnType<typeof setTimeout> | null = null
 
   private selfFileOfferMagnetUri: string | null = null
+
+  /**
+   * Magnets a peer announced as all inline media. Their torrents outlive the
+   * offer, so a later claim on the same magnet cannot be used to destroy them.
+   */
+  private retainedMagnetUris: Set<string> = new Set()
 
   private selfOfferedFiles: readonly FileHandle[] | null = null
 
@@ -725,13 +732,15 @@ export class ChatRoom extends EventTarget {
     if (!this.isFromRoomPeer(peerId)) return
 
     if (metadata) {
+      if (metadata.isAllInlineMedia) {
+        this.retainedMagnetUris.add(metadata.magnetURI)
+      }
+
       this.fileOffers = applyFileOffer(this.fileOffers, peerId, metadata)
     } else {
       const withdrawn = this.fileOffers[peerId]
 
-      if (
-        shouldRescindOffer(withdrawn, this.adapters.fileTransfer.isOffering)
-      ) {
+      if (this.shouldStopSeedingOffer(peerId, withdrawn)) {
         this.stopSeeding(withdrawn.magnetURI)
       }
 
@@ -741,6 +750,37 @@ export class ChatRoom extends EventTarget {
     this.updatePeer(peerId, { offeredFileId: metadata?.magnetURI ?? null })
     this.emit(ChatRoomEvent.FILE_OFFER_CHANGE, { peerId, metadata })
   }
+
+  /**
+   * Whether a peer's withdrawn (or departed) offer means this client should
+   * stop seeding it. Decided from this client's own records, not from anything
+   * the peer wrote: see {@link shouldRescindOffer}.
+   */
+  private shouldStopSeedingOffer = (
+    peerId: string,
+    offer: FileOfferMetadata | undefined
+  ) => {
+    // A direct-message room cannot tell which torrents its peer's offer made
+    // this client seed: downloads happen outside the core, and the file
+    // transfer it would rescind through is shared with the group room, so a
+    // magnet the peer names may well be one this client re-seeds for the group.
+    // Stopping on its say-so would hand every DM peer a way to destroy those.
+    // Leaving the group room still ends all seeding.
+    if (this.isDirectMessageRoom) return false
+
+    return shouldRescindOffer(
+      offer,
+      this.adapters.fileTransfer.isOffering,
+      magnetURI =>
+        this.isProtectedFromPeerRescind(magnetURI) ||
+        isOfferedByAnotherPeer(this.fileOffers, peerId, magnetURI)
+    )
+  }
+
+  private isProtectedFromPeerRescind = (magnetURI: string) =>
+    this.adapters.fileTransfer.isOriginated(magnetURI) ||
+    this.retainedMagnetUris.has(magnetURI) ||
+    getInlineMediaUris(this.messageLog).includes(magnetURI)
 
   private handlePeerJoin = (peerId: string) => {
     this.departedPeerIds.delete(peerId)
@@ -801,7 +841,7 @@ export class ChatRoom extends EventTarget {
     const peer = findPeer(this.peers, peerId)
     const offer = this.fileOffers[peerId]
 
-    if (shouldRescindOffer(offer, this.adapters.fileTransfer.isOffering)) {
+    if (this.shouldStopSeedingOffer(peerId, offer)) {
       this.stopSeeding(offer.magnetURI)
     }
 
@@ -988,6 +1028,8 @@ export class ChatRoom extends EventTarget {
    * end of the process in the Node host this core is built for.
    */
   private stopSeeding = (magnetURI: string) => {
+    this.retainedMagnetUris.delete(magnetURI)
+
     void this.adapters.fileTransfer
       .rescind(magnetURI)
       .catch(error =>

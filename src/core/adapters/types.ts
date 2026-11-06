@@ -45,6 +45,16 @@ export interface FileTransferAdapter {
   rescind: (magnetURI: string) => Promise<void>
   rescindAll: () => Promise<void>
   isOffering: (magnetURI: string) => boolean
+  /**
+   * Whether this client started seeding `magnetURI` itself through `offer`, as
+   * opposed to re-seeding it after downloading it from someone else.
+   *
+   * It is the adapter's to answer, not a room's, because the adapter is shared:
+   * a group room and each direct-message room offer and rescind through the one
+   * instance, so only it sees every torrent this client started. A peer's say-so
+   * must never stop one of these.
+   */
+  isOriginated: (magnetURI: string) => boolean
 }
 
 /** Injectable so tests can control time instead of waiting for it. */

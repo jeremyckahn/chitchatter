@@ -44,6 +44,7 @@ export const noopFileTransfer: FileTransferAdapter = {
   rescind: async () => {},
   rescindAll: async () => {},
   isOffering: () => false,
+  isOriginated: () => false,
 }
 
 export const systemClock: ClockAdapter = { now: () => Date.now() }

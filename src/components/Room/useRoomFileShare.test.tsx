@@ -31,6 +31,7 @@ const createRoom = ({
     rescind: vi.fn(async () => {}),
     rescindAll: vi.fn(async () => {}),
     isOffering: vi.fn(() => true),
+    isOriginated: vi.fn(() => false),
   }
 
   const chatRoom = new ChatRoom({

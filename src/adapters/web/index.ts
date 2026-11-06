@@ -13,6 +13,8 @@ import {
 import { FileHandle } from 'core/chat/fileOffers'
 import { time } from 'core/lib/Time'
 import { getSharedAudio } from 'lib/Audio'
+import type { FileTransfer } from 'secure-file-transfer'
+
 import { FileTransferService } from 'services/FileTransfer'
 import { notification } from 'services/Notification'
 
@@ -48,6 +50,39 @@ export const createWebStorage = (
 })
 
 /**
+ * The slice of {@link FileTransferService} the adapter uses. Narrow so a test
+ * can supply a real, typed stand-in rather than a cast one.
+ */
+export interface FileTransferSource {
+  fileTransfer: Pick<
+    FileTransfer,
+    'offer' | 'rescind' | 'rescindAll' | 'isOffering'
+  >
+}
+
+const originatedBySource = new WeakMap<FileTransferSource, Set<string>>()
+
+/**
+ * The magnet URIs this client started seeding, per file transfer service.
+ *
+ * `createWebAdapters` runs once per room, but every room of a session shares
+ * one service (and so one WebTorrent client). Keeping the record on the service
+ * rather than in each adapter's closure is what lets a direct-message room see
+ * the torrents the group room started, and the other way round.
+ */
+const getOriginatedMagnetUris = (source: FileTransferSource) => {
+  const existing = originatedBySource.get(source)
+
+  if (existing) return existing
+
+  const created = new Set<string>()
+
+  originatedBySource.set(source, created)
+
+  return created
+}
+
+/**
  * Encrypted file transfer over WebTorrent.
  *
  * The underlying library takes a `FileList`/`File[]`, which the core's
@@ -55,20 +90,34 @@ export const createWebStorage = (
  * real `File`s, so the cast is sound here and nowhere else.
  */
 export const createWebFileTransfer = (
-  fileTransferService: FileTransferService
+  fileTransferService: FileTransferSource
 ): FileTransferAdapter => {
   const { fileTransfer } = fileTransferService
+  const originatedMagnetUris = getOriginatedMagnetUris(fileTransferService)
 
   return {
-    offer: (files: readonly FileHandle[], roomId: string) =>
-      fileTransfer.offer(files as unknown as File[], roomId),
+    offer: async (files: readonly FileHandle[], roomId: string) => {
+      const magnetURI = await fileTransfer.offer(
+        files as unknown as File[],
+        roomId
+      )
+
+      originatedMagnetUris.add(magnetURI)
+
+      return magnetURI
+    },
     rescind: async (magnetURI: string) => {
+      originatedMagnetUris.delete(magnetURI)
+
       await fileTransfer.rescind(magnetURI)
     },
     rescindAll: async () => {
+      originatedMagnetUris.clear()
+
       await fileTransfer.rescindAll()
     },
     isOffering: (magnetURI: string) => fileTransfer.isOffering(magnetURI),
+    isOriginated: (magnetURI: string) => originatedMagnetUris.has(magnetURI),
   }
 }
 
