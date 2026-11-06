@@ -1080,6 +1080,36 @@ describe('ChatRoom', () => {
         expect(bob.adapters.logger.warn).toHaveBeenCalled()
       })
 
+      it('keeps the file available when its owner reconnects under a new peer id before the old one is gone', async () => {
+        const alice = createClient(network, 0)
+        const bob = createClient(network, 1)
+
+        await joinAll(alice, bob)
+
+        // Alice re-seeds what Bob offered: the mock reports every magnet as
+        // being offered.
+        await bob.chatRoom.offerFiles([
+          { name: 'doc.pdf', type: 'application/pdf', size: 10 },
+        ])
+        await settle()
+
+        // Bob's connection comes back under a new peer id while the transport
+        // still lists the old one, so the same file is announced twice.
+        const returning = await createForger(5)
+
+        await returning.offer('magnet:peer-1')
+        await settle()
+
+        bob.transport.leaveRoom()
+        await settle()
+
+        expect(alice.chatRoom.getFileOffers()['peer-5']).toEqual({
+          magnetURI: 'magnet:peer-1',
+          isAllInlineMedia: false,
+        })
+        expect(alice.fileTransfer.rescind).not.toHaveBeenCalled()
+      })
+
       it('still lets a peer rejoin and offer the same file after its old session left', async () => {
         const alice = createClient(network, 0)
         const bob = createClient(network, 1)
