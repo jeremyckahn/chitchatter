@@ -13,6 +13,8 @@ import {
 import { FileHandle } from 'core/chat/fileOffers'
 import { time } from 'core/lib/Time'
 import { getSharedAudio } from 'lib/Audio'
+import type { FileTransfer } from 'secure-file-transfer'
+
 import { FileTransferService } from 'services/FileTransfer'
 import { notification } from 'services/Notification'
 
@@ -47,7 +49,18 @@ export const createWebStorage = (
   removeItem: (key: string) => persistedStorage.removeItem(key),
 })
 
-const originatedByService = new WeakMap<FileTransferService, Set<string>>()
+/**
+ * The slice of {@link FileTransferService} the adapter uses. Narrow so a test
+ * can supply a real, typed stand-in rather than a cast one.
+ */
+export interface FileTransferSource {
+  fileTransfer: Pick<
+    FileTransfer,
+    'offer' | 'rescind' | 'rescindAll' | 'isOffering'
+  >
+}
+
+const originatedBySource = new WeakMap<FileTransferSource, Set<string>>()
 
 /**
  * The magnet URIs this client started seeding, per file transfer service.
@@ -57,14 +70,14 @@ const originatedByService = new WeakMap<FileTransferService, Set<string>>()
  * rather than in each adapter's closure is what lets a direct-message room see
  * the torrents the group room started, and the other way round.
  */
-const getOriginatedMagnetUris = (service: FileTransferService) => {
-  const existing = originatedByService.get(service)
+const getOriginatedMagnetUris = (source: FileTransferSource) => {
+  const existing = originatedBySource.get(source)
 
   if (existing) return existing
 
   const created = new Set<string>()
 
-  originatedByService.set(service, created)
+  originatedBySource.set(source, created)
 
   return created
 }
@@ -77,7 +90,7 @@ const getOriginatedMagnetUris = (service: FileTransferService) => {
  * real `File`s, so the cast is sound here and nowhere else.
  */
 export const createWebFileTransfer = (
-  fileTransferService: FileTransferService
+  fileTransferService: FileTransferSource
 ): FileTransferAdapter => {
   const { fileTransfer } = fileTransferService
   const originatedMagnetUris = getOriginatedMagnetUris(fileTransferService)
