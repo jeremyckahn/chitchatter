@@ -15,10 +15,12 @@ import {
 } from 'core/chat/events'
 import { signIdentity } from 'core/chat/identity'
 import { UserMetadata } from 'core/chat/protocol'
+import { messageCharacterSizeLimit } from 'core/config/messaging'
 import { encryption } from 'core/crypto/Encryption'
 import { PeerAction } from 'core/models/network'
 import {
   FileOfferMetadata,
+  isInlineMedia,
   isMessageReceived,
   PeerVerificationState,
   ReceivedMessage,
@@ -60,6 +62,21 @@ const makeIds = (): IdAdapter => {
 
 const roomId = 'test-room'
 
+/**
+ * A well-formed magnet URI for `name`, in the shape WebTorrent produces: one
+ * `urn:btih:` info hash (forty hex digits) and nothing else the receiving
+ * client would act on. Distinct names give distinct hashes.
+ */
+const magnetFor = (name: string) => {
+  const hash = [...name]
+    .map(char => char.charCodeAt(0).toString(16).padStart(2, '0'))
+    .join('')
+    .padEnd(40, '0')
+    .slice(0, 40)
+
+  return `magnet:?xt=urn:btih:${hash}&dn=${name}`
+}
+
 interface Client {
   chatRoom: ChatRoom
   transport: InMemoryTransport
@@ -74,10 +91,12 @@ const createClient = (
     password,
     customUsername = '',
     targetPeerId,
+    transcriptSizeLimit,
   }: {
     password?: string
     customUsername?: string
     targetPeerId?: string
+    transcriptSizeLimit?: number
   } = {}
 ): Client => {
   const peerId = `peer-${index}`
@@ -88,9 +107,9 @@ const createClient = (
   const inlineMedia = new Set<string>()
   const fileTransfer: FileTransferAdapter = {
     offer: vi.fn(async () => {
-      originated.add(`magnet:${peerId}`)
+      originated.add(magnetFor(peerId))
 
-      return `magnet:${peerId}`
+      return magnetFor(peerId)
     }),
     rescind: vi.fn(async (magnetURI: string) => {
       originated.delete(magnetURI)
@@ -125,6 +144,7 @@ const createClient = (
     adapters,
     password,
     targetPeerId,
+    transcriptSizeLimit,
   })
 
   return { chatRoom, transport, adapters, fileTransfer }
@@ -790,7 +810,7 @@ describe('ChatRoom', () => {
       const network2 = createInMemoryNetwork()
       const transport = new InMemoryTransport(network2, 'peer-0')
       const fileTransfer: FileTransferAdapter = {
-        offer: vi.fn(async () => 'magnet:evicted'),
+        offer: vi.fn(async () => magnetFor('evicted')),
         rescind: vi.fn(async () => {}),
         rescindAll: vi.fn(async () => {}),
         isOffering: vi.fn(() => true),
@@ -826,7 +846,639 @@ describe('ChatRoom', () => {
         'two',
         'three',
       ])
-      expect(fileTransfer.rescind).toHaveBeenCalledWith('magnet:evicted')
+      expect(fileTransfer.rescind).toHaveBeenCalledWith(magnetFor('evicted'))
+    })
+  })
+
+  // Everything a peer sends is untrusted, and a transcript is the largest thing
+  // one can send at once. These tests put raw frames on the wire the way a
+  // hostile client would, bypassing the types the honest sender is held to.
+  describe('input from an untrusted peer', () => {
+    const entryLimit = 5
+
+    /** A hostile client on the room's network. Its frames are `unknown` on purpose. */
+    const createHostilePeer = (index = 9) => {
+      const transport = new InMemoryTransport(network, `peer-${index}`)
+
+      return {
+        transport,
+        send: async (peerAction: PeerAction, payload: unknown) => {
+          const [send] = transport.makeAction<DataPayload>(
+            peerAction,
+            ActionNamespace.GROUP
+          )
+
+          // Sound only because this helper exists to defeat the type: it is how
+          // a frame the protocol never promised to be well-formed is injected.
+          await send(payload as DataPayload)
+        },
+      }
+    }
+
+    const textEntry = (
+      id: string,
+      overrides: Record<string, unknown> = {}
+    ) => ({
+      id,
+      text: `text of ${id}`,
+      timeSent: 1_000,
+      timeReceived: 1_000,
+      authorId: 'user-9',
+      ...overrides,
+    })
+
+    const mediaEntry = (
+      id: string,
+      magnetURI: unknown,
+      overrides: Record<string, unknown> = {}
+    ) => ({
+      id,
+      magnetURI,
+      timeSent: 1_000,
+      timeReceived: 1_000,
+      authorId: 'user-9',
+      ...overrides,
+    })
+
+    const createVictim = (transcriptSizeLimit = entryLimit) => {
+      const victim = createClient(network, 0, { transcriptSizeLimit })
+
+      return victim
+    }
+
+    describe('a transcript', () => {
+      it('is ignored when it is not an array', async () => {
+        const alice = createVictim()
+        const mallory = createHostilePeer()
+
+        await alice.chatRoom.join()
+
+        for (const payload of [null, 'text', 42, true, {}, { length: 3 }]) {
+          await expect(
+            mallory.send(PeerAction.MESSAGE_TRANSCRIPT, payload)
+          ).resolves.toBeUndefined()
+        }
+
+        await settle()
+
+        expect(alice.chatRoom.getMessageLog()).toEqual([])
+      })
+
+      it('drops malformed entries and keeps the well-formed ones around them', async () => {
+        const alice = createVictim()
+        const mallory = createHostilePeer()
+
+        await alice.chatRoom.join()
+
+        await mallory.send(PeerAction.MESSAGE_TRANSCRIPT, [
+          textEntry('first'),
+          null,
+          'a string',
+          7,
+          [],
+          {},
+          textEntry('no-text', { text: undefined }),
+          textEntry('text-is-a-number', { text: 5 }),
+          textEntry('text-is-an-object', { text: { nested: true } }),
+          textEntry('no-author', { authorId: undefined }),
+          textEntry('author-is-a-number', { authorId: 5 }),
+          textEntry('empty-author', { authorId: '' }),
+          textEntry('', {}),
+          textEntry(String(5), { id: 5 }),
+          textEntry('last'),
+        ])
+        await settle()
+
+        expect(alice.chatRoom.getMessageLog().map(({ id }) => id)).toEqual([
+          'first',
+          'last',
+        ])
+      })
+
+      it.each([
+        ['a string', '1000'],
+        ['null', null],
+        ['too large for a Date', 1e300],
+        ['too small for a Date', -1e300],
+        ['infinite', Infinity],
+        ['not a number', NaN],
+      ])('drops an entry whose timeSent is %s', async (_label, timeSent) => {
+        // Formatting such a timestamp throws a RangeError in the renderer, so
+        // one of these would blank the transcript of everyone who received it.
+        const alice = createVictim()
+        const mallory = createHostilePeer()
+
+        await alice.chatRoom.join()
+
+        await mallory.send(PeerAction.MESSAGE_TRANSCRIPT, [
+          textEntry('bad-time', { timeSent }),
+          textEntry('good'),
+        ])
+        await settle()
+
+        expect(alice.chatRoom.getMessageLog().map(({ id }) => id)).toEqual([
+          'good',
+        ])
+      })
+
+      it('carries over only the fields the protocol defines', async () => {
+        // `isInlineMedia` is `'magnetURI' in message`, so a smuggled field would
+        // turn a text entry into a download.
+        const alice = createVictim()
+        const mallory = createHostilePeer()
+
+        await alice.chatRoom.join()
+
+        await mallory.send(PeerAction.MESSAGE_TRANSCRIPT, [
+          textEntry('smuggler', {
+            magnetURI: magnetFor('smuggled'),
+            isAdmin: true,
+          }),
+        ])
+        await settle()
+
+        const [entry] = alice.chatRoom.getMessageLog()
+
+        expect(entry).toEqual({
+          id: 'smuggler',
+          text: 'text of smuggler',
+          timeSent: 1_000,
+          timeReceived: expect.any(Number),
+          authorId: 'user-9',
+        })
+        expect(alice.fileTransfer.trackInlineMedia).not.toHaveBeenCalled()
+      })
+
+      it("stamps its own receipt time rather than trusting the sender's", async () => {
+        const alice = createVictim()
+        const mallory = createHostilePeer()
+
+        await alice.chatRoom.join()
+
+        const before = Date.now()
+
+        await mallory.send(PeerAction.MESSAGE_TRANSCRIPT, [
+          textEntry('claims-the-past', { timeReceived: 5 }),
+        ])
+        await settle()
+
+        const [entry] = alice.chatRoom.getMessageLog()
+
+        expect(isMessageReceived(entry)).toBe(true)
+
+        if (!isMessageReceived(entry)) return
+
+        expect(entry.timeReceived).toBeGreaterThanOrEqual(before)
+      })
+
+      it('drops an entry whose text is over the message size limit', async () => {
+        const alice = createVictim()
+        const mallory = createHostilePeer()
+
+        await alice.chatRoom.join()
+
+        await mallory.send(PeerAction.MESSAGE_TRANSCRIPT, [
+          textEntry('too-long', {
+            text: 'x'.repeat(messageCharacterSizeLimit + 1),
+          }),
+          textEntry('at-the-limit', {
+            text: 'x'.repeat(messageCharacterSizeLimit),
+          }),
+        ])
+        await settle()
+
+        expect(alice.chatRoom.getMessageLog().map(({ id }) => id)).toEqual([
+          'at-the-limit',
+        ])
+      })
+
+      it('drops an entry with an oversized id or author', async () => {
+        const alice = createVictim()
+        const mallory = createHostilePeer()
+
+        await alice.chatRoom.join()
+
+        await mallory.send(PeerAction.MESSAGE_TRANSCRIPT, [
+          textEntry('x'.repeat(10_000)),
+          textEntry('long-author', { authorId: 'x'.repeat(10_000) }),
+          textEntry('fine'),
+        ])
+        await settle()
+
+        expect(alice.chatRoom.getMessageLog().map(({ id }) => id)).toEqual([
+          'fine',
+        ])
+      })
+
+      it('keeps the first of several entries that share an id', async () => {
+        // The renderer keys on the id, so a duplicate corrupts the list.
+        const alice = createVictim()
+        const mallory = createHostilePeer()
+
+        await alice.chatRoom.join()
+
+        await mallory.send(PeerAction.MESSAGE_TRANSCRIPT, [
+          textEntry('same', { text: 'original' }),
+          textEntry('same', { text: 'replacement' }),
+          textEntry('other'),
+        ])
+        await settle()
+
+        expect(alice.chatRoom.getMessageLog()).toMatchObject([
+          { id: 'same', text: 'original' },
+          { id: 'other' },
+        ])
+      })
+
+      it('is cut to its most recent entries before any of them is acted on', async () => {
+        const alice = createVictim()
+        const mallory = createHostilePeer()
+
+        await alice.chatRoom.join()
+
+        const media = Array.from({ length: entryLimit + 3 }, (_, i) =>
+          mediaEntry(`media-${i}`, magnetFor(`media-${i}`))
+        )
+
+        await mallory.send(PeerAction.MESSAGE_TRANSCRIPT, media)
+        await settle()
+
+        expect(alice.chatRoom.getMessageLog().map(({ id }) => id)).toEqual(
+          media.slice(-entryLimit).map(({ id }) => id)
+        )
+
+        // The excess never entered the log, so it must not have been tracked,
+        // let alone untracked or rescinded on the way out.
+        expect(alice.fileTransfer.trackInlineMedia).toHaveBeenCalledTimes(
+          entryLimit
+        )
+        expect(alice.fileTransfer.untrackInlineMedia).not.toHaveBeenCalled()
+        expect(alice.fileTransfer.rescind).not.toHaveBeenCalled()
+      })
+
+      it("cannot name the victim's own file in an over-long history to destroy it", async () => {
+        // Entries past the limit are evicted, and eviction stops seeding the
+        // magnet an entry names. The magnet of a file the victim is offering is
+        // visible to everyone in the room, so naming it is enough.
+        const alice = createVictim()
+        const mallory = createHostilePeer()
+
+        await alice.chatRoom.join()
+        await alice.chatRoom.offerFiles([
+          { name: 'doc.pdf', type: 'application/pdf', size: 10 },
+        ])
+
+        const victimsMagnet = alice.chatRoom.getSelfFileOfferMagnetUri()
+
+        expect(victimsMagnet).toBe(magnetFor('peer-0'))
+
+        await mallory.send(PeerAction.MESSAGE_TRANSCRIPT, [
+          mediaEntry('names-the-file', victimsMagnet),
+          ...Array.from({ length: entryLimit }, (_, i) =>
+            textEntry(`pad-${i}`)
+          ),
+        ])
+        await settle()
+
+        expect(alice.fileTransfer.rescind).not.toHaveBeenCalled()
+        expect(alice.chatRoom.getSelfFileOfferMagnetUri()).toBe(victimsMagnet)
+      })
+
+      it("cannot name the victim's own file in a history that later scrolls out", async () => {
+        // The same attack without exceeding the limit: the forged entry sits in
+        // the log until ordinary chatter pushes it off the front.
+        const alice = createVictim()
+        const bob = createClient(network, 1)
+        const mallory = createHostilePeer()
+
+        await joinAll(alice, bob)
+        await alice.chatRoom.offerFiles([
+          { name: 'doc.pdf', type: 'application/pdf', size: 10 },
+        ])
+
+        const victimsMagnet = alice.chatRoom.getSelfFileOfferMagnetUri()
+
+        await mallory.send(PeerAction.MESSAGE_TRANSCRIPT, [
+          mediaEntry('names-the-file', victimsMagnet),
+          ...Array.from({ length: entryLimit - 1 }, (_, i) =>
+            textEntry(`pad-${i}`)
+          ),
+        ])
+        await settle()
+
+        expect(alice.chatRoom.getMessageLog()).toHaveLength(entryLimit)
+
+        await bob.chatRoom.sendMessage('scrolls the forged entry off')
+        await settle()
+
+        expect(alice.chatRoom.getMessageLog()).toHaveLength(entryLimit)
+        expect(alice.chatRoom.getMessageLog()[0].id).not.toBe('names-the-file')
+        expect(alice.fileTransfer.rescind).not.toHaveBeenCalled()
+        expect(alice.chatRoom.getSelfFileOfferMagnetUri()).toBe(victimsMagnet)
+      })
+
+      it('still backfills after an earlier peer sent an empty one', async () => {
+        // Behavior to preserve: an empty transcript must not use up the one
+        // chance to backfill, or a hostile peer could withhold history by
+        // answering first with nothing.
+        const alice = createVictim()
+        const mallory = createHostilePeer()
+        const honest = createHostilePeer(8)
+
+        await alice.chatRoom.join()
+
+        await mallory.send(PeerAction.MESSAGE_TRANSCRIPT, [])
+        await honest.send(PeerAction.MESSAGE_TRANSCRIPT, [textEntry('history')])
+        await settle()
+
+        expect(alice.chatRoom.getMessageLog().map(({ id }) => id)).toEqual([
+          'history',
+        ])
+      })
+
+      it('attributes entries to whatever author the sender names, because history is not signed', async () => {
+        // A KNOWN LIMITATION, pinned so that it is not mistaken for a
+        // guarantee. Messages carry no signature, and a user id is a public
+        // label rather than a secret, so a receiver has nothing to check an
+        // author, a timestamp or the existence of a message against. The same
+        // is true of a live message. Flip this test when messages are signed.
+        const alice = createVictim()
+        const mallory = createHostilePeer()
+
+        await alice.chatRoom.join()
+
+        await mallory.send(PeerAction.MESSAGE_TRANSCRIPT, [
+          textEntry('invented', {
+            authorId: 'user-1',
+            text: 'something user-1 never said',
+          }),
+        ])
+        await settle()
+
+        expect(alice.chatRoom.getMessageLog()).toMatchObject([
+          { authorId: 'user-1', text: 'something user-1 never said' },
+        ])
+      })
+    })
+
+    describe('a magnet URI in an inline-media entry', () => {
+      // WebTorrent's `add` takes more than magnets: an http(s) URL is fetched as
+      // a .torrent file, and a magnet's `ws` and `xs` parameters name servers it
+      // will request from. The chat UI downloads every inline-media entry it
+      // renders, so these would make each viewer's browser contact them.
+      const infoHash = 'a'.repeat(40)
+
+      const unsafeMagnets: Array<[string, unknown]> = [
+        ['a .torrent URL', 'https://attacker.example/payload.torrent'],
+        ['an http URL', 'http://127.0.0.1:8080/'],
+        ['a bare info hash', infoHash],
+        ['not a string', { magnetURI: 'magnet:?xt=urn:btih:' + infoHash }],
+        ['empty', ''],
+        ['missing an xt', 'magnet:?dn=nothing'],
+        [
+          'an xt that is not a bittorrent hash',
+          'magnet:?xt=urn:sha1:' + infoHash,
+        ],
+        ['a truncated info hash', 'magnet:?xt=urn:btih:' + 'a'.repeat(39)],
+        ['a non-hex info hash', 'magnet:?xt=urn:btih:' + 'z'.repeat(40)],
+        [
+          'two info hashes',
+          `magnet:?xt=urn:btih:${infoHash}&xt=urn:btih:${'b'.repeat(40)}`,
+        ],
+        [
+          'a web seed',
+          `magnet:?xt=urn:btih:${infoHash}&ws=${encodeURIComponent('https://attacker.example/')}`,
+        ],
+        [
+          'an exact-source torrent URL',
+          `magnet:?xt=urn:btih:${infoHash}&xs=${encodeURIComponent('https://attacker.example/x.torrent')}`,
+        ],
+        [
+          'an acceptable-source URL',
+          `magnet:?xt=urn:btih:${infoHash}&as=${encodeURIComponent('https://attacker.example/f')}`,
+        ],
+        [
+          'an unexpected parameter',
+          `magnet:?xt=urn:btih:${infoHash}&x.pe=attacker.example:6881`,
+        ],
+        [
+          'a non-websocket tracker',
+          `magnet:?xt=urn:btih:${infoHash}&tr=${encodeURIComponent('https://attacker.example/announce')}`,
+        ],
+        [
+          'a tracker that is not a URL',
+          `magnet:?xt=urn:btih:${infoHash}&tr=not%20a%20url`,
+        ],
+        [
+          'a stray magnet prefix',
+          `javascript:alert(1)//magnet:?xt=urn:btih:${infoHash}`,
+        ],
+        [
+          'an over-long value',
+          `magnet:?xt=urn:btih:${infoHash}&dn=${'x'.repeat(5_000)}`,
+        ],
+      ]
+
+      it.each(unsafeMagnets)(
+        'is rejected in a transcript when it is %s',
+        async (_label, magnetURI) => {
+          const alice = createVictim()
+          const mallory = createHostilePeer()
+
+          await alice.chatRoom.join()
+
+          await mallory.send(PeerAction.MESSAGE_TRANSCRIPT, [
+            mediaEntry('unsafe', magnetURI),
+            textEntry('kept'),
+          ])
+          await settle()
+
+          expect(alice.chatRoom.getMessageLog().map(({ id }) => id)).toEqual([
+            'kept',
+          ])
+          expect(alice.fileTransfer.trackInlineMedia).not.toHaveBeenCalled()
+        }
+      )
+
+      it.each(unsafeMagnets)(
+        'is rejected in a live inline-media message when it is %s',
+        async (_label, magnetURI) => {
+          const alice = createVictim()
+          const mallory = createHostilePeer()
+
+          await alice.chatRoom.join()
+
+          await mallory.send(PeerAction.MEDIA_MESSAGE, {
+            id: 'unsafe',
+            magnetURI,
+            timeSent: 1_000,
+            authorId: 'user-9',
+          })
+          await settle()
+
+          expect(alice.chatRoom.getMessageLog()).toEqual([])
+          expect(alice.fileTransfer.trackInlineMedia).not.toHaveBeenCalled()
+        }
+      )
+
+      it.each([
+        ['a bare magnet', `magnet:?xt=urn:btih:${infoHash}`],
+        ['an upper-case hex hash', `magnet:?xt=urn:btih:${'A'.repeat(40)}`],
+        ['a base32 hash', `magnet:?xt=urn:btih:${'A2'.repeat(16)}`],
+        [
+          'a name and secure trackers, as WebTorrent writes them',
+          `magnet:?xt=urn:btih:${infoHash}&dn=my+image+(1).png&tr=wss%3A%2F%2Ftracker.openwebtorrent.com&tr=wss%3A%2F%2Ftracker.example.org%2Fannounce`,
+        ],
+        [
+          'a local development tracker',
+          `magnet:?xt=urn:btih:${infoHash}&tr=ws%3A%2F%2Flocalhost%3A8000`,
+        ],
+        [
+          'a v1 and v2 hybrid hash',
+          `magnet:?xt=urn:btih:${infoHash}&xt=urn:btmh:1220${'b'.repeat(64)}`,
+        ],
+      ])('is accepted when it is %s', async (_label, magnetURI) => {
+        // Behavior to preserve: what the app itself produces must still pass.
+        const alice = createVictim()
+        const mallory = createHostilePeer()
+
+        await alice.chatRoom.join()
+
+        await mallory.send(PeerAction.MESSAGE_TRANSCRIPT, [
+          mediaEntry('ok', magnetURI),
+        ])
+        await settle()
+
+        expect(alice.chatRoom.getMessageLog()).toMatchObject([
+          { id: 'ok', magnetURI },
+        ])
+        expect(alice.fileTransfer.trackInlineMedia).toHaveBeenCalledWith(
+          magnetURI
+        )
+      })
+    })
+
+    describe('a live message', () => {
+      it.each([
+        ['null', null],
+        ['a string', 'hello'],
+        ['an empty object', {}],
+        ['a number for text', { id: 'a', text: 5, timeSent: 1, authorId: 'u' }],
+        ['no id', { text: 'hi', timeSent: 1, authorId: 'u' }],
+        ['no author', { id: 'a', text: 'hi', timeSent: 1 }],
+        [
+          'an unusable timestamp',
+          { id: 'a', text: 'hi', timeSent: 1e300, authorId: 'u' },
+        ],
+      ])('is dropped when it is %s', async (_label, payload) => {
+        // Unlike a transcript entry, this one reaches every peer in the room.
+        const alice = createVictim()
+        const mallory = createHostilePeer()
+
+        await alice.chatRoom.join()
+
+        await expect(
+          mallory.send(PeerAction.MESSAGE, payload)
+        ).resolves.toBeUndefined()
+        await settle()
+
+        expect(alice.chatRoom.getMessageLog()).toEqual([])
+      })
+
+      it('cannot become inline media through a smuggled magnet field', async () => {
+        const alice = createVictim()
+        const mallory = createHostilePeer()
+
+        await alice.chatRoom.join()
+
+        await mallory.send(PeerAction.MESSAGE, {
+          id: 'a',
+          text: 'hi',
+          timeSent: 1,
+          authorId: 'user-9',
+          magnetURI: 'https://attacker.example/payload.torrent',
+        })
+        await settle()
+
+        const [message] = alice.chatRoom.getMessageLog()
+
+        expect(message).toMatchObject({ id: 'a', text: 'hi' })
+        expect(message).not.toHaveProperty('magnetURI')
+        expect(alice.fileTransfer.trackInlineMedia).not.toHaveBeenCalled()
+      })
+
+      it('is dropped when its text is over the message size limit', async () => {
+        const alice = createVictim()
+        const mallory = createHostilePeer()
+
+        await alice.chatRoom.join()
+
+        await mallory.send(PeerAction.MESSAGE, {
+          id: 'a',
+          text: 'x'.repeat(messageCharacterSizeLimit + 1),
+          timeSent: 1,
+          authorId: 'user-9',
+        })
+        await settle()
+
+        expect(alice.chatRoom.getMessageLog()).toEqual([])
+      })
+    })
+
+    describe('what an evicted inline-media entry may stop seeding', () => {
+      const image = { name: 'a.png', type: 'image/png', size: 1 }
+
+      it('stops seeding media this client sent once it scrolls out', async () => {
+        // Behavior to preserve.
+        const alice = createVictim(2)
+
+        await alice.chatRoom.join()
+        await alice.chatRoom.sendInlineMedia([image])
+        await alice.chatRoom.sendMessage('one')
+        await alice.chatRoom.sendMessage('two')
+
+        expect(alice.fileTransfer.rescind).toHaveBeenCalledWith(
+          magnetFor('peer-0')
+        )
+      })
+
+      it('keeps seeding media that a later entry still shows', async () => {
+        // The same image sent twice is one torrent. Evicting the first entry
+        // must not tear down what the second still needs.
+        const alice = createVictim(3)
+
+        await alice.chatRoom.join()
+        await alice.chatRoom.sendInlineMedia([image])
+        await alice.chatRoom.sendInlineMedia([image])
+        await alice.chatRoom.sendMessage('one')
+        await alice.chatRoom.sendMessage('two')
+
+        expect(alice.chatRoom.getMessageLog()).toHaveLength(3)
+        expect(alice.fileTransfer.rescind).not.toHaveBeenCalled()
+        expect(alice.fileTransfer.isInlineMedia(magnetFor('peer-0'))).toBe(true)
+      })
+
+      it('keeps seeding a file another present peer is still offering', async () => {
+        const alice = createVictim(2)
+        const bob = createClient(network, 1)
+
+        await joinAll(alice, bob)
+
+        await bob.chatRoom.offerFiles([image])
+        await bob.chatRoom.sendInlineMedia([image])
+        await settle()
+        await bob.chatRoom.sendMessage('one')
+        await bob.chatRoom.sendMessage('two')
+        await settle()
+
+        // Alice re-seeds Bob's image, which scrolled out of her log while Bob
+        // is still offering the same torrent.
+        expect(alice.chatRoom.getMessageLog().map(isInlineMedia)).toEqual([
+          false,
+          false,
+        ])
+        expect(alice.fileTransfer.rescind).not.toHaveBeenCalled()
+      })
     })
   })
 
@@ -848,10 +1500,10 @@ describe('ChatRoom', () => {
 
       expect(onOfferChange).toHaveBeenCalledTimes(1)
       expect(bob.chatRoom.getFileOffers()['peer-0']).toEqual({
-        magnetURI: 'magnet:peer-0',
+        magnetURI: magnetFor('peer-0'),
         isAllInlineMedia: false,
       })
-      expect(bob.chatRoom.getPeers()[0].offeredFileId).toBe('magnet:peer-0')
+      expect(bob.chatRoom.getPeers()[0].offeredFileId).toBe(magnetFor('peer-0'))
     })
 
     it('clears the offer on both sides when it is rescinded', async () => {
@@ -870,7 +1522,9 @@ describe('ChatRoom', () => {
 
       expect(bob.chatRoom.getFileOffers()).toEqual({})
       expect(bob.chatRoom.getPeers()[0].offeredFileId).toBeNull()
-      expect(alice.fileTransfer.rescind).toHaveBeenCalledWith('magnet:peer-0')
+      expect(alice.fileTransfer.rescind).toHaveBeenCalledWith(
+        magnetFor('peer-0')
+      )
     })
 
     it('spares an all-inline-media offer from being rescinded', async () => {
@@ -900,7 +1554,7 @@ describe('ChatRoom', () => {
       await settle()
 
       expect(bob.chatRoom.getFileOffers()['peer-0']).toMatchObject({
-        magnetURI: 'magnet:peer-0',
+        magnetURI: magnetFor('peer-0'),
       })
     })
 
@@ -919,7 +1573,9 @@ describe('ChatRoom', () => {
       await settle()
 
       expect(alice.chatRoom.getFileOffers()).toEqual({})
-      expect(alice.fileTransfer.rescind).toHaveBeenCalledWith('magnet:peer-1')
+      expect(alice.fileTransfer.rescind).toHaveBeenCalledWith(
+        magnetFor('peer-1')
+      )
     })
 
     it('tells subscribers an offer is gone when the peer leaves', async () => {
@@ -983,14 +1639,14 @@ describe('ChatRoom', () => {
 
         const mallory = await createForger(2)
 
-        await mallory.offer('magnet:peer-0')
+        await mallory.offer(magnetFor('peer-0'))
         await mallory.withdraw()
         await settle()
 
         expect(alice.fileTransfer.rescind).not.toHaveBeenCalled()
         expect(bob.fileTransfer.rescind).not.toHaveBeenCalled()
         expect(bob.chatRoom.getFileOffers()).toEqual({
-          'peer-0': { magnetURI: 'magnet:peer-0', isAllInlineMedia: false },
+          'peer-0': { magnetURI: magnetFor('peer-0'), isAllInlineMedia: false },
         })
       })
 
@@ -1007,7 +1663,7 @@ describe('ChatRoom', () => {
         // still there to be attacked.
         const mallory = await createForger(2)
 
-        await mallory.offer('magnet:peer-0', false)
+        await mallory.offer(magnetFor('peer-0'), false)
         await mallory.withdraw()
         await settle()
 
@@ -1027,7 +1683,7 @@ describe('ChatRoom', () => {
 
         const mallory = await createForger(2)
 
-        await mallory.offer('magnet:peer-0', false)
+        await mallory.offer(magnetFor('peer-0'), false)
         await mallory.withdraw()
         await settle()
 
@@ -1045,7 +1701,7 @@ describe('ChatRoom', () => {
 
         const mallory = await createForger(2)
 
-        await mallory.offer('magnet:peer-0')
+        await mallory.offer(magnetFor('peer-0'))
         mallory.transport.leaveRoom()
         await settle()
 
@@ -1068,7 +1724,7 @@ describe('ChatRoom', () => {
 
           const mallory = await createForger(2, ActionNamespace.DIRECT_MESSAGE)
 
-          await mallory.offer('magnet:peer-0')
+          await mallory.offer(magnetFor('peer-0'))
           await mallory.withdraw()
           await settle()
 
@@ -1087,7 +1743,7 @@ describe('ChatRoom', () => {
 
           const mallory = await createForger(1)
 
-          await mallory.offer('magnet:peer-0')
+          await mallory.offer(magnetFor('peer-0'))
           await mallory.withdraw()
           await settle()
 
@@ -1123,7 +1779,10 @@ describe('ChatRoom', () => {
             ActionNamespace.GROUP
           )
 
-          await send({ magnetURI: 'magnet:peer-2', isAllInlineMedia: false })
+          await send({
+            magnetURI: magnetFor('peer-2'),
+            isAllInlineMedia: false,
+          })
           await send(null)
           await settle()
 
@@ -1147,7 +1806,7 @@ describe('ChatRoom', () => {
 
           const mallory = await createForger(2, ActionNamespace.DIRECT_MESSAGE)
 
-          await mallory.offer('magnet:peer-0')
+          await mallory.offer(magnetFor('peer-0'))
           await mallory.withdraw()
           await settle()
 
@@ -1199,7 +1858,7 @@ describe('ChatRoom', () => {
 
         const mallory = await createForger(2)
 
-        await mallory.offer('magnet:peer-1')
+        await mallory.offer(magnetFor('peer-1'))
         await settle()
 
         // The claim is shown like any offer: it cannot be told apart from the
@@ -1229,7 +1888,7 @@ describe('ChatRoom', () => {
 
         const mallory = await createForger(2)
 
-        await mallory.offer('magnet:peer-1')
+        await mallory.offer(magnetFor('peer-1'))
         await settle()
 
         bob.transport.leaveRoom()
@@ -1241,7 +1900,9 @@ describe('ChatRoom', () => {
         await mallory.withdraw()
         await settle()
 
-        expect(alice.fileTransfer.rescind).toHaveBeenCalledWith('magnet:peer-1')
+        expect(alice.fileTransfer.rescind).toHaveBeenCalledWith(
+          magnetFor('peer-1')
+        )
       })
 
       describe('a file announced as inline media', () => {
@@ -1263,7 +1924,7 @@ describe('ChatRoom', () => {
 
           const mallory = await createForger(2)
 
-          await mallory.offer('magnet:peer-1', false)
+          await mallory.offer(magnetFor('peer-1'), false)
           await mallory.withdraw()
           await settle()
 
@@ -1293,12 +1954,12 @@ describe('ChatRoom', () => {
 
           const mallory = await createForger(2)
 
-          await mallory.offer('magnet:peer-1', false)
+          await mallory.offer(magnetFor('peer-1'), false)
           await mallory.withdraw()
           await settle()
 
           expect(alice.fileTransfer.rescind).toHaveBeenCalledWith(
-            'magnet:peer-1'
+            magnetFor('peer-1')
           )
         })
       })
@@ -1320,14 +1981,14 @@ describe('ChatRoom', () => {
         // still lists the old one, so the same file is announced twice.
         const returning = await createForger(5)
 
-        await returning.offer('magnet:peer-1')
+        await returning.offer(magnetFor('peer-1'))
         await settle()
 
         bob.transport.leaveRoom()
         await settle()
 
         expect(alice.chatRoom.getFileOffers()['peer-5']).toEqual({
-          magnetURI: 'magnet:peer-1',
+          magnetURI: magnetFor('peer-1'),
           isAllInlineMedia: false,
         })
         expect(alice.fileTransfer.rescind).not.toHaveBeenCalled()
@@ -1349,11 +2010,11 @@ describe('ChatRoom', () => {
 
         const returning = await createForger(5)
 
-        await returning.offer('magnet:peer-1')
+        await returning.offer(magnetFor('peer-1'))
         await settle()
 
         expect(alice.chatRoom.getFileOffers()['peer-5']).toEqual({
-          magnetURI: 'magnet:peer-1',
+          magnetURI: magnetFor('peer-1'),
           isAllInlineMedia: false,
         })
       })
@@ -1375,7 +2036,9 @@ describe('ChatRoom', () => {
       // The torrent exists by the time the broadcast fails. Left seeding, it
       // would be handed to every future joiner by `greetPeer` while the UI
       // reports the share as failed and offers no way to stop it.
-      expect(alice.fileTransfer.rescind).toHaveBeenCalledWith('magnet:peer-0')
+      expect(alice.fileTransfer.rescind).toHaveBeenCalledWith(
+        magnetFor('peer-0')
+      )
       expect(alice.chatRoom.getSelfFileOfferMagnetUri()).toBeNull()
 
       const bob = createClient(network, 1)
@@ -1406,7 +2069,9 @@ describe('ChatRoom', () => {
       // stop control comes free again. A failure to announce it is the room's to
       // report, not the caller's to be wedged by.
       expect(alice.chatRoom.getSelfFileOfferMagnetUri()).toBeNull()
-      expect(alice.fileTransfer.rescind).toHaveBeenCalledWith('magnet:peer-0')
+      expect(alice.fileTransfer.rescind).toHaveBeenCalledWith(
+        magnetFor('peer-0')
+      )
       expect(onError).toHaveBeenCalledTimes(1)
       expect(onError.mock.calls[0][0]).toMatchObject({
         context: ChatRoomErrorContext.RESCIND_FILE_OFFER,
@@ -1436,7 +2101,9 @@ describe('ChatRoom', () => {
       // One action for the user, one report. The first failure wins, so the
       // announcement is what gets reported and the seed failure adds nothing.
       expect(alice.chatRoom.getSelfFileOfferMagnetUri()).toBeNull()
-      expect(alice.fileTransfer.rescind).toHaveBeenCalledWith('magnet:peer-0')
+      expect(alice.fileTransfer.rescind).toHaveBeenCalledWith(
+        magnetFor('peer-0')
+      )
       expect(onError).toHaveBeenCalledTimes(1)
       expect(onError.mock.calls[0][0]).toMatchObject({
         context: ChatRoomErrorContext.RESCIND_FILE_OFFER,
