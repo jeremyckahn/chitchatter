@@ -1007,6 +1007,42 @@ describe('ChatRoom', () => {
           expect(alice.fileTransfer.rescind).not.toHaveBeenCalled()
         })
 
+        it('does not stop seeding inline media from a direct-message transcript, when its author claims it in the group room', async () => {
+          const alice = createClient(network, 0)
+          const mallory = createClient(network, 2)
+          const aliceToMallory = createDirectMessageRoom(alice, 0, 'peer-2')
+          const malloryToAlice = createDirectMessageRoom(mallory, 2, 'peer-0')
+
+          await alice.chatRoom.join()
+          await aliceToMallory.join()
+          await malloryToAlice.join()
+
+          // Mallory sends Alice an image in the DM. Alice downloads and seeds
+          // it, so it persists for her even if Mallory leaves; the mock reports
+          // every magnet as being offered. The magnet is in the DM transcript
+          // only: the group room has never heard of it.
+          await malloryToAlice.sendInlineMedia([
+            { name: 'a.png', type: 'image/png', size: 1 },
+          ])
+          await settle()
+
+          expect(aliceToMallory.getMessageLog()).toHaveLength(1)
+          expect(alice.chatRoom.getMessageLog()).toHaveLength(0)
+
+          // Mallory knows the magnet, having authored it, and names it in a
+          // group file offer before withdrawing it.
+          const [send] = mallory.transport.makeAction<FileOfferMetadata | null>(
+            PeerAction.FILE_OFFER,
+            ActionNamespace.GROUP
+          )
+
+          await send({ magnetURI: 'magnet:peer-2', isAllInlineMedia: false })
+          await send(null)
+          await settle()
+
+          expect(alice.fileTransfer.rescind).not.toHaveBeenCalled()
+        })
+
         it("does not stop re-seeding a file the client downloaded, on a direct-message peer's say-so", async () => {
           const alice = createClient(network, 0)
           const bob = createClient(network, 1)
