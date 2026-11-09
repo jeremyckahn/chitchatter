@@ -701,6 +701,80 @@ describe('ChatRoom', () => {
     })
   })
 
+  // Inline media is meant to outlive its sender: every peer that received it
+  // keeps seeding it for as long as it is in the transcript. The mock reports
+  // every magnet as being offered, so each recipient here is a re-seeder, and a
+  // `rescind` call would mean the persistence was broken. (That the mock does
+  // surface a rescind when one is due is shown by 'drops a departing peer
+  // offer and rescinds it'; that eviction from the transcript still ends the
+  // seeding, as intended, by 'caps the log and rescinds offers for evicted
+  // inline media'.)
+  describe('inline media persistence', () => {
+    const image = { name: 'a.png', type: 'image/png', size: 1 }
+
+    it('keeps seeding inline media after its sender leaves the room', async () => {
+      const alice = createClient(network, 0)
+      const bob = createClient(network, 1)
+
+      await joinAll(alice, bob)
+
+      await bob.chatRoom.sendInlineMedia([image])
+      await settle()
+
+      expect(alice.chatRoom.getMessageLog()).toHaveLength(1)
+
+      bob.transport.leaveRoom()
+      await settle()
+
+      expect(alice.chatRoom.getMessageLog()).toHaveLength(1)
+      expect(alice.fileTransfer.rescind).not.toHaveBeenCalled()
+    })
+
+    it('keeps seeding inline media after its sender stops sharing the same images', async () => {
+      const alice = createClient(network, 0)
+      const bob = createClient(network, 1)
+
+      await joinAll(alice, bob)
+
+      // What sharing an image through the file button does: a file offer and
+      // a separate inline-media message.
+      await bob.chatRoom.offerFiles([image])
+      await bob.chatRoom.sendInlineMedia([image])
+      await settle()
+
+      await bob.chatRoom.rescindFileOffer()
+      await settle()
+
+      expect(alice.chatRoom.getFileOffers()).toEqual({})
+      expect(alice.chatRoom.getMessageLog()).toHaveLength(1)
+      expect(alice.fileTransfer.rescind).not.toHaveBeenCalled()
+      expect(bob.fileTransfer.rescind).not.toHaveBeenCalled()
+    })
+
+    it('keeps seeding inline media from a direct-message conversation after its correspondent leaves', async () => {
+      const alice = createClient(network, 0)
+      const bob = createClient(network, 1)
+      const aliceToBob = createDirectMessageRoom(alice, 0, 'peer-1')
+      const bobToAlice = createDirectMessageRoom(bob, 1, 'peer-0')
+
+      await joinAll(alice, bob)
+      await aliceToBob.join()
+      await bobToAlice.join()
+
+      await bobToAlice.sendInlineMedia([image])
+      await settle()
+
+      expect(aliceToBob.getMessageLog()).toHaveLength(1)
+
+      // The registry forwards the group room's departures to the conversation.
+      aliceToBob.notifyPeerLeft('peer-1')
+      await settle()
+
+      expect(aliceToBob.getMessageLog()).toHaveLength(1)
+      expect(alice.fileTransfer.rescind).not.toHaveBeenCalled()
+    })
+  })
+
   describe('transcript limit', () => {
     it('caps the log and rescinds offers for evicted inline media', async () => {
       const network2 = createInMemoryNetwork()
