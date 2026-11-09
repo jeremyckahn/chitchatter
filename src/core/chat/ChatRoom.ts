@@ -136,6 +136,8 @@ export class ChatRoom extends EventTarget {
   /**
    * Magnets a peer announced as all inline media. Their torrents outlive the
    * offer, so a later claim on the same magnet cannot be used to destroy them.
+   * Pruned once nothing is seeding a magnet and no peer offers it: see
+   * {@link pruneRetainedMagnet}.
    */
   private retainedMagnetUris: Set<string> = new Set()
 
@@ -738,11 +740,17 @@ export class ChatRoom extends EventTarget {
     if (!this.isFromRoomPeer(peerId)) return
 
     if (metadata) {
+      const replaced = this.fileOffers[peerId]
+
       if (metadata.isAllInlineMedia) {
         this.retainedMagnetUris.add(metadata.magnetURI)
       }
 
       this.fileOffers = applyFileOffer(this.fileOffers, peerId, metadata)
+
+      if (replaced && replaced.magnetURI !== metadata.magnetURI) {
+        this.pruneRetainedMagnet(peerId, replaced.magnetURI)
+      }
     } else {
       const withdrawn = this.fileOffers[peerId]
 
@@ -751,6 +759,8 @@ export class ChatRoom extends EventTarget {
       }
 
       this.fileOffers = removeFileOffer(this.fileOffers, peerId)
+
+      if (withdrawn) this.pruneRetainedMagnet(peerId, withdrawn.magnetURI)
     }
 
     this.updatePeer(peerId, { offeredFileId: metadata?.magnetURI ?? null })
@@ -781,6 +791,25 @@ export class ChatRoom extends EventTarget {
         this.isProtectedFromPeerRescind(magnetURI) ||
         isOfferedByAnotherPeer(this.fileOffers, peerId, magnetURI)
     )
+  }
+
+  /**
+   * Forgets a retained magnet once there is nothing left for the retention to
+   * protect: this client is not seeding it and no present peer offers it.
+   *
+   * The set is filled from a flag the offering peer writes, so left alone it
+   * grows with every flagged offer a peer sends for the whole session. Pruning
+   * keeps it to the offers that are live and the torrents this client seeds.
+   * Called with the peer whose offer just ended or was replaced; `peerId` is
+   * excluded from the "somebody else still offers it" check, as it no longer
+   * does.
+   */
+  private pruneRetainedMagnet = (peerId: string, magnetURI: string) => {
+    if (!this.retainedMagnetUris.has(magnetURI)) return
+    if (this.adapters.fileTransfer.isOffering(magnetURI)) return
+    if (isOfferedByAnotherPeer(this.fileOffers, peerId, magnetURI)) return
+
+    this.retainedMagnetUris.delete(magnetURI)
   }
 
   private isProtectedFromPeerRescind = (magnetURI: string) =>
@@ -859,6 +888,7 @@ export class ChatRoom extends EventTarget {
     // leave them holding a departed peer's.
     if (offer) {
       this.fileOffers = removeFileOffer(this.fileOffers, peerId)
+      this.pruneRetainedMagnet(peerId, offer.magnetURI)
       this.emit(ChatRoomEvent.FILE_OFFER_CHANGE, { peerId, metadata: null })
     }
 
