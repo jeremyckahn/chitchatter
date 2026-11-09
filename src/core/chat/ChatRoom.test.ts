@@ -1244,6 +1244,65 @@ describe('ChatRoom', () => {
         expect(alice.fileTransfer.rescind).toHaveBeenCalledWith('magnet:peer-1')
       })
 
+      describe('a file announced as inline media', () => {
+        const image = { name: 'a.png', type: 'image/png', size: 1 }
+
+        it('keeps being seeded by a receiver that holds it, after its owner leaves and the offer is replayed', async () => {
+          const alice = createClient(network, 0)
+          const bob = createClient(network, 1)
+
+          await joinAll(alice, bob)
+
+          // Alice re-seeds what Bob offered: the mock reports every magnet as
+          // being offered.
+          await bob.chatRoom.offerFiles([image])
+          await settle()
+
+          bob.transport.leaveRoom()
+          await settle()
+
+          const mallory = await createForger(2)
+
+          await mallory.offer('magnet:peer-1', false)
+          await mallory.withdraw()
+          await settle()
+
+          expect(alice.fileTransfer.rescind).not.toHaveBeenCalled()
+        })
+
+        // The one place forgetting a retained magnet is observable: nothing was
+        // being seeded when the owner's offer ended, so there was nothing to
+        // keep. If the magnet is later replayed and downloaded from the replaying
+        // peer, its withdrawal ends that seed, as it always did before the
+        // retention existed.
+        it('is forgotten when the owner leaves while nothing is seeding it', async () => {
+          const alice = createClient(network, 0)
+          const bob = createClient(network, 1)
+
+          await joinAll(alice, bob)
+
+          vi.mocked(alice.fileTransfer.isOffering).mockReturnValue(false)
+
+          await bob.chatRoom.offerFiles([image])
+          await settle()
+
+          bob.transport.leaveRoom()
+          await settle()
+
+          vi.mocked(alice.fileTransfer.isOffering).mockReturnValue(true)
+
+          const mallory = await createForger(2)
+
+          await mallory.offer('magnet:peer-1', false)
+          await mallory.withdraw()
+          await settle()
+
+          expect(alice.fileTransfer.rescind).toHaveBeenCalledWith(
+            'magnet:peer-1'
+          )
+        })
+      })
+
       it('keeps the file available when its owner reconnects under a new peer id before the old one is gone', async () => {
         const alice = createClient(network, 0)
         const bob = createClient(network, 1)
