@@ -925,7 +925,7 @@ describe('ChatRoom', () => {
       })
 
       it('drops malformed entries and keeps the well-formed ones around them', async () => {
-        const alice = createVictim()
+        const alice = createVictim(50)
         const mallory = createHostilePeer()
 
         await alice.chatRoom.join()
@@ -982,30 +982,45 @@ describe('ChatRoom', () => {
       })
 
       it('carries over only the fields the protocol defines', async () => {
-        // `isInlineMedia` is `'magnetURI' in message`, so a smuggled field would
-        // turn a text entry into a download.
         const alice = createVictim()
         const mallory = createHostilePeer()
 
         await alice.chatRoom.join()
 
         await mallory.send(PeerAction.MESSAGE_TRANSCRIPT, [
-          textEntry('smuggler', {
-            magnetURI: magnetFor('smuggled'),
-            isAdmin: true,
-          }),
+          textEntry('extra', { isAdmin: true, nested: { deep: 1 } }),
         ])
         await settle()
 
-        const [entry] = alice.chatRoom.getMessageLog()
+        expect(alice.chatRoom.getMessageLog()).toEqual([
+          {
+            id: 'extra',
+            text: 'text of extra',
+            timeSent: 1_000,
+            timeReceived: expect.any(Number),
+            authorId: 'user-9',
+          },
+        ])
+      })
 
-        expect(entry).toEqual({
-          id: 'smuggler',
-          text: 'text of smuggler',
-          timeSent: 1_000,
-          timeReceived: expect.any(Number),
-          authorId: 'user-9',
-        })
+      it('drops an entry that is both a text message and inline media', async () => {
+        // `isInlineMedia` is `'magnetURI' in message`, so a text entry with a
+        // magnet bolted on would be rendered as a download. An honest peer never
+        // sends one, so it is dropped rather than guessed at.
+        const alice = createVictim()
+        const mallory = createHostilePeer()
+
+        await alice.chatRoom.join()
+
+        await mallory.send(PeerAction.MESSAGE_TRANSCRIPT, [
+          textEntry('smuggler', { magnetURI: magnetFor('smuggled') }),
+          textEntry('kept'),
+        ])
+        await settle()
+
+        expect(alice.chatRoom.getMessageLog().map(({ id }) => id)).toEqual([
+          'kept',
+        ])
         expect(alice.fileTransfer.trackInlineMedia).not.toHaveBeenCalled()
       })
 
