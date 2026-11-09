@@ -85,6 +85,7 @@ const createClient = (
   // Mirrors the web adapter, which is shared by a group room and every
   // direct-message room on one host and so remembers what any of them started.
   const originated = new Set<string>()
+  const inlineMedia = new Set<string>()
   const fileTransfer: FileTransferAdapter = {
     offer: vi.fn(async () => {
       originated.add(`magnet:${peerId}`)
@@ -93,12 +94,21 @@ const createClient = (
     }),
     rescind: vi.fn(async (magnetURI: string) => {
       originated.delete(magnetURI)
+      inlineMedia.delete(magnetURI)
     }),
     rescindAll: vi.fn(async () => {
       originated.clear()
+      inlineMedia.clear()
     }),
     isOffering: vi.fn(() => true),
     isOriginated: vi.fn((magnetURI: string) => originated.has(magnetURI)),
+    trackInlineMedia: vi.fn((magnetURI: string) => {
+      inlineMedia.add(magnetURI)
+    }),
+    untrackInlineMedia: vi.fn((magnetURI: string) => {
+      inlineMedia.delete(magnetURI)
+    }),
+    isInlineMedia: vi.fn((magnetURI: string) => inlineMedia.has(magnetURI)),
   }
   const adapters = createPlatformAdapters(makeIds(), {
     fileTransfer,
@@ -785,6 +795,9 @@ describe('ChatRoom', () => {
         rescindAll: vi.fn(async () => {}),
         isOffering: vi.fn(() => true),
         isOriginated: vi.fn(() => false),
+        trackInlineMedia: vi.fn(),
+        untrackInlineMedia: vi.fn(),
+        isInlineMedia: vi.fn(() => false),
       }
 
       const chatRoom = new ChatRoom({

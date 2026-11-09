@@ -107,6 +107,67 @@ describe('createWebFileTransfer', () => {
     })
   })
 
+  describe('inline media', () => {
+    it('knows a magnet once it is tracked and forgets it once untracked', () => {
+      const adapter = createWebFileTransfer(createSource().source)
+
+      expect(adapter.isInlineMedia('magnet:img')).toBe(false)
+
+      adapter.trackInlineMedia('magnet:img')
+
+      expect(adapter.isInlineMedia('magnet:img')).toBe(true)
+
+      adapter.untrackInlineMedia('magnet:img')
+
+      expect(adapter.isInlineMedia('magnet:img')).toBe(false)
+    })
+
+    // A direct-message room's transcript is invisible to the group room, so
+    // the record has to be shared for either to protect the other's media.
+    it('lets one adapter see what another tracked', () => {
+      const { source } = createSource()
+      const groupRoom = createWebFileTransfer(source)
+      const directMessageRoom = createWebFileTransfer(source)
+
+      directMessageRoom.trackInlineMedia('magnet:img')
+
+      expect(groupRoom.isInlineMedia('magnet:img')).toBe(true)
+    })
+
+    it('keeps separate services separate', () => {
+      const first = createWebFileTransfer(createSource().source)
+      const second = createWebFileTransfer(createSource().source)
+
+      first.trackInlineMedia('magnet:img')
+
+      expect(second.isInlineMedia('magnet:img')).toBe(false)
+    })
+
+    it('forgets a magnet once it is rescinded, as when it is evicted', async () => {
+      const { source } = createSource()
+      const adapter = createWebFileTransfer(source)
+
+      const magnetURI = await adapter.offer(files, 'room')
+
+      adapter.trackInlineMedia(magnetURI)
+      await adapter.rescind(magnetURI)
+
+      expect(adapter.isInlineMedia(magnetURI)).toBe(false)
+    })
+
+    it('forgets every magnet on rescindAll', async () => {
+      const adapter = createWebFileTransfer(createSource().source)
+
+      adapter.trackInlineMedia('magnet:one')
+      adapter.trackInlineMedia('magnet:two')
+
+      await adapter.rescindAll()
+
+      expect(adapter.isInlineMedia('magnet:one')).toBe(false)
+      expect(adapter.isInlineMedia('magnet:two')).toBe(false)
+    })
+  })
+
   describe('rescinding', () => {
     it('forgets a torrent once it is rescinded and passes the call through', async () => {
       const { source } = createSource()

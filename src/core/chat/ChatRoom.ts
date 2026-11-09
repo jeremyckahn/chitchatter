@@ -627,6 +627,12 @@ export class ChatRoom extends EventTarget {
     // this peer already has.
     if (this.messageLog.length) return
 
+    for (const message of transcript) {
+      if (isInlineMedia(message)) {
+        this.adapters.fileTransfer.trackInlineMedia(message.magnetURI)
+      }
+    }
+
     this.setMessageLog(transcript)
   }
 
@@ -780,6 +786,9 @@ export class ChatRoom extends EventTarget {
   private isProtectedFromPeerRescind = (magnetURI: string) =>
     this.adapters.fileTransfer.isOriginated(magnetURI) ||
     this.retainedMagnetUris.has(magnetURI) ||
+    // Checked against the adapter as well as this room's own transcript: a
+    // direct-message room's images are in a transcript this room cannot see.
+    this.adapters.fileTransfer.isInlineMedia(magnetURI) ||
     getInlineMediaUris(this.messageLog).includes(magnetURI)
 
   private handlePeerJoin = (peerId: string) => {
@@ -962,6 +971,10 @@ export class ChatRoom extends EventTarget {
     this.targetPeerId ? { target: this.targetPeerId } : undefined
 
   private appendToMessageLog = (message: Message | InlineMedia) => {
+    if (isInlineMedia(message)) {
+      this.adapters.fileTransfer.trackInlineMedia(message.magnetURI)
+    }
+
     this.setMessageLog([...this.messageLog, message])
   }
 
@@ -985,10 +998,11 @@ export class ChatRoom extends EventTarget {
     // Inline media that has scrolled out of the transcript is unreachable, so
     // stop seeding it rather than holding the torrent open forever.
     for (const message of evicted) {
-      if (
-        isInlineMedia(message) &&
-        this.adapters.fileTransfer.isOffering(message.magnetURI)
-      ) {
+      if (!isInlineMedia(message)) continue
+
+      this.adapters.fileTransfer.untrackInlineMedia(message.magnetURI)
+
+      if (this.adapters.fileTransfer.isOffering(message.magnetURI)) {
         this.stopSeeding(message.magnetURI)
       }
     }

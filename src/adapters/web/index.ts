@@ -60,24 +60,34 @@ export interface FileTransferSource {
   >
 }
 
-const originatedBySource = new WeakMap<FileTransferSource, Set<string>>()
+interface SharedMagnetRecord {
+  /** Torrents this client started with `offer`. */
+  originated: Set<string>
+  /** Magnets that are inline media in some room's transcript. */
+  inlineMedia: Set<string>
+}
+
+const recordsBySource = new WeakMap<FileTransferSource, SharedMagnetRecord>()
 
 /**
- * The magnet URIs this client started seeding, per file transfer service.
+ * What this client knows about the torrents of a file transfer service.
  *
  * `createWebAdapters` runs once per room, but every room of a session shares
  * one service (and so one WebTorrent client). Keeping the record on the service
  * rather than in each adapter's closure is what lets a direct-message room see
  * the torrents the group room started, and the other way round.
  */
-const getOriginatedMagnetUris = (source: FileTransferSource) => {
-  const existing = originatedBySource.get(source)
+const getSharedMagnetRecord = (source: FileTransferSource) => {
+  const existing = recordsBySource.get(source)
 
   if (existing) return existing
 
-  const created = new Set<string>()
+  const created: SharedMagnetRecord = {
+    originated: new Set(),
+    inlineMedia: new Set(),
+  }
 
-  originatedBySource.set(source, created)
+  recordsBySource.set(source, created)
 
   return created
 }
@@ -93,7 +103,7 @@ export const createWebFileTransfer = (
   fileTransferService: FileTransferSource
 ): FileTransferAdapter => {
   const { fileTransfer } = fileTransferService
-  const originatedMagnetUris = getOriginatedMagnetUris(fileTransferService)
+  const { originated, inlineMedia } = getSharedMagnetRecord(fileTransferService)
 
   return {
     offer: async (files: readonly FileHandle[], roomId: string) => {
@@ -102,22 +112,31 @@ export const createWebFileTransfer = (
         roomId
       )
 
-      originatedMagnetUris.add(magnetURI)
+      originated.add(magnetURI)
 
       return magnetURI
     },
     rescind: async (magnetURI: string) => {
-      originatedMagnetUris.delete(magnetURI)
+      originated.delete(magnetURI)
+      inlineMedia.delete(magnetURI)
 
       await fileTransfer.rescind(magnetURI)
     },
     rescindAll: async () => {
-      originatedMagnetUris.clear()
+      originated.clear()
+      inlineMedia.clear()
 
       await fileTransfer.rescindAll()
     },
     isOffering: (magnetURI: string) => fileTransfer.isOffering(magnetURI),
-    isOriginated: (magnetURI: string) => originatedMagnetUris.has(magnetURI),
+    isOriginated: (magnetURI: string) => originated.has(magnetURI),
+    trackInlineMedia: (magnetURI: string) => {
+      inlineMedia.add(magnetURI)
+    },
+    untrackInlineMedia: (magnetURI: string) => {
+      inlineMedia.delete(magnetURI)
+    },
+    isInlineMedia: (magnetURI: string) => inlineMedia.has(magnetURI),
   }
 }
 
