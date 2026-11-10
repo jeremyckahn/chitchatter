@@ -41,7 +41,7 @@
     "readable-web-to-node-stream": "^3.0.2",
     "remark-gfm": "^4.0.1",
     "sdp": "^3.2.1",
-    "secure-file-transfer": "^0.0.8",
+    "secure-file-transfer": "github:jeremyckahn/secure-file-transfer#bec222208fa2e7b5c484e7551c7c8d91c9016663",
     "streamsaver": "^2.0.6",
     "trystero": "^0.26.0",
     "typeface-public-sans": "^1.1.13",
