@@ -80,6 +80,13 @@ export interface SelfState {
   isTyping: boolean
 }
 
+/** What a frame that failed validation was meant to be, for the log line. */
+enum MalformedFrame {
+  MESSAGE = 'message',
+  INLINE_MEDIA = 'inline media message',
+  TRANSCRIPT = 'transcript',
+}
+
 /**
  * A headless Chitchatter chat room.
  *
@@ -602,7 +609,7 @@ export class ChatRoom extends EventTarget {
     const message = parseUnsentMessage(payload)
 
     if (!message) {
-      this.warnMalformed('message', peerId)
+      this.warnMalformed(MalformedFrame.MESSAGE, peerId)
 
       return
     }
@@ -626,7 +633,7 @@ export class ChatRoom extends EventTarget {
     const inlineMedia = parseUnsentInlineMedia(payload)
 
     if (!inlineMedia) {
-      this.warnMalformed('inline media message', peerId)
+      this.warnMalformed(MalformedFrame.INLINE_MEDIA, peerId)
 
       return
     }
@@ -677,7 +684,7 @@ export class ChatRoom extends EventTarget {
     })
 
     if (!parsed) {
-      this.warnMalformed('transcript', peerId)
+      this.warnMalformed(MalformedFrame.TRANSCRIPT, peerId)
 
       return
     }
@@ -701,7 +708,7 @@ export class ChatRoom extends EventTarget {
     this.setMessageLog(parsed.messageLog)
   }
 
-  private warnMalformed = (what: string, peerId: string) => {
+  private warnMalformed = (what: MalformedFrame, peerId: string) => {
     this.adapters.logger.warn(`Ignored a malformed ${what} from peer ${peerId}`)
   }
 
@@ -1115,13 +1122,15 @@ export class ChatRoom extends EventTarget {
     evicted: MessageLog,
     remaining: MessageLog
   ) => {
+    // Distinct, so a magnet evicted twice in one batch (an image sent twice) is
+    // let go of once. Checked first, as nearly every call evicts nothing.
+    const evictedUris = new Set(getInlineMediaUris(evicted))
+
+    if (!evictedUris.size) return
+
     const stillShown = new Set(getInlineMediaUris(remaining))
 
-    for (const message of evicted) {
-      if (!isInlineMedia(message)) continue
-
-      const { magnetURI } = message
-
+    for (const magnetURI of evictedUris) {
       if (stillShown.has(magnetURI)) continue
 
       this.adapters.fileTransfer.untrackInlineMedia(magnetURI)
