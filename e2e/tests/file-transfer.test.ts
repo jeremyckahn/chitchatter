@@ -1,5 +1,7 @@
 import { Browser, BrowserContext, expect, test } from '@playwright/test'
 
+import { sendMessage } from '../helpers/test-helpers'
+
 // StreamSaver registers a service worker (inside its mitm iframe) to deliver
 // the download, so unlike the rest of the suite this one needs them enabled.
 test.use({ serviceWorkers: 'allow' })
@@ -27,8 +29,7 @@ const offerFileAndDownloadIt = async (browser: Browser) => {
     // Wait until the peers are connected to one another
     const message = 'Hello before the file'
 
-    await page1.getByPlaceholder('Your message').fill(message)
-    await page1.getByPlaceholder('Your message').press('Enter')
+    await sendMessage(page1, message)
     await expect(page2.getByText(message)).toBeVisible({ timeout: 25000 })
 
     const fileName = 'greeting.txt'
