@@ -45,6 +45,30 @@ export interface FileTransferAdapter {
   rescind: (magnetURI: string) => Promise<void>
   rescindAll: () => Promise<void>
   isOffering: (magnetURI: string) => boolean
+  /**
+   * Whether this client started seeding `magnetURI` itself through `offer`, as
+   * opposed to re-seeding it after downloading it from someone else.
+   *
+   * It is the adapter's to answer, not a room's, because the adapter is shared:
+   * a group room and each direct-message room offer and rescind through the one
+   * instance, so only it sees every torrent this client started. A peer's say-so
+   * must never stop one of these.
+   */
+  isOriginated: (magnetURI: string) => boolean
+  /**
+   * Records that `magnetURI` is inline media in a room's transcript, and
+   * {@link untrackInlineMedia} forgets it once it has left the transcript.
+   *
+   * Inline media is meant to outlive its sender: every peer that received it
+   * keeps seeding it for as long as it is in the transcript. Each room only
+   * sees its own transcript, but they share this adapter, so the record lives
+   * here for a room to know that a magnet is inline media in a room it cannot
+   * see. {@link rescind} and {@link rescindAll} forget it too.
+   */
+  trackInlineMedia: (magnetURI: string) => void
+  untrackInlineMedia: (magnetURI: string) => void
+  /** Whether any room's transcript refers to `magnetURI` as inline media. */
+  isInlineMedia: (magnetURI: string) => boolean
 }
 
 /** Injectable so tests can control time instead of waiting for it. */
