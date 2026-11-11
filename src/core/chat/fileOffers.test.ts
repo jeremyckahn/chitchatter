@@ -7,6 +7,7 @@ import {
   getInlineMediaFiles,
   isEveryFileInlineMedia,
   isInlineMediaFile,
+  isOfferedByAnotherPeer,
   removeFileOffer,
   shouldRescindOffer,
 } from 'core/chat/fileOffers'
@@ -117,12 +118,14 @@ describe('applyFileOffer / removeFileOffer', () => {
 
 describe('shouldRescindOffer', () => {
   const isOffering = vi.fn(() => true)
+  const notProtected = () => false
 
   it('rescinds a non-inline offer that is still being seeded', () => {
     expect(
       shouldRescindOffer(
         { magnetURI: 'magnet:a', isAllInlineMedia: false },
-        isOffering
+        isOffering,
+        notProtected
       )
     ).toBe(true)
   })
@@ -131,7 +134,20 @@ describe('shouldRescindOffer', () => {
     expect(
       shouldRescindOffer(
         { magnetURI: 'magnet:a', isAllInlineMedia: true },
-        isOffering
+        isOffering,
+        notProtected
+      )
+    ).toBe(false)
+  })
+
+  it('spares a protected magnet even when the peer says it is not inline media', () => {
+    // The flag is written by the withdrawing peer, so it cannot be what keeps
+    // the receiver's own files and transcript media alive.
+    expect(
+      shouldRescindOffer(
+        { magnetURI: 'magnet:a', isAllInlineMedia: false },
+        isOffering,
+        magnetURI => magnetURI === 'magnet:a'
       )
     ).toBe(false)
   })
@@ -140,14 +156,48 @@ describe('shouldRescindOffer', () => {
     expect(
       shouldRescindOffer(
         { magnetURI: 'magnet:a', isAllInlineMedia: false },
-        () => false
+        () => false,
+        notProtected
       )
     ).toBe(false)
   })
 
   it('tolerates a missing offer', () => {
-    expect(shouldRescindOffer(null, isOffering)).toBe(false)
-    expect(shouldRescindOffer(undefined, isOffering)).toBe(false)
+    expect(shouldRescindOffer(null, isOffering, notProtected)).toBe(false)
+    expect(shouldRescindOffer(undefined, isOffering, notProtected)).toBe(false)
+  })
+})
+
+describe('isOfferedByAnotherPeer', () => {
+  const offers: FileOffers = {
+    'peer-1': { magnetURI: 'magnet:a', isAllInlineMedia: false },
+    'peer-2': { magnetURI: 'magnet:b', isAllInlineMedia: false },
+  }
+
+  it('is false when only the peer itself offers the magnet', () => {
+    expect(isOfferedByAnotherPeer(offers, 'peer-1', 'magnet:a')).toBe(false)
+  })
+
+  it('is true when a different peer offers the same magnet', () => {
+    expect(
+      isOfferedByAnotherPeer(
+        {
+          ...offers,
+          'peer-3': { magnetURI: 'magnet:a', isAllInlineMedia: false },
+        },
+        'peer-1',
+        'magnet:a'
+      )
+    ).toBe(true)
+  })
+
+  it('judges each magnet on its own', () => {
+    expect(isOfferedByAnotherPeer(offers, 'peer-1', 'magnet:b')).toBe(true)
+    expect(isOfferedByAnotherPeer(offers, 'peer-1', 'magnet:z')).toBe(false)
+  })
+
+  it('is false when nobody offers anything', () => {
+    expect(isOfferedByAnotherPeer({}, 'peer-1', 'magnet:a')).toBe(false)
   })
 })
 

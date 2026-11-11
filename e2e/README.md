@@ -47,13 +47,17 @@ npm run test:e2e:report
 ```
 e2e/
 ├── helpers/
-│   └── test-helpers.ts      # Common utility functions
+│   ├── test-helpers.ts          # Common utility functions
+│   ├── hostile-peer.ts          # Drives a hostile peer from a test (Node side)
+│   ├── hostile-peer.browser.ts  # What the hostile peer runs in the browser
+│   └── hostile-peer.html        # The blank page it runs on
 ├── tests/
-│   ├── accessibility.test.ts # Accessibility tests
-│   ├── home.test.ts         # Home page tests
-│   ├── room.test.ts         # Room functionality tests
-│   └── settings.test.ts     # Settings and preferences tests
-└── README.md                # This file
+│   ├── accessibility.test.ts    # Accessibility tests
+│   ├── file-offer-replay.test.ts # Replayed file offers cannot destroy shared files
+│   ├── home.test.ts             # Home page tests
+│   ├── room.test.ts             # Room functionality tests
+│   └── settings.test.ts         # Settings and preferences tests
+└── README.md                    # This file
 ```
 
 ## Test Categories
@@ -87,6 +91,14 @@ e2e/
 - Screen reader compatibility
 - Focus management
 - Color contrast verification
+
+### File Offer Replay Tests (`tests/file-offer-replay.test.ts`)
+
+- A peer replaying another peer's magnet URI, then withdrawing or leaving, must not make anyone destroy the shared file
+- Inline media in the transcript must survive the same attack, whatever the attacker claims about it
+- The sharer can still withdraw their own offer
+
+These tests need a peer that does something the app's UI cannot: write a file offer for a magnet URI it did not create. See [Testing against a hostile peer](#testing-against-a-hostile-peer).
 
 ## Authoring Tests with Playwright Codegen
 
@@ -125,6 +137,32 @@ Playwright provides a code generation tool that can help you create tests by rec
 - Generated code may need refactoring to follow project conventions
 - Some dynamic content may require manual adjustments
 - WebRTC features may not record properly and need manual implementation
+
+## Testing against a hostile peer
+
+Some behaviour only matters when another peer misbehaves, and the UI cannot be made to misbehave. `helpers/hostile-peer.ts` opens a second browser that speaks the chat protocol directly:
+
+```typescript
+const mallory = await joinAsHostilePeer(browser, roomId)
+
+await mallory.claim(magnetURI) // offer a magnet URI someone else shared
+await mallory.withdraw()
+```
+
+Nothing about it is simulated. The browser module (`hostile-peer.browser.ts`) is the app's own source, served by Vite to a blank page on the app's origin, so it uses the real `TrysteroTransport`, tracker configuration and file transfer service. The victims are the app, driven through the UI.
+
+To find out whether a file survived, do not inspect the app's internals. Ask the swarm, the way a late joiner would:
+
+```typescript
+await downloadFileAsLateJoiner(browser, magnetURI, roomId) // the file's text, or rejects
+```
+
+Things to know when writing one of these:
+
+- **Prove the test can fail.** Run it against the code it guards without the fix. A test that passes either way proves nothing. Include a control that does the same thing without the attack, so a failure can be put down to the attack and not to the environment.
+- **Nothing in the UI shows that an attack frame was handled.** The hostile peer never introduces itself, so it is not in anyone's peer list. Wait a short, fixed time before checking the outcome, and wait for the real users to connect to each other before the attack starts.
+- **Serve the hostile page from Vite, not from a Playwright route.** Chrome treats a page without a real address as public and refuses its connections to the local tracker.
+- `hostile-peer.browser.ts` runs in the browser: keep Node and Playwright imports out of it.
 
 ## Writing New Tests
 

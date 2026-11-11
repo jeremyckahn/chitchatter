@@ -70,17 +70,44 @@ export const removeFileOffer = (
 }
 
 /**
+ * Whether a peer other than `peerId` is currently offering `magnetURI`.
+ *
+ * A magnet URI is a bearer identifier: the app broadcasts every file's to the
+ * whole room, so anyone can name one as their own offer, and nothing in the
+ * protocol distinguishes that from the real owner announcing it again (for one
+ * who reconnected under a new peer id, say). So a withdrawal is not trusted to
+ * end the seed while somebody else still stands behind the same file; the seed
+ * ends with the last offerer.
+ */
+export const isOfferedByAnotherPeer = (
+  offers: FileOffers,
+  peerId: string,
+  magnetURI: string
+): boolean =>
+  Object.entries(offers).some(
+    ([offeringPeerId, offer]) =>
+      offeringPeerId !== peerId && offer.magnetURI === magnetURI
+  )
+
+/**
  * Whether an offer should be rescinded now that it has been withdrawn or its
  * peer has left.
  *
  * Offers made up entirely of inline media are exempt: that content is rendered
  * in the transcript and stays reachable after the offer itself is gone, so
- * rescinding it would break already-delivered messages.
+ * rescinding it would break already-delivered messages. That flag is written by
+ * the offering peer, so it cannot be the only protection: `isProtected` is the
+ * receiver's own knowledge of what must stay seeded (files it originated, and
+ * anything its transcript refers to) and always wins.
  */
 export const shouldRescindOffer = (
   metadata: FileOfferMetadata | undefined | null,
-  isOffering: (magnetURI: string) => boolean
+  isOffering: (magnetURI: string) => boolean,
+  isProtected: (magnetURI: string) => boolean
 ): boolean =>
   Boolean(
-    metadata && !metadata.isAllInlineMedia && isOffering(metadata.magnetURI)
+    metadata &&
+      !metadata.isAllInlineMedia &&
+      !isProtected(metadata.magnetURI) &&
+      isOffering(metadata.magnetURI)
   )
