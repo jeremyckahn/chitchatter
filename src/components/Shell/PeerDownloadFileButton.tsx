@@ -26,13 +26,13 @@ export const PeerDownloadFileButton = ({
     fileTransferService: { fileTransfer },
   } = useContext(RoomContext)
   const { getDisplayUsername } = usePeerNameDisplay()
-  const { offeredFileId } = peer
+  const { offeredFile } = peer
 
   const onProgress = (progress: number) => {
     setDownloadProgress(progress * 100)
   }
 
-  if (!offeredFileId) {
+  if (!offeredFile) {
     return <></>
   }
 
@@ -41,11 +41,7 @@ export const PeerDownloadFileButton = ({
     setDownloadProgress(null)
 
     try {
-      if (typeof shellContext.roomId !== 'string') {
-        throw new Error('shellContext.roomId is not a string')
-      }
-
-      await fileTransfer.download(offeredFileId, shellContext.roomId, {
+      await fileTransfer.download(offeredFile.magnetURI, offeredFile.fileKey, {
         doSave: true,
         onProgress,
       })

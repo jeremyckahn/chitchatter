@@ -150,7 +150,10 @@ export const Message = ({ message, showAuthor, userId }: MessageProps) => {
           maxWidth="85%"
         >
           {isInlineMedia(message) ? (
-            <InlineMedia magnetURI={message.magnetURI} />
+            <InlineMedia
+              magnetURI={message.magnetURI}
+              fileKey={message.fileKey}
+            />
           ) : isYouTubeLink(message) ? (
             <YouTube videoId={getYouTubeVideoId(message.text)} />
           ) : (

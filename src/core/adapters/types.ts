@@ -40,8 +40,12 @@ export interface StorageAdapter {
  * version and simply never offers files.
  */
 export interface FileTransferAdapter {
-  /** Offers files to the room, resolving to the magnet URI that identifies them. */
-  offer: (files: readonly FileHandle[], roomId: string) => Promise<string>
+  /**
+   * Encrypts `files` with `fileKey` and seeds them, resolving to the magnet
+   * URI that identifies them. The key is the core's to generate and share;
+   * the adapter only uses it.
+   */
+  offer: (files: readonly FileHandle[], fileKey: string) => Promise<string>
   rescind: (magnetURI: string) => Promise<void>
   rescindAll: () => Promise<void>
   isOffering: (magnetURI: string) => boolean

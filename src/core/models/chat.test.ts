@@ -2,6 +2,12 @@ import { describe, expect, it } from 'vitest'
 
 import {
   FileOfferMetadata,
+  isFileKey,
+  isFileOfferMetadata,
+  isFileReference,
+  isReceivedInlineMedia,
+  isReceivedMessage,
+  isUnsentInlineMedia,
   TypingStatus,
   UnsentInlineMedia,
   UnsentMessage,
@@ -28,6 +34,7 @@ describe('wire models', () => {
 
     const wrongFieldType: UnsentInlineMedia = {
       magnetURI: 'magnet:a',
+      fileKey: 'key',
       id: 'id',
       // @ts-expect-error — `timeSent` is a number
       timeSent: 'not-a-number',
@@ -49,6 +56,7 @@ describe('wire models', () => {
 
     const extraOnOffer: FileOfferMetadata = {
       magnetURI: 'magnet:a',
+      fileKey: 'key',
       isAllInlineMedia: false,
       // @ts-expect-error — nor on the file-offer payload
       nope: 1,
@@ -61,5 +69,105 @@ describe('wire models', () => {
       extraField,
       extraOnOffer,
     ]).toHaveLength(5)
+  })
+})
+
+const fileKey = 'Ab-_'.repeat(10) + 'xyz'
+
+const envelope = { id: 'id', authorId: 'author', timeSent: 1 }
+
+describe('isFileKey', () => {
+  it('accepts 43 base64url characters', () => {
+    expect(isFileKey(fileKey)).toBe(true)
+  })
+
+  it.each([
+    ['a shorter key', fileKey.slice(1)],
+    ['a longer key', fileKey + 'A'],
+    ['padding', fileKey.slice(1) + '='],
+    ['standard base64 characters', fileKey.slice(2) + '+/'],
+    ['an empty string', ''],
+    ['a room name', 'my-secret-room'],
+    ['a non-string', 42],
+    ['undefined', undefined],
+  ])('rejects %s', (_label, value) => {
+    expect(isFileKey(value)).toBe(false)
+  })
+})
+
+describe('isFileReference', () => {
+  it('accepts a magnet URI with a valid key', () => {
+    expect(isFileReference({ magnetURI: 'magnet:a', fileKey })).toBe(true)
+  })
+
+  it.each([
+    ['no key', { magnetURI: 'magnet:a' }],
+    ['a malformed key', { magnetURI: 'magnet:a', fileKey: 'short' }],
+    ['no magnet URI', { fileKey }],
+    ['a non-string magnet URI', { magnetURI: 1, fileKey }],
+    ['null', null],
+    ['an array', [fileKey]],
+  ])('rejects %s', (_label, value) => {
+    expect(isFileReference(value)).toBe(false)
+  })
+})
+
+describe('isFileOfferMetadata', () => {
+  it('accepts a complete offer', () => {
+    expect(
+      isFileOfferMetadata({
+        magnetURI: 'magnet:a',
+        fileKey,
+        isAllInlineMedia: true,
+      })
+    ).toBe(true)
+  })
+
+  it('rejects an offer without a boolean isAllInlineMedia', () => {
+    expect(isFileOfferMetadata({ magnetURI: 'magnet:a', fileKey })).toBe(false)
+    expect(
+      isFileOfferMetadata({
+        magnetURI: 'magnet:a',
+        fileKey,
+        isAllInlineMedia: 'yes',
+      })
+    ).toBe(false)
+  })
+
+  it('rejects an offer without a key, as an older peer sends', () => {
+    expect(
+      isFileOfferMetadata({ magnetURI: 'magnet:a', isAllInlineMedia: false })
+    ).toBe(false)
+  })
+})
+
+describe('inline media and message validators', () => {
+  const media = { ...envelope, magnetURI: 'magnet:a', fileKey }
+
+  it('accepts unsent and received inline media', () => {
+    expect(isUnsentInlineMedia(media)).toBe(true)
+    expect(isReceivedInlineMedia({ ...media, timeReceived: 2 })).toBe(true)
+  })
+
+  it('requires a receipt time on received inline media', () => {
+    expect(isReceivedInlineMedia(media)).toBe(false)
+    expect(isReceivedInlineMedia({ ...media, timeReceived: 'now' })).toBe(false)
+  })
+
+  it.each([
+    ['no key', { ...envelope, magnetURI: 'magnet:a' }],
+    ['no id', { ...media, id: undefined }],
+    ['a non-string author', { ...media, authorId: 7 }],
+    ['a non-finite send time', { ...media, timeSent: Infinity }],
+  ])('rejects inline media with %s', (_label, value) => {
+    expect(isUnsentInlineMedia(value)).toBe(false)
+  })
+
+  it('accepts a received message and rejects one missing its text', () => {
+    const message = { ...envelope, text: 'hi', timeReceived: 2 }
+
+    expect(isReceivedMessage(message)).toBe(true)
+    expect(isReceivedMessage({ ...message, text: undefined })).toBe(false)
+    expect(isReceivedMessage({ ...envelope, text: 'hi' })).toBe(false)
   })
 })

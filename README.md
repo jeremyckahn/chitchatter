@@ -38,7 +38,7 @@ Open <https://chitchatter.im/> and join a room to start chatting with anyone els
 - Direct messaging.
 - File sharing:
   - Unlimited file size transfers.
-  - Files are encrypted prior to sending and decrypted by the receiver (the key is the room name).
+  - Files are encrypted prior to sending and decrypted by the receiver. Each share gets its own random key, which is only sent to peers in the room.
 - Embedding into other web apps via `iframe`.
 - Markdown support via [`react-markdown`](https://github.com/remarkjs/react-markdown).
   - Includes support for syntax highlighting of code.

@@ -60,8 +60,8 @@ export const createWebFileTransfer = (
   const { fileTransfer } = fileTransferService
 
   return {
-    offer: (files: readonly FileHandle[], roomId: string) =>
-      fileTransfer.offer(files as unknown as File[], roomId),
+    offer: (files: readonly FileHandle[], fileKey: string) =>
+      fileTransfer.offer(files as unknown as File[], fileKey),
     rescind: async (magnetURI: string) => {
       await fileTransfer.rescind(magnetURI)
     },

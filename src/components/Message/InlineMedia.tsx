@@ -9,13 +9,11 @@ import { useContext, useEffect, useState } from 'react'
 import { TorrentFile } from 'webtorrent'
 
 import { RoomContext } from 'contexts/RoomContext'
-import { ShellContext } from 'contexts/ShellContext'
+import { FileReference } from 'core/models/chat'
 
 type TorrentFiles = TorrentFile[]
 
-interface InlineMediaProps {
-  magnetURI: string
-}
+type InlineMediaProps = FileReference
 
 interface InlineFileProps {
   file: Pick<TorrentFile, 'name' | 'length' | 'getBlobURL'>
@@ -165,10 +163,9 @@ export const InlineFile = ({ file }: InlineFileProps) => {
   )
 }
 
-export const InlineMedia = ({ magnetURI }: InlineMediaProps) => {
+export const InlineMedia = ({ magnetURI, fileKey }: InlineMediaProps) => {
   const [hasDownloadInitiated, setHasDownloadInitiated] = useState(false)
   const [downloadedFiles, setDownloadedFiles] = useState<TorrentFiles>([])
-  const shellContext = useContext(ShellContext)
   const {
     fileTransferService: { fileTransfer },
   } = useContext(RoomContext)
@@ -176,16 +173,13 @@ export const InlineMedia = ({ magnetURI }: InlineMediaProps) => {
   useEffect(() => {
     ;(async () => {
       if (hasDownloadInitiated) return
-      if (typeof shellContext.roomId !== 'string') {
-        throw new Error('shellContext.roomId is not a string')
-      }
 
       setHasDownloadInitiated(true)
-      const files = await fileTransfer.download(magnetURI, shellContext.roomId)
+      const files = await fileTransfer.download(magnetURI, fileKey)
 
       setDownloadedFiles(files)
     })()
-  }, [fileTransfer, hasDownloadInitiated, magnetURI, shellContext.roomId])
+  }, [fileTransfer, fileKey, hasDownloadInitiated, magnetURI])
 
   return (
     <>

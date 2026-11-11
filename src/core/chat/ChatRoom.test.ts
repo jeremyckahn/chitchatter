@@ -18,6 +18,7 @@ import { UserMetadata } from 'core/chat/protocol'
 import { encryption } from 'core/crypto/Encryption'
 import { PeerAction } from 'core/models/network'
 import {
+  isFileKey,
   isMessageReceived,
   PeerVerificationState,
   ReceivedMessage,
@@ -150,6 +151,15 @@ const waitFor = async (
   }
 
   throw new Error(`Timed out waiting for: ${label}`)
+}
+
+/** The key a client's `n`th offer was encrypted with. */
+const offeredKey = (client: Client, n = 0): string => {
+  const call = vi.mocked(client.fileTransfer.offer).mock.calls[n]
+
+  if (!call) throw new Error(`No offer #${n} was made`)
+
+  return call[1]
 }
 
 /** Lets in-flight protocol traffic drain when there is no condition to await. */
@@ -595,6 +605,128 @@ describe('ChatRoom', () => {
       expect(alice.chatRoom.getMessageLog()).toHaveLength(1)
       expect(alice.chatRoom.getMessageLog()[0]).toMatchObject({ text: 'mine' })
     })
+
+    it('keeps the valid entries of a transcript and drops the malformed ones', async () => {
+      const alice = createClient(network, 0)
+
+      await alice.chatRoom.join()
+
+      const envelope = { timeSent: 0, timeReceived: 0, authorId: 'user-9' }
+      const validMessage = { ...envelope, id: 'text', text: 'hello' }
+      const validMedia = {
+        ...envelope,
+        id: 'media',
+        magnetURI: 'magnet:ok',
+        fileKey: 'A'.repeat(43),
+      }
+
+      const impostor = new InMemoryTransport(network, 'peer-9')
+      const [sendTranscript] = impostor.makeAction<DataPayload>(
+        PeerAction.MESSAGE_TRANSCRIPT,
+        ActionNamespace.GROUP
+      )
+
+      await sendTranscript([
+        validMessage,
+        { ...envelope, id: 'keyless', magnetURI: 'magnet:legacy' },
+        { ...envelope, id: 'no-text' },
+        validMedia,
+        'not even an object',
+      ])
+      await settle()
+
+      expect(alice.chatRoom.getMessageLog()).toEqual([validMessage, validMedia])
+      expect(alice.adapters.logger.warn).toHaveBeenCalledWith(
+        'Dropped 3 malformed transcript entries from peer peer-9'
+      )
+    })
+
+    it('ignores a transcript that is not a list', async () => {
+      const alice = createClient(network, 0)
+
+      await alice.chatRoom.join()
+
+      const impostor = new InMemoryTransport(network, 'peer-9')
+      const [sendTranscript] = impostor.makeAction<DataPayload>(
+        PeerAction.MESSAGE_TRANSCRIPT,
+        ActionNamespace.GROUP
+      )
+
+      await sendTranscript({ not: 'a list' })
+      await settle()
+
+      expect(alice.chatRoom.getMessageLog()).toEqual([])
+    })
+  })
+
+  describe('inline media', () => {
+    const photo = [{ name: 'a.png', type: 'image/png', size: 1 }]
+
+    it('delivers the key the media was encrypted with', async () => {
+      const alice = createClient(network, 0)
+      const bob = createClient(network, 1)
+
+      await joinAll(alice, bob)
+
+      await alice.chatRoom.sendInlineMedia(photo)
+      await settle()
+
+      const expected = {
+        magnetURI: 'magnet:peer-0',
+        fileKey: offeredKey(alice),
+      }
+
+      expect(alice.chatRoom.getMessageLog()[0]).toMatchObject(expected)
+      expect(bob.chatRoom.getMessageLog()[0]).toMatchObject(expected)
+    })
+
+    it('hands the key to a peer joining a public room, via backfill', async () => {
+      const alice = createClient(network, 0)
+      const bob = createClient(network, 1)
+
+      await joinAll(alice, bob)
+
+      await alice.chatRoom.sendInlineMedia(photo)
+      await settle()
+
+      const carol = createClient(network, 2)
+
+      await carol.chatRoom.join()
+      await waitFor(
+        () => carol.chatRoom.getMessageLog().length === 1,
+        'carol to receive the backfilled transcript'
+      )
+
+      expect(carol.chatRoom.getMessageLog()[0]).toMatchObject({
+        magnetURI: 'magnet:peer-0',
+        fileKey: offeredKey(alice),
+      })
+    })
+
+    it('drops inline media that carries no usable key', async () => {
+      const alice = createClient(network, 0)
+
+      await alice.chatRoom.join()
+
+      const legacyPeer = new InMemoryTransport(network, 'peer-9')
+      const [sendInlineMedia] = legacyPeer.makeAction<DataPayload>(
+        PeerAction.MEDIA_MESSAGE,
+        ActionNamespace.GROUP
+      )
+
+      await sendInlineMedia({
+        id: 'legacy',
+        authorId: 'user-9',
+        timeSent: 0,
+        magnetURI: 'magnet:legacy',
+      })
+      await settle()
+
+      expect(alice.chatRoom.getMessageLog()).toEqual([])
+      expect(alice.adapters.logger.warn).toHaveBeenCalledWith(
+        'Ignoring malformed inline media from peer peer-9'
+      )
+    })
   })
 
   describe('joining after the transport has already connected', () => {
@@ -745,12 +877,100 @@ describe('ChatRoom', () => {
       ])
       await settle()
 
+      const fileKey = offeredKey(alice)
+
       expect(onOfferChange).toHaveBeenCalledTimes(1)
       expect(bob.chatRoom.getFileOffers()['peer-0']).toEqual({
         magnetURI: 'magnet:peer-0',
+        fileKey,
         isAllInlineMedia: false,
       })
-      expect(bob.chatRoom.getPeers()[0].offeredFileId).toBe('magnet:peer-0')
+      expect(bob.chatRoom.getPeers()[0].offeredFile).toEqual({
+        magnetURI: 'magnet:peer-0',
+        fileKey,
+      })
+    })
+
+    it('leaves the peers snapshot alone when an offer is repeated', async () => {
+      const alice = createClient(network, 0)
+      const bob = createClient(network, 1)
+
+      await joinAll(alice, bob)
+
+      await alice.chatRoom.offerFiles([
+        { name: 'doc.pdf', type: 'application/pdf', size: 10 },
+      ])
+      await settle()
+
+      const peersBefore = bob.chatRoom.getPeers()
+      const offer = bob.chatRoom.getFileOffers()['peer-0']
+
+      // What alice's greeting does when it reaches a peer that already has
+      // the offer.
+      const [resend] = alice.transport.makeAction<DataPayload>(
+        PeerAction.FILE_OFFER,
+        ActionNamespace.GROUP
+      )
+
+      await resend({ ...offer })
+      await settle()
+
+      expect(bob.chatRoom.getPeers()).toBe(peersBefore)
+    })
+
+    it('encrypts each offer with a fresh random key rather than the room id', async () => {
+      const alice = createClient(network, 0, { password: 'hunter2' })
+
+      await alice.chatRoom.join()
+
+      const files = [{ name: 'doc.pdf', type: 'application/pdf', size: 10 }]
+
+      await alice.chatRoom.offerFiles(files)
+      await alice.chatRoom.rescindFileOffer()
+      await alice.chatRoom.offerFiles(files)
+
+      const [first, second] = [offeredKey(alice, 0), offeredKey(alice, 1)]
+
+      expect(isFileKey(first)).toBe(true)
+      expect(isFileKey(second)).toBe(true)
+      expect(first).not.toBe(second)
+      expect([first, second]).not.toContain(roomId)
+      expect([first, second]).not.toContain('hunter2')
+    })
+
+    it('ignores an offer that carries no usable key', async () => {
+      const alice = createClient(network, 0)
+
+      await alice.chatRoom.join()
+
+      const onOfferChange = vi.fn()
+
+      alice.chatRoom.on(ChatRoomEvent.FILE_OFFER_CHANGE, onOfferChange)
+
+      // What a peer on an older version sends: the key used to be the room id,
+      // so there was no key in the offer.
+      const legacyPeer = new InMemoryTransport(network, 'peer-9')
+      const [sendFileOffer] = legacyPeer.makeAction<DataPayload>(
+        PeerAction.FILE_OFFER,
+        ActionNamespace.GROUP
+      )
+
+      await sendFileOffer({
+        magnetURI: 'magnet:legacy',
+        isAllInlineMedia: false,
+      })
+      await sendFileOffer({
+        magnetURI: 'magnet:short-key',
+        fileKey: 'guessable',
+        isAllInlineMedia: false,
+      })
+      await settle()
+
+      expect(onOfferChange).not.toHaveBeenCalled()
+      expect(alice.chatRoom.getFileOffers()).toEqual({})
+      expect(alice.adapters.logger.warn).toHaveBeenCalledWith(
+        'Ignoring malformed file offer from peer peer-9'
+      )
     })
 
     it('clears the offer on both sides when it is rescinded', async () => {
@@ -768,7 +988,7 @@ describe('ChatRoom', () => {
       await settle()
 
       expect(bob.chatRoom.getFileOffers()).toEqual({})
-      expect(bob.chatRoom.getPeers()[0].offeredFileId).toBeNull()
+      expect(bob.chatRoom.getPeers()[0].offeredFile).toBeNull()
       expect(alice.fileTransfer.rescind).toHaveBeenCalledWith('magnet:peer-0')
     })
 
@@ -798,8 +1018,11 @@ describe('ChatRoom', () => {
       await bob.chatRoom.join()
       await settle()
 
+      // Without the key the late joiner would see the offer and be unable to
+      // decrypt it.
       expect(bob.chatRoom.getFileOffers()['peer-0']).toMatchObject({
         magnetURI: 'magnet:peer-0',
+        fileKey: offeredKey(alice),
       })
     })
 

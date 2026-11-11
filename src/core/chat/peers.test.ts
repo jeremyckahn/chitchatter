@@ -56,7 +56,7 @@ describe('createPeer', () => {
       },
       videoState: VideoState.STOPPED,
       screenShareState: ScreenShareState.NOT_SHARING,
-      offeredFileId: null,
+      offeredFile: null,
       isTypingGroupMessage: false,
       isTypingDirectMessage: false,
       verificationState: PeerVerificationState.VERIFIED,
@@ -192,7 +192,7 @@ describe('reconcilePeerMetadata', () => {
       peerFor('peer-1', {
         videoState: VideoState.PLAYING,
         isTypingGroupMessage: true,
-        offeredFileId: 'magnet:a',
+        offeredFile: { magnetURI: 'magnet:a', fileKey: 'A'.repeat(43) },
       }),
     ]
     const { peers } = reconcilePeerMetadata(existing, {
@@ -205,7 +205,10 @@ describe('reconcilePeerMetadata', () => {
 
     expect(peers[0].videoState).toBe(VideoState.PLAYING)
     expect(peers[0].isTypingGroupMessage).toBe(true)
-    expect(peers[0].offeredFileId).toBe('magnet:a')
+    expect(peers[0].offeredFile).toEqual({
+      magnetURI: 'magnet:a',
+      fileKey: 'A'.repeat(43),
+    })
   })
 })
 
@@ -227,7 +230,7 @@ describe('PeerStateUpdate', () => {
     const chatState: PeerStateUpdate = {
       isTypingGroupMessage: true,
       isTypingDirectMessage: false,
-      offeredFileId: 'magnet:a',
+      offeredFile: { magnetURI: 'magnet:a', fileKey: 'A'.repeat(43) },
     }
 
     const forgedVerification: PeerStateUpdate = {

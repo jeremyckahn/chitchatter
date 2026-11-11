@@ -8,6 +8,7 @@ import {
   FileHandle,
   FileOffers,
   applyFileOffer,
+  generateFileKey,
   isEveryFileInlineMedia,
   removeFileOffer,
   shouldRescindOffer,
@@ -29,9 +30,14 @@ import {
 import { EncryptionService, encryption } from 'core/crypto/Encryption'
 import {
   FileOfferMetadata,
+  FileReference,
   InlineMedia,
+  isFileOfferMetadata,
   isInlineMedia,
   isMessageReceived,
+  isReceivedInlineMedia,
+  isReceivedMessage,
+  isUnsentInlineMedia,
   Message,
   MessageLog,
   Peer,
@@ -130,7 +136,7 @@ export class ChatRoom extends EventTarget {
 
   private typingExpiryTimer: ReturnType<typeof setTimeout> | null = null
 
-  private selfFileOfferMagnetUri: string | null = null
+  private selfFileOffer: Readonly<FileReference> | null = null
 
   private selfOfferedFiles: readonly FileHandle[] | null = null
 
@@ -333,7 +339,7 @@ export class ChatRoom extends EventTarget {
 
   getFileOffers = (): FileOffers => this.fileOffers
 
-  getSelfFileOfferMagnetUri = () => this.selfFileOfferMagnetUri
+  getSelfFileOfferMagnetUri = () => this.selfFileOffer?.magnetURI ?? null
 
   /**
    * The one place our own offer is recorded, so that every change announces
@@ -343,12 +349,13 @@ export class ChatRoom extends EventTarget {
    * where one does.
    */
   private setSelfFileOffer = (
-    magnetURI: string | null,
+    offer: Readonly<FileReference> | null,
     files: readonly FileHandle[] | null
   ) => {
-    const hasChanged = this.selfFileOfferMagnetUri !== magnetURI
+    const magnetURI = offer?.magnetURI ?? null
+    const hasChanged = this.getSelfFileOfferMagnetUri() !== magnetURI
 
-    this.selfFileOfferMagnetUri = magnetURI
+    this.selfFileOffer = offer
     this.selfOfferedFiles = files
 
     if (hasChanged)
@@ -415,14 +422,13 @@ export class ChatRoom extends EventTarget {
     this.setIsMessageSending(true)
 
     try {
-      const magnetURI = await this.adapters.fileTransfer.offer(
-        files,
-        this.roomId
-      )
+      const fileKey = generateFileKey()
+      const magnetURI = await this.adapters.fileTransfer.offer(files, fileKey)
 
       const unsentInlineMedia: UnsentInlineMedia = {
         authorId: this.userId,
         magnetURI,
+        fileKey,
         timeSent: this.adapters.clock.now(),
         id: this.adapters.ids.uuid(),
       }
@@ -501,13 +507,14 @@ export class ChatRoom extends EventTarget {
   ): Promise<string | undefined> => {
     if (this.hasLeft) return
 
-    const magnetURI = await this.adapters.fileTransfer.offer(files, this.roomId)
+    const fileKey = generateFileKey()
+    const magnetURI = await this.adapters.fileTransfer.offer(files, fileKey)
 
-    this.setSelfFileOffer(magnetURI, files)
+    this.setSelfFileOffer({ magnetURI, fileKey }, files)
 
     try {
       await this.senders?.fileOffer(
-        { magnetURI, isAllInlineMedia: isEveryFileInlineMedia(files) },
+        { magnetURI, fileKey, isAllInlineMedia: isEveryFileInlineMedia(files) },
         this.sendOptions()
       )
     } catch (error) {
@@ -528,7 +535,7 @@ export class ChatRoom extends EventTarget {
   }
 
   rescindFileOffer = async () => {
-    const magnetURI = this.selfFileOfferMagnetUri
+    const magnetURI = this.getSelfFileOfferMagnetUri()
 
     if (!magnetURI) return
 
@@ -596,10 +603,18 @@ export class ChatRoom extends EventTarget {
   }
 
   private handleInlineMedia = (
-    inlineMedia: UnsentInlineMedia,
+    inlineMedia: unknown,
     { peerId }: { peerId: string }
   ) => {
     if (!this.isFromRoomPeer(peerId)) return
+
+    if (!isUnsentInlineMedia(inlineMedia)) {
+      this.adapters.logger.warn(
+        `Ignoring malformed inline media from peer ${peerId}`
+      )
+
+      return
+    }
 
     const received: ReceivedInlineMedia = {
       ...inlineMedia,
@@ -611,7 +626,7 @@ export class ChatRoom extends EventTarget {
   }
 
   private handleTranscript = (
-    transcript: Array<ReceivedMessage | ReceivedInlineMedia>,
+    transcript: unknown,
     { peerId }: { peerId: string }
   ) => {
     if (!this.isFromRoomPeer(peerId)) return
@@ -620,7 +635,28 @@ export class ChatRoom extends EventTarget {
     // this peer already has.
     if (this.messageLog.length) return
 
-    this.setMessageLog(transcript)
+    if (!Array.isArray(transcript)) {
+      this.adapters.logger.warn(
+        `Ignoring malformed transcript from peer ${peerId}`
+      )
+
+      return
+    }
+
+    // Entries are checked one by one so that a single bad entry costs only
+    // itself, not the newcomer's whole view of the room's history.
+    const validEntries: MessageLog = transcript.filter(
+      (entry: unknown) =>
+        isReceivedMessage(entry) || isReceivedInlineMedia(entry)
+    )
+
+    if (validEntries.length < transcript.length) {
+      this.adapters.logger.warn(
+        `Dropped ${transcript.length - validEntries.length} malformed transcript entries from peer ${peerId}`
+      )
+    }
+
+    this.setMessageLog(validEntries)
   }
 
   private handleMetadata = async (
@@ -719,10 +755,22 @@ export class ChatRoom extends EventTarget {
   }
 
   private handleFileOffer = (
-    metadata: FileOfferMetadata | null,
+    payload: unknown,
     { peerId }: { peerId: string }
   ) => {
     if (!this.isFromRoomPeer(peerId)) return
+
+    // `null` is a withdrawal. Anything else has to be a complete offer: one
+    // without a usable key could never be downloaded.
+    if (payload !== null && !isFileOfferMetadata(payload)) {
+      this.adapters.logger.warn(
+        `Ignoring malformed file offer from peer ${peerId}`
+      )
+
+      return
+    }
+
+    const metadata = payload
 
     if (metadata) {
       this.fileOffers = applyFileOffer(this.fileOffers, peerId, metadata)
@@ -738,7 +786,23 @@ export class ChatRoom extends EventTarget {
       this.fileOffers = removeFileOffer(this.fileOffers, peerId)
     }
 
-    this.updatePeer(peerId, { offeredFileId: metadata?.magnetURI ?? null })
+    // `updatePeer` skips no-op updates by reference, so a repeated offer has
+    // to reuse the reference the peer already holds, or every greeting that
+    // re-sends it would re-render the peer list.
+    const current = findPeer(this.peers, peerId)?.offeredFile ?? null
+    const isSameOffer =
+      metadata !== null &&
+      current?.magnetURI === metadata.magnetURI &&
+      current.fileKey === metadata.fileKey
+
+    this.updatePeer(peerId, {
+      offeredFile: isSameOffer
+        ? current
+        : metadata && {
+            magnetURI: metadata.magnetURI,
+            fileKey: metadata.fileKey,
+          },
+    })
     this.emit(ChatRoomEvent.FILE_OFFER_CHANGE, { peerId, metadata })
   }
 
@@ -780,10 +844,11 @@ export class ChatRoom extends EventTarget {
               { target: peerId }
             ),
 
-        this.selfFileOfferMagnetUri
+        this.selfFileOffer
           ? this.senders?.fileOffer(
               {
-                magnetURI: this.selfFileOfferMagnetUri,
+                magnetURI: this.selfFileOffer.magnetURI,
+                fileKey: this.selfFileOffer.fileKey,
                 isAllInlineMedia: isEveryFileInlineMedia(this.selfOfferedFiles),
               },
               { target: peerId }
