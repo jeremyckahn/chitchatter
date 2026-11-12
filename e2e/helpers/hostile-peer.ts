@@ -2,9 +2,12 @@ import { Browser, BrowserContext, JSHandle } from '@playwright/test'
 
 import type {
   downloadAsFreshClient as downloadAsFreshClientInBrowser,
+  ForgedTranscriptEntry,
   HostilePeer,
   joinRoomAsHostilePeer,
 } from './hostile-peer.browser'
+
+export type { ForgedTranscriptEntry }
 
 type HostilePeerModule = {
   joinRoomAsHostilePeer: typeof joinRoomAsHostilePeer
@@ -31,7 +34,8 @@ const openBlankPage = async (context: BrowserContext) => {
  * A peer that is not running the Chitchatter UI, only its protocol.
  *
  * It exists to do what a modified client can: write a file offer for a magnet
- * URI that someone else offered. Everything is real: the browser, the WebRTC
+ * URI that someone else offered, or hand a newcomer a transcript of its own
+ * making. Everything is real: the browser, the WebRTC
  * connection, the tracker and the app's own transport.
  */
 export interface HostilePeerSession {
@@ -43,6 +47,11 @@ export interface HostilePeerSession {
   getPeerCount: () => Promise<number>
   /** Offers `magnetURI` as this peer's own file. */
   claim: (magnetURI: string, isAllInlineMedia?: boolean) => Promise<void>
+  /**
+   * Answers as the room's history, to the peers here now and to any that join:
+   * the transcript a newcomer to a public room is backfilled with.
+   */
+  serveTranscript: (entries: ForgedTranscriptEntry[]) => Promise<void>
   /** Withdraws this peer's file offer. */
   withdraw: () => Promise<void>
   /** Leaves the room, as a peer that simply disconnects does. */
@@ -80,6 +89,8 @@ export const joinAsHostilePeer = async (
         magnetURI,
         isAllInlineMedia,
       ] as const),
+    serveTranscript: entries =>
+      peer.evaluate((p, forged) => p.serveTranscript(forged), entries),
     withdraw: () => peer.evaluate(p => p.withdraw()),
     leave: () => peer.evaluate(p => p.leave()),
     close: () => context.close(),
