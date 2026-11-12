@@ -54,6 +54,7 @@ e2e/
 ├── tests/
 │   ├── accessibility.test.ts    # Accessibility tests
 │   ├── file-offer-replay.test.ts # Replayed file offers cannot destroy shared files
+│   ├── forged-transcript.test.ts # A hostile first peer's history cannot make a newcomer contact its server
 │   ├── home.test.ts             # Home page tests
 │   ├── room.test.ts             # Room functionality tests
 │   └── settings.test.ts         # Settings and preferences tests
