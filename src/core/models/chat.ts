@@ -166,11 +166,21 @@ export const isReceivedInlineMedia = (
 ): value is ReceivedInlineMedia =>
   isUnsentInlineMedia(value) && hasTimeReceived(value)
 
-export const isReceivedMessage = (value: unknown): value is ReceivedMessage =>
+/**
+ * A text message must not carry a `magnetURI`. Hosts tell the two kinds apart
+ * with {@link isInlineMedia}, which only looks for that field, so a "text
+ * message" carrying one would be rendered as inline media and downloaded with
+ * whatever `fileKey` it did or did not have. Rejecting it keeps the validator
+ * and the renderer in agreement about what the payload is.
+ */
+export const isUnsentMessage = (value: unknown): value is UnsentMessage =>
   hasMessageEnvelope(value) &&
   'text' in value &&
   typeof value.text === 'string' &&
-  hasTimeReceived(value)
+  !('magnetURI' in value)
+
+export const isReceivedMessage = (value: unknown): value is ReceivedMessage =>
+  isUnsentMessage(value) && hasTimeReceived(value)
 
 export type TypingStatus = {
   isTyping: boolean

@@ -7,7 +7,9 @@ import {
   isFileReference,
   isReceivedInlineMedia,
   isReceivedMessage,
+  isInlineMedia,
   isUnsentInlineMedia,
+  isUnsentMessage,
   TypingStatus,
   UnsentInlineMedia,
   UnsentMessage,
@@ -169,5 +171,16 @@ describe('inline media and message validators', () => {
     expect(isReceivedMessage(message)).toBe(true)
     expect(isReceivedMessage({ ...message, text: undefined })).toBe(false)
     expect(isReceivedMessage({ ...envelope, text: 'hi' })).toBe(false)
+  })
+
+  // Regression: such a payload passed as a text message, but hosts render
+  // anything with a `magnetURI` as inline media, so it was downloaded with an
+  // undefined key.
+  it('rejects a text message carrying a magnet URI', () => {
+    const smuggled = { ...envelope, text: 'hi', magnetURI: 'magnet:a' }
+
+    expect(isInlineMedia(smuggled)).toBe(true)
+    expect(isUnsentMessage(smuggled)).toBe(false)
+    expect(isReceivedMessage({ ...smuggled, timeReceived: 2 })).toBe(false)
   })
 })

@@ -630,6 +630,8 @@ describe('ChatRoom', () => {
         validMessage,
         { ...envelope, id: 'keyless', magnetURI: 'magnet:legacy' },
         { ...envelope, id: 'no-text' },
+        // Would otherwise pass as text and then render as keyless media
+        { ...envelope, id: 'smuggled', text: 'x', magnetURI: 'magnet:legacy' },
         validMedia,
         'not even an object',
       ])
@@ -637,7 +639,7 @@ describe('ChatRoom', () => {
 
       expect(alice.chatRoom.getMessageLog()).toEqual([validMessage, validMedia])
       expect(alice.adapters.logger.warn).toHaveBeenCalledWith(
-        'Dropped 3 malformed transcript entries from peer peer-9'
+        'Dropped 4 malformed transcript entries from peer peer-9'
       )
     })
 
@@ -701,6 +703,33 @@ describe('ChatRoom', () => {
         magnetURI: 'magnet:peer-0',
         fileKey: offeredKey(alice),
       })
+    })
+
+    it('drops a live message that would render as keyless media', async () => {
+      const alice = createClient(network, 0)
+
+      await alice.chatRoom.join()
+
+      const impostor = new InMemoryTransport(network, 'peer-9')
+      const [sendMessage] = impostor.makeAction<DataPayload>(
+        PeerAction.MESSAGE,
+        ActionNamespace.GROUP
+      )
+
+      await sendMessage({
+        id: 'smuggled',
+        authorId: 'user-9',
+        timeSent: 0,
+        text: 'x',
+        magnetURI: 'magnet:legacy',
+      })
+      await sendMessage({ id: 'no-text', authorId: 'user-9', timeSent: 0 })
+      await settle()
+
+      expect(alice.chatRoom.getMessageLog()).toEqual([])
+      expect(alice.adapters.logger.warn).toHaveBeenCalledWith(
+        'Ignoring malformed message from peer peer-9'
+      )
     })
 
     it('drops inline media that carries no usable key', async () => {

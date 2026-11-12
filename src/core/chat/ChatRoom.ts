@@ -38,6 +38,7 @@ import {
   isReceivedInlineMedia,
   isReceivedMessage,
   isUnsentInlineMedia,
+  isUnsentMessage,
   Message,
   MessageLog,
   Peer,
@@ -587,10 +588,18 @@ export class ChatRoom extends EventTarget {
   // ------------------------------------------------------------------ handlers
 
   private handleMessage = (
-    message: UnsentMessage,
+    message: unknown,
     { peerId }: { peerId: string }
   ) => {
     if (!this.isFromRoomPeer(peerId)) return
+
+    if (!isUnsentMessage(message)) {
+      this.adapters.logger.warn(
+        `Ignoring malformed message from peer ${peerId}`
+      )
+
+      return
+    }
 
     const received: ReceivedMessage = {
       ...message,
