@@ -273,3 +273,52 @@ describe('InMemoryTransport', () => {
     await expect(alice.getPeerConnectionTypes()).resolves.toEqual({})
   })
 })
+
+describe('InMemoryTransport handler unregistration', () => {
+  it('stops delivering joins to a handler once it is unregistered', () => {
+    const network = createInMemoryNetwork()
+    const alice = new InMemoryTransport(network, 'alice')
+    const bob = new InMemoryTransport(network, 'bob')
+    const aliceSawJoin = vi.fn()
+
+    const unregister = alice.onPeerJoin(PeerHookType.NEW_PEER, aliceSawJoin)
+
+    unregister()
+    bob.onPeerJoin(PeerHookType.NEW_PEER, vi.fn())
+
+    expect(aliceSawJoin).not.toHaveBeenCalled()
+  })
+
+  it('stops delivering leaves to a handler once it is unregistered', () => {
+    const network = createInMemoryNetwork()
+    const alice = new InMemoryTransport(network, 'alice')
+    const bob = new InMemoryTransport(network, 'bob')
+    const aliceSawLeave = vi.fn()
+
+    alice.onPeerJoin(PeerHookType.NEW_PEER, vi.fn())
+    bob.onPeerJoin(PeerHookType.NEW_PEER, vi.fn())
+
+    const unregister = alice.onPeerLeave(PeerHookType.NEW_PEER, aliceSawLeave)
+
+    unregister()
+    bob.leaveRoom()
+
+    expect(aliceSawLeave).not.toHaveBeenCalled()
+  })
+
+  it('leaves a newer handler alone when a superseded one unregisters', () => {
+    const network = createInMemoryNetwork()
+    const alice = new InMemoryTransport(network, 'alice')
+    const bob = new InMemoryTransport(network, 'bob')
+    const first = vi.fn()
+    const second = vi.fn()
+
+    const unregisterFirst = alice.onPeerJoin(PeerHookType.NEW_PEER, first)
+
+    alice.onPeerJoin(PeerHookType.NEW_PEER, second)
+    unregisterFirst()
+    bob.onPeerJoin(PeerHookType.NEW_PEER, vi.fn())
+
+    expect(second).toHaveBeenCalledWith('bob')
+  })
+})

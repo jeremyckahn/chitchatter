@@ -2,7 +2,11 @@ import { describe, expect, it, vi } from 'vitest'
 
 import { PeerAction } from 'core/models/network'
 import { TrysteroTransport } from 'core/transport/TrysteroTransport'
-import { ActionNamespace, PeerHookType } from 'core/transport/types'
+import {
+  ActionNamespace,
+  PeerHookType,
+  PeerStreamType,
+} from 'core/transport/types'
 
 /**
  * These tests drive `TrysteroTransport` against a stub of Trystero's `Room`.
@@ -206,5 +210,75 @@ describe('TrysteroTransport', () => {
 
     expect(onFirst).not.toHaveBeenCalled()
     expect(onSecond).toHaveBeenCalledTimes(1)
+  })
+})
+
+describe('TrysteroTransport handler unregistration', () => {
+  it('stops delivering joins to a handler once it is unregistered', () => {
+    const { transport, trysteroRoom } = createTransport()
+    const onJoin = vi.fn()
+
+    const unregister = transport.onPeerJoin(PeerHookType.AUDIO, onJoin)
+
+    unregister()
+    trysteroRoom.connectPeer('bob')
+
+    expect(onJoin).not.toHaveBeenCalled()
+  })
+
+  it('stops delivering leaves to a handler once it is unregistered', () => {
+    const { transport, trysteroRoom } = createTransport()
+    const onLeave = vi.fn()
+
+    const unregister = transport.onPeerLeave(PeerHookType.AUDIO, onLeave)
+
+    unregister()
+    trysteroRoom.disconnectPeer('bob')
+
+    expect(onLeave).not.toHaveBeenCalled()
+  })
+
+  it('stops delivering streams to a handler once it is unregistered', () => {
+    const { transport, trysteroRoom } = createTransport()
+    const onStream = vi.fn()
+
+    const unregister = transport.onPeerStream(PeerStreamType.AUDIO, onStream)
+
+    unregister()
+    trysteroRoom.room.onPeerStream?.({}, 'bob', {})
+
+    expect(onStream).not.toHaveBeenCalled()
+  })
+
+  it('leaves a newer handler alone when a superseded one unregisters', () => {
+    const { transport, trysteroRoom } = createTransport()
+    const first = vi.fn()
+    const second = vi.fn()
+
+    const unregisterFirst = transport.onPeerJoin(PeerHookType.AUDIO, first)
+
+    transport.onPeerJoin(PeerHookType.AUDIO, second)
+    unregisterFirst()
+    trysteroRoom.connectPeer('bob')
+
+    expect(second).toHaveBeenCalledWith('bob')
+  })
+
+  it('does not announce an already-greeted peer again after re-registering', () => {
+    const { transport, trysteroRoom } = createTransport()
+
+    trysteroRoom.connectPeer('bob')
+
+    const first = vi.fn()
+    const unregister = transport.onPeerJoin(PeerHookType.AUDIO, first)
+
+    unregister()
+
+    const second = vi.fn()
+
+    transport.onPeerJoin(PeerHookType.AUDIO, second)
+
+    expect(first).toHaveBeenCalledTimes(1)
+    expect(second).not.toHaveBeenCalled()
   })
 })
