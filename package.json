@@ -145,7 +145,7 @@
     "tsx": "^4.20.6",
     "url": "^0.11.0",
     "util": "^0.12.5",
-    "vercel": "^54.18.6",
+    "vercel": "^65.15.0",
     "vite": "^6.4.5",
     "vite-plugin-node-polyfills": "^0.23.0",
     "vite-plugin-pwa": "^0.21.2",
