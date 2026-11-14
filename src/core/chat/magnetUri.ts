@@ -7,8 +7,8 @@
  * request from. A host that downloads inline media as it renders it would send
  * a request to wherever a peer pointed it. So this is an allowlist of the shape
  * WebTorrent itself writes for a torrent a client offers — one info hash, an
- * optional display name, and websocket trackers — and anything else is not
- * treated as a magnet at all.
+ * optional display name, and trackers — and anything else is not treated as a
+ * magnet at all.
  */
 
 /** The parameters a magnet URI written by a client of this app can carry. */
@@ -33,8 +33,18 @@ const bitTorrentInfoHashTopic = /^urn:btih:(?:[0-9a-f]{40}|[a-z2-7]{32})$/i
 /** The BEP 52 multihash of a hybrid torrent: `1220` is sha2-256, 32 bytes. */
 const bitTorrentV2InfoHashTopic = /^urn:btmh:1220[0-9a-f]{64}$/i
 
-/** Trackers a browser can speak to; WebTorrent in a browser has no other kind. */
-const trackerProtocols = ['ws:', 'wss:']
+/**
+ * The trackers a magnet written by this app carries. A host that configures
+ * trackers writes `ws:`/`wss:` ones, the only kind a browser can speak to. One
+ * that does not gets `create-torrent`'s default announce list, which has five
+ * `udp:` trackers beside two `wss:` ones, so a magnet for every image shared
+ * on such a host names them. Refusing `udp:` would refuse all of those.
+ *
+ * `udp:` is inert in a browser: `bittorrent-tracker` leaves its UDP client out
+ * of the browser build. `http(s):` is not allowed: nothing this app writes
+ * carries it, and an HTTP tracker is a request to a host the sender chose.
+ */
+const trackerProtocols = ['ws:', 'wss:', 'udp:']
 
 const decode = (value: string): string | null => {
   try {
