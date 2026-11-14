@@ -144,6 +144,30 @@ whether that is a snackbar, a log line or nothing at all. The payload's
 which operation failed. Nothing in the web app subscribes to it today; the
 adapter's logger is the only consumer.
 
+### Input from peers
+
+Every message, inline-media message and transcript a room receives arrives as
+`unknown` and is narrowed by `chat/messageValidation.ts` before anything else
+sees it. A parser builds a new object from the fields it checked, so nothing
+rides along, and a frame that fails is dropped with a warning rather than
+thrown on. A new action that carries chat content belongs behind one of these
+parsers, not behind a type annotation on its handler.
+
+Two limits on what that gives you:
+
+- **Shape, not truth.** Messages are not signed and a user id is a public label,
+  so a well-formed message proves nothing about who wrote it, when, or whether
+  it was ever sent. The same holds for a live message as for a transcript
+  entry. Do not build a feature that treats `authorId` as authenticated.
+- **A magnet URI is not a magnet.** The string reaches WebTorrent's `add`, which
+  also fetches `http(s)` URLs and follows `ws`/`xs` sources, so
+  `chat/magnetUri.ts` admits only the shape a client of this app writes.
+  Anything that downloads a peer-supplied identifier needs the same check.
+
+An entry in the transcript is a claim about a torrent, not proof this client has
+anything to do with it, so it can never be what ends a seed on its own: see
+`ChatRoom.stopSeedingEvictedMedia`.
+
 ## Running it headless
 
 ```sh
@@ -166,6 +190,8 @@ currently gets.
 | Wire payloads         | `chat/protocol.ts`            |
 | Peer identity         | `chat/identity.ts`            |
 | Transcript policy     | `chat/transcript.ts`          |
+| Input from peers      | `chat/messageValidation.ts`   |
+| Magnet URI check      | `chat/magnetUri.ts`           |
 | Peer-list reducers    | `chat/peers.ts`               |
 | File offers           | `chat/fileOffers.ts`          |
 | Open-room bookkeeping | `chat/ChatRoomRegistry.ts`    |
