@@ -26,6 +26,7 @@ import {
   ReceivedMessage,
   VideoState,
 } from 'core/models/chat'
+import { webTorrentDefaultMagnetUri } from 'core/chat/webTorrentMagnet.fixture'
 import { getPeerName } from 'core/names/peerNames'
 import {
   createInMemoryNetwork,
@@ -1349,6 +1350,10 @@ describe('ChatRoom', () => {
           `magnet:?xt=urn:btih:${infoHash}&tr=ws%3A%2F%2Flocalhost%3A8000`,
         ],
         [
+          'the magnet WebTorrent writes when no tracker is configured',
+          webTorrentDefaultMagnetUri,
+        ],
+        [
           'a v1 and v2 hybrid hash',
           `magnet:?xt=urn:btih:${infoHash}&xt=urn:btmh:1220${'b'.repeat(64)}`,
         ],
@@ -1370,6 +1375,28 @@ describe('ChatRoom', () => {
         expect(alice.fileTransfer.trackInlineMedia).toHaveBeenCalledWith(
           magnetURI
         )
+      })
+
+      it('is accepted live when it is the magnet WebTorrent writes when no tracker is configured', async () => {
+        // The case a deployment without trackers of its own produces for every
+        // image its users post, and one the end-to-end tests cannot: they run
+        // against a local tracker, which writes a different magnet.
+        const alice = createVictim()
+        const mallory = createHostilePeer()
+
+        await alice.chatRoom.join()
+
+        await mallory.send(PeerAction.MEDIA_MESSAGE, {
+          id: 'photo',
+          magnetURI: webTorrentDefaultMagnetUri,
+          timeSent: 1_000,
+          authorId: 'user-9',
+        })
+        await settle()
+
+        expect(alice.chatRoom.getMessageLog()).toMatchObject([
+          { id: 'photo', magnetURI: webTorrentDefaultMagnetUri },
+        ])
       })
     })
 

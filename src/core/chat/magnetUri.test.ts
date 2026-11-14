@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 
 import { isSafeMagnetUri, magnetUriMaxLength } from 'core/chat/magnetUri'
+import { webTorrentDefaultMagnetUri } from 'core/chat/webTorrentMagnet.fixture'
 
 const infoHash = 'c'.repeat(40)
 const topic = `xt=urn:btih:${infoHash}`
@@ -27,6 +28,14 @@ describe('isSafeMagnetUri', () => {
     [
       'a local development tracker',
       `magnet:?${topic}&tr=${encodeURIComponent('ws://localhost:8000')}`,
+    ],
+    [
+      'the magnet WebTorrent writes when no tracker is configured',
+      webTorrentDefaultMagnetUri,
+    ],
+    [
+      'a udp tracker, which a browser has no client for',
+      `magnet:?${topic}&tr=${encodeURIComponent('udp://t.example:80')}`,
     ],
   ])('accepts %s', (_label, magnetURI) => {
     expect(isSafeMagnetUri(magnetURI)).toBe(true)
@@ -93,10 +102,6 @@ describe('isSafeMagnetUri', () => {
     [
       'an http tracker',
       `magnet:?${topic}&tr=${encodeURIComponent('http://t.example/announce')}`,
-    ],
-    [
-      'a udp tracker',
-      `magnet:?${topic}&tr=${encodeURIComponent('udp://t.example:80')}`,
     ],
     ['an unparseable tracker', `magnet:?${topic}&tr=%`],
   ])('rejects %s', (_label, value) => {
