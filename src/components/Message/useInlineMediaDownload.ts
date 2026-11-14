@@ -48,7 +48,14 @@ export const useInlineMediaDownload = (
     // gone (or after its reference changed) does not update stale state.
     let isCurrent = true
 
-    setDownload({ state: InlineMediaDownloadState.LOADING })
+    // Only a changed reference has anything to reset. The first run finds the
+    // initial LOADING state, and replacing it with an equal object would
+    // render every message twice for nothing.
+    setDownload(previous =>
+      previous.state === InlineMediaDownloadState.LOADING
+        ? previous
+        : { state: InlineMediaDownloadState.LOADING }
+    )
 
     fileTransfer.download(magnetURI, fileKey).then(
       files => {

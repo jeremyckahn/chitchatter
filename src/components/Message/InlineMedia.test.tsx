@@ -1,6 +1,7 @@
 import {
   render,
   screen,
+  waitFor,
   waitForElementToBeRemoved,
   within,
 } from '@testing-library/react'
@@ -215,6 +216,29 @@ describe('InlineMediaView', () => {
 
     screen.getByText('Media failed to load')
     expect(screen.queryByRole('progressbar')).not.toBeInTheDocument()
+  })
+
+  test('renders every file of a share that holds two with the same name', async () => {
+    render(
+      <InlineMediaView
+        download={{
+          state: InlineMediaDownloadState.READY,
+          files: [fileStub('photo.png'), fileStub('photo.png')],
+        }}
+      />
+    )
+
+    await waitFor(() =>
+      expect(
+        screen.getAllByRole('button', { name: /photo\.png/ })
+      ).toHaveLength(2)
+    )
+    // React reports a key collision as an error rather than throwing
+    expect(console.error).not.toHaveBeenCalledWith(
+      expect.stringContaining('same key'),
+      expect.anything(),
+      expect.anything()
+    )
   })
 
   test('renders each downloaded file once it is ready', async () => {

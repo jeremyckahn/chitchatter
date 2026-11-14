@@ -107,11 +107,21 @@ export type FileOfferMetadata = FileReference & {
 }
 
 /**
- * The shape of a file key: 32 random bytes as unpadded base64url. Checked
- * exactly, rather than as any string, so a peer cannot hand over a short or
- * guessable key as if it were one of ours.
+ * How many random bytes a file key holds: 256 bits, far beyond guessing,
+ * whatever the key derivation costs. `generateFileKey` makes keys of this size
+ * and {@link isFileKey} accepts only this size, so both follow from here.
  */
-const fileKeyPattern = /^[A-Za-z0-9_-]{43}$/
+export const FILE_KEY_BYTE_LENGTH = 32
+
+/** Unpadded base64 spends four characters on every three bytes, rounding up. */
+const fileKeyCharacterLength = Math.ceil((FILE_KEY_BYTE_LENGTH * 4) / 3)
+
+/**
+ * The shape of a file key: {@link FILE_KEY_BYTE_LENGTH} random bytes as
+ * unpadded base64url. Checked exactly, rather than as any string, so a peer
+ * cannot hand over a short or guessable key as if it were one of ours.
+ */
+const fileKeyPattern = new RegExp(`^[A-Za-z0-9_-]{${fileKeyCharacterLength}}$`)
 
 export const isFileKey = (value: unknown): value is string =>
   typeof value === 'string' && fileKeyPattern.test(value)

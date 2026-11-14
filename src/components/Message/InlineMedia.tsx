@@ -200,8 +200,10 @@ export const InlineMediaView = ({ download }: InlineMediaViewProps) => {
     case InlineMediaDownloadState.READY:
       return (
         <>
-          {download.files.map(file => (
-            <InlineFile file={file} key={file.name} />
+          {/* A share can hold two files with the same name, so the name
+              alone is not a unique key. The list never reorders. */}
+          {download.files.map((file, index) => (
+            <InlineFile file={file} key={`${index}-${file.name}`} />
           ))}
         </>
       )

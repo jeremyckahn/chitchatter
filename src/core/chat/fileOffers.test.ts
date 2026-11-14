@@ -12,7 +12,11 @@ import {
   removeFileOffer,
   shouldRescindOffer,
 } from 'core/chat/fileOffers'
-import { FileOfferMetadata, isFileKey } from 'core/models/chat'
+import {
+  FILE_KEY_BYTE_LENGTH,
+  FileOfferMetadata,
+  isFileKey,
+} from 'core/models/chat'
 
 const fileKey = generateFileKey()
 
@@ -84,14 +88,21 @@ describe('generateFileKey', () => {
     expect(isFileKey(generateFileKey())).toBe(true)
   })
 
-  it('encodes 32 bytes as unpadded base64url', () => {
+  it('encodes FILE_KEY_BYTE_LENGTH bytes as unpadded base64url', () => {
     const key = generateFileKey()
 
-    expect(key).toMatch(/^[A-Za-z0-9_-]{43}$/)
+    expect(key).toMatch(/^[A-Za-z0-9_-]+$/)
+    expect(key).not.toContain('=')
 
-    const base64 = key.replace(/-/g, '+').replace(/_/g, '/') + '='
+    const base64 = key.replace(/-/g, '+').replace(/_/g, '/')
 
-    expect(atob(base64)).toHaveLength(32)
+    expect(atob(base64)).toHaveLength(FILE_KEY_BYTE_LENGTH)
+  })
+
+  it('makes 256-bit keys', () => {
+    // Pinned, so that shrinking the key is a decision someone makes on purpose
+    expect(FILE_KEY_BYTE_LENGTH * 8).toBe(256)
+    expect(generateFileKey()).toHaveLength(43)
   })
 
   it('uses the platform CSPRNG', () => {

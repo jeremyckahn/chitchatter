@@ -40,6 +40,19 @@ describe('useInlineMediaDownload', () => {
     expect(transfer.download).toHaveBeenCalledWith(file.magnetURI, file.fileKey)
   })
 
+  test('renders once on mount rather than resetting a state it already has', () => {
+    const transfer = transferWith(() => deferred().promise)
+    let renders = 0
+
+    renderHook(() => {
+      renders++
+
+      return useInlineMediaDownload(transfer, file)
+    })
+
+    expect(renders).toBe(1)
+  })
+
   test('is loading until the download settles, then ready with its files', async () => {
     const pending = deferred()
     const transfer = transferWith(() => pending.promise)

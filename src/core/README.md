@@ -148,10 +148,10 @@ adapter's logger is the only consumer.
 
 Every message, inline-media message, file offer and transcript a room receives
 arrives as `unknown` and is narrowed by `chat/messageValidation.ts` before
-anything else sees it. A parser builds a new object from the fields it checked, so nothing
-rides along, and a frame that fails is dropped with a warning rather than
-thrown on. A new action that carries chat content belongs behind one of these
-parsers, not behind a type annotation on its handler.
+anything else sees it. A parser builds a new object from the fields it checked,
+so nothing rides along, and a frame that fails is dropped with a warning rather
+than thrown on. A new action that carries chat content belongs behind one of
+these parsers, not behind a type annotation on its handler.
 
 Two limits on what that gives you:
 

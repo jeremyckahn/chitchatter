@@ -1,4 +1,5 @@
-import { FileOfferMetadata } from 'core/models/chat'
+import { EncryptionService } from 'core/crypto/Encryption'
+import { FILE_KEY_BYTE_LENGTH, FileOfferMetadata } from 'core/models/chat'
 
 /**
  * The minimum a file needs to look like for the core to reason about it. The
@@ -9,9 +10,6 @@ export interface FileHandle {
   type: string
   size: number
 }
-
-/** 256 bits: far beyond guessing, whatever the key derivation costs. */
-const FILE_KEY_BYTE_LENGTH = 32
 
 /**
  * A fresh random key for one file offer, as unpadded base64url so it matches
@@ -28,7 +26,7 @@ export const generateFileKey = (): string => {
     new Uint8Array(FILE_KEY_BYTE_LENGTH)
   )
 
-  return btoa(String.fromCharCode(...bytes))
+  return EncryptionService.arrayBufferToBase64(bytes.buffer)
     .replace(/\+/g, '-')
     .replace(/\//g, '_')
     .replace(/=+$/, '')
