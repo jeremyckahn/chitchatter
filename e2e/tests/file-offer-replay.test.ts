@@ -92,9 +92,19 @@ test.describe("A peer replaying another peer's magnet URI", () => {
     file: { name: string; mimeType: string; buffer: Buffer }
   ) => page.locator('#file-upload').setInputFiles(file)
 
+  /**
+   * Shares `file` and waits until the share is standing.
+   *
+   * What is waited on is the share control turning into its stop-sharing
+   * state: the folder icon only replaces the spinner once encryption is done
+   * and an offer is up. Not the "Encryption complete" toast, which announces
+   * the same moment: the shell has one alert slot, so a peer's join landing
+   * just after it (an attacker connecting, say) replaces it before it can be
+   * seen, and the test fails with the share working fine.
+   */
   const share = async (page: Page, file: Parameters<typeof upload>[1]) => {
     await upload(page, file)
-    await expect(page.getByText('Encryption complete')).toBeVisible()
+    await expect(page.getByTestId('FolderIcon')).toBeVisible()
   }
 
   const shareText = (page: Page) =>
