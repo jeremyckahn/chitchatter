@@ -22,6 +22,11 @@ import {
   removePeer,
 } from 'core/chat/peers'
 import { UserMetadata } from 'core/chat/protocol'
+import {
+  parseTranscript,
+  parseUnsentInlineMedia,
+  parseUnsentMessage,
+} from 'core/chat/messageValidation'
 import { applyTranscriptLimit, getInlineMediaUris } from 'core/chat/transcript'
 import {
   messageTranscriptSizeLimit,
@@ -73,6 +78,13 @@ export interface SelfState {
   userId: string
   customUsername: string
   isTyping: boolean
+}
+
+/** What a frame that failed validation was meant to be, for the log line. */
+enum MalformedFrame {
+  MESSAGE = 'message',
+  INLINE_MEDIA = 'inline media message',
+  TRANSCRIPT = 'transcript',
 }
 
 /**
@@ -589,10 +601,18 @@ export class ChatRoom extends EventTarget {
   // ------------------------------------------------------------------ handlers
 
   private handleMessage = (
-    message: UnsentMessage,
+    payload: unknown,
     { peerId }: { peerId: string }
   ) => {
     if (!this.isFromRoomPeer(peerId)) return
+
+    const message = parseUnsentMessage(payload)
+
+    if (!message) {
+      this.warnMalformed(MalformedFrame.MESSAGE, peerId)
+
+      return
+    }
 
     const received: ReceivedMessage = {
       ...message,
@@ -605,10 +625,18 @@ export class ChatRoom extends EventTarget {
   }
 
   private handleInlineMedia = (
-    inlineMedia: UnsentInlineMedia,
+    payload: unknown,
     { peerId }: { peerId: string }
   ) => {
     if (!this.isFromRoomPeer(peerId)) return
+
+    const inlineMedia = parseUnsentInlineMedia(payload)
+
+    if (!inlineMedia) {
+      this.warnMalformed(MalformedFrame.INLINE_MEDIA, peerId)
+
+      return
+    }
 
     const received: ReceivedInlineMedia = {
       ...inlineMedia,
@@ -619,8 +647,29 @@ export class ChatRoom extends EventTarget {
     this.emit(ChatRoomEvent.MESSAGE_RECEIVED, { message: received, peerId })
   }
 
+  /**
+   * Backfills an empty log with the history a peer hands over on arrival.
+   *
+   * What this does and does not establish, since the answer is not obvious:
+   *
+   * - The *shape* is established. The payload arrives as `unknown`, is cut to
+   *   the most recent entries the log can hold before any of them is looked
+   *   at, and each survivor is rebuilt from validated fields only.
+   * - The *content* is not, and cannot be. Messages are not signed and a user
+   *   id is a public label, so the peer that answers first can attribute
+   *   anything to anyone, date it as it likes and invent messages outright. A
+   *   receiver has nothing to check against, and the identity check that exists
+   *   (see {@link verifyPeerIdentity}) proves only that a peer holds *a* key.
+   *   Picking whom to believe does not help either: a peer that has been
+   *   verified is one that signed its own advertised id, and requiring several
+   *   peers to agree would leave a room of two with no history at all. Closing
+   *   this needs signed messages, which is a protocol change.
+   * - Nothing a transcript says may *act on* this client beyond showing the
+   *   history. In particular an entry naming a torrent must not be able to end
+   *   a seed: see {@link stopSeedingEvictedMedia}.
+   */
   private handleTranscript = (
-    transcript: Array<ReceivedMessage | ReceivedInlineMedia>,
+    payload: unknown,
     { peerId }: { peerId: string }
   ) => {
     if (!this.isFromRoomPeer(peerId)) return
@@ -629,13 +678,38 @@ export class ChatRoom extends EventTarget {
     // this peer already has.
     if (this.messageLog.length) return
 
-    for (const message of transcript) {
+    const parsed = parseTranscript(payload, {
+      limit: this.transcriptSizeLimit,
+      receivedAt: this.adapters.clock.now(),
+    })
+
+    if (!parsed) {
+      this.warnMalformed(MalformedFrame.TRANSCRIPT, peerId)
+
+      return
+    }
+
+    if (parsed.discardedCount > 0) {
+      this.adapters.logger.warn(
+        `Discarded ${parsed.discardedCount} entries of the transcript from peer ${peerId}`
+      )
+    }
+
+    // An empty backfill changes nothing, and must not use up the chance of a
+    // later peer's: the log is still empty.
+    if (!parsed.messageLog.length) return
+
+    for (const message of parsed.messageLog) {
       if (isInlineMedia(message)) {
         this.adapters.fileTransfer.trackInlineMedia(message.magnetURI)
       }
     }
 
-    this.setMessageLog(transcript)
+    this.setMessageLog(parsed.messageLog)
+  }
+
+  private warnMalformed = (what: MalformedFrame, peerId: string) => {
+    this.adapters.logger.warn(`Ignored a malformed ${what} from peer ${peerId}`)
   }
 
   private handleMetadata = async (
@@ -1025,22 +1099,54 @@ export class ChatRoom extends EventTarget {
       this.transcriptSizeLimit
     )
 
-    // Inline media that has scrolled out of the transcript is unreachable, so
-    // stop seeding it rather than holding the torrent open forever.
-    for (const message of evicted) {
-      if (!isInlineMedia(message)) continue
-
-      this.adapters.fileTransfer.untrackInlineMedia(message.magnetURI)
-
-      if (this.adapters.fileTransfer.isOffering(message.magnetURI)) {
-        this.stopSeeding(message.magnetURI)
-      }
-    }
+    this.stopSeedingEvictedMedia(evicted, messageLog)
 
     this.messageLog = messageLog
     this.messageLogSnapshot = messageLog
     this.emit(ChatRoomEvent.MESSAGE_LOG_CHANGE, { messageLog })
   }
+
+  /**
+   * Lets go of the inline media that has scrolled out of the transcript, which
+   * is unreachable now, rather than holding its torrent open forever.
+   *
+   * An entry is a claim about a torrent, not proof this client has anything to
+   * do with it: a peer's transcript can name any magnet it has seen, including
+   * one for a file this client is offering. So an entry going away ends the
+   * seed only when nothing else stands behind it — no entry still in the log,
+   * no offer of our own, and no present peer offering it. That is the rule
+   * {@link shouldStopSeedingOffer} applies to a withdrawn offer, for the same
+   * reason: a magnet is a bearer identifier anyone can write.
+   */
+  private stopSeedingEvictedMedia = (
+    evicted: MessageLog,
+    remaining: MessageLog
+  ) => {
+    // Distinct, so a magnet evicted twice in one batch (an image sent twice) is
+    // let go of once. Checked first, as nearly every call evicts nothing.
+    const evictedUris = new Set(getInlineMediaUris(evicted))
+
+    if (!evictedUris.size) return
+
+    const stillShown = new Set(getInlineMediaUris(remaining))
+
+    for (const magnetURI of evictedUris) {
+      if (stillShown.has(magnetURI)) continue
+
+      this.adapters.fileTransfer.untrackInlineMedia(magnetURI)
+
+      if (this.isStillOffered(magnetURI)) continue
+
+      if (this.adapters.fileTransfer.isOffering(magnetURI)) {
+        this.stopSeeding(magnetURI)
+      }
+    }
+  }
+
+  /** Whether this client or a present peer has an offer standing for a magnet. */
+  private isStillOffered = (magnetURI: string) =>
+    this.selfFileOfferMagnetUri === magnetURI ||
+    Object.values(this.fileOffers).some(offer => offer.magnetURI === magnetURI)
 
   private setPeers = (peers: Peer[]) => {
     this.peers = peers

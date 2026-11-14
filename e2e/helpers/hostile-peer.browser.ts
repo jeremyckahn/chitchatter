@@ -13,7 +13,7 @@ import { trackerUrls } from 'config/trackerUrls'
 import { PeerAction } from 'core/models/network'
 import { FileOfferMetadata } from 'core/models/chat'
 import { TrysteroTransport } from 'core/transport/TrysteroTransport'
-import { ActionNamespace } from 'core/transport/types'
+import { ActionNamespace, PeerHookType } from 'core/transport/types'
 import { FileTransferService } from 'services/FileTransfer'
 
 // Mirrors what `Room` builds for the app. If it drifts, the hostile peer never
@@ -22,6 +22,13 @@ import { FileTransferService } from 'services/FileTransfer'
 const appId = `${encodeURI(window.location.origin)}_${process.env['VITE_NAME']}`
 
 const rtcConfig: RTCConfiguration = { iceServers: [] }
+
+/**
+ * One entry of a transcript, as a hostile peer writes it: a flat record of
+ * whatever fields it likes. It is deliberately not `ReceivedMessage`, since the
+ * point is to send what a well-behaved client never would.
+ */
+export type ForgedTranscriptEntry = { [field: string]: string | number }
 
 const isMagnetCarrier = (data: unknown): data is { magnetURI: string } =>
   typeof data === 'object' &&
@@ -55,8 +62,23 @@ export const joinRoomAsHostilePeer = (roomId: string) => {
     ActionNamespace.GROUP
   )
 
+  const [sendTranscript] = transport.makeAction<ForgedTranscriptEntry[]>(
+    PeerAction.MESSAGE_TRANSCRIPT,
+    ActionNamespace.GROUP
+  )
+
   const offeredMagnetUris: string[] = []
   const inlineMediaMagnetUris: string[] = []
+
+  let forgedTranscript: ForgedTranscriptEntry[] | undefined
+
+  // What a real client does for a newcomer to a public room, with the history
+  // of the hostile peer's choosing: it is how a room's first peer to answer
+  // gets to say what was said before the newcomer arrived.
+  transport.onPeerJoin(PeerHookType.NEW_PEER, peerId => {
+    if (forgedTranscript)
+      void sendTranscript(forgedTranscript, { target: peerId })
+  })
 
   onFileOffer(data => {
     if (isMagnetCarrier(data)) offeredMagnetUris.push(data.magnetURI)
@@ -81,6 +103,20 @@ export const joinRoomAsHostilePeer = (roomId: string) => {
      */
     claim: (magnetURI: string, isAllInlineMedia = false) =>
       sendFileOffer({ magnetURI, isAllInlineMedia }),
+
+    /**
+     * Hands `entries` over as the room's history, to everyone already here and
+     * to each peer that arrives later, as a client does when it greets one.
+     */
+    serveTranscript: async (entries: ForgedTranscriptEntry[]) => {
+      forgedTranscript = entries
+
+      await Promise.all(
+        transport
+          .getPeers()
+          .map(peerId => sendTranscript(entries, { target: peerId }))
+      )
+    },
 
     withdraw: () => sendFileOffer(null),
 
