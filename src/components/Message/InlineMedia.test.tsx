@@ -6,7 +6,8 @@ import {
 } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 
-import { InlineFile } from './InlineMedia'
+import { InlineFile, InlineMediaView } from './InlineMedia'
+import { InlineMediaDownloadState } from './useInlineMediaDownload'
 
 type InlineFileSource = Parameters<typeof InlineFile>[0]['file']
 
@@ -193,5 +194,40 @@ describe('InlineFile blob URL cleanup', () => {
     await vi.waitFor(() => {
       expect(revokeObjectURL).toHaveBeenCalledWith(blobUrl)
     })
+  })
+})
+
+describe('InlineMediaView', () => {
+  test('shows a spinner while the media downloads', () => {
+    render(
+      <InlineMediaView download={{ state: InlineMediaDownloadState.LOADING }} />
+    )
+
+    expect(screen.getByRole('progressbar')).toBeInTheDocument()
+  })
+
+  // Regression: a download that failed (a key that does not decrypt the file,
+  // say) left the spinner up forever instead of saying so.
+  test('says the media failed instead of spinning forever', () => {
+    render(
+      <InlineMediaView download={{ state: InlineMediaDownloadState.FAILED }} />
+    )
+
+    screen.getByText('Media failed to load')
+    expect(screen.queryByRole('progressbar')).not.toBeInTheDocument()
+  })
+
+  test('renders each downloaded file once it is ready', async () => {
+    render(
+      <InlineMediaView
+        download={{
+          state: InlineMediaDownloadState.READY,
+          files: [fileStub('photo.png')],
+        }}
+      />
+    )
+
+    await findThumbnail()
+    expect(screen.queryByRole('progressbar')).not.toBeInTheDocument()
   })
 })

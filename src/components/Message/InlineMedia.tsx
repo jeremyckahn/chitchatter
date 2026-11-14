@@ -11,12 +11,17 @@ import { TorrentFile } from 'webtorrent'
 import { RoomContext } from 'contexts/RoomContext'
 import { FileReference } from 'core/models/chat'
 
-type TorrentFiles = TorrentFile[]
+import {
+  InlineMediaDownload,
+  InlineMediaDownloadState,
+  InlineMediaFile,
+  useInlineMediaDownload,
+} from './useInlineMediaDownload'
 
 type InlineMediaProps = FileReference
 
 interface InlineFileProps {
-  file: Pick<TorrentFile, 'name' | 'length' | 'getBlobURL'>
+  file: InlineMediaFile
 }
 
 const thumbnailMaxHeight = '300px'
@@ -164,30 +169,41 @@ export const InlineFile = ({ file }: InlineFileProps) => {
 }
 
 export const InlineMedia = ({ magnetURI, fileKey }: InlineMediaProps) => {
-  const [hasDownloadInitiated, setHasDownloadInitiated] = useState(false)
-  const [downloadedFiles, setDownloadedFiles] = useState<TorrentFiles>([])
   const {
     fileTransferService: { fileTransfer },
   } = useContext(RoomContext)
 
-  useEffect(() => {
-    ;(async () => {
-      if (hasDownloadInitiated) return
-
-      setHasDownloadInitiated(true)
-      const files = await fileTransfer.download(magnetURI, fileKey)
-
-      setDownloadedFiles(files)
-    })()
-  }, [fileTransfer, fileKey, hasDownloadInitiated, magnetURI])
-
   return (
-    <>
-      {hasDownloadInitiated && downloadedFiles.length === 0 ? (
-        <CircularProgress variant="indeterminate" color="inherit" />
-      ) : (
-        downloadedFiles.map(file => <InlineFile file={file} key={file.name} />)
-      )}
-    </>
+    <InlineMediaView
+      download={useInlineMediaDownload(fileTransfer, { magnetURI, fileKey })}
+    />
   )
+}
+
+interface InlineMediaViewProps {
+  download: InlineMediaDownload
+}
+
+/** What a message shows for each stage of its media's download. */
+export const InlineMediaView = ({ download }: InlineMediaViewProps) => {
+  switch (download.state) {
+    case InlineMediaDownloadState.LOADING:
+      return <CircularProgress variant="indeterminate" color="inherit" />
+
+    case InlineMediaDownloadState.FAILED:
+      return (
+        <Typography sx={{ fontStyle: 'italic' }}>
+          Media failed to load
+        </Typography>
+      )
+
+    case InlineMediaDownloadState.READY:
+      return (
+        <>
+          {download.files.map(file => (
+            <InlineFile file={file} key={file.name} />
+          ))}
+        </>
+      )
+  }
 }
