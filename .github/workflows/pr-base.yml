@@ -1,0 +1,38 @@
+name: PR base branch
+
+# Every pull request must target develop (see "Pull Requests" in AGENTS.md).
+# main only changes through the release workflow, which fast-forwards it to
+# develop and fails if main holds commits develop lacks. A PR merged straight
+# into main creates exactly that, and blocks every release until main is reset.
+#
+# This check fails a PR that targets any other branch. To make it block the
+# merge rather than only warn, mark "Require develop as the base branch" as a
+# required status check in main's branch protection.
+on:
+  pull_request:
+    # `edited` covers a PR retargeted to another base after it was opened.
+    types: [opened, edited, reopened, synchronize]
+  # So the check reports in a merge queue too, if it is ever required there.
+  merge_group:
+
+permissions: {}
+
+jobs:
+  check_base:
+    name: Require develop as the base branch
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check the base branch
+        env:
+          # From the environment rather than interpolated into the script, so
+          # a branch name cannot inject shell.
+          BASE_REF: ${{ github.event_name == 'merge_group' && github.event.merge_group.base_ref || github.base_ref }}
+        run: |
+          base="${BASE_REF#refs/heads/}"
+
+          if [ "$base" != "develop" ]; then
+            echo "::error::This pull request targets '$base'. Pull requests must target develop: change the base branch to develop. main only changes through the release workflow."
+            exit 1
+          fi
+
+          echo "Base branch is develop."
