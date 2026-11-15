@@ -264,7 +264,13 @@ Before committing any code, ensure:
 
 **Every pull request must target `develop`.** Never open one against `main` or
 any other branch, and retarget one that does. Branch from the latest `develop`
-too, so the PR's diff holds only its own changes.
+too, so the PR's diff holds only its own changes. The `PR base branch` workflow
+(`.github/workflows/pr-base.yml`) fails any pull request that targets another
+branch.
+
+`main` only changes through the release workflow, which fast-forwards it to
+`develop`. A PR merged straight into `main` gives it commits `develop` lacks,
+and that blocks every release until `main` is reset.
 
 ### Performance Considerations
 
