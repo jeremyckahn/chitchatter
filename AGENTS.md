@@ -260,6 +260,12 @@ Before committing any code, ensure:
 6. New features include appropriate test coverage
 7. Bug fixes include regression tests
 
+### Pull Requests
+
+**Every pull request must target `develop`.** Never open one against `main` or
+any other branch, and retarget one that does. Branch from the latest `develop`
+too, so the PR's diff holds only its own changes.
+
 ### Performance Considerations
 
 - Avoid unnecessary re-renders in React components
