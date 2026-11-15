@@ -8,6 +8,7 @@ import {
   FileHandle,
   FileOffers,
   applyFileOffer,
+  generateFileKey,
   isEveryFileInlineMedia,
   isOfferedByAnotherPeer,
   removeFileOffer,
@@ -23,6 +24,7 @@ import {
 } from 'core/chat/peers'
 import { UserMetadata } from 'core/chat/protocol'
 import {
+  parseFileOfferMetadata,
   parseTranscript,
   parseUnsentInlineMedia,
   parseUnsentMessage,
@@ -35,6 +37,7 @@ import {
 import { EncryptionService, encryption } from 'core/crypto/Encryption'
 import {
   FileOfferMetadata,
+  FileReference,
   InlineMedia,
   isInlineMedia,
   isMessageReceived,
@@ -85,6 +88,7 @@ enum MalformedFrame {
   MESSAGE = 'message',
   INLINE_MEDIA = 'inline media message',
   TRANSCRIPT = 'transcript',
+  FILE_OFFER = 'file offer',
 }
 
 /**
@@ -143,7 +147,7 @@ export class ChatRoom extends EventTarget {
 
   private typingExpiryTimer: ReturnType<typeof setTimeout> | null = null
 
-  private selfFileOfferMagnetUri: string | null = null
+  private selfFileOffer: Readonly<FileReference> | null = null
 
   /**
    * Magnets a peer announced as all inline media. Their torrents outlive the
@@ -354,7 +358,7 @@ export class ChatRoom extends EventTarget {
 
   getFileOffers = (): FileOffers => this.fileOffers
 
-  getSelfFileOfferMagnetUri = () => this.selfFileOfferMagnetUri
+  getSelfFileOfferMagnetUri = () => this.selfFileOffer?.magnetURI ?? null
 
   /**
    * The one place our own offer is recorded, so that every change announces
@@ -364,12 +368,13 @@ export class ChatRoom extends EventTarget {
    * where one does.
    */
   private setSelfFileOffer = (
-    magnetURI: string | null,
+    offer: Readonly<FileReference> | null,
     files: readonly FileHandle[] | null
   ) => {
-    const hasChanged = this.selfFileOfferMagnetUri !== magnetURI
+    const magnetURI = offer?.magnetURI ?? null
+    const hasChanged = this.getSelfFileOfferMagnetUri() !== magnetURI
 
-    this.selfFileOfferMagnetUri = magnetURI
+    this.selfFileOffer = offer
     this.selfOfferedFiles = files
 
     if (hasChanged)
@@ -436,14 +441,13 @@ export class ChatRoom extends EventTarget {
     this.setIsMessageSending(true)
 
     try {
-      const magnetURI = await this.adapters.fileTransfer.offer(
-        files,
-        this.roomId
-      )
+      const fileKey = generateFileKey()
+      const magnetURI = await this.adapters.fileTransfer.offer(files, fileKey)
 
       const unsentInlineMedia: UnsentInlineMedia = {
         authorId: this.userId,
         magnetURI,
+        fileKey,
         timeSent: this.adapters.clock.now(),
         id: this.adapters.ids.uuid(),
       }
@@ -522,13 +526,14 @@ export class ChatRoom extends EventTarget {
   ): Promise<string | undefined> => {
     if (this.hasLeft) return
 
-    const magnetURI = await this.adapters.fileTransfer.offer(files, this.roomId)
+    const fileKey = generateFileKey()
+    const magnetURI = await this.adapters.fileTransfer.offer(files, fileKey)
 
-    this.setSelfFileOffer(magnetURI, files)
+    this.setSelfFileOffer({ magnetURI, fileKey }, files)
 
     try {
       await this.senders?.fileOffer(
-        { magnetURI, isAllInlineMedia: isEveryFileInlineMedia(files) },
+        { magnetURI, fileKey, isAllInlineMedia: isEveryFileInlineMedia(files) },
         this.sendOptions()
       )
     } catch (error) {
@@ -549,7 +554,7 @@ export class ChatRoom extends EventTarget {
   }
 
   rescindFileOffer = async () => {
-    const magnetURI = this.selfFileOfferMagnetUri
+    const magnetURI = this.getSelfFileOfferMagnetUri()
 
     if (!magnetURI) return
 
@@ -808,10 +813,20 @@ export class ChatRoom extends EventTarget {
   }
 
   private handleFileOffer = (
-    metadata: FileOfferMetadata | null,
+    payload: unknown,
     { peerId }: { peerId: string }
   ) => {
     if (!this.isFromRoomPeer(peerId)) return
+
+    // `null` is a withdrawal. Anything else has to be a complete offer, rebuilt
+    // from checked fields: one without a usable key could never be downloaded.
+    const metadata = payload === null ? null : parseFileOfferMetadata(payload)
+
+    if (payload !== null && !metadata) {
+      this.warnMalformed(MalformedFrame.FILE_OFFER, peerId)
+
+      return
+    }
 
     if (metadata) {
       const replaced = this.fileOffers[peerId]
@@ -837,7 +852,23 @@ export class ChatRoom extends EventTarget {
       if (withdrawn) this.pruneRetainedMagnet(peerId, withdrawn.magnetURI)
     }
 
-    this.updatePeer(peerId, { offeredFileId: metadata?.magnetURI ?? null })
+    // `updatePeer` skips no-op updates by reference, so a repeated offer has
+    // to reuse the reference the peer already holds, or every greeting that
+    // re-sends it would re-render the peer list.
+    const current = findPeer(this.peers, peerId)?.offeredFile ?? null
+    const isSameOffer =
+      metadata !== null &&
+      current?.magnetURI === metadata.magnetURI &&
+      current.fileKey === metadata.fileKey
+
+    this.updatePeer(peerId, {
+      offeredFile: isSameOffer
+        ? current
+        : metadata && {
+            magnetURI: metadata.magnetURI,
+            fileKey: metadata.fileKey,
+          },
+    })
     this.emit(ChatRoomEvent.FILE_OFFER_CHANGE, { peerId, metadata })
   }
 
@@ -932,10 +963,11 @@ export class ChatRoom extends EventTarget {
               { target: peerId }
             ),
 
-        this.selfFileOfferMagnetUri
+        this.selfFileOffer
           ? this.senders?.fileOffer(
               {
-                magnetURI: this.selfFileOfferMagnetUri,
+                magnetURI: this.selfFileOffer.magnetURI,
+                fileKey: this.selfFileOffer.fileKey,
                 isAllInlineMedia: isEveryFileInlineMedia(this.selfOfferedFiles),
               },
               { target: peerId }
@@ -1145,7 +1177,7 @@ export class ChatRoom extends EventTarget {
 
   /** Whether this client or a present peer has an offer standing for a magnet. */
   private isStillOffered = (magnetURI: string) =>
-    this.selfFileOfferMagnetUri === magnetURI ||
+    this.getSelfFileOfferMagnetUri() === magnetURI ||
     Object.values(this.fileOffers).some(offer => offer.magnetURI === magnetURI)
 
   private setPeers = (peers: Peer[]) => {

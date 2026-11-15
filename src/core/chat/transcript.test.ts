@@ -13,6 +13,7 @@ const message = (id: string): Message => ({
 const media = (id: string, magnetURI: string): InlineMedia => ({
   id,
   magnetURI,
+  fileKey: 'A'.repeat(43),
   timeSent: 0,
   authorId: 'author',
 })

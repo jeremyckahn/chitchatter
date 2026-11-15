@@ -20,9 +20,21 @@ export type ReceivedMessage = UnsentMessage & {
 
 export type Message = UnsentMessage | ReceivedMessage
 
-export type UnsentInlineMedia = Omit<UnsentMessage, 'text'> & {
+/**
+ * Everything a peer needs to fetch and decrypt an offered set of files.
+ *
+ * The two travel together because neither is useful alone. The magnet URI
+ * reaches the torrent swarm and its tracker, which anyone can watch; the key
+ * never leaves the room's peer connections. It is random per offer rather than
+ * derived from anything about the room, so knowing or guessing the room name
+ * does not decrypt a torrent seen on the tracker.
+ */
+export type FileReference = {
   magnetURI: string
+  fileKey: string
 }
+
+export type UnsentInlineMedia = Omit<UnsentMessage, 'text'> & FileReference
 
 export type ReceivedInlineMedia = UnsentInlineMedia & {
   timeReceived: number
@@ -74,7 +86,7 @@ export interface Peer {
   audioChannelState: PeerAudioChannelState
   videoState: VideoState
   screenShareState: ScreenShareState
-  offeredFileId: string | null
+  offeredFile: Readonly<FileReference> | null
   isTypingGroupMessage: boolean
   isTypingDirectMessage: boolean
   verificationState: PeerVerificationState
@@ -90,10 +102,19 @@ export const isInlineMedia = (
   return 'magnetURI' in message
 }
 
-export type FileOfferMetadata = {
-  magnetURI: string
+export type FileOfferMetadata = FileReference & {
   isAllInlineMedia: boolean
 }
+
+/**
+ * The shape of a file key: 32 random bytes as unpadded base64url. Checked
+ * exactly, rather than as any string, so a peer cannot hand over a short or
+ * guessable key as if it were one of ours.
+ */
+const fileKeyPattern = /^[A-Za-z0-9_-]{43}$/
+
+export const isFileKey = (value: unknown): value is string =>
+  typeof value === 'string' && fileKeyPattern.test(value)
 
 export type TypingStatus = {
   isTyping: boolean

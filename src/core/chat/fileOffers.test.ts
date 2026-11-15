@@ -4,6 +4,7 @@ import {
   applyFileOffer,
   FileHandle,
   FileOffers,
+  generateFileKey,
   getInlineMediaFiles,
   isEveryFileInlineMedia,
   isInlineMediaFile,
@@ -11,7 +12,9 @@ import {
   removeFileOffer,
   shouldRescindOffer,
 } from 'core/chat/fileOffers'
-import { FileOfferMetadata } from 'core/models/chat'
+import { FileOfferMetadata, isFileKey } from 'core/models/chat'
+
+const fileKey = generateFileKey()
 
 const file = (name: string, type: string): FileHandle => ({
   name,
@@ -76,9 +79,41 @@ describe('getInlineMediaFiles', () => {
   })
 })
 
+describe('generateFileKey', () => {
+  it('produces a key that passes the wire validator', () => {
+    expect(isFileKey(generateFileKey())).toBe(true)
+  })
+
+  it('encodes 32 bytes as unpadded base64url', () => {
+    const key = generateFileKey()
+
+    expect(key).toMatch(/^[A-Za-z0-9_-]{43}$/)
+
+    const base64 = key.replace(/-/g, '+').replace(/_/g, '/') + '='
+
+    expect(atob(base64)).toHaveLength(32)
+  })
+
+  it('uses the platform CSPRNG', () => {
+    const getRandomValues = vi.spyOn(globalThis.crypto, 'getRandomValues')
+
+    generateFileKey()
+
+    expect(getRandomValues).toHaveBeenCalledOnce()
+    getRandomValues.mockRestore()
+  })
+
+  it('never repeats a key', () => {
+    const keys = new Set(Array.from({ length: 1000 }, generateFileKey))
+
+    expect(keys.size).toBe(1000)
+  })
+})
+
 describe('applyFileOffer / removeFileOffer', () => {
   const metadata: FileOfferMetadata = {
     magnetURI: 'magnet:a',
+    fileKey,
     isAllInlineMedia: false,
   }
 
@@ -91,6 +126,7 @@ describe('applyFileOffer / removeFileOffer', () => {
   it('replaces an existing offer from the same peer', () => {
     const replacement: FileOfferMetadata = {
       magnetURI: 'magnet:b',
+      fileKey,
       isAllInlineMedia: true,
     }
 
@@ -123,7 +159,7 @@ describe('shouldRescindOffer', () => {
   it('rescinds a non-inline offer that is still being seeded', () => {
     expect(
       shouldRescindOffer(
-        { magnetURI: 'magnet:a', isAllInlineMedia: false },
+        { magnetURI: 'magnet:a', fileKey, isAllInlineMedia: false },
         isOffering,
         notProtected
       )
@@ -133,7 +169,7 @@ describe('shouldRescindOffer', () => {
   it('spares an all-inline-media offer, which stays reachable in the transcript', () => {
     expect(
       shouldRescindOffer(
-        { magnetURI: 'magnet:a', isAllInlineMedia: true },
+        { magnetURI: 'magnet:a', fileKey, isAllInlineMedia: true },
         isOffering,
         notProtected
       )
@@ -145,7 +181,7 @@ describe('shouldRescindOffer', () => {
     // the receiver's own files and transcript media alive.
     expect(
       shouldRescindOffer(
-        { magnetURI: 'magnet:a', isAllInlineMedia: false },
+        { magnetURI: 'magnet:a', fileKey, isAllInlineMedia: false },
         isOffering,
         magnetURI => magnetURI === 'magnet:a'
       )
@@ -155,7 +191,7 @@ describe('shouldRescindOffer', () => {
   it('does nothing when the offer is not being seeded', () => {
     expect(
       shouldRescindOffer(
-        { magnetURI: 'magnet:a', isAllInlineMedia: false },
+        { magnetURI: 'magnet:a', fileKey, isAllInlineMedia: false },
         () => false,
         notProtected
       )
@@ -170,8 +206,8 @@ describe('shouldRescindOffer', () => {
 
 describe('isOfferedByAnotherPeer', () => {
   const offers: FileOffers = {
-    'peer-1': { magnetURI: 'magnet:a', isAllInlineMedia: false },
-    'peer-2': { magnetURI: 'magnet:b', isAllInlineMedia: false },
+    'peer-1': { magnetURI: 'magnet:a', fileKey, isAllInlineMedia: false },
+    'peer-2': { magnetURI: 'magnet:b', fileKey, isAllInlineMedia: false },
   }
 
   it('is false when only the peer itself offers the magnet', () => {
@@ -183,7 +219,7 @@ describe('isOfferedByAnotherPeer', () => {
       isOfferedByAnotherPeer(
         {
           ...offers,
-          'peer-3': { magnetURI: 'magnet:a', isAllInlineMedia: false },
+          'peer-3': { magnetURI: 'magnet:a', fileKey, isAllInlineMedia: false },
         },
         'peer-1',
         'magnet:a'
@@ -209,14 +245,22 @@ describe('the offers snapshot type', () => {
     // writing into it changes core state without the event subscribers re-read
     // on — the reference does not change, so nothing re-renders.
     const offers: FileOffers = {
-      'peer-1': { magnetURI: 'magnet:a', isAllInlineMedia: false },
+      'peer-1': { magnetURI: 'magnet:a', fileKey, isAllInlineMedia: false },
     }
 
     // @ts-expect-error — a snapshot is not a place to add an offer
-    offers['peer-2'] = { magnetURI: 'magnet:b', isAllInlineMedia: false }
+    offers['peer-2'] = {
+      magnetURI: 'magnet:b',
+      fileKey,
+      isAllInlineMedia: false,
+    }
 
     // @ts-expect-error — nor to replace one
-    offers['peer-1'] = { magnetURI: 'magnet:c', isAllInlineMedia: true }
+    offers['peer-1'] = {
+      magnetURI: 'magnet:c',
+      fileKey,
+      isAllInlineMedia: true,
+    }
 
     // `readonly` leaves no runtime trace, so both writes above really land —
     // which is the point: the compiler is the only thing standing between a

@@ -30,7 +30,7 @@ export const createPeer = ({
   },
   videoState: VideoState.STOPPED,
   screenShareState: ScreenShareState.NOT_SHARING,
-  offeredFileId: null,
+  offeredFile: null,
   isTypingGroupMessage: false,
   isTypingDirectMessage: false,
   verificationState,
@@ -52,7 +52,7 @@ export type PeerStateUpdate = Partial<
     | 'audioChannelState'
     | 'isTypingDirectMessage'
     | 'isTypingGroupMessage'
-    | 'offeredFileId'
+    | 'offeredFile'
     | 'screenShareState'
     | 'videoState'
   >
