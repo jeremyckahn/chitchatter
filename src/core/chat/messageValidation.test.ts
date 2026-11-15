@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 
 import {
   identifierMaxLength,
+  parseFileOfferMetadata,
   parseTranscript,
   parseUnsentInlineMedia,
   parseUnsentMessage,
@@ -9,6 +10,8 @@ import {
 import { messageCharacterSizeLimit } from 'core/config/messaging'
 
 const magnetURI = `magnet:?xt=urn:btih:${'e'.repeat(40)}`
+
+const fileKey = 'k'.repeat(43)
 
 const message = (overrides: Record<string, unknown> = {}) => ({
   id: 'm1',
@@ -21,6 +24,7 @@ const message = (overrides: Record<string, unknown> = {}) => ({
 const media = (overrides: Record<string, unknown> = {}) => ({
   id: 'i1',
   magnetURI,
+  fileKey,
   timeSent: 1_000,
   authorId: 'user-1',
   ...overrides,
@@ -108,8 +112,58 @@ describe('parseUnsentInlineMedia', () => {
     ['an unsafe magnet', media({ magnetURI: 'https://a.example/a.torrent' })],
     ['a missing magnet', media({ magnetURI: undefined })],
     ['a bad envelope', media({ authorId: 5 })],
+    // What a peer on an older version sends: files were keyed by the room id
+    ['a missing key', media({ fileKey: undefined })],
+    ['a malformed key', media({ fileKey: 'guessable' })],
   ])('rejects %s', (_label, input) => {
     expect(parseUnsentInlineMedia(input)).toBeNull()
+  })
+
+  it('drops a transcript entry whose media has no key', () => {
+    const parsed = parseTranscript(
+      [media({ id: 'keyless', fileKey: undefined }), media({ id: 'ok' })],
+      { limit: 10, receivedAt }
+    )
+
+    expect(parsed?.messageLog.map(({ id }) => id)).toEqual(['ok'])
+    expect(parsed?.discardedCount).toBe(1)
+  })
+})
+
+describe('parseFileOfferMetadata', () => {
+  const offer = (overrides: Record<string, unknown> = {}) => ({
+    magnetURI,
+    fileKey,
+    isAllInlineMedia: false,
+    ...overrides,
+  })
+
+  it('returns the fields of a valid offer', () => {
+    expect(parseFileOfferMetadata(offer())).toEqual(offer())
+    expect(parseFileOfferMetadata(offer({ isAllInlineMedia: true }))).toEqual(
+      offer({ isAllInlineMedia: true })
+    )
+  })
+
+  it('returns a copy that carries nothing the protocol does not define', () => {
+    const parsed = parseFileOfferMetadata(offer({ extra: 'smuggled' }))
+
+    expect(parsed).toEqual(offer())
+    expect(parsed).not.toHaveProperty('extra')
+  })
+
+  it.each([
+    ['null', null],
+    ['a string', 'magnet:?xt=urn:btih:abc'],
+    ['an array', [offer()]],
+    ['a missing key', offer({ fileKey: undefined })],
+    ['a malformed key', offer({ fileKey: 'guessable' })],
+    ['an unsafe magnet', offer({ magnetURI: 'https://a.example/a.torrent' })],
+    ['a missing magnet', offer({ magnetURI: undefined })],
+    ['a non-boolean inline flag', offer({ isAllInlineMedia: 'yes' })],
+    ['a missing inline flag', offer({ isAllInlineMedia: undefined })],
+  ])('rejects %s', (_label, input) => {
+    expect(parseFileOfferMetadata(input)).toBeNull()
   })
 })
 

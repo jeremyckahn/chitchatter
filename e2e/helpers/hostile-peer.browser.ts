@@ -11,7 +11,7 @@
  */
 import { trackerUrls } from 'config/trackerUrls'
 import { PeerAction } from 'core/models/network'
-import { FileOfferMetadata } from 'core/models/chat'
+import { FileOfferMetadata, FileReference, isFileKey } from 'core/models/chat'
 import { TrysteroTransport } from 'core/transport/TrysteroTransport'
 import { ActionNamespace, PeerHookType } from 'core/transport/types'
 import { FileTransferService } from 'services/FileTransfer'
@@ -30,11 +30,24 @@ const rtcConfig: RTCConfiguration = { iceServers: [] }
  */
 export type ForgedTranscriptEntry = { [field: string]: string | number }
 
-const isMagnetCarrier = (data: unknown): data is { magnetURI: string } =>
+/**
+ * Whether `data` names a file the way an offer or an inline-media message does:
+ * a magnet URI and the key that decrypts it. The key only ever crosses the
+ * room's peer connections, which a hostile peer in the room is on, so it learns
+ * every key exactly as a real attacker would.
+ */
+const isFileReferenceCarrier = (data: unknown): data is FileReference =>
   typeof data === 'object' &&
   data !== null &&
   'magnetURI' in data &&
-  typeof data.magnetURI === 'string'
+  typeof data.magnetURI === 'string' &&
+  'fileKey' in data &&
+  isFileKey(data.fileKey)
+
+const toFileReference = ({ magnetURI, fileKey }: FileReference) => ({
+  magnetURI,
+  fileKey,
+})
 
 /**
  * Joins `roomId` as a peer that follows no part of the chat protocol beyond
@@ -57,7 +70,7 @@ export const joinRoomAsHostilePeer = (roomId: string) => {
       PeerAction.FILE_OFFER,
       ActionNamespace.GROUP
     )
-  const [, onMediaMessage] = transport.makeAction<{ magnetURI: string }>(
+  const [, onMediaMessage] = transport.makeAction<FileReference>(
     PeerAction.MEDIA_MESSAGE,
     ActionNamespace.GROUP
   )
@@ -67,8 +80,8 @@ export const joinRoomAsHostilePeer = (roomId: string) => {
     ActionNamespace.GROUP
   )
 
-  const offeredMagnetUris: string[] = []
-  const inlineMediaMagnetUris: string[] = []
+  const offeredFiles: FileReference[] = []
+  const inlineMediaFiles: FileReference[] = []
 
   let forgedTranscript: ForgedTranscriptEntry[] | undefined
 
@@ -81,28 +94,30 @@ export const joinRoomAsHostilePeer = (roomId: string) => {
   })
 
   onFileOffer(data => {
-    if (isMagnetCarrier(data)) offeredMagnetUris.push(data.magnetURI)
+    if (isFileReferenceCarrier(data)) offeredFiles.push(toFileReference(data))
   })
 
   onMediaMessage(data => {
-    if (isMagnetCarrier(data)) inlineMediaMagnetUris.push(data.magnetURI)
+    if (isFileReferenceCarrier(data))
+      inlineMediaFiles.push(toFileReference(data))
   })
 
   return {
-    /** Magnet URIs other peers have offered, in the order they were seen. */
-    getOfferedMagnetUris: () => [...offeredMagnetUris],
+    /** Files other peers have offered, in the order they were seen. */
+    getOfferedFiles: () => [...offeredFiles],
 
-    /** Magnet URIs of inline media other peers have posted. */
-    getInlineMediaMagnetUris: () => [...inlineMediaMagnetUris],
+    /** Inline media other peers have posted. */
+    getInlineMediaFiles: () => [...inlineMediaFiles],
 
     getPeerCount: () => transport.getPeers().length,
 
     /**
-     * Claims `magnetURI` as this peer's own file offer. The flag is the peer's
-     * to set, so a hostile one sets it to whatever suits it.
+     * Claims `file` as this peer's own file offer, key and all, as a replay
+     * would. The flag is the peer's to set, so a hostile one sets it to
+     * whatever suits it.
      */
-    claim: (magnetURI: string, isAllInlineMedia = false) =>
-      sendFileOffer({ magnetURI, isAllInlineMedia }),
+    claim: ({ magnetURI, fileKey }: FileReference, isAllInlineMedia = false) =>
+      sendFileOffer({ magnetURI, fileKey, isAllInlineMedia }),
 
     /**
      * Hands `entries` over as the room's history, to everyone already here and
@@ -127,18 +142,18 @@ export const joinRoomAsHostilePeer = (roomId: string) => {
 export type HostilePeer = ReturnType<typeof joinRoomAsHostilePeer>
 
 /**
- * Downloads `magnetURI` with a fresh client that has never been in the room,
- * the way a late joiner would, and returns the decrypted text of its first
- * file. It resolves only once a seeder has actually delivered the data, so it
- * is the end-to-end answer to "is the file still there?".
+ * Downloads `file` with a fresh client that has never been in the room, the way
+ * a late joiner would, and returns the decrypted text of its first file. It
+ * resolves only once a seeder has actually delivered the data, so it is the
+ * end-to-end answer to "is the file still there?".
  */
-export const downloadAsFreshClient = async (
-  magnetURI: string,
-  roomId: string
-): Promise<string> => {
+export const downloadAsFreshClient = async ({
+  magnetURI,
+  fileKey,
+}: FileReference): Promise<string> => {
   const { fileTransfer } = new FileTransferService(rtcConfig)
 
-  const [file] = await fileTransfer.download(magnetURI, roomId, {
+  const [file] = await fileTransfer.download(magnetURI, fileKey, {
     doSave: false,
   })
 

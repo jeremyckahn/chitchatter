@@ -1,4 +1,5 @@
-import { FileOfferMetadata } from 'core/models/chat'
+import { EncryptionService } from 'core/crypto/Encryption'
+import { FILE_KEY_BYTE_LENGTH, FileOfferMetadata } from 'core/models/chat'
 
 /**
  * The minimum a file needs to look like for the core to reason about it. The
@@ -8,6 +9,27 @@ export interface FileHandle {
   name: string
   type: string
   size: number
+}
+
+/**
+ * A fresh random key for one file offer, as unpadded base64url so it matches
+ * `isFileKey`.
+ *
+ * Files used to be encrypted with the room id, which made every file in a
+ * room only as secret as its name — readable by anyone who saw the torrent on
+ * the tracker and could guess the name, and blind to a private room's
+ * password. A random key that only travels over the room's peer connections
+ * depends on neither.
+ */
+export const generateFileKey = (): string => {
+  const bytes = globalThis.crypto.getRandomValues(
+    new Uint8Array(FILE_KEY_BYTE_LENGTH)
+  )
+
+  return EncryptionService.arrayBufferToBase64(bytes.buffer)
+    .replace(/\+/g, '-')
+    .replace(/\//g, '_')
+    .replace(/=+$/, '')
 }
 
 const inlineMediaTypes = ['image', 'audio', 'video']

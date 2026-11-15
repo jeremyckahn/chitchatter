@@ -1,6 +1,8 @@
 import { messageCharacterSizeLimit } from 'core/config/messaging'
 import { isSafeMagnetUri } from 'core/chat/magnetUri'
 import {
+  FileOfferMetadata,
+  isFileKey,
   ReceivedInlineMedia,
   ReceivedMessage,
   UnsentInlineMedia,
@@ -81,11 +83,37 @@ export const parseUnsentInlineMedia = (
   if (!isRecord(value)) return null
 
   const envelope = parseEnvelope(value)
-  const { magnetURI } = value
+  const { magnetURI, fileKey } = value
 
-  if (!envelope || !isSafeMagnetUri(magnetURI)) return null
+  // Without its key the media could never be decrypted. Older peers send
+  // none, because files used to be encrypted with the room id.
+  if (!envelope || !isSafeMagnetUri(magnetURI) || !isFileKey(fileKey)) {
+    return null
+  }
 
-  return { ...envelope, magnetURI }
+  return { ...envelope, magnetURI, fileKey }
+}
+
+/**
+ * A file offer, or `null` if `value` is not exactly one. A withdrawal is sent
+ * as `null` and never reaches this; see `ChatRoom.handleFileOffer`.
+ */
+export const parseFileOfferMetadata = (
+  value: unknown
+): FileOfferMetadata | null => {
+  if (!isRecord(value)) return null
+
+  const { magnetURI, fileKey, isAllInlineMedia } = value
+
+  if (
+    !isSafeMagnetUri(magnetURI) ||
+    !isFileKey(fileKey) ||
+    typeof isAllInlineMedia !== 'boolean'
+  ) {
+    return null
+  }
+
+  return { magnetURI, fileKey, isAllInlineMedia }
 }
 
 /**

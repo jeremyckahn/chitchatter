@@ -34,6 +34,13 @@ const infoHash = '0123456789abcdef0123456789abcdef01234567'
 const historyFromAStranger = 'History from a stranger is still shown'
 
 /**
+ * A well-formed key, so that each forged entry below is turned away for its
+ * magnet and not merely for lacking a key, which would let the test pass
+ * without testing anything.
+ */
+const forgedFileKey = 'k'.repeat(43)
+
+/**
  * Each way a string handed to WebTorrent's `add` can send a request somewhere
  * the attacker chose, with the URL it would request, at a path of its own so a
  * request can be traced to the entry that caused it.
@@ -106,6 +113,7 @@ test.describe('A hostile first peer handing over the chat history', () => {
         authorId: 'someone-else',
         timeSent: now - index,
         magnetURI,
+        fileKey: forgedFileKey,
       })),
     ])
 

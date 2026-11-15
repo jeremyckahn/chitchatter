@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 
 import {
   FileOfferMetadata,
+  isFileKey,
   TypingStatus,
   UnsentInlineMedia,
   UnsentMessage,
@@ -28,6 +29,7 @@ describe('wire models', () => {
 
     const wrongFieldType: UnsentInlineMedia = {
       magnetURI: 'magnet:a',
+      fileKey: 'key',
       id: 'id',
       // @ts-expect-error — `timeSent` is a number
       timeSent: 'not-a-number',
@@ -49,6 +51,7 @@ describe('wire models', () => {
 
     const extraOnOffer: FileOfferMetadata = {
       magnetURI: 'magnet:a',
+      fileKey: 'key',
       isAllInlineMedia: false,
       // @ts-expect-error — nor on the file-offer payload
       nope: 1,
@@ -61,5 +64,26 @@ describe('wire models', () => {
       extraField,
       extraOnOffer,
     ]).toHaveLength(5)
+  })
+})
+
+const fileKey = 'Ab-_'.repeat(10) + 'xyz'
+
+describe('isFileKey', () => {
+  it('accepts 43 base64url characters', () => {
+    expect(isFileKey(fileKey)).toBe(true)
+  })
+
+  it.each([
+    ['a shorter key', fileKey.slice(1)],
+    ['a longer key', fileKey + 'A'],
+    ['padding', fileKey.slice(1) + '='],
+    ['standard base64 characters', fileKey.slice(2) + '+/'],
+    ['an empty string', ''],
+    ['a room name', 'my-secret-room'],
+    ['a non-string', 42],
+    ['undefined', undefined],
+  ])('rejects %s', (_label, value) => {
+    expect(isFileKey(value)).toBe(false)
   })
 })

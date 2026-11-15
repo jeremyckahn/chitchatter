@@ -145,8 +145,9 @@ Some behaviour only matters when another peer misbehaves, and the UI cannot be m
 
 ```typescript
 const mallory = await joinAsHostilePeer(browser, roomId)
+const [file] = await mallory.getOfferedFiles() // magnet URI and key, as seen in the room
 
-await mallory.claim(magnetURI) // offer a magnet URI someone else shared
+await mallory.claim(file) // offer a file someone else shared
 await mallory.withdraw()
 ```
 
@@ -155,7 +156,7 @@ Nothing about it is simulated. The browser module (`hostile-peer.browser.ts`) is
 To find out whether a file survived, do not inspect the app's internals. Ask the swarm, the way a late joiner would:
 
 ```typescript
-await downloadFileAsLateJoiner(browser, magnetURI, roomId) // the file's text, or rejects
+await downloadFileAsLateJoiner(browser, file) // the file's text, or rejects
 ```
 
 Things to know when writing one of these:

@@ -106,10 +106,10 @@ export const createWebFileTransfer = (
   const { originated, inlineMedia } = getSharedMagnetRecord(fileTransferService)
 
   return {
-    offer: async (files: readonly FileHandle[], roomId: string) => {
+    offer: async (files: readonly FileHandle[], fileKey: string) => {
       const magnetURI = await fileTransfer.offer(
         files as unknown as File[],
-        roomId
+        fileKey
       )
 
       originated.add(magnetURI)

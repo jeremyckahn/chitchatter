@@ -1,5 +1,7 @@
 import { Browser, BrowserContext, JSHandle } from '@playwright/test'
 
+import type { FileReference } from 'core/models/chat'
+
 import type {
   downloadAsFreshClient as downloadAsFreshClientInBrowser,
   ForgedTranscriptEntry,
@@ -7,7 +9,7 @@ import type {
   joinRoomAsHostilePeer,
 } from './hostile-peer.browser'
 
-export type { ForgedTranscriptEntry }
+export type { FileReference, ForgedTranscriptEntry }
 
 type HostilePeerModule = {
   joinRoomAsHostilePeer: typeof joinRoomAsHostilePeer
@@ -39,14 +41,14 @@ const openBlankPage = async (context: BrowserContext) => {
  * connection, the tracker and the app's own transport.
  */
 export interface HostilePeerSession {
-  /** Magnet URIs of the file offers other peers have broadcast. */
-  getOfferedMagnetUris: () => Promise<string[]>
-  /** Magnet URIs of the inline media other peers have posted. */
-  getInlineMediaMagnetUris: () => Promise<string[]>
+  /** The file offers other peers have broadcast, with their keys. */
+  getOfferedFiles: () => Promise<FileReference[]>
+  /** The inline media other peers have posted, with their keys. */
+  getInlineMediaFiles: () => Promise<FileReference[]>
   /** How many peers this one is currently connected to. */
   getPeerCount: () => Promise<number>
-  /** Offers `magnetURI` as this peer's own file. */
-  claim: (magnetURI: string, isAllInlineMedia?: boolean) => Promise<void>
+  /** Offers `file` as this peer's own, replaying its magnet URI and key. */
+  claim: (file: FileReference, isAllInlineMedia?: boolean) => Promise<void>
   /**
    * Answers as the room's history, to the peers here now and to any that join:
    * the transcript a newcomer to a public room is backfilled with.
@@ -80,13 +82,12 @@ export const joinAsHostilePeer = async (
   )
 
   return {
-    getOfferedMagnetUris: () => peer.evaluate(p => p.getOfferedMagnetUris()),
-    getInlineMediaMagnetUris: () =>
-      peer.evaluate(p => p.getInlineMediaMagnetUris()),
+    getOfferedFiles: () => peer.evaluate(p => p.getOfferedFiles()),
+    getInlineMediaFiles: () => peer.evaluate(p => p.getInlineMediaFiles()),
     getPeerCount: () => peer.evaluate(p => p.getPeerCount()),
-    claim: (magnetURI, isAllInlineMedia = false) =>
-      peer.evaluate((p, [uri, isInline]) => p.claim(uri, isInline), [
-        magnetURI,
+    claim: (file, isAllInlineMedia = false) =>
+      peer.evaluate((p, [claimed, isInline]) => p.claim(claimed, isInline), [
+        file,
         isAllInlineMedia,
       ] as const),
     serveTranscript: entries =>
@@ -98,14 +99,14 @@ export const joinAsHostilePeer = async (
 }
 
 /**
- * Downloads the file behind `magnetURI` as a client that was never in the room
- * and returns its decrypted text. Rejects if no seeder delivers it within
- * `timeoutMs`, which is what a destroyed torrent looks like from outside.
+ * Downloads `file` as a client that was never in the room and returns its
+ * decrypted text. Rejects if no seeder delivers it within `timeoutMs`, which is
+ * what a destroyed torrent looks like from outside. The key comes from what a
+ * peer in the room saw, since nothing outside the room can derive it.
  */
 export const downloadFileAsLateJoiner = async (
   browser: Browser,
-  magnetURI: string,
-  roomId: string,
+  file: FileReference,
   timeoutMs = 15_000
 ): Promise<string> => {
   const context = await browser.newContext()
@@ -114,14 +115,14 @@ export const downloadFileAsLateJoiner = async (
     const page = await openBlankPage(context)
 
     const download = page.evaluate(
-      async ([modulePath, uri, room]) => {
+      async ([modulePath, wanted]) => {
         const module: HostilePeerModule = await import(
           /* @vite-ignore */ new URL(modulePath, window.location.href).href
         )
 
-        return module.downloadAsFreshClient(uri, room)
+        return module.downloadAsFreshClient(wanted)
       },
-      [browserModulePath, magnetURI, roomId]
+      [browserModulePath, file] as const
     )
 
     let timer: ReturnType<typeof setTimeout> | undefined

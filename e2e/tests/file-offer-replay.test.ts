@@ -92,9 +92,19 @@ test.describe("A peer replaying another peer's magnet URI", () => {
     file: { name: string; mimeType: string; buffer: Buffer }
   ) => page.locator('#file-upload').setInputFiles(file)
 
+  /**
+   * Shares `file` and waits until the share is standing.
+   *
+   * What is waited on is the share control turning into its stop-sharing
+   * state: the folder icon only replaces the spinner once encryption is done
+   * and an offer is up. Not the "Encryption complete" toast, which announces
+   * the same moment: the shell has one alert slot, so a peer's join landing
+   * just after it (an attacker connecting, say) replaces it before it can be
+   * seen, and the test fails with the share working fine.
+   */
   const share = async (page: Page, file: Parameters<typeof upload>[1]) => {
     await upload(page, file)
-    await expect(page.getByText('Encryption complete')).toBeVisible()
+    await expect(page.getByTestId('FolderIcon')).toBeVisible()
   }
 
   const shareText = (page: Page) =>
@@ -106,15 +116,15 @@ test.describe("A peer replaying another peer's magnet URI", () => {
 
   const waitForSingleOffer = async (attacker: HostilePeerSession) => {
     await expect
-      .poll(() => attacker.getOfferedMagnetUris(), {
+      .poll(() => attacker.getOfferedFiles(), {
         message: 'The attacker never saw the sharer offer the file',
         timeout: connectionTimeout,
       })
       .toHaveLength(1)
 
-    const [magnetURI] = await attacker.getOfferedMagnetUris()
+    const [file] = await attacker.getOfferedFiles()
 
-    return magnetURI
+    return file
   }
 
   /**
@@ -145,13 +155,13 @@ test.describe("A peer replaying another peer's magnet URI", () => {
 
     // Reads the magnet URI the way the attacker does, and then does nothing
     const bystander = await joinAsAttacker(browser, roomId)
-    const magnetURI = await waitForSingleOffer(bystander)
+    const file = await waitForSingleOffer(bystander)
 
     await settle(alice)
 
-    await expect(
-      downloadFileAsLateJoiner(browser, magnetURI, roomId)
-    ).resolves.toBe(sharedText)
+    await expect(downloadFileAsLateJoiner(browser, file)).resolves.toBe(
+      sharedText
+    )
   })
 
   test('cannot take a shared file away by claiming it and withdrawing', async ({
@@ -162,15 +172,15 @@ test.describe("A peer replaying another peer's magnet URI", () => {
     await shareText(alice)
 
     const mallory = await joinAsAttacker(browser, roomId)
-    const magnetURI = await waitForSingleOffer(mallory)
+    const file = await waitForSingleOffer(mallory)
 
-    await mallory.claim(magnetURI)
+    await mallory.claim(file)
     await mallory.withdraw()
     await settle(alice)
 
-    await expect(
-      downloadFileAsLateJoiner(browser, magnetURI, roomId)
-    ).resolves.toBe(sharedText)
+    await expect(downloadFileAsLateJoiner(browser, file)).resolves.toBe(
+      sharedText
+    )
   })
 
   test('cannot take a shared file away by claiming it and leaving', async ({
@@ -181,15 +191,15 @@ test.describe("A peer replaying another peer's magnet URI", () => {
     await shareText(alice)
 
     const mallory = await joinAsAttacker(browser, roomId)
-    const magnetURI = await waitForSingleOffer(mallory)
+    const file = await waitForSingleOffer(mallory)
 
-    await mallory.claim(magnetURI)
+    await mallory.claim(file)
     await mallory.leave()
     await settle(alice)
 
-    await expect(
-      downloadFileAsLateJoiner(browser, magnetURI, roomId)
-    ).resolves.toBe(sharedText)
+    await expect(downloadFileAsLateJoiner(browser, file)).resolves.toBe(
+      sharedText
+    )
   })
 
   test('cannot take inline media away from the room, whatever it claims about it', async ({
@@ -219,16 +229,16 @@ test.describe("A peer replaying another peer's magnet URI", () => {
     })
 
     await expect
-      .poll(() => mallory.getInlineMediaMagnetUris(), {
+      .poll(() => mallory.getInlineMediaFiles(), {
         message: 'The attacker never saw the image being posted',
         timeout: connectionTimeout,
       })
       .toHaveLength(1)
 
-    const [magnetURI] = await mallory.getInlineMediaMagnetUris()
+    const [image] = await mallory.getInlineMediaFiles()
 
     // The flag is the peer's own to set; a hostile one says it is not media
-    await mallory.claim(magnetURI, false)
+    await mallory.claim(image, false)
     await mallory.withdraw()
     await settle(alice)
 
@@ -259,7 +269,7 @@ test.describe("A peer replaying another peer's magnet URI", () => {
 
     await expect(downloadButton).toBeVisible({ timeout: connectionTimeout })
 
-    const magnetURI = await waitForSingleOffer(mallory)
+    const file = await waitForSingleOffer(mallory)
 
     // The button's label does not change with its state; its icon does
     await alice.getByTestId('FolderIcon').click()
@@ -268,7 +278,7 @@ test.describe("A peer replaying another peer's magnet URI", () => {
 
     // Protecting the file from strangers must not stop its owner taking it back
     await expect(
-      downloadFileAsLateJoiner(browser, magnetURI, roomId, 6_000)
+      downloadFileAsLateJoiner(browser, file, 6_000)
     ).rejects.toThrow(/no peer is seeding it/)
   })
 })

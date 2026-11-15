@@ -146,12 +146,12 @@ adapter's logger is the only consumer.
 
 ### Input from peers
 
-Every message, inline-media message and transcript a room receives arrives as
-`unknown` and is narrowed by `chat/messageValidation.ts` before anything else
-sees it. A parser builds a new object from the fields it checked, so nothing
-rides along, and a frame that fails is dropped with a warning rather than
-thrown on. A new action that carries chat content belongs behind one of these
-parsers, not behind a type annotation on its handler.
+Every message, inline-media message, file offer and transcript a room receives
+arrives as `unknown` and is narrowed by `chat/messageValidation.ts` before
+anything else sees it. A parser builds a new object from the fields it checked,
+so nothing rides along, and a frame that fails is dropped with a warning rather
+than thrown on. A new action that carries chat content belongs behind one of
+these parsers, not behind a type annotation on its handler.
 
 Two limits on what that gives you:
 
@@ -163,6 +163,12 @@ Two limits on what that gives you:
   also fetches `http(s)` URLs and follows `ws`/`xs` sources, so
   `chat/magnetUri.ts` admits only the shape a client of this app writes.
   Anything that downloads a peer-supplied identifier needs the same check.
+- **A file key is the only secret a file has.** Each offer and inline-media
+  message carries a random `fileKey` (`generateFileKey` in `chat/fileOffers.ts`)
+  that decrypts its torrent. Unlike the magnet URI, which the tracker and swarm
+  see, the key only crosses the room's peer connections, so never log it, put it
+  in a notification or send it anywhere else. A payload without a well-formed
+  key (`isFileKey`) is dropped: it could never be decrypted.
 
 An entry in the transcript is a claim about a torrent, not proof this client has
 anything to do with it, so it can never be what ends a seed on its own: see

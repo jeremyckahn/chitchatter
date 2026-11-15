@@ -9,16 +9,19 @@ import { useContext, useEffect, useState } from 'react'
 import { TorrentFile } from 'webtorrent'
 
 import { RoomContext } from 'contexts/RoomContext'
-import { ShellContext } from 'contexts/ShellContext'
+import { FileReference } from 'core/models/chat'
 
-type TorrentFiles = TorrentFile[]
+import {
+  InlineMediaDownload,
+  InlineMediaDownloadState,
+  InlineMediaFile,
+  useInlineMediaDownload,
+} from './useInlineMediaDownload'
 
-interface InlineMediaProps {
-  magnetURI: string
-}
+type InlineMediaProps = FileReference
 
 interface InlineFileProps {
-  file: Pick<TorrentFile, 'name' | 'length' | 'getBlobURL'>
+  file: InlineMediaFile
 }
 
 const thumbnailMaxHeight = '300px'
@@ -165,35 +168,44 @@ export const InlineFile = ({ file }: InlineFileProps) => {
   )
 }
 
-export const InlineMedia = ({ magnetURI }: InlineMediaProps) => {
-  const [hasDownloadInitiated, setHasDownloadInitiated] = useState(false)
-  const [downloadedFiles, setDownloadedFiles] = useState<TorrentFiles>([])
-  const shellContext = useContext(ShellContext)
+export const InlineMedia = ({ magnetURI, fileKey }: InlineMediaProps) => {
   const {
     fileTransferService: { fileTransfer },
   } = useContext(RoomContext)
 
-  useEffect(() => {
-    ;(async () => {
-      if (hasDownloadInitiated) return
-      if (typeof shellContext.roomId !== 'string') {
-        throw new Error('shellContext.roomId is not a string')
-      }
-
-      setHasDownloadInitiated(true)
-      const files = await fileTransfer.download(magnetURI, shellContext.roomId)
-
-      setDownloadedFiles(files)
-    })()
-  }, [fileTransfer, hasDownloadInitiated, magnetURI, shellContext.roomId])
-
   return (
-    <>
-      {hasDownloadInitiated && downloadedFiles.length === 0 ? (
-        <CircularProgress variant="indeterminate" color="inherit" />
-      ) : (
-        downloadedFiles.map(file => <InlineFile file={file} key={file.name} />)
-      )}
-    </>
+    <InlineMediaView
+      download={useInlineMediaDownload(fileTransfer, { magnetURI, fileKey })}
+    />
   )
+}
+
+interface InlineMediaViewProps {
+  download: InlineMediaDownload
+}
+
+/** What a message shows for each stage of its media's download. */
+export const InlineMediaView = ({ download }: InlineMediaViewProps) => {
+  switch (download.state) {
+    case InlineMediaDownloadState.LOADING:
+      return <CircularProgress variant="indeterminate" color="inherit" />
+
+    case InlineMediaDownloadState.FAILED:
+      return (
+        <Typography sx={{ fontStyle: 'italic' }}>
+          Media failed to load
+        </Typography>
+      )
+
+    case InlineMediaDownloadState.READY:
+      return (
+        <>
+          {/* A share can hold two files with the same name, so the name
+              alone is not a unique key. The list never reorders. */}
+          {download.files.map((file, index) => (
+            <InlineFile file={file} key={`${index}-${file.name}`} />
+          ))}
+        </>
+      )
+  }
 }
