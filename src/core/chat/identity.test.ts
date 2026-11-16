@@ -1,6 +1,8 @@
 import { beforeAll, describe, expect, it } from 'vitest'
 
 import {
+  deriveUserId,
+  deriveUserIdFromKey,
   generateIdentityChallenge,
   getIdentityVerificationMessage,
   IdentityStatement,
@@ -178,5 +180,45 @@ describe('parsePeerPublicKey', () => {
     await expect(
       parsePeerPublicKey(encryption, 'not-a-key')
     ).resolves.toBeNull()
+  })
+})
+
+describe('deriveUserId', () => {
+  let keyPairs: CryptoKeyPair[]
+
+  beforeAll(async () => {
+    keyPairs = await Promise.all([
+      encryption.generateKeyPair(),
+      encryption.generateKeyPair(),
+    ])
+  })
+
+  it('is the SHA-256 of the key, as 64 lowercase hex digits', async () => {
+    const publicKeyString = await encryption.stringifyCryptoKey(
+      keyPairs[0].publicKey
+    )
+
+    await expect(deriveUserId(publicKeyString)).resolves.toMatch(
+      /^[0-9a-f]{64}$/
+    )
+  })
+
+  it('is the same however the key is held', async () => {
+    const { publicKey } = keyPairs[0]
+    const publicKeyString = await encryption.stringifyCryptoKey(publicKey)
+
+    await expect(deriveUserIdFromKey(encryption, publicKey)).resolves.toBe(
+      await deriveUserId(publicKeyString)
+    )
+  })
+
+  it('differs between keys', async () => {
+    const [a, b] = await Promise.all(
+      keyPairs.map(({ publicKey }) =>
+        deriveUserIdFromKey(encryption, publicKey)
+      )
+    )
+
+    expect(a).not.toBe(b)
   })
 })

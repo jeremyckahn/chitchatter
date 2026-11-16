@@ -38,10 +38,6 @@ class ChatEmbed extends HTMLElement {
   get chatConfig() {
     const chatConfig: SdkConfig = {}
 
-    if (this.hasAttribute(ChatEmbedAttributes.USER_ID)) {
-      chatConfig.userId = this.getAttribute(ChatEmbedAttributes.USER_ID) ?? ''
-    }
-
     if (this.hasAttribute(ChatEmbedAttributes.USER_NAME)) {
       chatConfig.customUsername =
         this.getAttribute(ChatEmbedAttributes.USER_NAME) ?? ''

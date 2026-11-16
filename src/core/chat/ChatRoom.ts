@@ -16,6 +16,7 @@ import {
 } from 'core/chat/fileOffers'
 import {
   generateIdentityChallenge,
+  deriveUserId,
   parsePeerPublicKey,
   signIdentityChallenge,
   verifyIdentityChallenge,
@@ -797,6 +798,11 @@ export class ChatRoom extends EventTarget {
    * be replayed by whoever received it, so a peer is only marked VERIFIED by
    * {@link handleIdentityProof}, once it has signed a challenge chosen here for
    * this connection. Until then it is listed as VERIFYING.
+   *
+   * A claim whose user id is not the one derived from its public key (see
+   * {@link deriveUserId}) is marked UNVERIFIED at once and never challenged:
+   * proving possession of a key says nothing about an id that belongs to
+   * another.
    */
   private handleMetadata = async (
     payload: unknown,
@@ -814,8 +820,9 @@ export class ChatRoom extends EventTarget {
 
     const { userId, customUsername, publicKeyString } = metadata
 
+    const knownPublicKey = this.findClaimedPublicKey(peerId, metadata)
     const publicKey =
-      this.findClaimedPublicKey(peerId, metadata) ??
+      knownPublicKey ??
       (await parsePeerPublicKey(this.encryptionService, publicKeyString))
 
     if (!publicKey) {
@@ -825,6 +832,11 @@ export class ChatRoom extends EventTarget {
 
       return
     }
+
+    // A repeated claim was already checked when it was first made.
+    const isUserIdBoundToKey =
+      knownPublicKey !== null ||
+      userId === (await deriveUserId(publicKeyString))
 
     // Deliberately not `transport.getPeers().includes(peerId)`: that couples
     // correctness to transport timing and drops metadata from a live peer whose
@@ -867,7 +879,18 @@ export class ChatRoom extends EventTarget {
 
     this.setPeers(peers)
 
-    if (isNewClaim) void this.challengePeerIdentity(peerId)
+    if (isNewClaim) {
+      if (isUserIdBoundToKey) {
+        void this.challengePeerIdentity(peerId)
+      } else {
+        // No answer could make this claim true: the id names some other key.
+        // Not challenged, so no proof is ever accepted for it.
+        this.adapters.logger.warn(
+          `Peer ${peerId} claims a user id that does not belong to its public key`
+        )
+        this.settleVerification(peerId, PeerVerificationState.UNVERIFIED)
+      }
+    }
 
     if (addedPeer) {
       // This peer may not know us either — its transport could have connected

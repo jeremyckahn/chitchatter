@@ -1,6 +1,7 @@
 import { beforeAll, describe, expect, it } from 'vitest'
 
 import { createMemoryStorage } from 'core/adapters/noop'
+import { deriveUserIdFromKey } from 'core/chat/identity'
 import { encryption } from 'core/crypto/Encryption'
 import { ColorMode, UserSettings } from 'core/models/settings'
 import { serialization } from 'core/settings/serialization'
@@ -15,7 +16,7 @@ beforeAll(async () => {
   const { publicKey, privateKey } = await encryption.generateKeyPair()
 
   defaults = {
-    userId: 'user-1',
+    userId: await deriveUserIdFromKey(encryption, publicKey),
     customUsername: '',
     colorMode: ColorMode.DARK,
     playSoundOnNewMessage: true,
@@ -45,7 +46,7 @@ describe('SettingsManager', () => {
     const { manager } = createManager()
 
     await expect(manager.load(defaults)).resolves.toMatchObject({
-      userId: 'user-1',
+      userId: defaults.userId,
       colorMode: ColorMode.DARK,
       customUsername: '',
     })
@@ -113,6 +114,38 @@ describe('SettingsManager', () => {
     expect(updated.userId).toBe(defaults.userId)
     await expect(manager.load(defaults)).resolves.toMatchObject({
       customUsername: 'Grace',
+    })
+  })
+
+  it('migrates a stored random user id to the one derived from the key', async () => {
+    const { storage, manager } = createManager()
+
+    await manager.save(defaults)
+
+    // What settings saved before ids were derived from keys look like.
+    const stored = await storage.getItem<Record<string, unknown>>(
+      userSettingsStorageKey
+    )
+
+    await storage.setItem(userSettingsStorageKey, {
+      ...stored,
+      userId: '3f8a2c1e-0b7d-4e59-9a16-5c2d8e7f4b01',
+    })
+
+    await expect(manager.load(defaults)).resolves.toMatchObject({
+      userId: defaults.userId,
+    })
+  })
+
+  it('cannot be made to keep a user id that does not belong to the key', async () => {
+    const { manager } = createManager()
+
+    const saved = await manager.update(defaults, { userId: 'chosen-by-hand' })
+
+    expect(saved.userId).toBe('chosen-by-hand')
+    // Corrected on the way back in, which every load and import goes through.
+    await expect(manager.load(defaults)).resolves.toMatchObject({
+      userId: defaults.userId,
     })
   })
 })

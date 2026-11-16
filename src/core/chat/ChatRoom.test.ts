@@ -13,7 +13,7 @@ import {
   ChatRoomEvent,
   ChatRoomEventPayloads,
 } from 'core/chat/events'
-import { signIdentityChallenge } from 'core/chat/identity'
+import { deriveUserIdFromKey, signIdentityChallenge } from 'core/chat/identity'
 import {
   IdentityChallenge,
   IdentityProof,
@@ -51,6 +51,9 @@ import {
 
 let keyPairs: CryptoKeyPair[]
 
+/** The user id each key pair derives, as a real client's would be. */
+let userIds: string[]
+
 beforeAll(async () => {
   // Key generation is the slow part, so generate once and share.
   keyPairs = await Promise.all([
@@ -58,6 +61,9 @@ beforeAll(async () => {
     encryption.generateKeyPair(),
     encryption.generateKeyPair(),
   ])
+  userIds = await Promise.all(
+    keyPairs.map(({ publicKey }) => deriveUserIdFromKey(encryption, publicKey))
+  )
 }, 30_000)
 
 const makeIds = (): IdAdapter => {
@@ -151,7 +157,7 @@ const createClient = (
 
   const chatRoom = new ChatRoom({
     roomId,
-    userId: `user-${index}`,
+    userId: userIds[index],
     customUsername,
     publicKey: keyPairs[index].publicKey,
     privateKey: keyPairs[index].privateKey,
@@ -177,7 +183,7 @@ const createDirectMessageRoom = (
 ) =>
   new ChatRoom({
     roomId,
-    userId: `user-${index}`,
+    userId: userIds[index],
     customUsername: '',
     publicKey: keyPairs[index].publicKey,
     privateKey: keyPairs[index].privateKey,
@@ -375,7 +381,7 @@ describe('ChatRoom', () => {
       expect(received).toHaveLength(1)
       expect(received[0]).toMatchObject({
         text: 'hello bob',
-        authorId: 'user-0',
+        authorId: userIds[0],
       })
       expect(isMessageReceived(received[0])).toBe(true)
     })
@@ -461,13 +467,13 @@ describe('ChatRoom', () => {
 
       expect(bobAsSeenByAlice).toMatchObject({
         peerId: 'peer-1',
-        userId: 'user-1',
+        userId: userIds[1],
         customUsername: 'Bob',
         verificationState: PeerVerificationState.VERIFIED,
       })
       expect(aliceAsSeenByBob).toMatchObject({
         peerId: 'peer-0',
-        userId: 'user-0',
+        userId: userIds[0],
         customUsername: 'Ada',
         verificationState: PeerVerificationState.VERIFIED,
       })
@@ -487,10 +493,10 @@ describe('ChatRoom', () => {
       )
 
       // Advertise key 1 but answer the challenge with key 2.
-      impostor.answerChallengesWith(keyPairs[2].privateKey, 'user-9')
+      impostor.answerChallengesWith(keyPairs[2].privateKey, userIds[1])
 
       await impostor.announce({
-        userId: 'user-9',
+        userId: userIds[1],
         customUsername: 'Impostor',
         publicKeyString: await encryption.stringifyCryptoKey(
           keyPairs[1].publicKey
@@ -527,8 +533,8 @@ describe('ChatRoom', () => {
       expect(onRename).toHaveBeenCalledTimes(1)
       expect(onRename.mock.calls[0][0]).toEqual({
         peerId: 'peer-1',
-        previousDisplayName: `Bob (${getPeerName('user-1')})`,
-        displayName: `Roberta (${getPeerName('user-1')})`,
+        previousDisplayName: `Bob (${getPeerName(userIds[1])})`,
+        displayName: `Roberta (${getPeerName(userIds[1])})`,
       })
     })
 
@@ -569,7 +575,7 @@ describe('ChatRoom', () => {
       // Resolved from the peer found by `peerId`. Looking the previous name up
       // by the *incoming* user id finds nobody, so the alert named the new
       // identity on both sides of "is now".
-      expect(renames[0].previousDisplayName).toBe(getPeerName('user-1'))
+      expect(renames[0].previousDisplayName).toBe(getPeerName(userIds[1]))
       expect(renames[0].displayName).toBe(getPeerName(renamedUserId))
     })
 
@@ -590,7 +596,7 @@ describe('ChatRoom', () => {
 
       expect(alice.chatRoom.getPeers()).toHaveLength(0)
       expect(onLeave.mock.calls[0][0].peerId).toBe('peer-1')
-      expect(onLeave.mock.calls[0][0].peer?.userId).toBe('user-1')
+      expect(onLeave.mock.calls[0][0].peer?.userId).toBe(userIds[1])
     })
   })
 
@@ -605,7 +611,7 @@ describe('ChatRoom', () => {
       await alice.chatRoom.join()
 
       await bob.announce({
-        userId: 'user-1',
+        userId: userIds[1],
         customUsername: 'Bob',
         publicKeyString: await encryption.stringifyCryptoKey(
           keyPairs[1].publicKey
@@ -626,7 +632,7 @@ describe('ChatRoom', () => {
         privateKey: keyPairs[1].privateKey,
         statement: {
           roomId,
-          userId: 'user-1',
+          userId: userIds[1],
           proverPeerId: 'peer-1',
           challenge,
         },
@@ -702,7 +708,7 @@ describe('ChatRoom', () => {
 
       expect(impersonation).toMatchObject({
         peerId: 'peer-9',
-        userId: 'user-0',
+        userId: userIds[0],
         verificationState: PeerVerificationState.VERIFYING,
       })
 
@@ -738,7 +744,7 @@ describe('ChatRoom', () => {
       // Mallory claims Alice's identity to Bob...
       await mallory.announce(
         {
-          userId: 'user-0',
+          userId: userIds[0],
           customUsername: '',
           publicKeyString: await encryption.stringifyCryptoKey(
             keyPairs[0].publicKey
@@ -780,7 +786,7 @@ describe('ChatRoom', () => {
       expect(
         bob.chatRoom.getPeers().find(peer => peer.peerId === 'peer-9')
       ).toMatchObject({
-        userId: 'user-0',
+        userId: userIds[0],
         verificationState: PeerVerificationState.UNVERIFIED,
       })
       // The real Alice is unaffected.
@@ -790,20 +796,71 @@ describe('ChatRoom', () => {
       ).toBe(PeerVerificationState.VERIFIED)
     })
 
+    /**
+     * Proving possession of a key only identifies a user when the id is bound
+     * to that key. Without the binding Mallory could claim Alice's id with a
+     * key pair of her own, answer every challenge, and be verified as Alice.
+     */
+    it('does not verify a peer claiming a user id that belongs to another key', async () => {
+      const alice = createClient(network, 0)
+      const bob = createClient(network, 1)
+
+      await joinAll(alice, bob)
+
+      const mallory = createRawPeer(network, 'peer-9')
+
+      // Mallory's own key, honestly proven, but Alice's id.
+      mallory.answerChallengesWith(keyPairs[2].privateKey, userIds[0])
+
+      const verifications: PeerVerificationState[] = []
+
+      bob.chatRoom.on(
+        ChatRoomEvent.PEER_VERIFICATION,
+        ({ peerId, verificationState }) => {
+          if (peerId === 'peer-9') verifications.push(verificationState)
+        }
+      )
+
+      await mallory.announce(
+        {
+          userId: userIds[0],
+          customUsername: 'Alice',
+          publicKeyString: await encryption.stringifyCryptoKey(
+            keyPairs[2].publicKey
+          ),
+        },
+        'peer-1'
+      )
+      await waitFor(() => verifications.length === 1, 'bob to judge mallory')
+
+      expect(verifications).toEqual([PeerVerificationState.UNVERIFIED])
+      expect(
+        bob.chatRoom.getPeers().find(peer => peer.peerId === 'peer-9')
+      ).toMatchObject({
+        userId: userIds[0],
+        verificationState: PeerVerificationState.UNVERIFIED,
+      })
+      // Judged from the claim alone: no challenge, so no answer can be accepted.
+      expect(mallory.challengesReceived).toHaveLength(0)
+      expect(bob.adapters.logger.warn).toHaveBeenCalledWith(
+        'Peer peer-9 claims a user id that does not belong to its public key'
+      )
+    })
+
     it('accepts an answer only once, and only for the outstanding challenge', async () => {
       const alice = createClient(network, 0)
       const bob = createRawPeer(network, 'peer-1')
 
       await alice.chatRoom.join()
 
-      bob.answerChallengesWith(keyPairs[1].privateKey, 'user-1')
+      bob.answerChallengesWith(keyPairs[1].privateKey, userIds[1])
 
       const publicKeyString = await encryption.stringifyCryptoKey(
         keyPairs[1].publicKey
       )
 
       await bob.announce({
-        userId: 'user-1',
+        userId: userIds[1],
         customUsername: '',
         publicKeyString,
       })
@@ -820,7 +877,7 @@ describe('ChatRoom', () => {
         privateKey: keyPairs[1].privateKey,
         statement: {
           roomId,
-          userId: 'user-1',
+          userId: userIds[1],
           proverPeerId: 'peer-1',
           challenge,
         },
@@ -845,7 +902,7 @@ describe('ChatRoom', () => {
       )
 
       await bob.announce({
-        userId: 'user-1',
+        userId: userIds[1],
         customUsername: '',
         publicKeyString,
       })
@@ -856,9 +913,11 @@ describe('ChatRoom', () => {
 
       // A new identity on the same connection invalidates the first challenge.
       await bob.announce({
-        userId: 'user-1b',
+        userId: userIds[2],
         customUsername: '',
-        publicKeyString,
+        publicKeyString: await encryption.stringifyCryptoKey(
+          keyPairs[2].publicKey
+        ),
       })
       await waitFor(
         () => bob.challengesReceived.length === 2,
@@ -871,7 +930,7 @@ describe('ChatRoom', () => {
         privateKey: keyPairs[1].privateKey,
         statement: {
           roomId,
-          userId: 'user-1',
+          userId: userIds[1],
           proverPeerId: 'peer-1',
           challenge: first.challenge,
         },
@@ -884,7 +943,7 @@ describe('ChatRoom', () => {
       await settle()
 
       expect(alice.chatRoom.getPeers()[0]).toMatchObject({
-        userId: 'user-1b',
+        userId: userIds[2],
         verificationState: PeerVerificationState.VERIFYING,
       })
     })
@@ -936,7 +995,7 @@ describe('ChatRoom', () => {
       await alice.chatRoom.join()
 
       await bob.announce({
-        userId: 'user-1',
+        userId: userIds[1],
         customUsername: '',
         publicKeyString: await encryption.stringifyCryptoKey(
           keyPairs[1].publicKey
@@ -1282,7 +1341,7 @@ describe('ChatRoom', () => {
 
       expect(bob.chatRoom.getMessageLog()[0]).toMatchObject({
         text: 'hello, nobody',
-        authorId: 'user-0',
+        authorId: userIds[0],
       })
     })
 
@@ -1389,7 +1448,7 @@ describe('ChatRoom', () => {
 
       const chatRoom = new ChatRoom({
         roomId,
-        userId: 'user-0',
+        userId: userIds[0],
         customUsername: '',
         publicKey: keyPairs[0].publicKey,
         privateKey: keyPairs[0].privateKey,
@@ -1792,14 +1851,14 @@ describe('ChatRoom', () => {
 
         await mallory.send(PeerAction.MESSAGE_TRANSCRIPT, [
           textEntry('invented', {
-            authorId: 'user-1',
+            authorId: userIds[1],
             text: 'something user-1 never said',
           }),
         ])
         await settle()
 
         expect(alice.chatRoom.getMessageLog()).toMatchObject([
-          { authorId: 'user-1', text: 'something user-1 never said' },
+          { authorId: userIds[1], text: 'something user-1 never said' },
         ])
       })
     })
@@ -3177,7 +3236,7 @@ describe('ChatRoom', () => {
 
       const chatRoom = new ChatRoom({
         roomId,
-        userId: 'user-0',
+        userId: userIds[0],
         customUsername: '',
         publicKey: keyPairs[0].publicKey,
         privateKey: keyPairs[0].privateKey,

@@ -102,6 +102,39 @@ export const signIdentityChallenge = async ({
 }
 
 /**
+ * The user id that belongs to a public key: the SHA-256 of its SPKI encoding,
+ * as lowercase hex.
+ *
+ * Deriving the id from the key is what binds the two. A random id is only a
+ * label, and any peer could pair it with a key of its own and prove possession
+ * of *that* key. A derived id cannot be claimed without the private key that
+ * produced it, so a verified peer is the user its id names.
+ *
+ * `publicKeyString` is the base64 SPKI that `EncryptionService.stringifyCryptoKey`
+ * produces and peers send in their metadata. The hash covers the bytes as
+ * sent, so the key a peer signs with is exactly the key its id was derived from.
+ */
+export const deriveUserId = async (
+  publicKeyString: string
+): Promise<string> => {
+  const digest = await globalThis.crypto.subtle.digest(
+    'SHA-256',
+    EncryptionService.base64ToArrayBuffer(publicKeyString)
+  )
+
+  return [...new Uint8Array(digest)]
+    .map(byte => byte.toString(16).padStart(2, '0'))
+    .join('')
+}
+
+/** {@link deriveUserId} for a key that is already a `CryptoKey`. */
+export const deriveUserIdFromKey = async (
+  encryptionService: EncryptionService,
+  publicKey: CryptoKey
+): Promise<string> =>
+  deriveUserId(await encryptionService.stringifyCryptoKey(publicKey))
+
+/**
  * Parses a peer's advertised public key. `null` when it is not a usable key:
  * the caller ignores such a peer's metadata outright.
  */

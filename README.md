@@ -145,8 +145,7 @@ You can use the official Chitchatter SDK to embed the app as a [Web Component](h
 The `<chat-room />` component supports the following optional attributes:
 
 - `room`: The name of the Chitchatter room the user should join. The default value is the URL of the embedding page.
-- `user-name`: The friendly name of the user (which they can change).
-- `user-id`: The static ID of the user. The default value is a random UUID.
+- `user-name`: An optional vanity name for the user, shown alongside the name derived from their identity (which they can change).
 - `root-url`: The URL of the Chitchatter instance to use. The default value is `https://chitchatter.im/`.
 - `color-mode`: `light` or `dark`. The default value is `dark`.
 - `play-message-sound`: Whether or not to play a sound when a user receives a message while the window is not in focus. The default value is `false`.
