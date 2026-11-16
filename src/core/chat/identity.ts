@@ -2,98 +2,155 @@ import { PeerVerificationState } from 'core/models/chat'
 import { AllowedKeyType, EncryptionService } from 'core/crypto/Encryption'
 
 /**
- * The plaintext each peer signs to prove it controls the private key matching
- * the public key it advertises. Binding the room id in means a signature
- * captured in one room cannot be replayed in another.
+ * How many random bytes an identity challenge holds: 256 bits, so a verifier's
+ * challenge is never repeated and cannot be predicted ahead of time.
  */
-export const getIdentityVerificationMessage = (
-  roomId: string,
-  userId: string
-): string => `${roomId}_${userId}`
+export const IDENTITY_CHALLENGE_BYTE_LENGTH = 32
 
-export interface IdentityProof {
-  publicKeyString: string
-  identitySignatureBase64: string
-}
+/** Unpadded base64 spends four characters on every three bytes, rounding up. */
+const identityChallengeCharacterLength = Math.ceil(
+  (IDENTITY_CHALLENGE_BYTE_LENGTH * 4) / 3
+)
 
-export const signIdentity = async ({
-  encryptionService,
-  publicKey,
-  privateKey,
-  roomId,
-  userId,
-}: {
-  encryptionService: EncryptionService
-  publicKey: CryptoKey
-  privateKey: CryptoKey
-  roomId: string
-  userId: string
-}): Promise<IdentityProof> => {
-  const publicKeyString = await encryptionService.stringifyCryptoKey(publicKey)
-  const identitySignature = await encryptionService.signString(
-    privateKey,
-    getIdentityVerificationMessage(roomId, userId)
+const identityChallengePattern = new RegExp(
+  `^[A-Za-z0-9_-]{${identityChallengeCharacterLength}}$`
+)
+
+/**
+ * Separates identity proofs from anything else this key might ever sign, and
+ * from the earlier `${roomId}_${userId}` statement, which carried no challenge.
+ */
+const identityProofDomain = 'chitchatter-identity-proof-v2'
+
+/**
+ * Whether `value` has the shape of a challenge {@link generateIdentityChallenge}
+ * makes. Checked exactly, so that a peer cannot ask this client to sign an
+ * arbitrarily long or structured string.
+ */
+export const isIdentityChallenge = (value: unknown): value is string =>
+  typeof value === 'string' && identityChallengePattern.test(value)
+
+/**
+ * A fresh, unpredictable challenge for one peer connection, as unpadded
+ * base64url.
+ */
+export const generateIdentityChallenge = (): string => {
+  const bytes = globalThis.crypto.getRandomValues(
+    new Uint8Array(IDENTITY_CHALLENGE_BYTE_LENGTH)
   )
 
-  return {
-    publicKeyString,
-    identitySignatureBase64:
-      EncryptionService.arrayBufferToBase64(identitySignature),
-  }
+  return EncryptionService.arrayBufferToBase64(bytes.buffer)
+    .replace(/\+/g, '-')
+    .replace(/\//g, '_')
+    .replace(/=+$/, '')
 }
 
-export interface VerifiedIdentity {
-  publicKey: CryptoKey
-  verificationState: PeerVerificationState
+export interface IdentityStatement {
+  roomId: string
+  /** The user id the prover claims. */
+  userId: string
+  /**
+   * The transport peer id of the prover, as the prover knows itself and as
+   * the verifier sees the frame arrive from.
+   */
+  proverPeerId: string
+  /** The verifier's challenge for this connection. */
+  challenge: string
 }
 
 /**
- * Parses a peer's advertised public key and checks their signature against it.
+ * The plaintext a peer signs to prove, *right now and on this connection*,
+ * that it controls the private key matching the public key it advertises.
  *
- * An unparseable key or a failed check yields UNVERIFIED rather than throwing:
- * a peer who cannot prove its identity is still a peer in the room, and the UI
- * says so. Only a verified signature yields VERIFIED.
+ * Each part closes a way of reusing a proof:
+ *
+ * - `roomId`: a proof from one room is worthless in another.
+ * - `challenge`: chosen at random by the verifier for this exchange, so a
+ *   proof cannot be captured once and presented again later. A static
+ *   statement made the proof a bearer token for anyone who had received it.
+ * - `proverPeerId`: a peer cannot relay a challenge to the real key holder
+ *   and pass the answer off as its own, because the key holder signs its own
+ *   peer id and the verifier checks the id the answer actually arrived from.
+ *
+ * Serialized as a JSON array so that no choice of room id (which may contain
+ * any character) can make two different statements produce the same bytes.
  */
-export const verifyPeerIdentity = async ({
-  encryptionService,
-  publicKeyString,
-  identitySignatureBase64,
+export const getIdentityVerificationMessage = ({
   roomId,
-  peerUserId,
+  userId,
+  proverPeerId,
+  challenge,
+}: IdentityStatement): string =>
+  JSON.stringify([identityProofDomain, roomId, userId, proverPeerId, challenge])
+
+/** Signs an {@link IdentityStatement}, returning the signature as base64. */
+export const signIdentityChallenge = async ({
+  encryptionService,
+  privateKey,
+  statement,
 }: {
   encryptionService: EncryptionService
-  publicKeyString: string
-  identitySignatureBase64: string
-  roomId: string
-  peerUserId: string
-}): Promise<VerifiedIdentity | null> => {
-  let publicKey: CryptoKey
+  privateKey: CryptoKey
+  statement: IdentityStatement
+}): Promise<string> => {
+  const identitySignature = await encryptionService.signString(
+    privateKey,
+    getIdentityVerificationMessage(statement)
+  )
 
+  return EncryptionService.arrayBufferToBase64(identitySignature)
+}
+
+/**
+ * Parses a peer's advertised public key. `null` when it is not a usable key:
+ * the caller ignores such a peer's metadata outright.
+ */
+export const parsePeerPublicKey = async (
+  encryptionService: EncryptionService,
+  publicKeyString: string
+): Promise<CryptoKey | null> => {
   try {
-    publicKey = await encryptionService.parseCryptoKeyString(
+    return await encryptionService.parseCryptoKeyString(
       publicKeyString,
       AllowedKeyType.PUBLIC
     )
   } catch {
     return null
   }
+}
 
+/**
+ * Checks a peer's answer to an identity challenge against the public key it
+ * advertised.
+ *
+ * A failed or malformed signature yields UNVERIFIED rather than throwing: a
+ * peer who cannot prove its identity is still a peer in the room, and the UI
+ * says so. Only a valid signature over this exact statement yields VERIFIED.
+ */
+export const verifyIdentityChallenge = async ({
+  encryptionService,
+  publicKey,
+  identitySignatureBase64,
+  statement,
+}: {
+  encryptionService: EncryptionService
+  publicKey: CryptoKey
+  identitySignatureBase64: string
+  statement: IdentityStatement
+}): Promise<PeerVerificationState> => {
   let isVerified = false
 
   try {
     isVerified = await encryptionService.verifySignature(
       publicKey,
       EncryptionService.base64ToArrayBuffer(identitySignatureBase64),
-      getIdentityVerificationMessage(roomId, peerUserId)
+      getIdentityVerificationMessage(statement)
     )
   } catch {
     isVerified = false
   }
 
-  return {
-    publicKey,
-    verificationState: isVerified
-      ? PeerVerificationState.VERIFIED
-      : PeerVerificationState.UNVERIFIED,
-  }
+  return isVerified
+    ? PeerVerificationState.VERIFIED
+    : PeerVerificationState.UNVERIFIED
 }

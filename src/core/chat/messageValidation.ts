@@ -1,5 +1,11 @@
 import { messageCharacterSizeLimit } from 'core/config/messaging'
+import { isIdentityChallenge } from 'core/chat/identity'
 import { isSafeMagnetUri } from 'core/chat/magnetUri'
+import {
+  IdentityChallenge,
+  IdentityProof,
+  UserMetadata,
+} from 'core/chat/protocol'
 import {
   FileOfferMetadata,
   isFileKey,
@@ -48,6 +54,21 @@ const isTimestamp = (value: unknown): value is number =>
   typeof value === 'number' &&
   Number.isFinite(value) &&
   Math.abs(value) <= maxTimestampMagnitude
+
+/**
+ * Generous bounds for the key material a peer sends: an SPKI RSA-4096 public
+ * key is about 740 base64 characters and its signature about 690.
+ */
+const publicKeyMaxLength = 4_096
+const signatureMaxLength = 2_048
+const customUsernameMaxLength = 256
+
+const base64Pattern = /^[A-Za-z0-9+/]+={0,2}$/
+
+const isBase64 = (value: unknown, maxLength: number): value is string =>
+  typeof value === 'string' &&
+  value.length <= maxLength &&
+  base64Pattern.test(value)
 
 const isMessageText = (value: unknown): value is string =>
   typeof value === 'string' && value.length <= messageCharacterSizeLimit
@@ -181,4 +202,51 @@ export const parseTranscript = (
     messageLog,
     discardedCount: received.length - messageLog.length,
   }
+}
+
+/** A peer's metadata announcement, or `null` if `value` is not exactly one. */
+export const parseUserMetadata = (value: unknown): UserMetadata | null => {
+  if (!isRecord(value)) return null
+
+  const { userId, customUsername, publicKeyString } = value
+
+  if (
+    !isIdentifier(userId) ||
+    typeof customUsername !== 'string' ||
+    customUsername.length > customUsernameMaxLength ||
+    !isBase64(publicKeyString, publicKeyMaxLength)
+  ) {
+    return null
+  }
+
+  return { userId, customUsername, publicKeyString }
+}
+
+/** An identity challenge, or `null` if `value` is not exactly one. */
+export const parseIdentityChallenge = (
+  value: unknown
+): IdentityChallenge | null => {
+  if (!isRecord(value)) return null
+
+  const { challenge } = value
+
+  if (!isIdentityChallenge(challenge)) return null
+
+  return { challenge }
+}
+
+/** An answer to an identity challenge, or `null` if `value` is not one. */
+export const parseIdentityProof = (value: unknown): IdentityProof | null => {
+  if (!isRecord(value)) return null
+
+  const { challenge, identitySignatureBase64 } = value
+
+  if (
+    !isIdentityChallenge(challenge) ||
+    !isBase64(identitySignatureBase64, signatureMaxLength)
+  ) {
+    return null
+  }
+
+  return { challenge, identitySignatureBase64 }
 }

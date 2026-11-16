@@ -121,6 +121,8 @@ const expectedAlerts: Record<ChatRoomErrorContext, boolean> = {
   [ChatRoomErrorContext.SEND_INLINE_MEDIA]: true,
   [ChatRoomErrorContext.RESCIND_FILE_OFFER]: true,
   [ChatRoomErrorContext.ANNOUNCE_SELF]: false,
+  [ChatRoomErrorContext.ANSWER_IDENTITY_CHALLENGE]: false,
+  [ChatRoomErrorContext.CHALLENGE_PEER_IDENTITY]: false,
   [ChatRoomErrorContext.GREET_PEER]: false,
   [ChatRoomErrorContext.REFRESH_CONNECTION_TYPES]: false,
   [ChatRoomErrorContext.SEND_TYPING_STATUS]: false,

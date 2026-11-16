@@ -13,8 +13,12 @@ import {
   ChatRoomEvent,
   ChatRoomEventPayloads,
 } from 'core/chat/events'
-import { signIdentity } from 'core/chat/identity'
-import { UserMetadata } from 'core/chat/protocol'
+import { signIdentityChallenge } from 'core/chat/identity'
+import {
+  IdentityChallenge,
+  IdentityProof,
+  UserMetadata,
+} from 'core/chat/protocol'
 import { messageCharacterSizeLimit } from 'core/config/messaging'
 import { encryption } from 'core/crypto/Encryption'
 import { PeerAction } from 'core/models/network'
@@ -101,11 +105,13 @@ const createClient = (
     customUsername = '',
     targetPeerId,
     transcriptSizeLimit,
+    identityVerificationTimeout,
   }: {
     password?: string
     customUsername?: string
     targetPeerId?: string
     transcriptSizeLimit?: number
+    identityVerificationTimeout?: number
   } = {}
 ): Client => {
   const peerId = `peer-${index}`
@@ -154,6 +160,7 @@ const createClient = (
     password,
     targetPeerId,
     transcriptSizeLimit,
+    identityVerificationTimeout,
   })
 
   return { chatRoom, transport, adapters, fileTransfer }
@@ -178,6 +185,80 @@ const createDirectMessageRoom = (
     adapters: client.adapters,
     targetPeerId,
   })
+
+/**
+ * A peer driven by hand rather than by a `ChatRoom`: it speaks the identity
+ * protocol frame by frame, so a test can make it lie, replay and relay.
+ */
+const createRawPeer = (
+  network: ReturnType<typeof createInMemoryNetwork>,
+  peerId: string
+) => {
+  const transport = new InMemoryTransport(network, peerId)
+
+  const [sendMetadata, onMetadata] = transport.makeAction<UserMetadata>(
+    PeerAction.PEER_METADATA,
+    ActionNamespace.GROUP
+  )
+  const [sendChallenge, onChallenge] = transport.makeAction<IdentityChallenge>(
+    PeerAction.IDENTITY_CHALLENGE,
+    ActionNamespace.GROUP
+  )
+  const [sendProof, onProof] = transport.makeAction<IdentityProof>(
+    PeerAction.IDENTITY_PROOF,
+    ActionNamespace.GROUP
+  )
+
+  const metadataReceived: Array<{ data: UserMetadata; peerId: string }> = []
+  const challengesReceived: Array<{ challenge: string; peerId: string }> = []
+  const proofsReceived: Array<{ proof: IdentityProof; peerId: string }> = []
+
+  let answerChallenge:
+    | ((challenge: string, fromPeerId: string) => Promise<void>)
+    | null = null
+
+  onMetadata((data, context) => {
+    metadataReceived.push({ data, peerId: context.peerId })
+  })
+  onChallenge(({ challenge }, context) => {
+    challengesReceived.push({ challenge, peerId: context.peerId })
+    void answerChallenge?.(challenge, context.peerId)
+  })
+  onProof((proof, context) => {
+    proofsReceived.push({ proof, peerId: context.peerId })
+  })
+
+  // Connects it to the room, as a ChatRoom's join() would.
+  transport.onPeerJoin(PeerHookType.NEW_PEER, () => {})
+
+  return {
+    transport,
+    metadataReceived,
+    challengesReceived,
+    proofsReceived,
+    announce: (metadata: UserMetadata, target?: string) =>
+      sendMetadata(metadata, target ? { target } : undefined),
+    challenge: (challenge: string, target: string) =>
+      sendChallenge({ challenge }, { target }),
+    prove: (proof: IdentityProof, target: string) =>
+      sendProof(proof, { target }),
+    /** Answers every challenge honestly, but with the key and id given. */
+    answerChallengesWith: (privateKey: CryptoKey, userId: string) => {
+      answerChallenge = async (challenge, fromPeerId) => {
+        const identitySignatureBase64 = await signIdentityChallenge({
+          encryptionService: encryption,
+          privateKey,
+          statement: { roomId, userId, proverPeerId: peerId, challenge },
+        })
+
+        await sendProof(
+          { challenge, identitySignatureBase64 },
+          { target: fromPeerId }
+        )
+      }
+    },
+  }
+}
 
 const tick = () => new Promise(resolve => setTimeout(resolve, 0))
 
@@ -218,16 +299,26 @@ const settle = async () => {
   for (let i = 0; i < 10; i++) await tick()
 }
 
-/** Joins every client and waits until each one has seen all the others. */
+/**
+ * Joins every client and waits until each one has seen all the others and
+ * finished challenging their identities.
+ */
 const joinAll = async (...clients: Client[]) => {
   for (const { chatRoom } of clients) await chatRoom.join()
 
   await waitFor(
     () =>
       clients.every(
-        ({ chatRoom }) => chatRoom.getPeers().length === clients.length - 1
+        ({ chatRoom }) =>
+          chatRoom.getPeers().length === clients.length - 1 &&
+          chatRoom
+            .getPeers()
+            .every(
+              ({ verificationState }) =>
+                verificationState !== PeerVerificationState.VERIFYING
+            )
       ),
-    `all ${clients.length} clients to see each other`
+    `all ${clients.length} clients to see and verify each other`
   )
 }
 
@@ -382,9 +473,9 @@ describe('ChatRoom', () => {
       })
     })
 
-    it('marks a peer UNVERIFIED when its signature does not match its key', async () => {
+    it('marks a peer UNVERIFIED when its answer is signed by another key', async () => {
       const alice = createClient(network, 0)
-      const impostorTransport = new InMemoryTransport(network, 'peer-9')
+      const impostor = createRawPeer(network, 'peer-9')
 
       await alice.chatRoom.join()
 
@@ -395,31 +486,22 @@ describe('ChatRoom', () => {
         ({ verificationState }) => verifications.push(verificationState)
       )
 
-      // Advertise key 1 but sign with key 2.
-      const forged = await signIdentity({
-        encryptionService: encryption,
-        publicKey: keyPairs[2].publicKey,
-        privateKey: keyPairs[2].privateKey,
-        roomId,
-        userId: 'user-9',
-      })
+      // Advertise key 1 but answer the challenge with key 2.
+      impostor.answerChallengesWith(keyPairs[2].privateKey, 'user-9')
 
-      const [sendMetadata] = impostorTransport.makeAction<any>(
-        PeerAction.PEER_METADATA,
-        ActionNamespace.GROUP
-      )
-
-      await sendMetadata({
+      await impostor.announce({
         userId: 'user-9',
         customUsername: 'Impostor',
         publicKeyString: await encryption.stringifyCryptoKey(
           keyPairs[1].publicKey
         ),
-        identitySignatureBase64: forged.identitySignatureBase64,
       })
-      await settle()
+      await waitFor(
+        () => verifications.length === 1,
+        'the verification to settle'
+      )
 
-      expect(verifications).toContain(PeerVerificationState.UNVERIFIED)
+      expect(verifications).toEqual([PeerVerificationState.UNVERIFIED])
       expect(alice.chatRoom.getPeers()[0].verificationState).toBe(
         PeerVerificationState.UNVERIFIED
       )
@@ -468,20 +550,18 @@ describe('ChatRoom', () => {
       // peer's next announcement looks like on the wire.
       const renamedUserId = 'user-1-reimported'
 
-      const proof = await signIdentity({
-        encryptionService: encryption,
-        publicKey: keyPairs[1].publicKey,
-        privateKey: keyPairs[1].privateKey,
-        roomId,
-        userId: renamedUserId,
-      })
-
       const [announce] = bob.transport.makeAction<UserMetadata>(
         PeerAction.PEER_METADATA,
         ActionNamespace.GROUP
       )
 
-      await announce({ userId: renamedUserId, customUsername: '', ...proof })
+      await announce({
+        userId: renamedUserId,
+        customUsername: '',
+        publicKeyString: await encryption.stringifyCryptoKey(
+          keyPairs[1].publicKey
+        ),
+      })
       // `>= 1`, not `=== 1`: a late duplicate greeting from bob can rename the
       // peer a second time within the same poll, so an exact count is racy.
       await waitFor(() => renames.length >= 1, 'the rename to be announced')
@@ -511,6 +591,368 @@ describe('ChatRoom', () => {
       expect(alice.chatRoom.getPeers()).toHaveLength(0)
       expect(onLeave.mock.calls[0][0].peerId).toBe('peer-1')
       expect(onLeave.mock.calls[0][0].peer?.userId).toBe('user-1')
+    })
+  })
+
+  describe('identity challenges', () => {
+    /** Short enough for a test to wait out, long enough for real crypto. */
+    const shortTimeout = 1_500
+
+    it('verifies a peer only once it has answered a challenge', async () => {
+      const alice = createClient(network, 0)
+      const bob = createRawPeer(network, 'peer-1')
+
+      await alice.chatRoom.join()
+
+      await bob.announce({
+        userId: 'user-1',
+        customUsername: 'Bob',
+        publicKeyString: await encryption.stringifyCryptoKey(
+          keyPairs[1].publicKey
+        ),
+      })
+      await waitFor(
+        () => bob.challengesReceived.length === 1,
+        'alice to challenge bob'
+      )
+
+      expect(alice.chatRoom.getPeers()[0].verificationState).toBe(
+        PeerVerificationState.VERIFYING
+      )
+
+      const [{ challenge }] = bob.challengesReceived
+      const identitySignatureBase64 = await signIdentityChallenge({
+        encryptionService: encryption,
+        privateKey: keyPairs[1].privateKey,
+        statement: {
+          roomId,
+          userId: 'user-1',
+          proverPeerId: 'peer-1',
+          challenge,
+        },
+      })
+
+      await bob.prove({ challenge, identitySignatureBase64 }, 'peer-0')
+      await waitFor(
+        () =>
+          alice.chatRoom.getPeers()[0].verificationState ===
+          PeerVerificationState.VERIFIED,
+        'bob to be verified'
+      )
+    })
+
+    it('does not issue a second challenge for a repeated announcement', async () => {
+      const alice = createClient(network, 0)
+      const bob = createClient(network, 1)
+
+      await joinAll(alice, bob)
+
+      const challenges = vi.fn()
+      const [, onChallenge] = bob.transport.makeAction<IdentityChallenge>(
+        PeerAction.IDENTITY_CHALLENGE,
+        ActionNamespace.GROUP
+      )
+
+      onChallenge(challenges)
+
+      await bob.chatRoom.setCustomUsername('Roberta')
+      await settle()
+
+      expect(challenges).not.toHaveBeenCalled()
+      expect(alice.chatRoom.getPeers()[0].verificationState).toBe(
+        PeerVerificationState.VERIFIED
+      )
+    })
+
+    /**
+     * The reported attack: Mallory hears Alice's announcement while both are
+     * in the room, and after Alice has gone re-announces it to Carol as her
+     * own. Under the old protocol the announcement carried a signature over
+     * `${roomId}_${userId}`, which verified for anyone who presented it.
+     */
+    it('does not verify a peer that replays an announcement it overheard', async () => {
+      const mallory = createRawPeer(network, 'peer-9')
+      const alice = createClient(network, 0, { customUsername: 'Alice' })
+
+      await alice.chatRoom.join()
+      await waitFor(
+        () => mallory.metadataReceived.length > 0,
+        "mallory to overhear alice's announcement"
+      )
+
+      const [{ data: overheard }] = mallory.metadataReceived
+
+      expect(overheard).not.toHaveProperty('identitySignatureBase64')
+
+      await alice.chatRoom.leave()
+      alice.transport.leaveRoom()
+
+      const carol = createClient(network, 2, {
+        identityVerificationTimeout: shortTimeout,
+      })
+
+      await carol.chatRoom.join()
+      await mallory.announce(overheard, 'peer-2')
+      await waitFor(
+        () => carol.chatRoom.getPeers().length === 1,
+        'carol to list mallory'
+      )
+
+      const [impersonation] = carol.chatRoom.getPeers()
+
+      expect(impersonation).toMatchObject({
+        peerId: 'peer-9',
+        userId: 'user-0',
+        verificationState: PeerVerificationState.VERIFYING,
+      })
+
+      await waitFor(
+        () =>
+          carol.chatRoom.getPeers()[0].verificationState ===
+          PeerVerificationState.UNVERIFIED,
+        'the unanswered challenge to time out',
+        shortTimeout * 3
+      )
+
+      expect(carol.adapters.logger.warn).toHaveBeenCalledWith(
+        'Peer peer-9 did not answer its identity challenge in time'
+      )
+    }, 10_000)
+
+    it('does not verify a peer that relays the real key holder’s answer', async () => {
+      const alice = createClient(network, 0)
+      const bob = createClient(network, 1)
+
+      await joinAll(alice, bob)
+
+      const mallory = createRawPeer(network, 'peer-9')
+      const verifications: Array<{
+        peerId: string
+        verificationState: PeerVerificationState
+      }> = []
+
+      bob.chatRoom.on(ChatRoomEvent.PEER_VERIFICATION, payload =>
+        verifications.push(payload)
+      )
+
+      // Mallory claims Alice's identity to Bob...
+      await mallory.announce(
+        {
+          userId: 'user-0',
+          customUsername: '',
+          publicKeyString: await encryption.stringifyCryptoKey(
+            keyPairs[0].publicKey
+          ),
+        },
+        'peer-1'
+      )
+      await waitFor(
+        () => mallory.challengesReceived.some(c => c.peerId === 'peer-1'),
+        'bob to challenge mallory'
+      )
+
+      const bobsChallenge = mallory.challengesReceived.find(
+        c => c.peerId === 'peer-1'
+      )?.challenge
+
+      if (!bobsChallenge) throw new Error('bob sent no challenge')
+
+      // ...forwards Bob's challenge to Alice as if it were Mallory's own...
+      await mallory.challenge(bobsChallenge, 'peer-0')
+      await waitFor(
+        () => mallory.proofsReceived.some(p => p.peerId === 'peer-0'),
+        "alice to answer mallory's challenge"
+      )
+
+      const alicesAnswer = mallory.proofsReceived.find(
+        p => p.peerId === 'peer-0'
+      )?.proof
+
+      if (!alicesAnswer) throw new Error('alice sent no answer')
+
+      // ...and hands Alice's genuine answer back to Bob.
+      await mallory.prove(alicesAnswer, 'peer-1')
+      await waitFor(
+        () => verifications.some(v => v.peerId === 'peer-9'),
+        "bob to check mallory's answer"
+      )
+
+      expect(
+        bob.chatRoom.getPeers().find(peer => peer.peerId === 'peer-9')
+      ).toMatchObject({
+        userId: 'user-0',
+        verificationState: PeerVerificationState.UNVERIFIED,
+      })
+      // The real Alice is unaffected.
+      expect(
+        bob.chatRoom.getPeers().find(peer => peer.peerId === 'peer-0')
+          ?.verificationState
+      ).toBe(PeerVerificationState.VERIFIED)
+    })
+
+    it('accepts an answer only once, and only for the outstanding challenge', async () => {
+      const alice = createClient(network, 0)
+      const bob = createRawPeer(network, 'peer-1')
+
+      await alice.chatRoom.join()
+
+      bob.answerChallengesWith(keyPairs[1].privateKey, 'user-1')
+
+      const publicKeyString = await encryption.stringifyCryptoKey(
+        keyPairs[1].publicKey
+      )
+
+      await bob.announce({
+        userId: 'user-1',
+        customUsername: '',
+        publicKeyString,
+      })
+      await waitFor(
+        () =>
+          alice.chatRoom.getPeers()[0]?.verificationState ===
+          PeerVerificationState.VERIFIED,
+        'bob to be verified'
+      )
+
+      const [{ challenge }] = bob.challengesReceived
+      const replay = await signIdentityChallenge({
+        encryptionService: encryption,
+        privateKey: keyPairs[1].privateKey,
+        statement: {
+          roomId,
+          userId: 'user-1',
+          proverPeerId: 'peer-1',
+          challenge,
+        },
+      })
+
+      await bob.prove({ challenge, identitySignatureBase64: replay }, 'peer-0')
+      await settle()
+
+      expect(alice.adapters.logger.warn).toHaveBeenCalledWith(
+        'Ignored an identity proof from peer peer-1 that answers no outstanding challenge'
+      )
+    })
+
+    it('ignores a late answer to a superseded claim', async () => {
+      const alice = createClient(network, 0)
+      const bob = createRawPeer(network, 'peer-1')
+
+      await alice.chatRoom.join()
+
+      const publicKeyString = await encryption.stringifyCryptoKey(
+        keyPairs[1].publicKey
+      )
+
+      await bob.announce({
+        userId: 'user-1',
+        customUsername: '',
+        publicKeyString,
+      })
+      await waitFor(
+        () => bob.challengesReceived.length === 1,
+        'the first challenge'
+      )
+
+      // A new identity on the same connection invalidates the first challenge.
+      await bob.announce({
+        userId: 'user-1b',
+        customUsername: '',
+        publicKeyString,
+      })
+      await waitFor(
+        () => bob.challengesReceived.length === 2,
+        'the second challenge'
+      )
+
+      const [first] = bob.challengesReceived
+      const staleAnswer = await signIdentityChallenge({
+        encryptionService: encryption,
+        privateKey: keyPairs[1].privateKey,
+        statement: {
+          roomId,
+          userId: 'user-1',
+          proverPeerId: 'peer-1',
+          challenge: first.challenge,
+        },
+      })
+
+      await bob.prove(
+        { challenge: first.challenge, identitySignatureBase64: staleAnswer },
+        'peer-0'
+      )
+      await settle()
+
+      expect(alice.chatRoom.getPeers()[0]).toMatchObject({
+        userId: 'user-1b',
+        verificationState: PeerVerificationState.VERIFYING,
+      })
+    })
+
+    it('ignores malformed identity frames', async () => {
+      const alice = createClient(network, 0)
+      const mallory = createRawPeer(network, 'peer-9')
+
+      await alice.chatRoom.join()
+
+      const [sendRawMetadata] = mallory.transport.makeAction<DataPayload>(
+        PeerAction.PEER_METADATA,
+        ActionNamespace.GROUP
+      )
+      const [sendRawChallenge] = mallory.transport.makeAction<DataPayload>(
+        PeerAction.IDENTITY_CHALLENGE,
+        ActionNamespace.GROUP
+      )
+      const [sendRawProof] = mallory.transport.makeAction<DataPayload>(
+        PeerAction.IDENTITY_PROOF,
+        ActionNamespace.GROUP
+      )
+
+      await sendRawMetadata({ userId: 'user-9', customUsername: 'x' })
+      await sendRawChallenge({ challenge: 'too-short' })
+      await sendRawProof({ challenge: 'c'.repeat(43) })
+      await settle()
+
+      expect(alice.chatRoom.getPeers()).toHaveLength(0)
+      expect(mallory.proofsReceived).toHaveLength(0)
+
+      for (const what of [
+        'peer metadata',
+        'identity challenge',
+        'identity proof',
+      ]) {
+        expect(alice.adapters.logger.warn).toHaveBeenCalledWith(
+          `Ignored a malformed ${what} from peer peer-9`
+        )
+      }
+    })
+
+    it('stops waiting for an answer once the peer has left', async () => {
+      const alice = createClient(network, 0, {
+        identityVerificationTimeout: 50,
+      })
+      const bob = createRawPeer(network, 'peer-1')
+
+      await alice.chatRoom.join()
+
+      await bob.announce({
+        userId: 'user-1',
+        customUsername: '',
+        publicKeyString: await encryption.stringifyCryptoKey(
+          keyPairs[1].publicKey
+        ),
+      })
+      await waitFor(
+        () => bob.challengesReceived.length === 1,
+        'alice to challenge bob'
+      )
+
+      bob.transport.leaveRoom()
+      await new Promise(resolve => setTimeout(resolve, 100))
+
+      expect(alice.adapters.logger.warn).not.toHaveBeenCalledWith(
+        'Peer peer-1 did not answer its identity challenge in time'
+      )
     })
   })
 

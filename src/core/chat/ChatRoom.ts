@@ -14,7 +14,12 @@ import {
   removeFileOffer,
   shouldRescindOffer,
 } from 'core/chat/fileOffers'
-import { signIdentity, verifyPeerIdentity } from 'core/chat/identity'
+import {
+  generateIdentityChallenge,
+  parsePeerPublicKey,
+  signIdentityChallenge,
+  verifyIdentityChallenge,
+} from 'core/chat/identity'
 import {
   applyPeerUpdate,
   findPeer,
@@ -22,15 +27,23 @@ import {
   reconcilePeerMetadata,
   removePeer,
 } from 'core/chat/peers'
-import { UserMetadata } from 'core/chat/protocol'
+import {
+  IdentityChallenge,
+  IdentityProof,
+  UserMetadata,
+} from 'core/chat/protocol'
 import {
   parseFileOfferMetadata,
+  parseIdentityChallenge,
+  parseIdentityProof,
   parseTranscript,
   parseUnsentInlineMedia,
   parseUnsentMessage,
+  parseUserMetadata,
 } from 'core/chat/messageValidation'
 import { applyTranscriptLimit, getInlineMediaUris } from 'core/chat/transcript'
 import {
+  identityVerificationTimeout,
   messageTranscriptSizeLimit,
   typingStatusExpiry,
 } from 'core/config/messaging'
@@ -75,6 +88,8 @@ export interface ChatRoomOptions {
   targetPeerId?: string | null
   encryptionService?: EncryptionService
   transcriptSizeLimit?: number
+  /** How long a peer has to answer an identity challenge, in milliseconds. */
+  identityVerificationTimeout?: number
 }
 
 export interface SelfState {
@@ -89,6 +104,25 @@ enum MalformedFrame {
   INLINE_MEDIA = 'inline media message',
   TRANSCRIPT = 'transcript',
   FILE_OFFER = 'file offer',
+  METADATA = 'peer metadata',
+  IDENTITY_CHALLENGE = 'identity challenge',
+  IDENTITY_PROOF = 'identity proof',
+}
+
+/**
+ * The identity a peer has announced, and where proving it stands.
+ *
+ * A claim is made by metadata and proven only by answering a challenge this
+ * client chose for it. Its `userId` and `publicKey` are the ones the answer is
+ * checked against, so the proof covers exactly what was announced.
+ */
+interface PeerIdentityClaim {
+  readonly userId: string
+  readonly publicKeyString: string
+  readonly publicKey: CryptoKey
+  /** The challenge awaiting an answer; `null` once answered or timed out. */
+  pendingChallenge: string | null
+  timeout: ReturnType<typeof setTimeout> | null
 }
 
 /**
@@ -133,6 +167,8 @@ export class ChatRoom extends EventTarget {
 
   private readonly transcriptSizeLimit: number
 
+  private readonly identityVerificationTimeout: number
+
   private customUsername: string
 
   private messageLog: MessageLog = []
@@ -170,6 +206,12 @@ export class ChatRoom extends EventTarget {
    */
   private departedPeerIds: Set<string> = new Set()
 
+  /** Each peer's announced identity, keyed by peer id. */
+  private identityClaims: Map<string, PeerIdentityClaim> = new Map()
+
+  /** Our own public key as sent on the wire, exported once and reused. */
+  private publicKeyString: Promise<string> | null = null
+
   // Snapshots are cached so that repeated reads without an intervening change
   // return the same reference.
   private messageLogSnapshot: MessageLog = []
@@ -187,6 +229,8 @@ export class ChatRoom extends EventTarget {
     inlineMedia: ActionSender<UnsentInlineMedia>
     transcript: ActionSender<Array<ReceivedMessage | ReceivedInlineMedia>>
     metadata: ActionSender<UserMetadata>
+    identityChallenge: ActionSender<IdentityChallenge>
+    identityProof: ActionSender<IdentityProof>
     typingStatus: ActionSender<TypingStatus>
     fileOffer: ActionSender<FileOfferMetadata | null>
   } | null = null
@@ -205,6 +249,8 @@ export class ChatRoom extends EventTarget {
     targetPeerId = null,
     encryptionService = encryption,
     transcriptSizeLimit = messageTranscriptSizeLimit,
+    identityVerificationTimeout:
+      verificationTimeout = identityVerificationTimeout,
   }: ChatRoomOptions) {
     super()
 
@@ -217,6 +263,7 @@ export class ChatRoom extends EventTarget {
     this.adapters = adapters
     this.encryptionService = encryptionService
     this.transcriptSizeLimit = transcriptSizeLimit
+    this.identityVerificationTimeout = verificationTimeout
 
     this.isPrivate = password !== undefined
     this.targetPeerId = targetPeerId
@@ -265,6 +312,20 @@ export class ChatRoom extends EventTarget {
         PeerAction.PEER_METADATA,
         this.namespace
       )
+    const [
+      sendIdentityChallenge,
+      connectIdentityChallenge,
+      ,
+      disconnectIdentityChallenge,
+    ] = this.transport.makeAction<IdentityChallenge>(
+      PeerAction.IDENTITY_CHALLENGE,
+      this.namespace
+    )
+    const [sendIdentityProof, connectIdentityProof, , disconnectIdentityProof] =
+      this.transport.makeAction<IdentityProof>(
+        PeerAction.IDENTITY_PROOF,
+        this.namespace
+      )
     const [sendTypingStatus, connectTypingStatus, , disconnectTypingStatus] =
       this.transport.makeAction<TypingStatus>(
         PeerAction.TYPING_STATUS_CHANGE,
@@ -281,6 +342,8 @@ export class ChatRoom extends EventTarget {
       inlineMedia: sendInlineMedia,
       transcript: sendTranscript,
       metadata: sendMetadata,
+      identityChallenge: sendIdentityChallenge,
+      identityProof: sendIdentityProof,
       typingStatus: sendTypingStatus,
       fileOffer: sendFileOffer,
     }
@@ -289,6 +352,8 @@ export class ChatRoom extends EventTarget {
     connectInlineMedia(this.handleInlineMedia)
     connectTranscript(this.handleTranscript)
     connectMetadata(this.handleMetadata)
+    connectIdentityChallenge(this.handleIdentityChallenge)
+    connectIdentityProof(this.handleIdentityProof)
     connectTypingStatus(this.handleTypingStatus)
     connectFileOffer(this.handleFileOffer)
 
@@ -297,6 +362,8 @@ export class ChatRoom extends EventTarget {
       disconnectInlineMedia,
       disconnectTranscript,
       disconnectMetadata,
+      disconnectIdentityChallenge,
+      disconnectIdentityProof,
       disconnectTypingStatus,
       disconnectFileOffer,
     ]
@@ -321,6 +388,10 @@ export class ChatRoom extends EventTarget {
     this.hasLeft = true
 
     this.clearTypingExpiry()
+
+    for (const peerId of [...this.identityClaims.keys()]) {
+      this.forgetIdentityClaim(peerId)
+    }
 
     if (this.isTyping) {
       await this.sendTypingStatus(false)
@@ -664,7 +735,8 @@ export class ChatRoom extends EventTarget {
    *   id is a public label, so the peer that answers first can attribute
    *   anything to anyone, date it as it likes and invent messages outright. A
    *   receiver has nothing to check against, and the identity check that exists
-   *   (see {@link verifyPeerIdentity}) proves only that a peer holds *a* key.
+   *   (see {@link verifyIdentityChallenge}) proves only that a peer holds *a*
+   *   key.
    *   Picking whom to believe does not help either: a peer that has been
    *   verified is one that signed its own advertised id, and requiring several
    *   peers to agree would leave a room of two with no history at all. Closing
@@ -717,37 +789,41 @@ export class ChatRoom extends EventTarget {
     this.adapters.logger.warn(`Ignored a malformed ${what} from peer ${peerId}`)
   }
 
+  /**
+   * Folds a peer's announcement into the peer list and, when it claims an
+   * identity this client has not yet checked, challenges the peer to prove it.
+   *
+   * Metadata proves nothing by itself. Anything signed once and broadcast can
+   * be replayed by whoever received it, so a peer is only marked VERIFIED by
+   * {@link handleIdentityProof}, once it has signed a challenge chosen here for
+   * this connection. Until then it is listed as VERIFYING.
+   */
   private handleMetadata = async (
-    {
-      userId,
-      customUsername,
-      publicKeyString,
-      identitySignatureBase64,
-    }: UserMetadata,
+    payload: unknown,
     { peerId }: { peerId: string }
   ) => {
     if (!this.isFromRoomPeer(peerId)) return
 
-    const verified = await verifyPeerIdentity({
-      encryptionService: this.encryptionService,
-      publicKeyString,
-      identitySignatureBase64,
-      roomId: this.roomId,
-      peerUserId: userId,
-    })
+    const metadata = parseUserMetadata(payload)
 
-    if (!verified) {
+    if (!metadata) {
+      this.warnMalformed(MalformedFrame.METADATA, peerId)
+
+      return
+    }
+
+    const { userId, customUsername, publicKeyString } = metadata
+
+    const publicKey =
+      this.findClaimedPublicKey(peerId, metadata) ??
+      (await parsePeerPublicKey(this.encryptionService, publicKeyString))
+
+    if (!publicKey) {
       this.adapters.logger.warn(
         `Could not parse the public key advertised by peer ${peerId}; ignoring its metadata`
       )
 
       return
-    }
-
-    if (verified.verificationState === PeerVerificationState.UNVERIFIED) {
-      this.adapters.logger.warn(
-        'Peer verification failed, marking peer as unverified'
-      )
     }
 
     // Deliberately not `transport.getPeers().includes(peerId)`: that couples
@@ -761,20 +837,37 @@ export class ChatRoom extends EventTarget {
     // (Breezy Bear)` — whenever a settings import changes the user id.
     const previousPeer = findPeer(this.peers, peerId)
 
+    // Checked after the await above, so that a duplicate greeting that arrived
+    // while the key was parsing does not issue a second challenge.
+    const isNewClaim =
+      previousPeer === null ||
+      this.findClaimedPublicKey(peerId, metadata) === null
+
+    if (isNewClaim) {
+      this.forgetIdentityClaim(peerId)
+      this.identityClaims.set(peerId, {
+        userId,
+        publicKeyString,
+        publicKey,
+        pendingChallenge: null,
+        timeout: null,
+      })
+    }
+
     const { peers, addedPeer, rename } = reconcilePeerMetadata(this.peers, {
       peerId,
       userId,
       customUsername,
-      publicKey: verified.publicKey,
-      verificationState: verified.verificationState,
+      publicKey,
+      verificationState:
+        isNewClaim || previousPeer === null
+          ? PeerVerificationState.VERIFYING
+          : previousPeer.verificationState,
     })
 
     this.setPeers(peers)
 
-    this.emit(ChatRoomEvent.PEER_VERIFICATION, {
-      peerId,
-      verificationState: verified.verificationState,
-    })
+    if (isNewClaim) void this.challengePeerIdentity(peerId)
 
     if (addedPeer) {
       // This peer may not know us either — its transport could have connected
@@ -796,6 +889,190 @@ export class ChatRoom extends EventTarget {
         }),
       })
     }
+  }
+
+  /**
+   * The already-parsed key for a peer whose metadata repeats the identity it
+   * last claimed, or `null` when the metadata claims something new.
+   */
+  private findClaimedPublicKey = (
+    peerId: string,
+    { userId, publicKeyString }: UserMetadata
+  ): CryptoKey | null => {
+    const claim = this.identityClaims.get(peerId)
+
+    if (
+      !claim ||
+      claim.userId !== userId ||
+      claim.publicKeyString !== publicKeyString
+    ) {
+      return null
+    }
+
+    return claim.publicKey
+  }
+
+  /**
+   * Sends `peerId` a fresh challenge for the identity it claims, and gives it
+   * {@link identityVerificationTimeout} to answer.
+   */
+  private challengePeerIdentity = async (peerId: string) => {
+    const claim = this.identityClaims.get(peerId)
+
+    if (!claim || !this.senders) return
+
+    const challenge = generateIdentityChallenge()
+
+    claim.pendingChallenge = challenge
+    claim.timeout = setTimeout(() => {
+      if (this.identityClaims.get(peerId) !== claim) return
+      if (claim.pendingChallenge !== challenge) return
+
+      claim.pendingChallenge = null
+      claim.timeout = null
+
+      this.adapters.logger.warn(
+        `Peer ${peerId} did not answer its identity challenge in time`
+      )
+      this.settleVerification(peerId, PeerVerificationState.UNVERIFIED)
+    }, this.identityVerificationTimeout)
+
+    try {
+      await this.senders.identityChallenge({ challenge }, { target: peerId })
+    } catch (error) {
+      this.reportError(error, ChatRoomErrorContext.CHALLENGE_PEER_IDENTITY)
+    }
+  }
+
+  /**
+   * Proves our identity to a peer that challenged it, by signing its challenge
+   * together with the room id, our user id and our own peer id.
+   */
+  private handleIdentityChallenge = async (
+    payload: unknown,
+    { peerId }: { peerId: string }
+  ) => {
+    if (!this.isFromRoomPeer(peerId)) return
+
+    const parsed = parseIdentityChallenge(payload)
+
+    if (!parsed) {
+      this.warnMalformed(MalformedFrame.IDENTITY_CHALLENGE, peerId)
+
+      return
+    }
+
+    const { challenge } = parsed
+
+    try {
+      const identitySignatureBase64 = await signIdentityChallenge({
+        encryptionService: this.encryptionService,
+        privateKey: this.privateKey,
+        statement: {
+          roomId: this.roomId,
+          userId: this.userId,
+          proverPeerId: this.transport.selfId,
+          challenge,
+        },
+      })
+
+      await this.senders?.identityProof(
+        { challenge, identitySignatureBase64 },
+        { target: peerId }
+      )
+    } catch (error) {
+      this.reportError(error, ChatRoomErrorContext.ANSWER_IDENTITY_CHALLENGE)
+    }
+  }
+
+  /**
+   * Checks a peer's answer to the challenge this client sent it.
+   *
+   * The answer is accepted only for the challenge still outstanding for that
+   * peer, and only once: a proof for any other challenge — a stale one, one
+   * sent to somebody else, or one already used — is discarded. The statement
+   * it is checked against is built here, from the identity the peer claimed
+   * and the peer id the answer arrived from, never from the answer itself.
+   */
+  private handleIdentityProof = async (
+    payload: unknown,
+    { peerId }: { peerId: string }
+  ) => {
+    if (!this.isFromRoomPeer(peerId)) return
+
+    const proof = parseIdentityProof(payload)
+
+    if (!proof) {
+      this.warnMalformed(MalformedFrame.IDENTITY_PROOF, peerId)
+
+      return
+    }
+
+    const claim = this.identityClaims.get(peerId)
+
+    if (!claim || claim.pendingChallenge !== proof.challenge) {
+      this.adapters.logger.warn(
+        `Ignored an identity proof from peer ${peerId} that answers no outstanding challenge`
+      )
+
+      return
+    }
+
+    // Spent before the await, so the same answer cannot be checked twice.
+    claim.pendingChallenge = null
+    this.clearIdentityTimeout(claim)
+
+    const verificationState = await verifyIdentityChallenge({
+      encryptionService: this.encryptionService,
+      publicKey: claim.publicKey,
+      identitySignatureBase64: proof.identitySignatureBase64,
+      statement: {
+        roomId: this.roomId,
+        userId: claim.userId,
+        proverPeerId: peerId,
+        challenge: proof.challenge,
+      },
+    })
+
+    // The peer may have left, or announced a different identity, while the
+    // signature was being checked. Either way this result no longer applies.
+    if (this.hasLeft || this.identityClaims.get(peerId) !== claim) return
+
+    this.settleVerification(peerId, verificationState)
+  }
+
+  private settleVerification = (
+    peerId: string,
+    verificationState: PeerVerificationState
+  ) => {
+    if (verificationState === PeerVerificationState.UNVERIFIED) {
+      this.adapters.logger.warn(
+        'Peer verification failed, marking peer as unverified'
+      )
+    }
+
+    if (!findPeer(this.peers, peerId)) return
+
+    this.setPeers(applyPeerUpdate(this.peers, peerId, { verificationState }))
+
+    this.emit(ChatRoomEvent.PEER_VERIFICATION, { peerId, verificationState })
+  }
+
+  private clearIdentityTimeout = (claim: PeerIdentityClaim) => {
+    if (claim.timeout === null) return
+
+    clearTimeout(claim.timeout)
+    claim.timeout = null
+  }
+
+  /** Drops a peer's claim, so that any answer still in flight is discarded. */
+  private forgetIdentityClaim = (peerId: string) => {
+    const claim = this.identityClaims.get(peerId)
+
+    if (!claim) return
+
+    this.clearIdentityTimeout(claim)
+    this.identityClaims.delete(peerId)
   }
 
   private handleTypingStatus = (
@@ -947,8 +1224,8 @@ export class ChatRoom extends EventTarget {
    */
   private greetPeer = async (peerId: string) => {
     try {
-      // Sent concurrently: signing the identity proof is slow enough that
-      // awaiting it first would delay the newcomer's transcript.
+      // Sent concurrently, so that exporting our public key for the first time
+      // does not delay the newcomer's transcript.
       await Promise.all([
         this.announceSelf(peerId),
 
@@ -981,6 +1258,7 @@ export class ChatRoom extends EventTarget {
 
   private handlePeerLeave = (peerId: string) => {
     this.departedPeerIds.add(peerId)
+    this.forgetIdentityClaim(peerId)
 
     const peer = findPeer(this.peers, peerId)
     const offer = this.fileOffers[peerId]
@@ -1034,27 +1312,31 @@ export class ChatRoom extends EventTarget {
 
   // ------------------------------------------------------------------ internals
 
+  /**
+   * Announces who we claim to be. It carries no proof: every peer that hears
+   * it challenges us, and {@link handleIdentityChallenge} answers.
+   */
   private announceSelf = async (targetPeerId?: string) => {
     if (!this.senders) return
 
     try {
-      const proof = await signIdentity({
-        encryptionService: this.encryptionService,
-        publicKey: this.publicKey,
-        privateKey: this.privateKey,
-        roomId: this.roomId,
-        userId: this.userId,
-      })
+      this.publicKeyString ??= this.encryptionService.stringifyCryptoKey(
+        this.publicKey
+      )
 
-      await this.senders.metadata(
+      const publicKeyString = await this.publicKeyString
+
+      await this.senders?.metadata(
         {
           userId: this.userId,
           customUsername: this.customUsername,
-          ...proof,
+          publicKeyString,
         },
         targetPeerId ? { target: targetPeerId } : this.sendOptions()
       )
     } catch (error) {
+      // Not cached as a failure: the next announcement tries again.
+      this.publicKeyString = null
       this.reportError(error, ChatRoomErrorContext.ANNOUNCE_SELF)
     }
   }

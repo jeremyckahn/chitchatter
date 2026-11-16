@@ -54,6 +54,8 @@ export enum ChatRoomEvent {
  */
 export enum ChatRoomErrorContext {
   ANNOUNCE_SELF = 'announceSelf',
+  ANSWER_IDENTITY_CHALLENGE = 'answerIdentityChallenge',
+  CHALLENGE_PEER_IDENTITY = 'challengePeerIdentity',
   GREET_PEER = 'greetPeer',
   LEAVE = 'leave',
   REFRESH_CONNECTION_TYPES = 'refreshConnectionTypes',

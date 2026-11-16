@@ -39,6 +39,7 @@ vi.mock('services/FileTransfer', () => ({
 }))
 
 vi.mock('@trystero-p2p/torrent', () => ({
+  selfId: 'self-peer-id',
   joinRoom: () => ({
     makeAction: () => ({
       send: vi.fn(async () => []),
