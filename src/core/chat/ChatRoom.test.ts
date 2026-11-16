@@ -550,11 +550,11 @@ describe('ChatRoom', () => {
         renames.push(payload)
       })
 
-      // Importing settings changes a peer's user id, not only its display
-      // name. Announced straight through the transport because a `ChatRoom`
-      // fixes its own user id at construction — this is what a reimported
-      // peer's next announcement looks like on the wire.
-      const renamedUserId = 'user-1-reimported'
+      // Importing settings changes a peer's key, and with it the user id
+      // derived from it. Announced straight through the transport because a
+      // `ChatRoom` fixes its own identity at construction — this is what a
+      // reimported peer's next announcement looks like on the wire.
+      const renamedUserId = userIds[2]
 
       const [announce] = bob.transport.makeAction<UserMetadata>(
         PeerAction.PEER_METADATA,
@@ -565,7 +565,7 @@ describe('ChatRoom', () => {
         userId: renamedUserId,
         customUsername: '',
         publicKeyString: await encryption.stringifyCryptoKey(
-          keyPairs[1].publicKey
+          keyPairs[2].publicKey
         ),
       })
       // `>= 1`, not `=== 1`: a late duplicate greeting from bob can rename the
@@ -801,7 +801,7 @@ describe('ChatRoom', () => {
      * to that key. Without the binding Mallory could claim Alice's id with a
      * key pair of her own, answer every challenge, and be verified as Alice.
      */
-    it('does not verify a peer claiming a user id that belongs to another key', async () => {
+    it('lists a peer claiming another user’s id under its own key’s id, unverified', async () => {
       const alice = createClient(network, 0)
       const bob = createClient(network, 1)
 
@@ -837,14 +837,67 @@ describe('ChatRoom', () => {
       expect(
         bob.chatRoom.getPeers().find(peer => peer.peerId === 'peer-9')
       ).toMatchObject({
-        userId: userIds[0],
+        // Listed under her own key's id, so she never appears as Alice.
+        userId: userIds[2],
+        customUsername: 'Alice',
         verificationState: PeerVerificationState.UNVERIFIED,
       })
       // Judged from the claim alone: no challenge, so no answer can be accepted.
       expect(mallory.challengesReceived).toHaveLength(0)
       expect(bob.adapters.logger.warn).toHaveBeenCalledWith(
-        'Peer peer-9 claims a user id that does not belong to its public key'
+        "Peer peer-9 claims a user id that does not belong to its public key; listing it under the key's own"
       )
+    })
+
+    it('attributes what an impostor sends to its own key’s id', async () => {
+      const alice = createClient(network, 0)
+      const bob = createClient(network, 1)
+
+      await joinAll(alice, bob)
+
+      const mallory = createRawPeer(network, 'peer-9')
+      const [sendMessage] = mallory.transport.makeAction<DataPayload>(
+        PeerAction.MESSAGE,
+        ActionNamespace.GROUP
+      )
+
+      await mallory.announce(
+        {
+          userId: userIds[0],
+          customUsername: 'Alice',
+          publicKeyString: await encryption.stringifyCryptoKey(
+            keyPairs[2].publicKey
+          ),
+        },
+        'peer-1'
+      )
+      await waitFor(
+        () => bob.chatRoom.getPeers().length === 2,
+        'bob to list mallory'
+      )
+
+      await sendMessage(
+        {
+          id: 'as-alice',
+          text: 'Alice here. Send the wallet seed phrase.',
+          timeSent: 1,
+          authorId: userIds[0],
+        },
+        { target: 'peer-1' }
+      )
+      await waitFor(
+        () => bob.chatRoom.getMessageLog().length === 1,
+        'the message to arrive'
+      )
+
+      // The display name a host renders is Mallory's, not Alice's.
+      expect(bob.chatRoom.getMessageLog()[0].authorId).toBe(userIds[2])
+      expect(
+        bob.chatRoom
+          .getPeers()
+          .filter(peer => peer.userId === userIds[0])
+          .map(peer => peer.peerId)
+      ).toEqual(['peer-0'])
     })
 
     it('accepts an answer only once, and only for the outstanding challenge', async () => {

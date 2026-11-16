@@ -151,6 +151,16 @@ await mallory.claim(file) // offer a file someone else shared
 await mallory.withdraw()
 ```
 
+It can also try to pass as another user:
+
+```typescript
+const [alice] = await mallory.getOverheardIdentities() // id and display name
+
+await mallory.impersonate(alice.userId) // her id, with a key of Mallory's own
+await mallory.replayIdentity(alice.userId) // her announcement, verbatim
+await mallory.sendMessage('Alice here', alice.userId) // names her as author
+```
+
 Nothing about it is simulated. The browser module (`hostile-peer.browser.ts`) is the app's own source, served by Vite to a blank page on the app's origin, so it uses the real `TrysteroTransport`, tracker configuration and file transfer service. The victims are the app, driven through the UI.
 
 To find out whether a file survived, do not inspect the app's internals. Ask the swarm, the way a late joiner would:
@@ -162,7 +172,7 @@ await downloadFileAsLateJoiner(browser, file) // the file's text, or rejects
 Things to know when writing one of these:
 
 - **Prove the test can fail.** Run it against the code it guards without the fix. A test that passes either way proves nothing. Include a control that does the same thing without the attack, so a failure can be put down to the attack and not to the environment.
-- **Nothing in the UI shows that an attack frame was handled.** The hostile peer never introduces itself, so it is not in anyone's peer list. Wait a short, fixed time before checking the outcome, and wait for the real users to connect to each other before the attack starts.
+- **Nothing in the UI shows that an attack frame was handled.** Unless it impersonates someone, the hostile peer never introduces itself, so it is not in anyone's peer list. Wait a short, fixed time before checking the outcome, and wait for the real users to connect to each other before the attack starts.
 - **Serve the hostile page from Vite, not from a Playwright route.** Chrome treats a page without a real address as public and refuses its connections to the local tracker.
 - `hostile-peer.browser.ts` runs in the browser: keep Node and Playwright imports out of it.
 

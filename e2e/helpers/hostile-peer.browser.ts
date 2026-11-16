@@ -10,8 +10,17 @@
  * Keep it free of Node and Playwright imports.
  */
 import { trackerUrls } from 'config/trackerUrls'
+import { deriveUserIdFromKey } from 'core/chat/identity'
+import { UserMetadata } from 'core/chat/protocol'
+import { encryption } from 'core/crypto/Encryption'
 import { PeerAction } from 'core/models/network'
-import { FileOfferMetadata, FileReference, isFileKey } from 'core/models/chat'
+import {
+  FileOfferMetadata,
+  FileReference,
+  isFileKey,
+  UnsentMessage,
+} from 'core/models/chat'
+import { getPeerName } from 'core/names/peerNames'
 import { TrysteroTransport } from 'core/transport/TrysteroTransport'
 import { ActionNamespace, PeerHookType } from 'core/transport/types'
 import { FileTransferService } from 'services/FileTransfer'
@@ -29,6 +38,19 @@ const rtcConfig: RTCConfiguration = { iceServers: [] }
  * point is to send what a well-behaved client never would.
  */
 export type ForgedTranscriptEntry = { [field: string]: string | number }
+
+/** An identity another peer announced, and the name the app shows it under. */
+export interface OverheardIdentity {
+  userId: string
+  customUsername: string
+  peerName: string
+}
+
+/** Who this peer is listed as, by an app that lists it under its own key. */
+export interface OwnIdentity {
+  userId: string
+  peerName: string
+}
 
 /**
  * Whether `data` names a file the way an offer or an inline-media message does:
@@ -79,6 +101,20 @@ export const joinRoomAsHostilePeer = (roomId: string) => {
     PeerAction.MESSAGE_TRANSCRIPT,
     ActionNamespace.GROUP
   )
+  const [sendMetadata, onMetadata] = transport.makeAction<UserMetadata>(
+    PeerAction.PEER_METADATA,
+    ActionNamespace.GROUP
+  )
+  const [sendMessage] = transport.makeAction<UnsentMessage>(
+    PeerAction.MESSAGE,
+    ActionNamespace.GROUP
+  )
+
+  // Every announcement a peer sent this one, verbatim: what a replay re-sends.
+  const overheard: UserMetadata[] = []
+
+  // The announcement this peer greets each newcomer with, once it has one.
+  let announcement: UserMetadata | undefined
 
   const offeredFiles: FileReference[] = []
   const inlineMediaFiles: FileReference[] = []
@@ -91,7 +127,19 @@ export const joinRoomAsHostilePeer = (roomId: string) => {
   transport.onPeerJoin(PeerHookType.NEW_PEER, peerId => {
     if (forgedTranscript)
       void sendTranscript(forgedTranscript, { target: peerId })
+
+    // Introduces itself to a newcomer as a real client does when it greets one.
+    if (announcement) void sendMetadata(announcement, { target: peerId })
   })
+
+  onMetadata(data => {
+    overheard.push(data)
+  })
+
+  const announce = async (metadata: UserMetadata) => {
+    announcement = metadata
+    await sendMetadata(metadata)
+  }
 
   onFileOffer(data => {
     if (isFileReferenceCarrier(data)) offeredFiles.push(toFileReference(data))
@@ -134,6 +182,52 @@ export const joinRoomAsHostilePeer = (roomId: string) => {
     },
 
     withdraw: () => sendFileOffer(null),
+
+    /** The identities other peers have announced to this one. */
+    getOverheardIdentities: (): OverheardIdentity[] =>
+      overheard.map(({ userId, customUsername }) => ({
+        userId,
+        customUsername,
+        peerName: getPeerName(userId),
+      })),
+
+    /**
+     * Announces itself under `userId`, another user's, with a key pair of its
+     * own: the most a peer can do without that user's private key.
+     */
+    impersonate: async (userId: string): Promise<OwnIdentity> => {
+      const { publicKey } = await encryption.generateKeyPair()
+      const ownUserId = await deriveUserIdFromKey(encryption, publicKey)
+
+      await announce({
+        userId,
+        customUsername: '',
+        publicKeyString: await encryption.stringifyCryptoKey(publicKey),
+      })
+
+      return { userId: ownUserId, peerName: getPeerName(ownUserId) }
+    },
+
+    /**
+     * Re-announces an identity it overheard, byte for byte, as its own: the
+     * attack in which a captured proof used to verify on any connection.
+     */
+    replayIdentity: async (userId: string) => {
+      const captured = overheard.find(metadata => metadata.userId === userId)
+
+      if (!captured) throw new Error(`No announcement from ${userId} was heard`)
+
+      await announce(captured)
+    },
+
+    /** Sends a live message naming `authorId`, whoever that is, as author. */
+    sendMessage: (text: string, authorId: string) =>
+      sendMessage({
+        id: crypto.randomUUID(),
+        text,
+        timeSent: Date.now(),
+        authorId,
+      }),
 
     leave: () => transport.leaveRoom(),
   }

@@ -119,6 +119,12 @@ enum MalformedFrame {
  * checked against, so the proof covers exactly what was announced.
  */
 interface PeerIdentityClaim {
+  /** The user id the peer's metadata names. */
+  readonly claimedUserId: string
+  /**
+   * The user id its key derives, which is what the peer is listed and
+   * verified as. Equal to `claimedUserId` for an honest peer.
+   */
   readonly userId: string
   readonly publicKeyString: string
   readonly publicKey: CryptoKey
@@ -878,10 +884,10 @@ export class ChatRoom extends EventTarget {
    * {@link handleIdentityProof}, once it has signed a challenge chosen here for
    * this connection. Until then it is listed as VERIFYING.
    *
-   * A claim whose user id is not the one derived from its public key (see
-   * {@link deriveUserId}) is marked UNVERIFIED at once and never challenged:
-   * proving possession of a key says nothing about an id that belongs to
-   * another.
+   * A peer is always listed under the user id its public key derives (see
+   * {@link deriveUserId}), not the one it names. One that names a different
+   * id is marked UNVERIFIED at once and never challenged: proving possession
+   * of a key says nothing about an id that belongs to another.
    */
   private handleMetadata = async (
     payload: unknown,
@@ -899,9 +905,9 @@ export class ChatRoom extends EventTarget {
 
     const { userId, customUsername, publicKeyString } = metadata
 
-    const knownPublicKey = this.findClaimedPublicKey(peerId, metadata)
+    const knownClaim = this.findRepeatedClaim(peerId, metadata)
     const publicKey =
-      knownPublicKey ??
+      knownClaim?.publicKey ??
       (await parsePeerPublicKey(this.encryptionService, publicKeyString))
 
     if (!publicKey) {
@@ -912,10 +918,12 @@ export class ChatRoom extends EventTarget {
       return
     }
 
-    // A repeated claim was already checked when it was first made.
-    const isUserIdBoundToKey =
-      knownPublicKey !== null ||
-      userId === (await deriveUserId(publicKeyString))
+    // The peer is listed under the id its key derives, whatever id it named.
+    // A peer that names another user's id can then never appear as them: not
+    // in the peer list, and not as the author of what it sends.
+    const listedUserId =
+      knownClaim?.userId ?? (await deriveUserId(publicKeyString))
+    const isUserIdBoundToKey = userId === listedUserId
 
     // Deliberately not `transport.getPeers().includes(peerId)`: that couples
     // correctness to transport timing and drops metadata from a live peer whose
@@ -931,13 +939,13 @@ export class ChatRoom extends EventTarget {
     // Checked after the await above, so that a duplicate greeting that arrived
     // while the key was parsing does not issue a second challenge.
     const isNewClaim =
-      previousPeer === null ||
-      this.findClaimedPublicKey(peerId, metadata) === null
+      previousPeer === null || this.findRepeatedClaim(peerId, metadata) === null
 
     if (isNewClaim) {
       this.forgetIdentityClaim(peerId)
       this.identityClaims.set(peerId, {
-        userId,
+        claimedUserId: userId,
+        userId: listedUserId,
         publicKeyString,
         publicKey,
         pendingChallenge: null,
@@ -948,8 +956,9 @@ export class ChatRoom extends EventTarget {
     const getVerificationState = (): PeerVerificationState => {
       if (!isNewClaim && previousPeer) return previousPeer.verificationState
 
-      // No answer could make a claim true whose id names some other key, so it
-      // is judged here and never challenged: no proof is accepted for it.
+      // A peer that named an id other than its own is misrepresenting itself
+      // even though it is listed under its own: it is shown as unverified and
+      // never challenged, so no proof is accepted for it.
       return isUserIdBoundToKey
         ? PeerVerificationState.VERIFYING
         : PeerVerificationState.UNVERIFIED
@@ -959,7 +968,7 @@ export class ChatRoom extends EventTarget {
 
     const { peers, addedPeer, rename } = reconcilePeerMetadata(this.peers, {
       peerId,
-      userId,
+      userId: listedUserId,
       customUsername,
       publicKey,
       verificationState,
@@ -973,7 +982,7 @@ export class ChatRoom extends EventTarget {
         void this.challengePeerIdentity(peerId)
       } else {
         this.adapters.logger.warn(
-          `Peer ${peerId} claims a user id that does not belong to its public key`
+          `Peer ${peerId} claims a user id that does not belong to its public key; listing it under the key's own`
         )
         this.reportVerification(peerId, verificationState)
       }
@@ -992,7 +1001,7 @@ export class ChatRoom extends EventTarget {
       this.emit(ChatRoomEvent.PEER_RENAME, {
         peerId,
         previousDisplayName: getPeerDisplayName(previousPeer),
-        displayName: getDisplayUsername(userId, {
+        displayName: getDisplayUsername(listedUserId, {
           selfUserId: this.userId,
           selfCustomUsername: this.customUsername,
           peers,
@@ -1002,24 +1011,24 @@ export class ChatRoom extends EventTarget {
   }
 
   /**
-   * The already-parsed key for a peer whose metadata repeats the identity it
-   * last claimed, or `null` when the metadata claims something new.
+   * The claim a peer's metadata repeats, already parsed and judged, or `null`
+   * when the metadata claims something new.
    */
-  private findClaimedPublicKey = (
+  private findRepeatedClaim = (
     peerId: string,
     { userId, publicKeyString }: UserMetadata
-  ): CryptoKey | null => {
+  ): PeerIdentityClaim | null => {
     const claim = this.identityClaims.get(peerId)
 
     if (
       !claim ||
-      claim.userId !== userId ||
+      claim.claimedUserId !== userId ||
       claim.publicKeyString !== publicKeyString
     ) {
       return null
     }
 
-    return claim.publicKey
+    return claim
   }
 
   /**
