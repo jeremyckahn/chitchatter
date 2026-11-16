@@ -29,6 +29,7 @@ import {
   isMessageReceived,
   PeerVerificationState,
   ReceivedMessage,
+  UnsentMessage,
   VideoState,
 } from 'core/models/chat'
 import { webTorrentDefaultMagnetUri } from 'core/chat/webTorrentMagnet.fixture'
@@ -1097,6 +1098,287 @@ describe('ChatRoom', () => {
     })
   })
 
+  describe('author verification on received messages', () => {
+    /** Short enough for a test to wait out, long enough for real crypto. */
+    const shortTimeout = 1_500
+
+    const sendMessageFrom = async (
+      transport: InMemoryTransport,
+      id: string,
+      target: string
+    ) => {
+      const [sendMessage] = transport.makeAction<UnsentMessage>(
+        PeerAction.MESSAGE,
+        ActionNamespace.GROUP
+      )
+
+      await sendMessage(
+        { id, text: `text of ${id}`, timeSent: 1, authorId: 'anyone' },
+        { target }
+      )
+    }
+
+    const verificationOf = (client: Client, id: string) => {
+      const entry = client.chatRoom
+        .getMessageLog()
+        .find(message => message.id === id)
+
+      if (!entry) throw new Error(`No message ${id} in the log`)
+
+      return isMessageReceived(entry)
+        ? entry.authorVerificationState
+        : undefined
+    }
+
+    const announceAs = async (
+      peer: ReturnType<typeof createRawPeer>,
+      keyIndex: number,
+      userId = userIds[keyIndex]
+    ) =>
+      peer.announce({
+        userId,
+        customUsername: '',
+        publicKeyString: await encryption.stringifyCryptoKey(
+          keyPairs[keyIndex].publicKey
+        ),
+      })
+
+    it('marks a message from a verified peer VERIFIED', async () => {
+      const alice = createClient(network, 0)
+      const bob = createClient(network, 1)
+
+      await joinAll(alice, bob)
+      await bob.chatRoom.sendMessage('hello')
+      await waitFor(
+        () => alice.chatRoom.getMessageLog().length === 1,
+        'the message to arrive'
+      )
+
+      const [received] = alice.chatRoom.getMessageLog()
+
+      expect(received).toMatchObject({
+        authorId: userIds[1],
+        authorVerificationState: PeerVerificationState.VERIFIED,
+      })
+    })
+
+    it('does not mark the sender’s own messages', async () => {
+      const alice = createClient(network, 0)
+      const bob = createClient(network, 1)
+
+      await joinAll(alice, bob)
+      await bob.chatRoom.sendMessage('hello')
+      await waitFor(
+        () => bob.chatRoom.getMessageLog().every(isMessageReceived),
+        'the message to be delivered'
+      )
+
+      expect(bob.chatRoom.getMessageLog()[0]).not.toHaveProperty(
+        'authorVerificationState'
+      )
+    })
+
+    it('marks a message sent mid-check VERIFYING, then gives it the verdict', async () => {
+      const alice = createClient(network, 0)
+      const bob = createRawPeer(network, 'peer-1')
+
+      await alice.chatRoom.join()
+      await announceAs(bob, 1)
+      await waitFor(
+        () => bob.challengesReceived.length === 1,
+        'alice to challenge bob'
+      )
+
+      await sendMessageFrom(bob.transport, 'early', 'peer-0')
+      await waitFor(
+        () => alice.chatRoom.getMessageLog().length === 1,
+        'the message to arrive'
+      )
+
+      expect(verificationOf(alice, 'early')).toBe(
+        PeerVerificationState.VERIFYING
+      )
+
+      const [{ challenge }] = bob.challengesReceived
+
+      await bob.prove(
+        {
+          challenge,
+          identitySignatureBase64: await signIdentityChallenge({
+            encryptionService: encryption,
+            privateKey: keyPairs[1].privateKey,
+            statement: {
+              roomId,
+              userId: userIds[1],
+              proverPeerId: 'peer-1',
+              challenge,
+            },
+          }),
+        },
+        'peer-0'
+      )
+      await waitFor(
+        () => verificationOf(alice, 'early') === PeerVerificationState.VERIFIED,
+        'the message to take on the verdict'
+      )
+    })
+
+    it('marks what a peer naming another user’s id sends UNVERIFIED', async () => {
+      const alice = createClient(network, 0)
+      const mallory = createRawPeer(network, 'peer-9')
+
+      await alice.chatRoom.join()
+      await announceAs(mallory, 2, userIds[1])
+      await waitFor(
+        () => alice.chatRoom.getPeers().length === 1,
+        'alice to list mallory'
+      )
+
+      await sendMessageFrom(mallory.transport, 'phish', 'peer-0')
+      await waitFor(
+        () => alice.chatRoom.getMessageLog().length === 1,
+        'the message to arrive'
+      )
+
+      expect(verificationOf(alice, 'phish')).toBe(
+        PeerVerificationState.UNVERIFIED
+      )
+    })
+
+    /**
+     * A replayed announcement names the real user's id and key, so the peer
+     * is listed, and what it sends attributed, as that user. Only the mark
+     * tells the two apart.
+     */
+    it('marks a replayer’s messages UNVERIFIED once its challenge goes unanswered', async () => {
+      const alice = createClient(network, 0, {
+        identityVerificationTimeout: shortTimeout,
+      })
+      const mallory = createRawPeer(network, 'peer-9')
+
+      await alice.chatRoom.join()
+      await announceAs(mallory, 1)
+      await waitFor(
+        () => mallory.challengesReceived.length === 1,
+        'alice to challenge mallory'
+      )
+
+      await sendMessageFrom(mallory.transport, 'replayed', 'peer-0')
+      await waitFor(
+        () => alice.chatRoom.getMessageLog().length === 1,
+        'the message to arrive'
+      )
+
+      expect(alice.chatRoom.getMessageLog()[0].authorId).toBe(userIds[1])
+      expect(verificationOf(alice, 'replayed')).toBe(
+        PeerVerificationState.VERIFYING
+      )
+
+      await waitFor(
+        () =>
+          verificationOf(alice, 'replayed') ===
+          PeerVerificationState.UNVERIFIED,
+        'the unanswered challenge to time out',
+        shortTimeout * 3
+      )
+    }, 10_000)
+
+    it('marks messages UNVERIFIED when their sender leaves before proving itself', async () => {
+      const alice = createClient(network, 0)
+      const bob = createRawPeer(network, 'peer-1')
+
+      await alice.chatRoom.join()
+      await announceAs(bob, 1)
+      await waitFor(
+        () => bob.challengesReceived.length === 1,
+        'alice to challenge bob'
+      )
+
+      await sendMessageFrom(bob.transport, 'parting', 'peer-0')
+      await waitFor(
+        () => alice.chatRoom.getMessageLog().length === 1,
+        'the message to arrive'
+      )
+
+      bob.transport.leaveRoom()
+
+      await waitFor(
+        () =>
+          verificationOf(alice, 'parting') === PeerVerificationState.UNVERIFIED,
+        'the message to be marked unverified'
+      )
+    })
+
+    it('marks messages UNVERIFIED when their sender switches identity before proving the first', async () => {
+      const alice = createClient(network, 0)
+      const bob = createRawPeer(network, 'peer-1')
+
+      await alice.chatRoom.join()
+      await announceAs(bob, 1)
+      await waitFor(
+        () => bob.challengesReceived.length === 1,
+        'alice to challenge bob'
+      )
+
+      await sendMessageFrom(bob.transport, 'first-identity', 'peer-0')
+      await waitFor(
+        () => alice.chatRoom.getMessageLog().length === 1,
+        'the message to arrive'
+      )
+
+      // Bob now proves possession of a different key. That proves nothing
+      // about the identity the first message was written under.
+      bob.answerChallengesWith(keyPairs[2].privateKey, userIds[2])
+      await announceAs(bob, 2)
+      await waitFor(
+        () =>
+          alice.chatRoom.getPeers()[0]?.verificationState ===
+          PeerVerificationState.VERIFIED,
+        'bob to prove his second identity'
+      )
+
+      expect(verificationOf(alice, 'first-identity')).toBe(
+        PeerVerificationState.UNVERIFIED
+      )
+    })
+
+    it('keeps its verdicts out of the transcript it hands a newcomer', async () => {
+      const alice = createClient(network, 0)
+      const bob = createClient(network, 1)
+
+      await joinAll(alice, bob)
+      await bob.chatRoom.sendMessage('hello')
+      await waitFor(
+        () =>
+          verificationOf(alice, alice.chatRoom.getMessageLog()[0]?.id ?? '') ===
+          PeerVerificationState.VERIFIED,
+        'the message to arrive verified'
+      )
+      await bob.chatRoom.leave()
+      bob.transport.leaveRoom()
+
+      const newcomer = new InMemoryTransport(network, 'peer-5')
+      const transcripts: unknown[] = []
+      const [, onTranscript] = newcomer.makeAction<DataPayload>(
+        PeerAction.MESSAGE_TRANSCRIPT,
+        ActionNamespace.GROUP
+      )
+
+      onTranscript(transcript => {
+        transcripts.push(transcript)
+      })
+      newcomer.onPeerJoin(PeerHookType.NEW_PEER, () => {})
+
+      await waitFor(() => transcripts.length === 1, 'the backfill to arrive')
+
+      expect(transcripts[0]).toEqual([
+        expect.not.objectContaining({
+          authorVerificationState: expect.anything(),
+        }),
+      ])
+    })
+  })
+
   describe('typing status', () => {
     it('announces typing immediately and expires it after the idle interval', async () => {
       const alice = createClient(network, 0)
@@ -1725,6 +2007,27 @@ describe('ChatRoom', () => {
             authorId: 'user-9',
           },
         ])
+      })
+
+      it('cannot vouch for the authors of its entries', async () => {
+        const alice = createVictim()
+        const mallory = createHostilePeer()
+
+        await alice.chatRoom.join()
+
+        await mallory.send(PeerAction.MESSAGE_TRANSCRIPT, [
+          textEntry('vouched', {
+            authorVerificationState: PeerVerificationState.VERIFIED,
+          }),
+        ])
+        await waitFor(
+          () => alice.chatRoom.getMessageLog().length === 1,
+          'the backfill to land'
+        )
+
+        expect(alice.chatRoom.getMessageLog()[0]).not.toHaveProperty(
+          'authorVerificationState'
+        )
       })
 
       it('drops an entry that is both a text message and inline media', async () => {

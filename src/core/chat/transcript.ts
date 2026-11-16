@@ -1,8 +1,12 @@
 import {
   InlineMedia,
   isInlineMedia,
+  isMessageReceived,
   Message,
   MessageLog,
+  PeerVerificationState,
+  ReceivedInlineMedia,
+  ReceivedMessage,
 } from 'core/models/chat'
 
 export interface TranscriptLimitResult {
@@ -41,3 +45,43 @@ export const applyTranscriptLimit = (
 export const getInlineMediaUris = (
   messages: readonly (Message | InlineMedia)[]
 ): string[] => messages.filter(isInlineMedia).map(({ magnetURI }) => magnetURI)
+
+/**
+ * Records the verdict on the author of messages that arrived while the
+ * sender's identity check was still running.
+ *
+ * Only entries still marked VERIFYING are touched, and only those by
+ * `authorId`: message ids are chosen by senders, so an id alone could name
+ * another peer's message.
+ */
+export const settleAuthorVerification = (
+  messages: MessageLog,
+  {
+    messageIds,
+    authorId,
+    verificationState,
+  }: {
+    messageIds: ReadonlySet<string>
+    authorId: string
+    verificationState: PeerVerificationState
+  }
+): MessageLog =>
+  messages.map(message =>
+    isMessageReceived(message) &&
+    message.authorVerificationState === PeerVerificationState.VERIFYING &&
+    message.authorId === authorId &&
+    messageIds.has(message.id)
+      ? { ...message, authorVerificationState: verificationState }
+      : message
+  )
+
+/**
+ * A received entry as it is sent to a peer: without what this client
+ * concluded about its author, which is this client's alone to vouch for.
+ */
+export const withoutAuthorVerification = ({
+  authorVerificationState: _authorVerificationState,
+  ...entry
+}: ReceivedMessage | ReceivedInlineMedia):
+  | ReceivedMessage
+  | ReceivedInlineMedia => entry

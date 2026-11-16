@@ -2,7 +2,12 @@ import { useRef, useEffect, useState, useContext } from 'react'
 import Box, { BoxProps } from '@mui/material/Box'
 import useTheme from '@mui/material/styles/useTheme'
 
-import { Message as IMessage, InlineMedia } from 'core/models/chat'
+import {
+  Message as IMessage,
+  InlineMedia,
+  isMessageReceived,
+  PeerVerificationState,
+} from 'core/models/chat'
 import { Message } from 'components/Message'
 import { ShellContext } from 'contexts/ShellContext'
 
@@ -10,6 +15,9 @@ export interface ChatTranscriptProps extends BoxProps {
   messageLog: Array<IMessage | InlineMedia>
   userId: string
 }
+
+const getAuthorVerificationState = (message: IMessage | InlineMedia) =>
+  isMessageReceived(message) ? message.authorVerificationState : undefined
 
 export const ChatTranscript = ({
   messageLog,
@@ -84,8 +92,18 @@ export const ChatTranscript = ({
     >
       {messageLog.map((message, idx) => {
         const previousMessage = messageLog[idx - 1]
+
+        // A run of messages shares one author line, which carries the
+        // sender's verification badge. Two peers can be listed under the same
+        // user id, one verified and one not, so a change in verification
+        // starts a new run as well. A message from an unverified sender always
+        // gets its own line and badge, so that none of them passes for one
+        // from the verified user that shares its name.
         const isFirstMessageInGroup =
-          previousMessage?.authorId !== message.authorId
+          previousMessage === undefined ||
+          previousMessage.authorId !== message.authorId ||
+          getAuthorVerificationState(previousMessage) !==
+            getAuthorVerificationState(message)
 
         return (
           // This wrapper div is necessary for accurate layout calculations
@@ -94,7 +112,11 @@ export const ChatTranscript = ({
             <Message
               message={message}
               userId={userId}
-              showAuthor={isFirstMessageInGroup}
+              showAuthor={
+                isFirstMessageInGroup ||
+                getAuthorVerificationState(message) ===
+                  PeerVerificationState.UNVERIFIED
+              }
             />
           </div>
         )

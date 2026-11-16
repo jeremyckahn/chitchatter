@@ -2,10 +2,18 @@ import { render, screen } from '@testing-library/react'
 import { SettingsContext } from 'contexts/SettingsContext'
 import { funAnimalName } from 'fun-animal-names'
 
-import { ReceivedMessage, UnsentMessage } from 'core/models/chat'
+import {
+  PeerVerificationState,
+  ReceivedMessage,
+  UnsentMessage,
+} from 'core/models/chat'
 import { userSettingsContextStubFactory } from 'test-utils/stubs/settingsContext'
 
 import { Message, MessageProps } from './Message'
+import {
+  unverifiedAuthorLabel,
+  verifyingAuthorLabel,
+} from './AuthorVerificationBadge'
 
 const mockUserId = 'user-123'
 
@@ -69,5 +77,49 @@ describe('Message', () => {
     )
 
     screen.getByText(funAnimalName(mockUserId))
+  })
+
+  describe('author verification', () => {
+    const peerUserId = 'peer-456'
+
+    const fromPeer = (
+      authorVerificationState?: PeerVerificationState
+    ): ReceivedMessage => ({
+      ...mockReceivedMessage,
+      authorId: peerUserId,
+      authorVerificationState,
+    })
+
+    const renderFromPeer = (authorVerificationState?: PeerVerificationState) =>
+      render(
+        <MockMessage
+          message={fromPeer(authorVerificationState)}
+          userId={mockUserId}
+          showAuthor={true}
+        />
+      )
+
+    test('flags a message from an unverified sender', () => {
+      renderFromPeer(PeerVerificationState.UNVERIFIED)
+
+      expect(screen.getByLabelText(unverifiedAuthorLabel)).toBeInTheDocument()
+    })
+
+    test('shows that the sender is still being verified', () => {
+      renderFromPeer(PeerVerificationState.VERIFYING)
+
+      expect(screen.getByLabelText(verifyingAuthorLabel)).toBeInTheDocument()
+      expect(screen.queryByLabelText(unverifiedAuthorLabel)).toBeNull()
+    })
+
+    test.each<[string, PeerVerificationState | undefined]>([
+      ['a verified sender', PeerVerificationState.VERIFIED],
+      ['a message with no verdict', undefined],
+    ])('does not flag %s', (_, state) => {
+      renderFromPeer(state)
+
+      expect(screen.queryByLabelText(unverifiedAuthorLabel)).toBeNull()
+      expect(screen.queryByLabelText(verifyingAuthorLabel)).toBeNull()
+    })
   })
 })

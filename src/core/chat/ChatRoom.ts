@@ -42,7 +42,12 @@ import {
   parseUnsentMessage,
   parseUserMetadata,
 } from 'core/chat/messageValidation'
-import { applyTranscriptLimit, getInlineMediaUris } from 'core/chat/transcript'
+import {
+  applyTranscriptLimit,
+  getInlineMediaUris,
+  settleAuthorVerification,
+  withoutAuthorVerification,
+} from 'core/chat/transcript'
 import {
   heldMessageLimit,
   identityVerificationTimeout,
@@ -232,6 +237,16 @@ export class ChatRoom extends EventTarget {
   private heldMessages: Map<string, Array<UnsentMessage | UnsentInlineMedia>> =
     new Map()
 
+  /**
+   * The messages each peer sent while its identity check was running, by the
+   * author they were attributed to, so that they take on the verdict once it
+   * lands: see {@link settleMessagesAwaitingVerdict}.
+   */
+  private messagesAwaitingVerdict: Map<
+    string,
+    { authorId: string; messageIds: Set<string> }
+  > = new Map()
+
   /** Our own public key as sent on the wire, exported once and reused. */
   private publicKeyString: Promise<string> | null = null
 
@@ -417,6 +432,7 @@ export class ChatRoom extends EventTarget {
     }
 
     this.heldMessages.clear()
+    this.messagesAwaitingVerdict.clear()
 
     if (this.isTyping) {
       await this.sendTypingStatus(false)
@@ -768,6 +784,11 @@ export class ChatRoom extends EventTarget {
       ...message,
       authorId: sender.userId,
       timeReceived: this.adapters.clock.now(),
+      authorVerificationState: sender.verificationState,
+    }
+
+    if (sender.verificationState === PeerVerificationState.VERIFYING) {
+      this.awaitVerdict(peerId, received)
     }
 
     this.appendToMessageLog(received)
@@ -777,6 +798,47 @@ export class ChatRoom extends EventTarget {
     }
 
     this.emit(ChatRoomEvent.MESSAGE_RECEIVED, { message: received, peerId })
+  }
+
+  private awaitVerdict = (
+    peerId: string,
+    { id, authorId }: ReceivedMessage | ReceivedInlineMedia
+  ) => {
+    const awaiting = this.messagesAwaitingVerdict.get(peerId)
+
+    if (awaiting?.authorId === authorId) {
+      awaiting.messageIds.add(id)
+
+      return
+    }
+
+    this.messagesAwaitingVerdict.set(peerId, {
+      authorId,
+      messageIds: new Set([id]),
+    })
+  }
+
+  /**
+   * Marks what a peer sent while its identity check was running with the
+   * check's verdict: VERIFIED only if the peer went on to prove its identity.
+   * A peer that left, or that switched to another identity, before proving
+   * the one it wrote under never did, so its messages are UNVERIFIED.
+   */
+  private settleMessagesAwaitingVerdict = (
+    peerId: string,
+    verificationState: PeerVerificationState
+  ) => {
+    const awaiting = this.messagesAwaitingVerdict.get(peerId)
+
+    if (!awaiting) return
+
+    this.messagesAwaitingVerdict.delete(peerId)
+    this.setMessageLog(
+      settleAuthorVerification(this.messageLog, {
+        ...awaiting,
+        verificationState,
+      })
+    )
   }
 
   private holdMessage = (
@@ -942,6 +1004,10 @@ export class ChatRoom extends EventTarget {
       previousPeer === null || this.findRepeatedClaim(peerId, metadata) === null
 
     if (isNewClaim) {
+      this.settleMessagesAwaitingVerdict(
+        peerId,
+        PeerVerificationState.UNVERIFIED
+      )
       this.forgetIdentityClaim(peerId)
       this.identityClaims.set(peerId, {
         claimedUserId: userId,
@@ -1198,6 +1264,7 @@ export class ChatRoom extends EventTarget {
     if (!findPeer(this.peers, peerId)) return
 
     this.setPeers(applyPeerUpdate(this.peers, peerId, { verificationState }))
+    this.settleMessagesAwaitingVerdict(peerId, verificationState)
     this.reportVerification(peerId, verificationState)
   }
 
@@ -1393,7 +1460,9 @@ export class ChatRoom extends EventTarget {
         this.isPrivate || this.isDirectMessageRoom
           ? Promise.resolve()
           : this.senders?.transcript(
-              this.messageLog.filter(isMessageReceived),
+              this.messageLog
+                .filter(isMessageReceived)
+                .map(withoutAuthorVerification),
               { target: peerId }
             ),
 
@@ -1417,6 +1486,7 @@ export class ChatRoom extends EventTarget {
     this.departedPeerIds.add(peerId)
     this.forgetIdentityClaim(peerId)
     this.heldMessages.delete(peerId)
+    this.settleMessagesAwaitingVerdict(peerId, PeerVerificationState.UNVERIFIED)
 
     const peer = findPeer(this.peers, peerId)
     const offer = this.fileOffers[peerId]

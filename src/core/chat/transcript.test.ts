@@ -1,7 +1,18 @@
 import { describe, expect, it } from 'vitest'
 
-import { applyTranscriptLimit, getInlineMediaUris } from 'core/chat/transcript'
-import { InlineMedia, Message, MessageLog } from 'core/models/chat'
+import {
+  applyTranscriptLimit,
+  getInlineMediaUris,
+  settleAuthorVerification,
+  withoutAuthorVerification,
+} from 'core/chat/transcript'
+import {
+  InlineMedia,
+  Message,
+  MessageLog,
+  PeerVerificationState,
+  ReceivedMessage,
+} from 'core/models/chat'
 
 const message = (id: string): Message => ({
   id,
@@ -84,5 +95,78 @@ describe('getInlineMediaUris', () => {
 
   it('returns nothing for a log of plain messages', () => {
     expect(getInlineMediaUris([message('a')])).toEqual([])
+  })
+})
+
+describe('settleAuthorVerification', () => {
+  const received = (
+    id: string,
+    authorVerificationState: PeerVerificationState,
+    authorId = 'author'
+  ): ReceivedMessage => ({
+    ...message(id),
+    authorId,
+    timeReceived: 1,
+    authorVerificationState,
+  })
+
+  const settle = (messages: MessageLog, messageIds: string[]) =>
+    settleAuthorVerification(messages, {
+      messageIds: new Set(messageIds),
+      authorId: 'author',
+      verificationState: PeerVerificationState.VERIFIED,
+    })
+
+  it('gives the verdict to the named messages still awaiting one', () => {
+    const settled = settle(
+      [received('a', PeerVerificationState.VERIFYING)],
+      ['a']
+    )
+
+    expect(settled).toEqual([received('a', PeerVerificationState.VERIFIED)])
+  })
+
+  it('leaves messages that already have a verdict alone', () => {
+    const messages = [received('a', PeerVerificationState.UNVERIFIED)]
+
+    expect(settle(messages, ['a'])).toEqual(messages)
+  })
+
+  it('leaves a message by another author alone, even when it shares an id', () => {
+    const messages = [
+      received('a', PeerVerificationState.VERIFYING, 'someone-else'),
+    ]
+
+    expect(settle(messages, ['a'])).toEqual(messages)
+  })
+
+  it('leaves messages it was not asked about alone', () => {
+    const messages = [received('b', PeerVerificationState.VERIFYING)]
+
+    expect(settle(messages, ['a'])).toEqual(messages)
+  })
+
+  it('leaves own and backfilled messages, which carry no verdict, alone', () => {
+    const messages: MessageLog = [
+      message('a'),
+      { ...message('b'), timeReceived: 1 },
+    ]
+
+    expect(settle(messages, ['a', 'b'])).toEqual(messages)
+  })
+})
+
+describe('withoutAuthorVerification', () => {
+  it('strips the verdict and keeps everything else', () => {
+    const entry: ReceivedMessage = {
+      ...message('a'),
+      timeReceived: 1,
+      authorVerificationState: PeerVerificationState.VERIFIED,
+    }
+
+    expect(withoutAuthorVerification(entry)).toEqual({
+      ...message('a'),
+      timeReceived: 1,
+    })
   })
 })

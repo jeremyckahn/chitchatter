@@ -15,10 +15,12 @@ import {
   Message as IMessage,
   isMessageReceived,
   isInlineMedia,
+  PeerVerificationState,
 } from 'core/models/chat'
 import { PeerNameDisplay } from 'components/PeerNameDisplay'
 import { CopyableBlock } from 'components/CopyableBlock/CopyableBlock'
 
+import { AuthorVerificationBadge } from './AuthorVerificationBadge'
 import { InlineMedia } from './InlineMedia'
 
 const StyledMarkdown = styled(Markdown)({})
@@ -109,6 +111,13 @@ export const Message = ({ message, showAuthor, userId }: MessageProps) => {
     backgroundColor = 'secondary.main'
   }
 
+  const authorVerificationState = isMessageReceived(message)
+    ? message.authorVerificationState
+    : undefined
+
+  const isAuthorUnverified =
+    authorVerificationState === PeerVerificationState.UNVERIFIED
+
   return (
     <Box className="Message">
       {showAuthor && (
@@ -120,6 +129,9 @@ export const Message = ({ message, showAuthor, userId }: MessageProps) => {
           }}
         >
           <PeerNameDisplay>{message.authorId}</PeerNameDisplay>
+          <AuthorVerificationBadge
+            verificationState={authorVerificationState}
+          />
         </Typography>
       )}
       <Tooltip
@@ -146,6 +158,8 @@ export const Message = ({ message, showAuthor, userId }: MessageProps) => {
             float: message.authorId === userId ? 'right' : 'left',
             transition: 'background-color 1s',
             wordBreak: 'break-word',
+            outline: isAuthorUnverified ? '2px dashed' : 'none',
+            outlineColor: 'error.main',
           }}
           maxWidth="85%"
         >

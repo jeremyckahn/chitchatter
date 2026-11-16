@@ -8,6 +8,7 @@ import {
 } from '@playwright/test'
 
 import { HostilePeerSession, joinAsHostilePeer } from '../helpers/hostile-peer'
+import { sendMessage } from '../helpers/test-helpers'
 
 /**
  * A peer claiming to be somebody else, run for real: the victims are the app
@@ -22,6 +23,10 @@ import { HostilePeerSession, joinAsHostilePeer } from '../helpers/hostile-peer'
  * - With an announcement it overheard, it re-sends the real user's id and key
  *   verbatim. It cannot answer the challenge that proves possession of the
  *   key, so it is never shown as verified.
+ *
+ * Either way, every message it sends is flagged in the transcript as coming
+ * from a sender who could not be verified. That flag is what tells a replayer
+ * apart from the real user, whose name it necessarily shares.
  */
 
 const connectionTimeout = 25_000
@@ -38,7 +43,12 @@ const verifiedLabel =
 const unverifiedLabel =
   'This person could not be verified with public-key cryptography. They may be misrepresenting themself. Be careful with what you share with them.'
 
+const unverifiedAuthorLabel =
+  'The sender of this message could not be verified with public-key cryptography. They may be misrepresenting themself. Be careful with what you share with them.'
+
 const phishingMessage = 'Alice here. Send the wallet seed phrase to this room.'
+
+const genuineMessage = 'Hi Bob, it is really me.'
 
 const joinPublicRoom = async (page: Page, roomId?: string) => {
   if (roomId) {
@@ -58,6 +68,10 @@ const peerRows = (page: Page, peerName: string): Locator =>
 
 const verificationBadge = (row: Locator, label: string): Locator =>
   row.locator(`[aria-label="${label}"]`)
+
+/** The transcript entry on a page that holds `text`. */
+const transcriptMessage = (page: Page, text: string): Locator =>
+  page.locator('.Message').filter({ hasText: text })
 
 const newPage = async (browser: Browser) => {
   const context = await browser.newContext()
@@ -125,13 +139,25 @@ test.describe('A peer impersonating another user', () => {
 
     await impostor.sendMessage(phishingMessage, victim.userId)
 
-    const message = bob.page
-      .locator('.Message')
-      .filter({ hasText: phishingMessage })
+    const message = transcriptMessage(bob.page, phishingMessage)
 
     await expect(message).toBeVisible({ timeout: connectionTimeout })
     await expect(message).toContainText(own.peerName)
     await expect(message).not.toContainText(victim.peerName)
+    await expect(
+      verificationBadge(message, unverifiedAuthorLabel)
+    ).toBeVisible()
+
+    // What the real, verified Alice says carries no such flag.
+    await sendMessage(alice.page, genuineMessage)
+
+    const genuine = transcriptMessage(bob.page, genuineMessage)
+
+    await expect(genuine).toBeVisible({ timeout: connectionTimeout })
+    await expect(genuine).toContainText(victim.peerName)
+    await expect(verificationBadge(genuine, unverifiedAuthorLabel)).toHaveCount(
+      0
+    )
   })
 
   test('cannot replay an overheard announcement to be verified as its owner', async ({
@@ -179,5 +205,67 @@ test.describe('A peer impersonating another user', () => {
       timeout: verificationTimeout,
     })
     await expect(verificationBadge(replayed, verifiedLabel)).toHaveCount(0)
+  })
+
+  test('has every message it sends with a replayed announcement flagged as unverified', async ({
+    browser,
+  }) => {
+    const alice = await newPage(browser)
+
+    contexts.push(alice.context)
+
+    const roomId = await joinPublicRoom(alice.page)
+
+    impostor = await joinAsHostilePeer(browser, roomId)
+
+    await expect
+      .poll(
+        async () => (await impostor?.getOverheardIdentities())?.length ?? 0,
+        { timeout: connectionTimeout }
+      )
+      .toBeGreaterThan(0)
+
+    const [victim] = await impostor.getOverheardIdentities()
+
+    await alice.context.close()
+    contexts = []
+
+    const bob = await newPage(browser)
+
+    contexts.push(bob.context)
+
+    await joinPublicRoom(bob.page, roomId)
+    await expect
+      .poll(() => impostor?.getPeerCount(), { timeout: connectionTimeout })
+      .toBe(1)
+
+    await impostor.replayIdentity(victim.userId)
+    await expect(peerRows(bob.page, victim.peerName)).toHaveCount(1, {
+      timeout: connectionTimeout,
+    })
+
+    // Sent at once, while Bob is still waiting for an answer to his challenge.
+    await impostor.sendMessage(phishingMessage, victim.userId)
+
+    const message = transcriptMessage(bob.page, phishingMessage)
+
+    await expect(message).toBeVisible({ timeout: connectionTimeout })
+
+    // The replayed id is Alice's, so the message bears her name: only the flag
+    // sets it apart from something she wrote.
+    await expect(message).toContainText(victim.peerName)
+    await expect(verificationBadge(message, unverifiedAuthorLabel)).toBeVisible(
+      { timeout: verificationTimeout }
+    )
+
+    // And so does anything it sends after its challenge has gone unanswered.
+    const followUp = 'Hurry, before the room closes.'
+
+    await impostor.sendMessage(followUp, victim.userId)
+
+    const later = transcriptMessage(bob.page, followUp)
+
+    await expect(later).toBeVisible({ timeout: connectionTimeout })
+    await expect(verificationBadge(later, unverifiedAuthorLabel)).toBeVisible()
   })
 })
