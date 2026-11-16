@@ -61,7 +61,12 @@ const isTimestamp = (value: unknown): value is number =>
  */
 const publicKeyMaxLength = 4_096
 const signatureMaxLength = 2_048
-const customUsernameMaxLength = 256
+
+/**
+ * Longer names are cut rather than rejected: a peer whose name is too long is
+ * still a peer, and dropping its metadata would hide it from the room.
+ */
+export const customUsernameMaxLength = 256
 
 const base64Pattern = /^[A-Za-z0-9+/]+={0,2}$/
 
@@ -213,13 +218,16 @@ export const parseUserMetadata = (value: unknown): UserMetadata | null => {
   if (
     !isIdentifier(userId) ||
     typeof customUsername !== 'string' ||
-    customUsername.length > customUsernameMaxLength ||
     !isBase64(publicKeyString, publicKeyMaxLength)
   ) {
     return null
   }
 
-  return { userId, customUsername, publicKeyString }
+  return {
+    userId,
+    customUsername: customUsername.slice(0, customUsernameMaxLength),
+    publicKeyString,
+  }
 }
 
 /** An identity challenge, or `null` if `value` is not exactly one. */

@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 
 import {
+  customUsernameMaxLength,
   identifierMaxLength,
   parseFileOfferMetadata,
   parseIdentityChallenge,
@@ -285,6 +286,14 @@ describe('parseUserMetadata', () => {
     expect(parseUserMetadata(metadata())).toEqual(metadata())
   })
 
+  it('cuts an oversized username rather than hiding the peer', () => {
+    expect(
+      parseUserMetadata(
+        metadata({ customUsername: 'a'.repeat(customUsernameMaxLength + 1) })
+      )
+    ).toEqual(metadata({ customUsername: 'a'.repeat(customUsernameMaxLength) }))
+  })
+
   it('drops fields it did not check, including a legacy signature', () => {
     expect(
       parseUserMetadata(metadata({ identitySignatureBase64: 'AAAA' }))
@@ -295,7 +304,6 @@ describe('parseUserMetadata', () => {
     ['a non-object', 'Ada'],
     ['an empty user id', metadata({ userId: '' })],
     ['a non-string username', metadata({ customUsername: 7 })],
-    ['an oversized username', metadata({ customUsername: 'a'.repeat(257) })],
     ['a non-base64 key', metadata({ publicKeyString: 'not a key' })],
     ['an oversized key', metadata({ publicKeyString: 'A'.repeat(4_097) })],
   ])('rejects %s', (_, value) => {

@@ -1,4 +1,4 @@
-import { EncryptionService } from 'core/crypto/Encryption'
+import { generateRandomBase64Url } from 'core/crypto/random'
 import { FILE_KEY_BYTE_LENGTH, FileOfferMetadata } from 'core/models/chat'
 
 /**
@@ -21,16 +21,8 @@ export interface FileHandle {
  * password. A random key that only travels over the room's peer connections
  * depends on neither.
  */
-export const generateFileKey = (): string => {
-  const bytes = globalThis.crypto.getRandomValues(
-    new Uint8Array(FILE_KEY_BYTE_LENGTH)
-  )
-
-  return EncryptionService.arrayBufferToBase64(bytes.buffer)
-    .replace(/\+/g, '-')
-    .replace(/\//g, '_')
-    .replace(/=+$/, '')
-}
+export const generateFileKey = (): string =>
+  generateRandomBase64Url(FILE_KEY_BYTE_LENGTH)
 
 const inlineMediaTypes = ['image', 'audio', 'video']
 

@@ -948,6 +948,35 @@ describe('ChatRoom', () => {
       })
     })
 
+    it('answers only the latest of a flood of challenges', async () => {
+      const alice = createClient(network, 0)
+      const mallory = createRawPeer(network, 'peer-9')
+
+      await alice.chatRoom.join()
+
+      const challenges = Array.from({ length: 20 }, (_, i) =>
+        String.fromCharCode(97 + i).repeat(43)
+      )
+
+      await Promise.all(
+        challenges.map(challenge => mallory.challenge(challenge, 'peer-0'))
+      )
+      await waitFor(
+        () =>
+          mallory.proofsReceived.some(
+            ({ proof }) => proof.challenge === challenges[19]
+          ),
+        'the latest challenge to be answered'
+      )
+      await settle()
+
+      // The first is already being signed when the rest arrive; of those, only
+      // the newest is still worth answering.
+      expect(
+        mallory.proofsReceived.map(({ proof }) => proof.challenge)
+      ).toEqual([challenges[0], challenges[19]])
+    })
+
     it('ignores malformed identity frames', async () => {
       const alice = createClient(network, 0)
       const mallory = createRawPeer(network, 'peer-9')

@@ -1,5 +1,6 @@
 import { PeerVerificationState } from 'core/models/chat'
 import { AllowedKeyType, EncryptionService } from 'core/crypto/Encryption'
+import { generateRandomBase64Url } from 'core/crypto/random'
 
 /**
  * How many random bytes an identity challenge holds: 256 bits, so a verifier's
@@ -34,16 +35,8 @@ export const isIdentityChallenge = (value: unknown): value is string =>
  * A fresh, unpredictable challenge for one peer connection, as unpadded
  * base64url.
  */
-export const generateIdentityChallenge = (): string => {
-  const bytes = globalThis.crypto.getRandomValues(
-    new Uint8Array(IDENTITY_CHALLENGE_BYTE_LENGTH)
-  )
-
-  return EncryptionService.arrayBufferToBase64(bytes.buffer)
-    .replace(/\+/g, '-')
-    .replace(/\//g, '_')
-    .replace(/=+$/, '')
-}
+export const generateIdentityChallenge = (): string =>
+  generateRandomBase64Url(IDENTITY_CHALLENGE_BYTE_LENGTH)
 
 export interface IdentityStatement {
   roomId: string

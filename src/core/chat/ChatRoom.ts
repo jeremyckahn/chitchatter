@@ -210,6 +210,14 @@ export class ChatRoom extends EventTarget {
   /** Each peer's announced identity, keyed by peer id. */
   private identityClaims: Map<string, PeerIdentityClaim> = new Map()
 
+  /**
+   * The newest challenge each peer is waiting on us to answer. Only one answer
+   * per peer is being signed at a time, and challenges that arrive meanwhile
+   * replace one another here: a verifier only ever accepts its latest, so a
+   * peer cannot make this client sign without limit.
+   */
+  private challengesToAnswer: Map<string, string> = new Map()
+
   /** Our own public key as sent on the wire, exported once and reused. */
   private publicKeyString: Promise<string> | null = null
 
@@ -866,15 +874,24 @@ export class ChatRoom extends EventTarget {
       })
     }
 
+    const getVerificationState = (): PeerVerificationState => {
+      if (!isNewClaim && previousPeer) return previousPeer.verificationState
+
+      // No answer could make a claim true whose id names some other key, so it
+      // is judged here and never challenged: no proof is accepted for it.
+      return isUserIdBoundToKey
+        ? PeerVerificationState.VERIFYING
+        : PeerVerificationState.UNVERIFIED
+    }
+
+    const verificationState = getVerificationState()
+
     const { peers, addedPeer, rename } = reconcilePeerMetadata(this.peers, {
       peerId,
       userId,
       customUsername,
       publicKey,
-      verificationState:
-        isNewClaim || previousPeer === null
-          ? PeerVerificationState.VERIFYING
-          : previousPeer.verificationState,
+      verificationState,
     })
 
     this.setPeers(peers)
@@ -883,12 +900,10 @@ export class ChatRoom extends EventTarget {
       if (isUserIdBoundToKey) {
         void this.challengePeerIdentity(peerId)
       } else {
-        // No answer could make this claim true: the id names some other key.
-        // Not challenged, so no proof is ever accepted for it.
         this.adapters.logger.warn(
           `Peer ${peerId} claims a user id that does not belong to its public key`
         )
-        this.settleVerification(peerId, PeerVerificationState.UNVERIFIED)
+        this.reportVerification(peerId, verificationState)
       }
     }
 
@@ -985,8 +1000,38 @@ export class ChatRoom extends EventTarget {
       return
     }
 
-    const { challenge } = parsed
+    const isAnswering = this.challengesToAnswer.has(peerId)
 
+    this.challengesToAnswer.set(peerId, parsed.challenge)
+
+    // Already answering this peer: the loop below picks this one up next.
+    if (isAnswering) return
+
+    for (
+      let challenge = this.challengesToAnswer.get(peerId);
+      challenge !== undefined && !this.hasLeft;
+      challenge = this.takeNewerChallenge(peerId, challenge)
+    ) {
+      await this.answerIdentityChallenge(peerId, challenge)
+    }
+
+    this.challengesToAnswer.delete(peerId)
+  }
+
+  /**
+   * The challenge that arrived from `peerId` while `answered` was being
+   * answered, or `undefined` when there is none.
+   */
+  private takeNewerChallenge = (peerId: string, answered: string) => {
+    const latest = this.challengesToAnswer.get(peerId)
+
+    return latest === answered ? undefined : latest
+  }
+
+  private answerIdentityChallenge = async (
+    peerId: string,
+    challenge: string
+  ) => {
     try {
       const identitySignatureBase64 = await signIdentityChallenge({
         encryptionService: this.encryptionService,
@@ -1064,7 +1109,19 @@ export class ChatRoom extends EventTarget {
     this.settleVerification(peerId, verificationState)
   }
 
+  /** Records a verdict on a listed peer, then reports it. */
   private settleVerification = (
+    peerId: string,
+    verificationState: PeerVerificationState
+  ) => {
+    if (!findPeer(this.peers, peerId)) return
+
+    this.setPeers(applyPeerUpdate(this.peers, peerId, { verificationState }))
+    this.reportVerification(peerId, verificationState)
+  }
+
+  /** Logs and announces a verdict already in the peer list. */
+  private reportVerification = (
     peerId: string,
     verificationState: PeerVerificationState
   ) => {
@@ -1073,10 +1130,6 @@ export class ChatRoom extends EventTarget {
         'Peer verification failed, marking peer as unverified'
       )
     }
-
-    if (!findPeer(this.peers, peerId)) return
-
-    this.setPeers(applyPeerUpdate(this.peers, peerId, { verificationState }))
 
     this.emit(ChatRoomEvent.PEER_VERIFICATION, { peerId, verificationState })
   }
