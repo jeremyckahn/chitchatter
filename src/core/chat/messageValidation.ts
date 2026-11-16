@@ -25,8 +25,11 @@ import {
  * (a smuggled `magnetURI` turns a text message into a download) coming along.
  *
  * What this cannot do is say whether a well-formed message is *true*. Messages
- * are not signed, so who wrote one, when, and whether it was ever sent are all
- * the sender's say-so. See the notes on `ChatRoom.handleTranscript`.
+ * are not signed, so the `authorId` a message carries is the sender's say-so.
+ * A live message is attributed to the peer that sent it instead (see
+ * `ChatRoom.deliverFromPeer`), but a transcript entry relays other people's
+ * messages and has no sender to check against. See the notes on
+ * `ChatRoom.handleTranscript`.
  */
 
 /** User ids and message ids are UUIDs; this leaves room without inviting abuse. */

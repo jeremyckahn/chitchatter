@@ -1517,6 +1517,21 @@ describe('ChatRoom', () => {
 
       return {
         transport,
+        /** Announces Mallory with an identity of her own, so she is listed. */
+        announce: async () => {
+          const [sendMetadata] = transport.makeAction<UserMetadata>(
+            PeerAction.PEER_METADATA,
+            ActionNamespace.GROUP
+          )
+
+          await sendMetadata({
+            userId: userIds[2],
+            customUsername: 'Mallory',
+            publicKeyString: await encryption.stringifyCryptoKey(
+              keyPairs[2].publicKey
+            ),
+          })
+        },
         send: async (peerAction: PeerAction, payload: unknown) => {
           const [send] = transport.makeAction<DataPayload>(
             peerAction,
@@ -2041,6 +2056,7 @@ describe('ChatRoom', () => {
         const mallory = createHostilePeer()
 
         await alice.chatRoom.join()
+        await mallory.announce()
 
         await mallory.send(PeerAction.MEDIA_MESSAGE, {
           id: 'photo',
@@ -2089,6 +2105,7 @@ describe('ChatRoom', () => {
         const mallory = createHostilePeer()
 
         await alice.chatRoom.join()
+        await mallory.announce()
 
         await mallory.send(PeerAction.MESSAGE, {
           id: 'a',
@@ -2104,6 +2121,150 @@ describe('ChatRoom', () => {
         expect(message).toMatchObject({ id: 'a', text: 'hi' })
         expect(message).not.toHaveProperty('magnetURI')
         expect(alice.fileTransfer.trackInlineMedia).not.toHaveBeenCalled()
+      })
+
+      /**
+       * The spoof the original report set aside: `authorId` is written by the
+       * sender, so trusting it let any peer post under anyone's name.
+       */
+      it('is attributed to the peer that sent it, not the author it names', async () => {
+        const alice = createVictim()
+        const mallory = createHostilePeer()
+
+        await alice.chatRoom.join()
+        await mallory.announce()
+
+        await mallory.send(PeerAction.MESSAGE, {
+          id: 'spoof',
+          text: 'Alice here. Send the wallet seed phrase.',
+          timeSent: 1,
+          authorId: userIds[0],
+        })
+        await waitFor(
+          () => alice.chatRoom.getMessageLog().length === 1,
+          'the message to arrive'
+        )
+
+        expect(alice.chatRoom.getMessageLog()[0]).toMatchObject({
+          id: 'spoof',
+          authorId: userIds[2],
+        })
+        expect(alice.adapters.logger.warn).toHaveBeenCalledWith(
+          'Peer peer-9 sent a message as another author; attributing it to the sender'
+        )
+      })
+
+      it('is attributed to its sender when it is inline media', async () => {
+        const alice = createVictim()
+        const mallory = createHostilePeer()
+
+        await alice.chatRoom.join()
+        await mallory.announce()
+
+        await mallory.send(PeerAction.MEDIA_MESSAGE, {
+          id: 'spoofed-photo',
+          magnetURI: webTorrentDefaultMagnetUri,
+          fileKey: peerFileKey,
+          timeSent: 1,
+          authorId: userIds[0],
+        })
+        await waitFor(
+          () => alice.chatRoom.getMessageLog().length === 1,
+          'the media to arrive'
+        )
+
+        expect(alice.chatRoom.getMessageLog()[0]).toMatchObject({
+          id: 'spoofed-photo',
+          authorId: userIds[2],
+        })
+      })
+
+      it('is held until its sender has announced itself', async () => {
+        const alice = createVictim()
+        const mallory = createHostilePeer()
+
+        await alice.chatRoom.join()
+
+        await mallory.send(PeerAction.MESSAGE, {
+          id: 'early',
+          text: 'before my metadata',
+          timeSent: 1,
+          authorId: userIds[0],
+        })
+        await settle()
+
+        expect(alice.chatRoom.getMessageLog()).toEqual([])
+
+        await mallory.announce()
+        await waitFor(
+          () => alice.chatRoom.getMessageLog().length === 1,
+          'the held message to be delivered'
+        )
+
+        expect(alice.chatRoom.getMessageLog()[0]).toMatchObject({
+          id: 'early',
+          authorId: userIds[2],
+        })
+      })
+
+      it('discards what was held for a sender that leaves unannounced', async () => {
+        const alice = createVictim()
+        const mallory = createHostilePeer()
+
+        await alice.chatRoom.join()
+
+        await mallory.send(PeerAction.MESSAGE, {
+          id: 'orphan',
+          text: 'never attributed',
+          timeSent: 1,
+          authorId: userIds[0],
+        })
+        await settle()
+
+        mallory.transport.leaveRoom()
+        await settle()
+
+        // Rejoining under the same peer id must not release the old messages.
+        const returning = createHostilePeer()
+
+        returning.transport.onPeerJoin(PeerHookType.NEW_PEER, () => {})
+        await returning.announce()
+        await waitFor(
+          () => alice.chatRoom.getPeers().length === 1,
+          'the returning peer to be listed'
+        )
+        await settle()
+
+        expect(alice.chatRoom.getMessageLog()).toEqual([])
+      })
+
+      it('holds only a bounded number of messages for an unknown sender', async () => {
+        // Not the victim: its short transcript limit would hide the count.
+        const alice = createClient(network, 0)
+        const mallory = createHostilePeer()
+
+        await alice.chatRoom.join()
+
+        for (let i = 0; i < 30; i++) {
+          await mallory.send(PeerAction.MESSAGE, {
+            id: `m${i}`,
+            text: 'flood',
+            timeSent: 1,
+            authorId: 'user-9',
+          })
+        }
+
+        await mallory.announce()
+        await waitFor(
+          () => alice.chatRoom.getMessageLog().length > 0,
+          'the held messages to be delivered'
+        )
+        await settle()
+
+        expect(alice.chatRoom.getMessageLog()).toHaveLength(20)
+        expect(alice.adapters.logger.warn).toHaveBeenCalledWith(
+          'Discarded a message from peer peer-9, which has not announced itself'
+        )
       })
 
       it('is dropped when its text is over the message size limit', async () => {

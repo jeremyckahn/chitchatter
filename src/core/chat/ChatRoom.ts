@@ -44,6 +44,7 @@ import {
 } from 'core/chat/messageValidation'
 import { applyTranscriptLimit, getInlineMediaUris } from 'core/chat/transcript'
 import {
+  heldMessageLimit,
   identityVerificationTimeout,
   messageTranscriptSizeLimit,
   typingStatusExpiry,
@@ -217,6 +218,13 @@ export class ChatRoom extends EventTarget {
    * peer cannot make this client sign without limit.
    */
   private challengesToAnswer: Map<string, string> = new Map()
+
+  /**
+   * Live messages from peers not yet in the list, oldest first. They are
+   * attributed once the sender's metadata lands: see {@link deliverFromPeer}.
+   */
+  private heldMessages: Map<string, Array<UnsentMessage | UnsentInlineMedia>> =
+    new Map()
 
   /** Our own public key as sent on the wire, exported once and reused. */
   private publicKeyString: Promise<string> | null = null
@@ -401,6 +409,8 @@ export class ChatRoom extends EventTarget {
     for (const peerId of [...this.identityClaims.keys()]) {
       this.forgetIdentityClaim(peerId)
     }
+
+    this.heldMessages.clear()
 
     if (this.isTyping) {
       await this.sendTypingStatus(false)
@@ -699,14 +709,7 @@ export class ChatRoom extends EventTarget {
       return
     }
 
-    const received: ReceivedMessage = {
-      ...message,
-      timeReceived: this.adapters.clock.now(),
-    }
-
-    this.appendToMessageLog(received)
-    this.updatePeer(peerId, { isTypingGroupMessage: false })
-    this.emit(ChatRoomEvent.MESSAGE_RECEIVED, { message: received, peerId })
+    this.deliverFromPeer(peerId, message)
   }
 
   private handleInlineMedia = (
@@ -723,13 +726,81 @@ export class ChatRoom extends EventTarget {
       return
     }
 
-    const received: ReceivedInlineMedia = {
-      ...inlineMedia,
+    this.deliverFromPeer(peerId, inlineMedia)
+  }
+
+  /**
+   * Adds a live message to the transcript under the identity of the peer that
+   * sent it.
+   *
+   * The `authorId` a message carries is the sender's say-so, so it is never
+   * used: a peer could otherwise write into the transcript as anyone. The
+   * author is the user id of the sending connection's entry in the peer list,
+   * which is what the identity check (see {@link handleMetadata}) vouches
+   * for. A message from a peer not in the list yet is held until its metadata
+   * arrives, since there is nobody to attribute it to.
+   */
+  private deliverFromPeer = (
+    peerId: string,
+    message: UnsentMessage | UnsentInlineMedia
+  ) => {
+    const sender = findPeer(this.peers, peerId)
+
+    if (!sender) {
+      this.holdMessage(peerId, message)
+
+      return
+    }
+
+    if (message.authorId !== sender.userId) {
+      this.adapters.logger.warn(
+        `Peer ${peerId} sent a message as another author; attributing it to the sender`
+      )
+    }
+
+    const received: ReceivedMessage | ReceivedInlineMedia = {
+      ...message,
+      authorId: sender.userId,
       timeReceived: this.adapters.clock.now(),
     }
 
     this.appendToMessageLog(received)
+
+    if (!isInlineMedia(received)) {
+      this.updatePeer(peerId, { isTypingGroupMessage: false })
+    }
+
     this.emit(ChatRoomEvent.MESSAGE_RECEIVED, { message: received, peerId })
+  }
+
+  private holdMessage = (
+    peerId: string,
+    message: UnsentMessage | UnsentInlineMedia
+  ) => {
+    if (this.departedPeerIds.has(peerId)) return
+
+    const held = this.heldMessages.get(peerId) ?? []
+
+    if (held.length >= heldMessageLimit) {
+      this.adapters.logger.warn(
+        `Discarded a message from peer ${peerId}, which has not announced itself`
+      )
+
+      return
+    }
+
+    this.heldMessages.set(peerId, [...held, message])
+  }
+
+  /** Delivers what a newly listed peer sent before it was known. */
+  private releaseHeldMessages = (peerId: string) => {
+    const held = this.heldMessages.get(peerId)
+
+    if (!held) return
+
+    this.heldMessages.delete(peerId)
+
+    for (const message of held) this.deliverFromPeer(peerId, message)
   }
 
   /**
@@ -895,6 +966,7 @@ export class ChatRoom extends EventTarget {
     })
 
     this.setPeers(peers)
+    this.releaseHeldMessages(peerId)
 
     if (isNewClaim) {
       if (isUserIdBoundToKey) {
@@ -1335,6 +1407,7 @@ export class ChatRoom extends EventTarget {
   private handlePeerLeave = (peerId: string) => {
     this.departedPeerIds.add(peerId)
     this.forgetIdentityClaim(peerId)
+    this.heldMessages.delete(peerId)
 
     const peer = findPeer(this.peers, peerId)
     const offer = this.fileOffers[peerId]
