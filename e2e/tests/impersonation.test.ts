@@ -181,8 +181,10 @@ test.describe('A peer impersonating another user', () => {
     const [victim] = await impostor.getOverheardIdentities()
 
     // The real Alice is gone before Bob arrives: nothing of hers is online.
-    await alice.context.close()
-    contexts = []
+    // Only the page is closed: that takes Alice out of the room just the same,
+    // while closing the whole context mid-test makes Playwright export its trace
+    // as the other contexts keep recording, which corrupts the trace in UI mode.
+    await alice.page.close()
 
     const bob = await newPage(browser)
 
@@ -227,8 +229,10 @@ test.describe('A peer impersonating another user', () => {
 
     const [victim] = await impostor.getOverheardIdentities()
 
-    await alice.context.close()
-    contexts = []
+    // Only the page is closed: that takes Alice out of the room just the same,
+    // while closing the whole context mid-test makes Playwright export its trace
+    // as the other contexts keep recording, which corrupts the trace in UI mode.
+    await alice.page.close()
 
     const bob = await newPage(browser)
 
