@@ -77,10 +77,12 @@ export const settleAuthorVerification = (
 
 /**
  * A received entry as it is sent to a peer: without what this client
- * concluded about its author, which is this client's alone to vouch for.
+ * concluded about its author or where the entry came from, which is this
+ * client's alone to vouch for. The next peer reaches its own conclusions.
  */
 export const withoutAuthorVerification = ({
   authorVerificationState: _authorVerificationState,
+  isRelayed: _isRelayed,
   ...entry
 }: ReceivedMessage | ReceivedInlineMedia):
   | ReceivedMessage

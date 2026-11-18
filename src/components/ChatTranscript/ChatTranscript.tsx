@@ -19,6 +19,9 @@ export interface ChatTranscriptProps extends BoxProps {
 const getAuthorVerificationState = (message: IMessage | InlineMedia) =>
   isMessageReceived(message) ? message.authorVerificationState : undefined
 
+const isRelayed = (message: IMessage | InlineMedia) =>
+  isMessageReceived(message) && message.isRelayed === true
+
 export const ChatTranscript = ({
   messageLog,
   userId,
@@ -98,12 +101,14 @@ export const ChatTranscript = ({
         // user id, one verified and one not, so a change in verification
         // starts a new run as well. A message from an unverified sender always
         // gets its own line and badge, so that none of them passes for one
-        // from the verified user that shares its name.
+        // from the verified user that shares its name. Relayed history, whose
+        // authors nothing can check, never shares a run with a live message.
         const isFirstMessageInGroup =
           previousMessage === undefined ||
           previousMessage.authorId !== message.authorId ||
           getAuthorVerificationState(previousMessage) !==
-            getAuthorVerificationState(message)
+            getAuthorVerificationState(message) ||
+          isRelayed(previousMessage) !== isRelayed(message)
 
         return (
           // This wrapper div is necessary for accurate layout calculations

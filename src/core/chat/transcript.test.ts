@@ -169,4 +169,17 @@ describe('withoutAuthorVerification', () => {
       timeReceived: 1,
     })
   })
+
+  it('strips the relayed mark and keeps everything else', () => {
+    const entry: ReceivedMessage = {
+      ...message('a'),
+      timeReceived: 1,
+      isRelayed: true,
+    }
+
+    expect(withoutAuthorVerification(entry)).toEqual({
+      ...message('a'),
+      timeReceived: 1,
+    })
+  })
 })

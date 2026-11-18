@@ -11,6 +11,7 @@ import { userSettingsContextStubFactory } from 'test-utils/stubs/settingsContext
 
 import { Message, MessageProps } from './Message'
 import {
+  relayedMessageLabel,
   unverifiedAuthorLabel,
   verifyingAuthorLabel,
 } from './AuthorVerificationBadge'
@@ -120,6 +121,37 @@ describe('Message', () => {
 
       expect(screen.queryByLabelText(unverifiedAuthorLabel)).toBeNull()
       expect(screen.queryByLabelText(verifyingAuthorLabel)).toBeNull()
+      expect(screen.queryByLabelText(relayedMessageLabel)).toBeNull()
+    })
+
+    test('flags a message relayed in a transcript backfill', () => {
+      render(
+        <MockMessage
+          message={{
+            ...mockReceivedMessage,
+            authorId: peerUserId,
+            isRelayed: true,
+          }}
+          userId={mockUserId}
+          showAuthor={true}
+        />
+      )
+
+      expect(screen.getByLabelText(relayedMessageLabel)).toBeInTheDocument()
+    })
+
+    test('flags a relayed message that names this user as its author', () => {
+      // A backfill can name anyone as author, this client's own user included,
+      // and it must not pass for something this user sent.
+      render(
+        <MockMessage
+          message={{ ...mockReceivedMessage, isRelayed: true }}
+          userId={mockUserId}
+          showAuthor={true}
+        />
+      )
+
+      expect(screen.getByLabelText(relayedMessageLabel)).toBeInTheDocument()
     })
   })
 })

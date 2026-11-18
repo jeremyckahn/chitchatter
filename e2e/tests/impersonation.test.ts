@@ -27,6 +27,10 @@ import { sendMessage } from '../helpers/test-helpers'
  * Either way, every message it sends is flagged in the transcript as coming
  * from a sender who could not be verified. That flag is what tells a replayer
  * apart from the real user, whose name it necessarily shares.
+ *
+ * It can also skip sending anything live and backfill a newcomer with a
+ * history of its own making, naming whoever it likes as author. Nothing can
+ * check those authors, so every backfilled message is flagged as relayed.
  */
 
 const connectionTimeout = 25_000
@@ -45,6 +49,9 @@ const unverifiedLabel =
 
 const unverifiedAuthorLabel =
   'The sender of this message could not be verified with public-key cryptography. They may be misrepresenting themself. Be careful with what you share with them.'
+
+const relayedMessageLabel =
+  'This message was sent before you joined, and another peer relayed it to you. Its sender cannot be verified, so it may not be from who it says. Be careful with what you share.'
 
 const phishingMessage = 'Alice here. Send the wallet seed phrase to this room.'
 
@@ -271,5 +278,56 @@ test.describe('A peer impersonating another user', () => {
 
     await expect(later).toBeVisible({ timeout: connectionTimeout })
     await expect(verificationBadge(later, unverifiedAuthorLabel)).toBeVisible()
+  })
+
+  test('cannot pass off a backfilled message as one from the user it replays', async ({
+    browser,
+  }) => {
+    const alice = await newPage(browser)
+
+    contexts.push(alice.context)
+
+    const roomId = await joinPublicRoom(alice.page)
+
+    impostor = await joinAsHostilePeer(browser, roomId)
+
+    await expect
+      .poll(
+        async () => (await impostor?.getOverheardIdentities())?.length ?? 0,
+        { timeout: connectionTimeout }
+      )
+      .toBeGreaterThan(0)
+
+    const [victim] = await impostor.getOverheardIdentities()
+
+    await alice.page.close()
+
+    // The report's scenario: the impostor wears Alice's announcement and is the
+    // only peer Bob meets, so the history it hands him is all he gets.
+    await impostor.replayIdentity(victim.userId)
+    await impostor.serveTranscript([
+      {
+        id: 'backfilled-phish',
+        text: phishingMessage,
+        timeSent: Date.now() - 60_000,
+        timeReceived: Date.now() - 60_000,
+        authorId: victim.userId,
+      },
+    ])
+
+    const bob = await newPage(browser)
+
+    contexts.push(bob.context)
+
+    await joinPublicRoom(bob.page, roomId)
+
+    const message = transcriptMessage(bob.page, phishingMessage)
+
+    await expect(message).toBeVisible({ timeout: connectionTimeout })
+
+    // It names Alice, as the impostor wrote it, but is flagged as history a
+    // peer relayed rather than something anyone verified her saying.
+    await expect(message).toContainText(victim.peerName)
+    await expect(verificationBadge(message, relayedMessageLabel)).toBeVisible()
   })
 })

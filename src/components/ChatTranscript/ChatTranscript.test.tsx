@@ -3,7 +3,10 @@ import { funAnimalName } from 'fun-animal-names'
 
 import { SettingsContext } from 'contexts/SettingsContext'
 import { PeerVerificationState, ReceivedMessage } from 'core/models/chat'
-import { unverifiedAuthorLabel } from 'components/Message/AuthorVerificationBadge'
+import {
+  relayedMessageLabel,
+  unverifiedAuthorLabel,
+} from 'components/Message/AuthorVerificationBadge'
 import { userSettingsContextStubFactory } from 'test-utils/stubs/settingsContext'
 
 import { ChatTranscript } from './ChatTranscript'
@@ -52,5 +55,21 @@ describe('ChatTranscript', () => {
 
     expect(screen.getAllByText(funAnimalName(peerUserId))).toHaveLength(4)
     expect(screen.getAllByLabelText(unverifiedAuthorLabel)).toHaveLength(2)
+  })
+
+  test('keeps relayed history and live messages from the same sender in separate runs, each flagged as relayed', () => {
+    const relayed = (id: string): ReceivedMessage => ({
+      ...received(id),
+      isRelayed: true,
+    })
+
+    renderTranscript([
+      relayed('a'),
+      relayed('b'),
+      received('c', PeerVerificationState.VERIFIED),
+    ])
+
+    expect(screen.getAllByText(funAnimalName(peerUserId))).toHaveLength(2)
+    expect(screen.getAllByLabelText(relayedMessageLabel)).toHaveLength(1)
   })
 })

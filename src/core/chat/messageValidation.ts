@@ -166,8 +166,10 @@ const parseTranscriptEntry = (
     : parseUnsentMessage(value)
 
   // Stamped here rather than carried over: `timeReceived` is when *this* client
-  // got the entry, which is not something a sender can know.
-  return parsed && { ...parsed, timeReceived: receivedAt }
+  // got the entry, which is not something a sender can know. Every entry of a
+  // transcript is relayed, whatever author it names: the peer handing it over
+  // is the only source, and it cannot vouch for anyone but itself.
+  return parsed && { ...parsed, timeReceived: receivedAt, isRelayed: true }
 }
 
 export interface ParsedTranscript {

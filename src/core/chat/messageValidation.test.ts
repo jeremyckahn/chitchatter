@@ -195,8 +195,20 @@ describe('parseTranscript', () => {
     ])
 
     expect(parsed?.messageLog).toEqual([
-      { ...message(), timeReceived: receivedAt },
-      { ...media(), timeReceived: receivedAt },
+      { ...message(), timeReceived: receivedAt, isRelayed: true },
+      { ...media(), timeReceived: receivedAt, isRelayed: true },
+    ])
+  })
+
+  it('marks every entry as relayed, whatever the sender says', () => {
+    const parsed = parse([
+      message({ id: 'a', isRelayed: false }),
+      media({ id: 'b', authorVerificationState: 2 }),
+    ])
+
+    expect(parsed?.messageLog).toEqual([
+      { ...message({ id: 'a' }), timeReceived: receivedAt, isRelayed: true },
+      { ...media({ id: 'b' }), timeReceived: receivedAt, isRelayed: true },
     ])
   })
 
@@ -258,7 +270,11 @@ describe('parseTranscript', () => {
     ])
 
     expect(parsed?.messageLog).toEqual([
-      { ...message({ id: 'x', text: 'first' }), timeReceived: receivedAt },
+      {
+        ...message({ id: 'x', text: 'first' }),
+        timeReceived: receivedAt,
+        isRelayed: true,
+      },
     ])
     expect(parsed?.discardedCount).toBe(2)
   })

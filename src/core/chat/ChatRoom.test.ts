@@ -2005,6 +2005,7 @@ describe('ChatRoom', () => {
             timeSent: 1_000,
             timeReceived: expect.any(Number),
             authorId: 'user-9',
+            isRelayed: true,
           },
         ])
       })
@@ -2028,6 +2029,62 @@ describe('ChatRoom', () => {
         expect(alice.chatRoom.getMessageLog()[0]).not.toHaveProperty(
           'authorVerificationState'
         )
+      })
+
+      it('has every entry marked as relayed, whoever it names as author', async () => {
+        // The victim of the impersonation report joins a room whose only other
+        // peer is the attacker, which then backfills a message "from" Alice.
+        // Nothing can check that author, so the entry must never pass for a
+        // message from a verified sender, nor for one this client sent.
+        const alice = createVictim()
+        const mallory = createHostilePeer()
+
+        await alice.chatRoom.join()
+
+        await mallory.send(PeerAction.MESSAGE_TRANSCRIPT, [
+          textEntry('from-someone'),
+          textEntry('from-alice', { authorId: userIds[0] }),
+          textEntry('denied', { isRelayed: false }),
+          mediaEntry('media', magnetFor('media')),
+        ])
+        await waitFor(
+          () => alice.chatRoom.getMessageLog().length === 4,
+          'the backfill to land'
+        )
+
+        expect(alice.chatRoom.getMessageLog()).toEqual(
+          Array(4).fill(expect.objectContaining({ isRelayed: true }))
+        )
+      })
+
+      it('does not hand its relayed mark on to the next newcomer', async () => {
+        const alice = createVictim()
+        const mallory = createHostilePeer()
+
+        await alice.chatRoom.join()
+        await mallory.send(PeerAction.MESSAGE_TRANSCRIPT, [textEntry('old')])
+        await waitFor(
+          () => alice.chatRoom.getMessageLog().length === 1,
+          'the backfill to land'
+        )
+
+        const newcomer = new InMemoryTransport(network, 'peer-5')
+        const transcripts: unknown[] = []
+        const [, onTranscript] = newcomer.makeAction<DataPayload>(
+          PeerAction.MESSAGE_TRANSCRIPT,
+          ActionNamespace.GROUP
+        )
+
+        onTranscript(transcript => {
+          transcripts.push(transcript)
+        })
+        newcomer.onPeerJoin(PeerHookType.NEW_PEER, () => {})
+
+        await waitFor(() => transcripts.length === 1, 'the backfill to arrive')
+
+        expect(transcripts[0]).toEqual([
+          expect.not.objectContaining({ isRelayed: expect.anything() }),
+        ])
       })
 
       it('drops an entry that is both a text message and inline media', async () => {
