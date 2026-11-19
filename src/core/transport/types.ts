@@ -76,6 +76,12 @@ export type PeerLeaveHandler = (peerId: string) => void
  * `InMemoryTransport` (in-process, tests).
  */
 export interface PeerTransport {
+  /**
+   * This client's own peer id: the one other peers see its frames arrive
+   * from. Identity proofs sign it, so that a proof cannot be relayed through
+   * another connection.
+   */
+  readonly selfId: string
   makeAction: <T extends DataPayload>(
     peerAction: PeerAction,
     namespace: ActionNamespace

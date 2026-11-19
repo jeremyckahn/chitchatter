@@ -15,10 +15,12 @@ import {
   Message as IMessage,
   isMessageReceived,
   isInlineMedia,
+  PeerVerificationState,
 } from 'core/models/chat'
 import { PeerNameDisplay } from 'components/PeerNameDisplay'
 import { CopyableBlock } from 'components/CopyableBlock/CopyableBlock'
 
+import { AuthorVerificationBadge } from './AuthorVerificationBadge'
 import { InlineMedia } from './InlineMedia'
 
 const StyledMarkdown = styled(Markdown)({})
@@ -109,6 +111,27 @@ export const Message = ({ message, showAuthor, userId }: MessageProps) => {
     backgroundColor = 'secondary.main'
   }
 
+  const authorVerificationState = isMessageReceived(message)
+    ? message.authorVerificationState
+    : undefined
+
+  const isAuthorUnverified =
+    authorVerificationState === PeerVerificationState.UNVERIFIED
+
+  const isRelayed = isMessageReceived(message) && message.isRelayed === true
+
+  // Each bubble carries the cue, not just the author line its run shares.
+  let outline = 'none'
+  let outlineColor = 'transparent'
+
+  if (isAuthorUnverified) {
+    outline = '2px dashed'
+    outlineColor = 'error.main'
+  } else if (isRelayed) {
+    outline = '1px dashed'
+    outlineColor = 'warning.main'
+  }
+
   return (
     <Box className="Message">
       {showAuthor && (
@@ -120,6 +143,10 @@ export const Message = ({ message, showAuthor, userId }: MessageProps) => {
           }}
         >
           <PeerNameDisplay>{message.authorId}</PeerNameDisplay>
+          <AuthorVerificationBadge
+            verificationState={authorVerificationState}
+            isRelayed={isRelayed}
+          />
         </Typography>
       )}
       <Tooltip
@@ -146,6 +173,8 @@ export const Message = ({ message, showAuthor, userId }: MessageProps) => {
             float: message.authorId === userId ? 'right' : 'left',
             transition: 'background-color 1s',
             wordBreak: 'break-word',
+            outline,
+            outlineColor,
           }}
           maxWidth="85%"
         >

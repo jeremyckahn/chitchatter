@@ -1,8 +1,7 @@
 import { lazy, Suspense, useEffect, useState } from 'react'
 import Box from '@mui/material/Box'
 import Typography from '@mui/material/Typography'
-import { v4 as uuid } from 'uuid'
-
+import { deriveUserIdFromKey } from 'core/chat/identity'
 import { encryption } from 'core/crypto/Encryption'
 import {
   EnvironmentUnsupportedDialog,
@@ -17,14 +16,12 @@ import type { BootstrapProps } from './Bootstrap'
 
 const Bootstrap = lazy(() => import('./Bootstrap'))
 
-export interface InitProps extends Omit<BootstrapProps, 'initialUserSettings'> {
-  getUuid?: typeof uuid
-}
+export type InitProps = Omit<BootstrapProps, 'initialUserSettings'>
 
 // NOTE: This is meant to be a thin layer around the Bootstrap component that
 // only handles asynchronous creation of the public/private keys that Bootstrap
 // requires.
-const Init = ({ getUuid = uuid, ...props }: InitProps) => {
+const Init = (props: InitProps) => {
   const [userSettings, setUserSettings] = useState<UserSettings | null>(null)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
 
@@ -36,7 +33,8 @@ const Init = ({ getUuid = uuid, ...props }: InitProps) => {
         const { publicKey, privateKey } = await encryption.generateKeyPair()
 
         setUserSettings({
-          userId: getUuid(),
+          // Derived, not random, so that peers can check it against the key.
+          userId: await deriveUserIdFromKey(encryption, publicKey),
           customUsername: '',
           colorMode: ColorMode.DARK,
           playSoundOnNewMessage: true,
@@ -54,7 +52,7 @@ const Init = ({ getUuid = uuid, ...props }: InitProps) => {
         )
       }
     })()
-  }, [getUuid, userSettings])
+  }, [userSettings])
 
   if (!isEnvironmentSupported) {
     return <EnvironmentUnsupportedDialog />

@@ -1,5 +1,6 @@
 import { ColorMode, UserSettings } from 'core/models/settings'
 import { AllowedKeyType, encryption } from 'core/crypto/Encryption'
+import { deriveUserIdFromKey } from 'core/chat/identity'
 
 export interface SerializedUserSettings
   extends Omit<UserSettings, 'publicKey' | 'privateKey'> {
@@ -75,6 +76,11 @@ export class SerializationService {
 
     return {
       ...userSettingsForIndexedDbRest,
+      // Always recomputed, never trusted from storage or an imported file: a
+      // user's id is a function of their public key (see `deriveUserIdFromKey`), and
+      // an id that disagreed with it would be shown as unverified to every
+      // peer. This is also what migrates settings saved with a random UUID.
+      userId: await deriveUserIdFromKey(encryption, publicKey),
       publicKey,
       privateKey,
     }

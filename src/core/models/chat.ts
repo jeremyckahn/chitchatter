@@ -14,9 +14,36 @@ export type UnsentMessage = {
   authorId: string
 }
 
+/**
+ * What this client knows about who wrote a received entry. Local to this
+ * client: it is never sent to a peer, and a transcript entry a peer hands over
+ * cannot set it.
+ *
+ * An entry either came live from its sender, whose identity check this client
+ * ran, or was relayed in a transcript by some other peer, with no sender to
+ * check at all. So at most one of these is ever set.
+ */
+export type AuthorVerification = {
+  /**
+   * The verification state of the peer that sent the message, as it stood
+   * once that peer's identity check settled. VERIFYING while the check is
+   * still running.
+   *
+   * Absent on this client's own messages and on relayed entries.
+   */
+  authorVerificationState?: PeerVerificationState
+  /**
+   * The entry arrived in a transcript backfill: another peer's account of what
+   * was said before this client joined. The author it names is that peer's
+   * say-so and nothing here can check it, so it must never look like a message
+   * from a verified sender.
+   */
+  isRelayed?: true
+}
+
 export type ReceivedMessage = UnsentMessage & {
   timeReceived: number
-}
+} & AuthorVerification
 
 export type Message = UnsentMessage | ReceivedMessage
 
@@ -38,7 +65,7 @@ export type UnsentInlineMedia = Omit<UnsentMessage, 'text'> & FileReference
 
 export type ReceivedInlineMedia = UnsentInlineMedia & {
   timeReceived: number
-}
+} & AuthorVerification
 
 export type InlineMedia = UnsentInlineMedia | ReceivedInlineMedia
 

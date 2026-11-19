@@ -22,6 +22,8 @@ const userFacingErrorMessages: Record<ChatRoomErrorContext, string | null> = {
   [ChatRoomErrorContext.RESCIND_FILE_OFFER]:
     'Stopping the file share did not fully succeed',
   [ChatRoomErrorContext.ANNOUNCE_SELF]: null,
+  [ChatRoomErrorContext.ANSWER_IDENTITY_CHALLENGE]: null,
+  [ChatRoomErrorContext.CHALLENGE_PEER_IDENTITY]: null,
   [ChatRoomErrorContext.GREET_PEER]: null,
   [ChatRoomErrorContext.REFRESH_CONNECTION_TYPES]: null,
   [ChatRoomErrorContext.SEND_TYPING_STATUS]: null,

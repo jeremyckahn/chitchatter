@@ -2,6 +2,7 @@ import { afterEach, beforeEach, vi } from 'vitest'
 import { act, render, screen, waitFor } from '@testing-library/react'
 import persistedStorage from 'localforage'
 
+import { ColorMode } from 'core/models/settings'
 import { QueryParamKeys } from 'models/shell'
 import { isPostMessageEvent, PostMessageEventName } from 'models/sdk'
 import { userSettingsStorageKey } from 'core/settings/SettingsManager'
@@ -153,9 +154,14 @@ describe('SDK configuration', () => {
 
     await waitFor(() => {
       expect(serializeSpy).toHaveBeenCalledWith(
-        expect.objectContaining({ customUsername: 'Alice', userId: 'sdk-user' })
+        expect.objectContaining({ customUsername: 'Alice' })
       )
     })
+
+    // The user id derives from the key, so the host cannot choose it.
+    for (const [settings] of serializeSpy.mock.calls) {
+      expect(settings.userId).not.toBe('sdk-user')
+    }
   })
 
   test('never takes identity keys from the parent frame', async () => {
@@ -205,13 +211,14 @@ describe('SDK configuration', () => {
     await renderBootstrap()
     await screen.findAllByText(getPeerName(userSettingsStub.userId))
 
+    expect(screen.queryAllByTestId('Brightness4Icon')).toHaveLength(0)
+
     act(() => {
-      postConfig(parentWindow, { userId: 'sdk-user' })
+      postConfig(parentWindow, { colorMode: ColorMode.LIGHT })
     })
 
-    expect(
-      await screen.findAllByText(getPeerName('sdk-user'))
-    ).not.toHaveLength(0)
+    // The drawer's theme toggle shows the light-mode icon once applied.
+    expect(await screen.findAllByTestId('Brightness4Icon')).not.toHaveLength(0)
     expect(parentPostMessageSpy).not.toHaveBeenCalled()
   })
 

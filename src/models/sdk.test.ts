@@ -73,14 +73,12 @@ describe('parseSdkConfig', () => {
         colorMode: ColorMode.LIGHT,
         customUsername: 'Alice',
         playSoundOnNewMessage: true,
-        userId: 'user-1',
       })
     ).toEqual({
       config: {
         colorMode: ColorMode.LIGHT,
         customUsername: 'Alice',
         playSoundOnNewMessage: true,
-        userId: 'user-1',
       },
       ignored: [],
     })
@@ -124,7 +122,6 @@ describe('parseSdkConfig', () => {
         colorMode: 'purple',
         customUsername: 42,
         playSoundOnNewMessage: 'yes',
-        userId: { id: 'user-1' },
       })
     ).toEqual({
       config: {},
@@ -135,7 +132,15 @@ describe('parseSdkConfig', () => {
           key: 'playSoundOnNewMessage',
           reason: IgnoredSdkConfigReason.INVALID_VALUE,
         },
-        { key: 'userId', reason: IgnoredSdkConfigReason.INVALID_VALUE },
+      ],
+    })
+  })
+
+  test('does not let the host choose the user id, which derives from the key', () => {
+    expect(parseSdkConfig({ userId: 'user-1' })).toEqual({
+      config: {},
+      ignored: [
+        { key: 'userId', reason: IgnoredSdkConfigReason.KEY_NOT_ALLOWED },
       ],
     })
   })
@@ -245,13 +250,13 @@ describe('getSdkConfigFromMessage', () => {
         createConfigEvent({
           source: parentWindow,
           payload: {
-            userId: 'user-1',
+            customUsername: 'Alice',
             publicKey: keyPair.publicKey,
             privateKey: keyPair.privateKey,
           },
         })
       )
-    ).toEqual({ userId: 'user-1' })
+    ).toEqual({ customUsername: 'Alice' })
   })
 
   test('warns, by key and never value, about the fields it ignored', () => {

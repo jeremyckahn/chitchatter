@@ -4,6 +4,7 @@ import {
   DataPayload,
   MessageAction,
   MessageContext,
+  selfId,
 } from '@trystero-p2p/torrent'
 import { joinRoom as baseJoinRoom } from 'trystero'
 
@@ -37,6 +38,9 @@ interface SharedAction {
 }
 
 export class TrysteroTransport implements PeerTransport {
+  /** Trystero's id for this client, shared by every room it joins. */
+  readonly selfId: string = selfId
+
   private room: Room
 
   private roomConfig: RoomConfig

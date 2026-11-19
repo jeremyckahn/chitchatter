@@ -40,7 +40,7 @@ interface PeerListItemProps {
 
 const verificationStateDisplayMap = {
   [PeerVerificationState.UNVERIFIED]: (
-    <Tooltip title="This person could not be verified with public-key cryptography. They may be misrepresenting themself. Be careful with what you share with them.">
+    <Tooltip title="This person could not be verified with public-key cryptography. They may be misrepresenting themself. Be careful with what you share.">
       <NoEncryptionIcon color="error" />
     </Tooltip>
   ),

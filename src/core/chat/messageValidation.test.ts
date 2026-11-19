@@ -1,11 +1,15 @@
 import { describe, expect, it } from 'vitest'
 
 import {
+  customUsernameMaxLength,
   identifierMaxLength,
   parseFileOfferMetadata,
+  parseIdentityChallenge,
+  parseIdentityProof,
   parseTranscript,
   parseUnsentInlineMedia,
   parseUnsentMessage,
+  parseUserMetadata,
 } from 'core/chat/messageValidation'
 import { messageCharacterSizeLimit } from 'core/config/messaging'
 
@@ -191,8 +195,20 @@ describe('parseTranscript', () => {
     ])
 
     expect(parsed?.messageLog).toEqual([
-      { ...message(), timeReceived: receivedAt },
-      { ...media(), timeReceived: receivedAt },
+      { ...message(), timeReceived: receivedAt, isRelayed: true },
+      { ...media(), timeReceived: receivedAt, isRelayed: true },
+    ])
+  })
+
+  it('marks every entry as relayed, whatever the sender says', () => {
+    const parsed = parse([
+      message({ id: 'a', isRelayed: false }),
+      media({ id: 'b', authorVerificationState: 2 }),
+    ])
+
+    expect(parsed?.messageLog).toEqual([
+      { ...message({ id: 'a' }), timeReceived: receivedAt, isRelayed: true },
+      { ...media({ id: 'b' }), timeReceived: receivedAt, isRelayed: true },
     ])
   })
 
@@ -254,7 +270,11 @@ describe('parseTranscript', () => {
     ])
 
     expect(parsed?.messageLog).toEqual([
-      { ...message({ id: 'x', text: 'first' }), timeReceived: receivedAt },
+      {
+        ...message({ id: 'x', text: 'first' }),
+        timeReceived: receivedAt,
+        isRelayed: true,
+      },
     ])
     expect(parsed?.discardedCount).toBe(2)
   })
@@ -267,5 +287,80 @@ describe('parseTranscript', () => {
 
     expect(parsed?.messageLog.map(({ id }) => id)).toEqual(['a', 'b'])
     expect(parsed?.discardedCount).toBe(3)
+  })
+})
+
+describe('parseUserMetadata', () => {
+  const metadata = (overrides: Record<string, unknown> = {}) => ({
+    userId: 'user-1',
+    customUsername: 'Ada',
+    publicKeyString: 'AAAA+/8=',
+    ...overrides,
+  })
+
+  it('accepts a well-formed announcement', () => {
+    expect(parseUserMetadata(metadata())).toEqual(metadata())
+  })
+
+  it('cuts an oversized username rather than hiding the peer', () => {
+    expect(
+      parseUserMetadata(
+        metadata({ customUsername: 'a'.repeat(customUsernameMaxLength + 1) })
+      )
+    ).toEqual(metadata({ customUsername: 'a'.repeat(customUsernameMaxLength) }))
+  })
+
+  it('drops fields it did not check, including a legacy signature', () => {
+    expect(
+      parseUserMetadata(metadata({ identitySignatureBase64: 'AAAA' }))
+    ).toEqual(metadata())
+  })
+
+  it.each<[string, unknown]>([
+    ['a non-object', 'Ada'],
+    ['an empty user id', metadata({ userId: '' })],
+    ['a non-string username', metadata({ customUsername: 7 })],
+    ['a non-base64 key', metadata({ publicKeyString: 'not a key' })],
+    ['an oversized key', metadata({ publicKeyString: 'A'.repeat(4_097) })],
+  ])('rejects %s', (_, value) => {
+    expect(parseUserMetadata(value)).toBeNull()
+  })
+})
+
+describe('parseIdentityChallenge', () => {
+  const challenge = 'c'.repeat(43)
+
+  it('accepts a well-formed challenge and nothing else', () => {
+    expect(parseIdentityChallenge({ challenge, extra: true })).toEqual({
+      challenge,
+    })
+  })
+
+  it.each<[string, unknown]>([
+    ['a non-object', challenge],
+    ['a short challenge', { challenge: 'c'.repeat(42) }],
+    ['an arbitrary string to sign', { challenge: 'sign me, please' }],
+  ])('rejects %s', (_, value) => {
+    expect(parseIdentityChallenge(value)).toBeNull()
+  })
+})
+
+describe('parseIdentityProof', () => {
+  const proof = { challenge: 'c'.repeat(43), identitySignatureBase64: 'AAAA' }
+
+  it('accepts a well-formed proof', () => {
+    expect(parseIdentityProof(proof)).toEqual(proof)
+  })
+
+  it.each<[string, unknown]>([
+    ['a missing signature', { challenge: proof.challenge }],
+    ['a malformed challenge', { ...proof, challenge: 'x' }],
+    ['a non-base64 signature', { ...proof, identitySignatureBase64: '!!' }],
+    [
+      'an oversized signature',
+      { ...proof, identitySignatureBase64: 'A'.repeat(2_049) },
+    ],
+  ])('rejects %s', (_, value) => {
+    expect(parseIdentityProof(value)).toBeNull()
   })
 })

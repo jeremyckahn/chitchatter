@@ -1,5 +1,11 @@
 import { messageCharacterSizeLimit } from 'core/config/messaging'
+import { isIdentityChallenge } from 'core/chat/identity'
 import { isSafeMagnetUri } from 'core/chat/magnetUri'
+import {
+  IdentityChallenge,
+  IdentityProof,
+  UserMetadata,
+} from 'core/chat/protocol'
 import {
   FileOfferMetadata,
   isFileKey,
@@ -19,8 +25,11 @@ import {
  * (a smuggled `magnetURI` turns a text message into a download) coming along.
  *
  * What this cannot do is say whether a well-formed message is *true*. Messages
- * are not signed, so who wrote one, when, and whether it was ever sent are all
- * the sender's say-so. See the notes on `ChatRoom.handleTranscript`.
+ * are not signed, so the `authorId` a message carries is the sender's say-so.
+ * A live message is attributed to the peer that sent it instead (see
+ * `ChatRoom.deliverFromPeer`), but a transcript entry relays other people's
+ * messages and has no sender to check against. See the notes on
+ * `ChatRoom.handleTranscript`.
  */
 
 /** User ids and message ids are UUIDs; this leaves room without inviting abuse. */
@@ -48,6 +57,26 @@ const isTimestamp = (value: unknown): value is number =>
   typeof value === 'number' &&
   Number.isFinite(value) &&
   Math.abs(value) <= maxTimestampMagnitude
+
+/**
+ * Generous bounds for the key material a peer sends: an SPKI RSA-4096 public
+ * key is about 740 base64 characters and its signature about 690.
+ */
+const publicKeyMaxLength = 4_096
+const signatureMaxLength = 2_048
+
+/**
+ * Longer names are cut rather than rejected: a peer whose name is too long is
+ * still a peer, and dropping its metadata would hide it from the room.
+ */
+export const customUsernameMaxLength = 256
+
+const base64Pattern = /^[A-Za-z0-9+/]+={0,2}$/
+
+const isBase64 = (value: unknown, maxLength: number): value is string =>
+  typeof value === 'string' &&
+  value.length <= maxLength &&
+  base64Pattern.test(value)
 
 const isMessageText = (value: unknown): value is string =>
   typeof value === 'string' && value.length <= messageCharacterSizeLimit
@@ -137,8 +166,10 @@ const parseTranscriptEntry = (
     : parseUnsentMessage(value)
 
   // Stamped here rather than carried over: `timeReceived` is when *this* client
-  // got the entry, which is not something a sender can know.
-  return parsed && { ...parsed, timeReceived: receivedAt }
+  // got the entry, which is not something a sender can know. Every entry of a
+  // transcript is relayed, whatever author it names: the peer handing it over
+  // is the only source, and it cannot vouch for anyone but itself.
+  return parsed && { ...parsed, timeReceived: receivedAt, isRelayed: true }
 }
 
 export interface ParsedTranscript {
@@ -181,4 +212,54 @@ export const parseTranscript = (
     messageLog,
     discardedCount: received.length - messageLog.length,
   }
+}
+
+/** A peer's metadata announcement, or `null` if `value` is not exactly one. */
+export const parseUserMetadata = (value: unknown): UserMetadata | null => {
+  if (!isRecord(value)) return null
+
+  const { userId, customUsername, publicKeyString } = value
+
+  if (
+    !isIdentifier(userId) ||
+    typeof customUsername !== 'string' ||
+    !isBase64(publicKeyString, publicKeyMaxLength)
+  ) {
+    return null
+  }
+
+  return {
+    userId,
+    customUsername: customUsername.slice(0, customUsernameMaxLength),
+    publicKeyString,
+  }
+}
+
+/** An identity challenge, or `null` if `value` is not exactly one. */
+export const parseIdentityChallenge = (
+  value: unknown
+): IdentityChallenge | null => {
+  if (!isRecord(value)) return null
+
+  const { challenge } = value
+
+  if (!isIdentityChallenge(challenge)) return null
+
+  return { challenge }
+}
+
+/** An answer to an identity challenge, or `null` if `value` is not one. */
+export const parseIdentityProof = (value: unknown): IdentityProof | null => {
+  if (!isRecord(value)) return null
+
+  const { challenge, identitySignatureBase64 } = value
+
+  if (
+    !isIdentityChallenge(challenge) ||
+    !isBase64(identitySignatureBase64, signatureMaxLength)
+  ) {
+    return null
+  }
+
+  return { challenge, identitySignatureBase64 }
 }

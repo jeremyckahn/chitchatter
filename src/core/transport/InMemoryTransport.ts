@@ -126,6 +126,10 @@ export const createInMemoryNetwork = () => new InMemoryNetwork()
 export class InMemoryTransport implements PeerTransport {
   readonly peerId: string
 
+  get selfId() {
+    return this.peerId
+  }
+
   private network: InMemoryNetwork
 
   private hasLeft = false

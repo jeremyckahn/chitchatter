@@ -15,6 +15,23 @@ const makeAction = (transport: InMemoryTransport) =>
   transport.makeAction<Greeting>(PeerAction.MESSAGE, ActionNamespace.GROUP)
 
 describe('InMemoryTransport', () => {
+  it('reports as its selfId the peer id its frames arrive from', async () => {
+    const network = createInMemoryNetwork()
+    const alice = new InMemoryTransport(network, 'alice')
+    const bob = new InMemoryTransport(network, 'bob')
+
+    const [send] = makeAction(alice)
+    const [, connectBob] = makeAction(bob)
+    const onBob = vi.fn()
+
+    connectBob(onBob)
+    await send({ text: 'hello' })
+
+    expect(onBob).toHaveBeenCalledWith(expect.anything(), {
+      peerId: alice.selfId,
+    })
+  })
+
   it('broadcasts an action to every other peer but not to the sender', async () => {
     const network = createInMemoryNetwork()
     const alice = new InMemoryTransport(network, 'alice')

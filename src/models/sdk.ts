@@ -12,7 +12,6 @@ export enum ChatEmbedAttributes {
   PLAY_MESSAGE_SOUND = 'play-message-sound',
   ROOM_NAME = 'room',
   ROOT_URL = 'root-url',
-  USER_ID = 'user-id',
   USER_NAME = 'user-name',
 }
 
@@ -22,17 +21,15 @@ export enum ChatEmbedAttributes {
  * Chitchatter and name their own origin as the parent — so it must never be
  * able to set identity material such as the keypair.
  *
- * `userId` is allowed on purpose: it backs the documented `user-id` SDK
- * attribute, and it is a public, self-asserted label rather than a credential.
- * Every peer already sees it, and any peer can already claim any `userId`, so
- * letting the host choose one grants nothing new. Binding a `userId` to a key
- * is the job of peer key pinning (#634), not of this allowlist.
+ * `userId` is not configurable either. It is derived from the public key
+ * (see `deriveUserIdFromKey`), so a host-chosen id could never match the key
+ * and peers would show the user as unverified. A host that wants to name its
+ * users sets `customUsername`, the `user-name` attribute, instead.
  */
 const sdkConfigKeys = [
   'colorMode',
   'customUsername',
   'playSoundOnNewMessage',
-  'userId',
 ] as const satisfies readonly (keyof UserSettings)[]
 
 type SdkConfigKey = (typeof sdkConfigKeys)[number]
@@ -48,7 +45,6 @@ const sdkConfigValidators: {
     isString(value) && isColorMode(value),
   customUsername: isString,
   playSoundOnNewMessage: isBoolean,
-  userId: isString,
 }
 
 export interface PostMessageEvent extends MessageEvent {

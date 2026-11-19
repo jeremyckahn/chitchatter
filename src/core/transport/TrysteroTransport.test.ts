@@ -79,7 +79,10 @@ const stub = vi.hoisted(() => {
   }
 })
 
-vi.mock('@trystero-p2p/torrent', () => ({ joinRoom: stub.joinRoom }))
+vi.mock('@trystero-p2p/torrent', () => ({
+  joinRoom: stub.joinRoom,
+  selfId: 'self-peer-id',
+}))
 vi.mock('trystero', () => ({ joinRoom: vi.fn() }))
 
 const createTransport = () => {
@@ -103,6 +106,12 @@ const makeAction = (transport: TrysteroTransport) =>
 const actionName = `${ActionNamespace.DIRECT_MESSAGE}.${PeerAction.MESSAGE}`
 
 describe('TrysteroTransport', () => {
+  it("reports Trystero's id for this client as its selfId", () => {
+    const { transport } = createTransport()
+
+    expect(transport.selfId).toBe('self-peer-id')
+  })
+
   it('announces a peer that connected before the handler was registered', () => {
     const { transport, trysteroRoom } = createTransport()
 

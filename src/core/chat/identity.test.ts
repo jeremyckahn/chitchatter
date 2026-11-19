@@ -1,170 +1,224 @@
 import { beforeAll, describe, expect, it } from 'vitest'
 
 import {
+  deriveUserId,
+  deriveUserIdFromKey,
+  generateIdentityChallenge,
   getIdentityVerificationMessage,
-  signIdentity,
-  verifyPeerIdentity,
+  IdentityStatement,
+  isIdentityChallenge,
+  parsePeerPublicKey,
+  signIdentityChallenge,
+  verifyIdentityChallenge,
 } from 'core/chat/identity'
 import { encryption, EncryptionService } from 'core/crypto/Encryption'
 import { PeerVerificationState } from 'core/models/chat'
 
-const roomId = 'room-1'
-const userId = 'user-1'
+const statement: IdentityStatement = {
+  roomId: 'room-1',
+  userId: 'user-1',
+  proverPeerId: 'peer-1',
+  challenge: 'c'.repeat(43),
+}
 
 describe('getIdentityVerificationMessage', () => {
-  it('binds the room id and user id together', () => {
-    expect(getIdentityVerificationMessage('abc', 'def')).toBe('abc_def')
+  it.each<[keyof IdentityStatement, string]>([
+    ['roomId', 'room-2'],
+    ['userId', 'user-2'],
+    ['proverPeerId', 'peer-2'],
+    ['challenge', 'd'.repeat(43)],
+  ])('differs when the %s differs', (field, value) => {
+    expect(
+      getIdentityVerificationMessage({ ...statement, [field]: value })
+    ).not.toBe(getIdentityVerificationMessage(statement))
   })
 
-  it('differs between rooms so a signature cannot be replayed elsewhere', () => {
-    expect(getIdentityVerificationMessage('room-a', userId)).not.toBe(
-      getIdentityVerificationMessage('room-b', userId)
+  it('cannot be made ambiguous by separators inside a field', () => {
+    // With plain `_` concatenation these two statements were the same bytes.
+    expect(
+      getIdentityVerificationMessage({
+        ...statement,
+        roomId: 'a_b',
+        userId: 'c',
+      })
+    ).not.toBe(
+      getIdentityVerificationMessage({
+        ...statement,
+        roomId: 'a',
+        userId: 'b_c',
+      })
+    )
+  })
+
+  it('is not the static statement the previous protocol signed', () => {
+    expect(getIdentityVerificationMessage(statement)).not.toBe(
+      `${statement.roomId}_${statement.userId}`
     )
   })
 })
 
-describe('signIdentity / verifyPeerIdentity', () => {
+describe('generateIdentityChallenge', () => {
+  it('makes well-formed challenges', () => {
+    expect(isIdentityChallenge(generateIdentityChallenge())).toBe(true)
+  })
+
+  it('never repeats a challenge', () => {
+    const challenges = new Set(
+      Array.from({ length: 100 }, generateIdentityChallenge)
+    )
+
+    expect(challenges.size).toBe(100)
+  })
+})
+
+describe('isIdentityChallenge', () => {
+  it.each<[string, unknown]>([
+    ['too short', 'a'.repeat(42)],
+    ['too long', 'a'.repeat(44)],
+    ['non-base64url characters', `${'a'.repeat(42)}+`],
+    ['a non-string', 42],
+  ])('rejects %s', (_, value) => {
+    expect(isIdentityChallenge(value)).toBe(false)
+  })
+})
+
+describe('signIdentityChallenge / verifyIdentityChallenge', () => {
   let keyPair: CryptoKeyPair
 
   beforeAll(async () => {
     keyPair = await encryption.generateKeyPair()
   })
 
+  const sign = (signed: IdentityStatement = statement) =>
+    signIdentityChallenge({
+      encryptionService: encryption,
+      privateKey: keyPair.privateKey,
+      statement: signed,
+    })
+
+  const verify = (
+    identitySignatureBase64: string,
+    checked: IdentityStatement = statement,
+    publicKey: CryptoKey = keyPair.publicKey
+  ) =>
+    verifyIdentityChallenge({
+      encryptionService: encryption,
+      publicKey,
+      identitySignatureBase64,
+      statement: checked,
+    })
+
   it('round-trips a signature as VERIFIED', async () => {
-    const proof = await signIdentity({
-      encryptionService: encryption,
-      publicKey: keyPair.publicKey,
-      privateKey: keyPair.privateKey,
-      roomId,
-      userId,
-    })
-
-    const verified = await verifyPeerIdentity({
-      encryptionService: encryption,
-      ...proof,
-      roomId,
-      peerUserId: userId,
-    })
-
-    expect(verified?.verificationState).toBe(PeerVerificationState.VERIFIED)
+    await expect(verify(await sign())).resolves.toBe(
+      PeerVerificationState.VERIFIED
+    )
   })
 
-  it('returns the parsed public key so the peer list can hold it', async () => {
-    const proof = await signIdentity({
-      encryptionService: encryption,
-      publicKey: keyPair.publicKey,
-      privateKey: keyPair.privateKey,
-      roomId,
-      userId,
-    })
+  it.each<[keyof IdentityStatement, string]>([
+    ['roomId', 'a-different-room'],
+    ['userId', 'somebody-else'],
+    ['proverPeerId', 'a-relaying-peer'],
+    ['challenge', 'd'.repeat(43)],
+  ])(
+    'reports UNVERIFIED when the verifier expects a different %s',
+    async (field, value) => {
+      const signature = await sign()
 
-    const verified = await verifyPeerIdentity({
-      encryptionService: encryption,
-      ...proof,
-      roomId,
-      peerUserId: userId,
-    })
-
-    expect(verified?.publicKey.type).toBe('public')
-    await expect(
-      encryption.stringifyCryptoKey(verified!.publicKey)
-    ).resolves.toBe(proof.publicKeyString)
-  })
-
-  it('reports UNVERIFIED when the signature is for a different user', async () => {
-    const proof = await signIdentity({
-      encryptionService: encryption,
-      publicKey: keyPair.publicKey,
-      privateKey: keyPair.privateKey,
-      roomId,
-      userId,
-    })
-
-    const verified = await verifyPeerIdentity({
-      encryptionService: encryption,
-      ...proof,
-      roomId,
-      peerUserId: 'somebody-else',
-    })
-
-    expect(verified?.verificationState).toBe(PeerVerificationState.UNVERIFIED)
-  })
-
-  it('reports UNVERIFIED when the signature is for a different room', async () => {
-    const proof = await signIdentity({
-      encryptionService: encryption,
-      publicKey: keyPair.publicKey,
-      privateKey: keyPair.privateKey,
-      roomId,
-      userId,
-    })
-
-    const verified = await verifyPeerIdentity({
-      encryptionService: encryption,
-      ...proof,
-      roomId: 'a-different-room',
-      peerUserId: userId,
-    })
-
-    expect(verified?.verificationState).toBe(PeerVerificationState.UNVERIFIED)
-  })
+      await expect(
+        verify(signature, { ...statement, [field]: value })
+      ).resolves.toBe(PeerVerificationState.UNVERIFIED)
+    }
+  )
 
   it('reports UNVERIFIED for a tampered signature rather than throwing', async () => {
-    const proof = await signIdentity({
-      encryptionService: encryption,
-      publicKey: keyPair.publicKey,
-      privateKey: keyPair.privateKey,
-      roomId,
-      userId,
-    })
-
-    const tampered = EncryptionService.base64ToArrayBuffer(
-      proof.identitySignatureBase64
+    const tampered = new Uint8Array(
+      EncryptionService.base64ToArrayBuffer(await sign())
     )
-    const bytes = new Uint8Array(tampered)
 
-    bytes[0] = bytes[0] ^ 0xff
+    tampered[0] = tampered[0] ^ 0xff
 
-    const verified = await verifyPeerIdentity({
-      encryptionService: encryption,
-      publicKeyString: proof.publicKeyString,
-      identitySignatureBase64: EncryptionService.arrayBufferToBase64(tampered),
-      roomId,
-      peerUserId: userId,
-    })
-
-    expect(verified?.verificationState).toBe(PeerVerificationState.UNVERIFIED)
+    await expect(
+      verify(EncryptionService.arrayBufferToBase64(tampered.buffer))
+    ).resolves.toBe(PeerVerificationState.UNVERIFIED)
   })
 
-  it('reports UNVERIFIED when another key signed the message', async () => {
+  it('reports UNVERIFIED when another key signed the statement', async () => {
     const impostor = await encryption.generateKeyPair()
 
-    const identitySignature = await encryption.signString(
-      impostor.privateKey,
-      getIdentityVerificationMessage(roomId, userId)
-    )
-
-    const verified = await verifyPeerIdentity({
+    const signature = await signIdentityChallenge({
       encryptionService: encryption,
-      publicKeyString: await encryption.stringifyCryptoKey(keyPair.publicKey),
-      identitySignatureBase64:
-        EncryptionService.arrayBufferToBase64(identitySignature),
-      roomId,
-      peerUserId: userId,
+      privateKey: impostor.privateKey,
+      statement,
     })
 
-    expect(verified?.verificationState).toBe(PeerVerificationState.UNVERIFIED)
+    await expect(verify(signature)).resolves.toBe(
+      PeerVerificationState.UNVERIFIED
+    )
   })
 
-  it('returns null for an unparseable public key rather than throwing', async () => {
+  it('reports UNVERIFIED for garbage rather than throwing', async () => {
+    await expect(verify('AAAA')).resolves.toBe(PeerVerificationState.UNVERIFIED)
+  })
+})
+
+describe('parsePeerPublicKey', () => {
+  it('round-trips a stringified public key', async () => {
+    const { publicKey } = await encryption.generateKeyPair()
+    const publicKeyString = await encryption.stringifyCryptoKey(publicKey)
+
+    const parsed = await parsePeerPublicKey(encryption, publicKeyString)
+
+    if (!parsed) throw new Error('expected the key to parse')
+
+    expect(parsed.type).toBe('public')
+    await expect(encryption.stringifyCryptoKey(parsed)).resolves.toBe(
+      publicKeyString
+    )
+  })
+
+  it('returns null for an unparseable key rather than throwing', async () => {
     await expect(
-      verifyPeerIdentity({
-        encryptionService: encryption,
-        publicKeyString: 'not-a-key',
-        identitySignatureBase64: 'AAAA',
-        roomId,
-        peerUserId: userId,
-      })
+      parsePeerPublicKey(encryption, 'not-a-key')
     ).resolves.toBeNull()
+  })
+})
+
+describe('deriveUserId', () => {
+  let keyPairs: CryptoKeyPair[]
+
+  beforeAll(async () => {
+    keyPairs = await Promise.all([
+      encryption.generateKeyPair(),
+      encryption.generateKeyPair(),
+    ])
+  })
+
+  it('is the SHA-256 of the key, as 64 lowercase hex digits', async () => {
+    const publicKeyString = await encryption.stringifyCryptoKey(
+      keyPairs[0].publicKey
+    )
+
+    await expect(deriveUserId(publicKeyString)).resolves.toMatch(
+      /^[0-9a-f]{64}$/
+    )
+  })
+
+  it('is the same however the key is held', async () => {
+    const { publicKey } = keyPairs[0]
+    const publicKeyString = await encryption.stringifyCryptoKey(publicKey)
+
+    await expect(deriveUserIdFromKey(encryption, publicKey)).resolves.toBe(
+      await deriveUserId(publicKeyString)
+    )
+  })
+
+  it('differs between keys', async () => {
+    const [a, b] = await Promise.all(
+      keyPairs.map(({ publicKey }) =>
+        deriveUserIdFromKey(encryption, publicKey)
+      )
+    )
+
+    expect(a).not.toBe(b)
   })
 })

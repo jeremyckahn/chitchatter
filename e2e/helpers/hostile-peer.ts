@@ -7,9 +7,16 @@ import type {
   ForgedTranscriptEntry,
   HostilePeer,
   joinRoomAsHostilePeer,
+  OverheardIdentity,
+  OwnIdentity,
 } from './hostile-peer.browser'
 
-export type { FileReference, ForgedTranscriptEntry }
+export type {
+  FileReference,
+  ForgedTranscriptEntry,
+  OverheardIdentity,
+  OwnIdentity,
+}
 
 type HostilePeerModule = {
   joinRoomAsHostilePeer: typeof joinRoomAsHostilePeer
@@ -56,6 +63,17 @@ export interface HostilePeerSession {
   serveTranscript: (entries: ForgedTranscriptEntry[]) => Promise<void>
   /** Withdraws this peer's file offer. */
   withdraw: () => Promise<void>
+  /** The identities other peers have announced to this one. */
+  getOverheardIdentities: () => Promise<OverheardIdentity[]>
+  /**
+   * Announces itself under another user's id with a key of its own, and
+   * resolves with the identity that key really derives.
+   */
+  impersonate: (userId: string) => Promise<OwnIdentity>
+  /** Re-announces an overheard identity verbatim, as its own. */
+  replayIdentity: (userId: string) => Promise<void>
+  /** Sends a live message naming `authorId` as its author. */
+  sendMessage: (text: string, authorId: string) => Promise<void>
   /** Leaves the room, as a peer that simply disconnects does. */
   leave: () => Promise<void>
   close: () => Promise<void>
@@ -93,6 +111,17 @@ export const joinAsHostilePeer = async (
     serveTranscript: entries =>
       peer.evaluate((p, forged) => p.serveTranscript(forged), entries),
     withdraw: () => peer.evaluate(p => p.withdraw()),
+    getOverheardIdentities: () =>
+      peer.evaluate(p => p.getOverheardIdentities()),
+    impersonate: userId =>
+      peer.evaluate((p, claimed) => p.impersonate(claimed), userId),
+    replayIdentity: userId =>
+      peer.evaluate((p, replayed) => p.replayIdentity(replayed), userId),
+    sendMessage: (text, authorId) =>
+      peer.evaluate((p, [body, author]) => p.sendMessage(body, author), [
+        text,
+        authorId,
+      ] as const),
     leave: () => peer.evaluate(p => p.leave()),
     close: () => context.close(),
   }
