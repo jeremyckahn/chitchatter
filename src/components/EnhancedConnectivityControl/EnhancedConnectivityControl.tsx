@@ -34,8 +34,10 @@ export const EnhancedConnectivityControl = ({
         variant={variant}
         color={showSecondaryColor ? 'text.secondary' : undefined}
       >
-        Use external TURN servers to improve connection reliability. Disable
-        this if you prefer not to connect to third-party servers.
+        Use external TURN relay servers to improve connection reliability.
+        Disable this if you prefer not to connect to third-party servers. Note
+        that without relays, you may be unable to connect to some peers,
+        depending on how you and they are connected to the internet.
       </Typography>
     </Paper>
   )
