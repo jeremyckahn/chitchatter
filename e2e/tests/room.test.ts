@@ -338,7 +338,7 @@ test.describe('Multi-user Room Interaction', () => {
 
       // Verify that page1 shows the verification failure tooltip/icon instead
       const unverifiedTooltipText =
-        'This person could not be verified with public-key cryptography. They may be misrepresenting themself. Be careful with what you share with them.'
+        'This person could not be verified with public-key cryptography. They may be misrepresenting themself. Be careful with what you share.'
       const unverifiedElement1 = page1.locator(
         `[aria-label="${unverifiedTooltipText}"]`
       )

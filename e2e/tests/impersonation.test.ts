@@ -45,10 +45,10 @@ const verifiedLabel =
   'This person has been verified with public-key cryptography'
 
 const unverifiedLabel =
-  'This person could not be verified with public-key cryptography. They may be misrepresenting themself. Be careful with what you share with them.'
+  'This person could not be verified with public-key cryptography. They may be misrepresenting themself. Be careful with what you share.'
 
 const unverifiedAuthorLabel =
-  'The sender of this message could not be verified with public-key cryptography. They may be misrepresenting themself. Be careful with what you share with them.'
+  'The sender of this message could not be verified with public-key cryptography. They may be misrepresenting themself. Be careful with what you share.'
 
 const relayedMessageLabel =
   'This message was sent before you joined, and another peer relayed it to you. Its sender cannot be verified, so it may not be from who it says. Be careful with what you share.'

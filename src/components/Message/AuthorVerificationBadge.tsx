@@ -6,7 +6,7 @@ import Tooltip from '@mui/material/Tooltip'
 import { PeerVerificationState } from 'core/models/chat'
 
 export const unverifiedAuthorLabel =
-  'The sender of this message could not be verified with public-key cryptography. They may be misrepresenting themself. Be careful with what you share with them.'
+  'The sender of this message could not be verified with public-key cryptography. They may be misrepresenting themself. Be careful with what you share.'
 
 export const verifyingAuthorLabel = 'Attempting to verify the sender...'
 
