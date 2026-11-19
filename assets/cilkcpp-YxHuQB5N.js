@@ -1,0 +1,2 @@
+import c from"./cpp-BuBgU4ZA.js";import"./c-XQKAasRE.js";import"./clike-BF_vhPOR.js";a.displayName="cilkcpp";a.aliases=["cilk","cilk-cpp"];function a(p){p.register(c),p.languages.cilkcpp=p.languages.insertBefore("cpp","function",{"parallel-keyword":{pattern:/\bcilk_(?:for|reducer|s(?:cope|pawn|ync))\b/,alias:"keyword"}}),p.languages["cilk-cpp"]=p.languages.cilkcpp,p.languages.cilk=p.languages.cilkcpp}export{a as default};
+//# sourceMappingURL=cilkcpp-YxHuQB5N.js.map
