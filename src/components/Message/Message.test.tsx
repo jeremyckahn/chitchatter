@@ -1,8 +1,20 @@
 import { render, screen } from '@testing-library/react'
 import { SettingsContext } from 'contexts/SettingsContext'
+import { ShellContext } from 'contexts/ShellContext'
 import { funAnimalName } from 'fun-animal-names'
+import { useContext } from 'react'
+
+import { createPeer } from 'core/chat/peers'
+import { encryption } from 'core/crypto/Encryption'
+import { getPeerName } from 'core/names/peerNames'
+import { findCollidingUserIds } from 'test-utils/peerNames'
+import {
+  peerFingerprintLabel,
+  sharedPeerNameLabel,
+} from 'components/PeerNameDisplay'
 
 import {
+  Peer,
   PeerVerificationState,
   ReceivedMessage,
   UnsentMessage,
@@ -152,6 +164,62 @@ describe('Message', () => {
       )
 
       expect(screen.getByLabelText(relayedMessageLabel)).toBeInTheDocument()
+    })
+  })
+
+  describe('author name', () => {
+    const [authorUserId, impostorUserId] = findCollidingUserIds()
+
+    const authorPeer = createPeer({
+      peerId: 'author-peer',
+      userId: authorUserId,
+      customUsername: '',
+      publicKey: encryption.cryptoKeyStub,
+      verificationState: PeerVerificationState.VERIFIED,
+    })
+
+    const MessageInRoom = ({ peerList }: { peerList: readonly Peer[] }) => {
+      const shellDefaults = useContext(ShellContext)
+
+      return (
+        <ShellContext.Provider value={{ ...shellDefaults, peerList }}>
+          <MockMessage
+            message={{ ...mockReceivedMessage, authorId: authorUserId }}
+            userId={mockUserId}
+            showAuthor={true}
+          />
+        </ShellContext.Provider>
+      )
+    }
+
+    test('flags an author whose generated name another peer shares', () => {
+      // Regression: a verified peer could take another user's generated name
+      // by trying keys until one matched, and nothing in the UI showed it.
+      render(
+        <MessageInRoom
+          peerList={[
+            authorPeer,
+            { ...authorPeer, peerId: 'impostor-peer', userId: impostorUserId },
+          ]}
+        />
+      )
+
+      expect(getPeerName(authorUserId)).toBe(getPeerName(impostorUserId))
+      expect(screen.getByLabelText(sharedPeerNameLabel)).toBeInTheDocument()
+    })
+
+    test('does not flag an author whose generated name is unique', () => {
+      render(<MessageInRoom peerList={[authorPeer]} />)
+
+      expect(screen.queryByLabelText(sharedPeerNameLabel)).toBeNull()
+    })
+
+    test("offers the author's fingerprint", () => {
+      render(<MessageInRoom peerList={[authorPeer]} />)
+
+      expect(
+        screen.getByLabelText(new RegExp(`^${peerFingerprintLabel}: `))
+      ).toBeInTheDocument()
     })
   })
 })

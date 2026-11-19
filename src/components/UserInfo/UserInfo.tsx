@@ -18,7 +18,12 @@ import { ShellContext } from 'contexts/ShellContext'
 import { getPeerName } from 'components/PeerNameDisplay'
 import { SettingsContext } from 'contexts/SettingsContext'
 import { PublicKey } from 'components/PublicKey'
-import { PeerNameDisplay } from 'components/PeerNameDisplay'
+import {
+  PeerFingerprint,
+  PeerNameDisplay,
+  SharedPeerNameBadge,
+} from 'components/PeerNameDisplay'
+import { getPeerFingerprint } from 'core/names/peerNames'
 
 interface UserInfoProps {
   userId: string
@@ -29,6 +34,7 @@ const maxCustomUsernameLength = 30
 export const UserInfo = ({ userId }: UserInfoProps) => {
   const theme = useTheme()
   const userName = getPeerName(userId)
+  const fingerprint = getPeerFingerprint(userId)
 
   const { customUsername, setCustomUsername, showAlert } =
     useContext(ShellContext)
@@ -100,7 +106,15 @@ export const UserInfo = ({ userId }: UserInfoProps) => {
               </IconButton>
             </Tooltip>
           </Box>
-          <FormHelperText>Your username</FormHelperText>
+          <FormHelperText>
+            Your username
+            {fingerprint === null ? null : (
+              <>
+                {' · fingerprint '}
+                <PeerFingerprint userId={userId} variant="inherit" />
+              </>
+            )}
+          </FormHelperText>
         </FormControl>
       </form>
       <Dialog open={isInfoDialogOpen} onClose={handleInfoDialogClose}>
@@ -109,9 +123,20 @@ export const UserInfo = ({ userId }: UserInfoProps) => {
             <PeerNameDisplay sx={{ fontSize: 'inherit' }}>
               {userId}
             </PeerNameDisplay>
+            <SharedPeerNameBadge userId={userId} />
           </Box>
         </DialogTitle>
         <DialogContent>
+          {fingerprint === null ? null : (
+            <DialogContentText>
+              Your fingerprint:{' '}
+              <PeerFingerprint userId={userId} variant="inherit" />
+              <br />
+              Your name is not unique, but your fingerprint is. Others can
+              compare it with the one shown next to your name to be sure they
+              are talking to you.
+            </DialogContentText>
+          )}
           <DialogContentText>
             Your public key (generated locally):
           </DialogContentText>

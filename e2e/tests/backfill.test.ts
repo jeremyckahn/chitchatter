@@ -20,7 +20,7 @@ const unverifiedAuthorLabel =
   'The sender of this message could not be verified with public-key cryptography. They may be misrepresenting themself. Be careful with what you share.'
 
 const verifiedLabel =
-  'This person has been verified with public-key cryptography'
+  'This person has proven they hold the key behind the fingerprint shown. Names are not unique, so compare the fingerprint to be sure who this is.'
 
 const transcriptMessage = (page: Page, text: string): Locator =>
   page.locator('.Message').filter({ hasText: text })

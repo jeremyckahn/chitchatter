@@ -234,7 +234,7 @@ test.describe('Multi-user Room Interaction', () => {
 
       // Verify both peers see each other as verified
       const verifiedTooltipText =
-        'This person has been verified with public-key cryptography'
+        'This person has proven they hold the key behind the fingerprint shown. Names are not unique, so compare the fingerprint to be sure who this is.'
 
       const verifiedElement1 = page1.locator(
         `[aria-label="${verifiedTooltipText}"]`
@@ -329,7 +329,7 @@ test.describe('Multi-user Room Interaction', () => {
 
       // Verify that page1 does NOT show any verified peer tooltips
       const verifiedTooltipText =
-        'This person has been verified with public-key cryptography'
+        'This person has proven they hold the key behind the fingerprint shown. Names are not unique, so compare the fingerprint to be sure who this is.'
       const verifiedElement1 = page1.locator(
         `[aria-label="${verifiedTooltipText}"]`
       )

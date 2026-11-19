@@ -17,7 +17,12 @@ import {
   isInlineMedia,
   PeerVerificationState,
 } from 'core/models/chat'
-import { PeerNameDisplay } from 'components/PeerNameDisplay'
+import {
+  PeerNameDisplay,
+  SharedPeerNameBadge,
+  peerFingerprintLabel,
+} from 'components/PeerNameDisplay'
+import { getPeerFingerprint } from 'core/names/peerNames'
 import { CopyableBlock } from 'components/CopyableBlock/CopyableBlock'
 
 import { AuthorVerificationBadge } from './AuthorVerificationBadge'
@@ -120,6 +125,8 @@ export const Message = ({ message, showAuthor, userId }: MessageProps) => {
 
   const isRelayed = isMessageReceived(message) && message.isRelayed === true
 
+  const authorFingerprint = getPeerFingerprint(message.authorId)
+
   // Each bubble carries the cue, not just the author line its run shares.
   let outline = 'none'
   let outlineColor = 'transparent'
@@ -142,7 +149,16 @@ export const Message = ({ message, showAuthor, userId }: MessageProps) => {
             textAlign: message.authorId === userId ? 'right' : 'left',
           }}
         >
-          <PeerNameDisplay>{message.authorId}</PeerNameDisplay>
+          <Tooltip
+            title={
+              authorFingerprint === null
+                ? ''
+                : `${peerFingerprintLabel}: ${authorFingerprint}`
+            }
+          >
+            <PeerNameDisplay>{message.authorId}</PeerNameDisplay>
+          </Tooltip>
+          <SharedPeerNameBadge userId={message.authorId} />
           <AuthorVerificationBadge
             verificationState={authorVerificationState}
             isRelayed={isRelayed}

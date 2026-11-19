@@ -4,13 +4,17 @@ import { createPeer } from 'core/chat/peers'
 import { encryption } from 'core/crypto/Encryption'
 import { Peer, PeerVerificationState } from 'core/models/chat'
 import {
+  findUserIdsSharingPeerName,
   getCustomUsername,
   getDisplayUsername,
   getFriendlyName,
+  getPeerFingerprint,
   getPeerName,
   isPeerSelf,
   NameResolutionContext,
 } from 'core/names/peerNames'
+import { deriveUserIdFromKey } from 'core/chat/identity'
+import { findCollidingUserIds } from 'test-utils/peerNames'
 
 let publicKey: CryptoKey
 
@@ -102,5 +106,92 @@ describe('getDisplayUsername', () => {
     expect(getDisplayUsername('nobody', contextWith([]))).toBe(
       getPeerName('nobody')
     )
+  })
+})
+
+describe('getPeerFingerprint', () => {
+  const userId =
+    'c62a8abe32b443bb9717f6f9e2e335ada1b2c3d4e5f60718293a4b5c6d7e8f90'
+
+  it('shows the first 64 bits of a key-derived user id, grouped', () => {
+    expect(getPeerFingerprint(userId)).toBe('c62a 8abe 32b4 43bb')
+  })
+
+  it('fingerprints the user id the app derives from a real key', async () => {
+    const derivedUserId = await deriveUserIdFromKey(encryption, publicKey)
+
+    expect(getPeerFingerprint(derivedUserId)).toMatch(
+      /^[0-9a-f]{4} [0-9a-f]{4} [0-9a-f]{4} [0-9a-f]{4}$/
+    )
+  })
+
+  it.each([
+    ['a non-hex id', 'user-1'],
+    ['a UUID', 'c62a8abe-32b4-43bb-9717-46f9e2e335ad'],
+    ['uppercase hex', userId.toUpperCase()],
+    ['a hex id that is too short', userId.slice(0, 63)],
+    ['a hex id that is too long', `${userId}0`],
+  ])('is null for %s, which no key derives', (_, notKeyDerived) => {
+    expect(getPeerFingerprint(notKeyDerived)).toBeNull()
+  })
+
+  it('tells apart users whose generated names collide', () => {
+    // Regression: a generated name can be matched by brute force, so it cannot
+    // be what tells two users apart.
+    const [userId1, userId2] = findCollidingUserIds()
+
+    expect(getPeerName(userId1)).toBe(getPeerName(userId2))
+    expect(getPeerFingerprint(userId1)).not.toBe(getPeerFingerprint(userId2))
+  })
+})
+
+describe('findUserIdsSharingPeerName', () => {
+  const [userId1, userId2] = findCollidingUserIds()
+
+  it('is empty when every name is distinct', () => {
+    expect(
+      findUserIdsSharingPeerName({
+        selfUserId: 'self',
+        peers: [peerWith('user-1', ''), peerWith('user-2', '')],
+      }).size
+    ).toBe(0)
+  })
+
+  it('flags two peers that share a generated name', () => {
+    const shared = findUserIdsSharingPeerName({
+      selfUserId: 'self',
+      peers: [peerWith(userId1, ''), peerWith(userId2, '')],
+    })
+
+    expect([...shared].sort()).toEqual([userId1, userId2].sort())
+  })
+
+  it("flags a peer that shares the local user's generated name", () => {
+    const shared = findUserIdsSharingPeerName({
+      selfUserId: userId1,
+      peers: [peerWith(userId2, '')],
+    })
+
+    expect([...shared].sort()).toEqual([userId1, userId2].sort())
+  })
+
+  it('flags a shared generated name even behind custom usernames', () => {
+    // The generated name is shown next to a custom one, so it still collides.
+    const shared = findUserIdsSharingPeerName({
+      selfUserId: 'self',
+      peers: [peerWith(userId1, 'Ada'), peerWith(userId2, 'Grace')],
+    })
+
+    expect(shared.has(userId1)).toBe(true)
+    expect(shared.has(userId2)).toBe(true)
+  })
+
+  it('does not flag one user connected twice', () => {
+    expect(
+      findUserIdsSharingPeerName({
+        selfUserId: userId1,
+        peers: [peerWith(userId1, ''), peerWith(userId1, '')],
+      }).size
+    ).toBe(0)
   })
 })
