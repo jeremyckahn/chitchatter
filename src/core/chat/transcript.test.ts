@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 
 import {
   applyTranscriptLimit,
+  attributeOwnBackfill,
   getInlineMediaUris,
   settleAuthorVerification,
   withoutAuthorVerification,
@@ -181,5 +182,56 @@ describe('withoutAuthorVerification', () => {
       ...message('a'),
       timeReceived: 1,
     })
+  })
+})
+
+describe('attributeOwnBackfill', () => {
+  const relayed = (id: string, authorId = 'sender'): ReceivedMessage => ({
+    ...message(id),
+    authorId,
+    timeReceived: 1,
+    isRelayed: true,
+  })
+
+  it('attributes the sender’s own relayed entries to it and leaves the rest alone', () => {
+    const log: MessageLog = [
+      relayed('own'),
+      relayed('others', 'someone-else'),
+      relayed('outside'),
+    ]
+
+    const { messageLog, attributed } = attributeOwnBackfill(log, {
+      entryIds: new Set(['own', 'others']),
+      authorId: 'sender',
+      verificationState: PeerVerificationState.VERIFYING,
+    })
+
+    const own = {
+      ...message('own'),
+      authorId: 'sender',
+      timeReceived: 1,
+      authorVerificationState: PeerVerificationState.VERIFYING,
+    }
+
+    expect(messageLog).toEqual([own, log[1], log[2]])
+    expect(attributed).toEqual([own])
+  })
+
+  it('does not touch an entry that is not relayed, even with a matching id', () => {
+    const live: ReceivedMessage = {
+      ...message('own'),
+      authorId: 'sender',
+      timeReceived: 1,
+      authorVerificationState: PeerVerificationState.UNVERIFIED,
+    }
+
+    const { messageLog, attributed } = attributeOwnBackfill([live], {
+      entryIds: new Set(['own']),
+      authorId: 'sender',
+      verificationState: PeerVerificationState.VERIFIED,
+    })
+
+    expect(messageLog).toEqual([live])
+    expect(attributed).toEqual([])
   })
 })

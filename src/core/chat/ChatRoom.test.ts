@@ -1342,6 +1342,171 @@ describe('ChatRoom', () => {
       )
     })
 
+    describe('in a backfill', () => {
+      const sendTranscriptFrom = async (
+        transport: InMemoryTransport,
+        authors: Record<string, string>,
+        target: string
+      ) => {
+        const [sendTranscript] = transport.makeAction<DataPayload>(
+          PeerAction.MESSAGE_TRANSCRIPT,
+          ActionNamespace.GROUP
+        )
+
+        await sendTranscript(
+          Object.entries(authors).map(([id, authorId]) => ({
+            id,
+            text: `text of ${id}`,
+            timeSent: 1,
+            timeReceived: 1,
+            authorId,
+          })),
+          { target }
+        )
+      }
+
+      const isRelayed = (client: Client, id: string) => {
+        const entry = client.chatRoom
+          .getMessageLog()
+          .find(message => message.id === id)
+
+        if (!entry) throw new Error(`No message ${id} in the log`)
+
+        return isMessageReceived(entry) && entry.isRelayed === true
+      }
+
+      const isVerified = (client: Client) =>
+        client.chatRoom.getPeers()[0]?.verificationState ===
+        PeerVerificationState.VERIFIED
+
+      it('attributes the entries its verified sender wrote to it, and leaves the rest relayed', async () => {
+        const alice = createClient(network, 0)
+        const bob = createRawPeer(network, 'peer-1')
+
+        bob.answerChallengesWith(keyPairs[1].privateKey, userIds[1])
+
+        await alice.chatRoom.join()
+        await announceAs(bob, 1)
+        await waitFor(() => isVerified(alice), 'bob to be verified')
+
+        await sendTranscriptFrom(
+          bob.transport,
+          { own: userIds[1], others: userIds[2], 'as-alice': userIds[0] },
+          'peer-0'
+        )
+        await waitFor(
+          () => alice.chatRoom.getMessageLog().length === 3,
+          'the backfill to land'
+        )
+
+        expect(isRelayed(alice, 'own')).toBe(false)
+        expect(verificationOf(alice, 'own')).toBe(
+          PeerVerificationState.VERIFIED
+        )
+
+        // What bob says about anyone else, alice included, is still only his
+        // account of it.
+        for (const id of ['others', 'as-alice']) {
+          expect(isRelayed(alice, id)).toBe(true)
+          expect(verificationOf(alice, id)).toBeUndefined()
+        }
+      })
+
+      it('attributes them once a sender that backfilled before announcing itself is listed and verified', async () => {
+        const alice = createClient(network, 0)
+        const bob = createRawPeer(network, 'peer-1')
+
+        bob.answerChallengesWith(keyPairs[1].privateKey, userIds[1])
+
+        await alice.chatRoom.join()
+        await sendTranscriptFrom(
+          bob.transport,
+          { own: userIds[1], others: userIds[2] },
+          'peer-0'
+        )
+        await waitFor(
+          () => alice.chatRoom.getMessageLog().length === 2,
+          'the backfill to land'
+        )
+
+        // Nobody is listed for the connection yet, so there is no one to
+        // attribute anything to.
+        expect(isRelayed(alice, 'own')).toBe(true)
+
+        await announceAs(bob, 1)
+        await waitFor(
+          () => verificationOf(alice, 'own') === PeerVerificationState.VERIFIED,
+          'bob’s own entry to take on his verdict'
+        )
+
+        expect(isRelayed(alice, 'own')).toBe(false)
+        expect(isRelayed(alice, 'others')).toBe(true)
+      })
+
+      it('marks a replayer’s own entries UNVERIFIED once its challenge goes unanswered', async () => {
+        const alice = createClient(network, 0, {
+          identityVerificationTimeout: shortTimeout,
+        })
+        const mallory = createRawPeer(network, 'peer-9')
+
+        await alice.chatRoom.join()
+        await announceAs(mallory, 1)
+        await waitFor(
+          () => alice.chatRoom.getPeers().length === 1,
+          'alice to list mallory as bob'
+        )
+
+        await sendTranscriptFrom(
+          mallory.transport,
+          { 'as-bob': userIds[1] },
+          'peer-0'
+        )
+        await waitFor(
+          () => alice.chatRoom.getMessageLog().length === 1,
+          'the backfill to land'
+        )
+
+        expect(verificationOf(alice, 'as-bob')).toBe(
+          PeerVerificationState.VERIFYING
+        )
+
+        await waitFor(
+          () =>
+            verificationOf(alice, 'as-bob') ===
+            PeerVerificationState.UNVERIFIED,
+          'the unanswered challenge to time out'
+        )
+        expect(isRelayed(alice, 'as-bob')).toBe(false)
+      })
+
+      it('never attributes entries to a peer other than the one that sent them', async () => {
+        // Mallory hands over history "by" Bob without announcing herself.
+        // The real Bob proving his identity afterwards must not vouch for it.
+        const alice = createClient(network, 0)
+        const mallory = createRawPeer(network, 'peer-9')
+        const bob = createRawPeer(network, 'peer-1')
+
+        bob.answerChallengesWith(keyPairs[1].privateKey, userIds[1])
+
+        await alice.chatRoom.join()
+        await sendTranscriptFrom(
+          mallory.transport,
+          { forged: userIds[1] },
+          'peer-0'
+        )
+        await waitFor(
+          () => alice.chatRoom.getMessageLog().length === 1,
+          'the backfill to land'
+        )
+
+        await announceAs(bob, 1)
+        await waitFor(() => isVerified(alice), 'bob to be verified')
+
+        expect(isRelayed(alice, 'forged')).toBe(true)
+        expect(verificationOf(alice, 'forged')).toBeUndefined()
+      })
+    })
+
     it('keeps its verdicts out of the transcript it hands a newcomer', async () => {
       const alice = createClient(network, 0)
       const bob = createClient(network, 1)

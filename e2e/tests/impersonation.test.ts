@@ -303,7 +303,12 @@ test.describe('A peer impersonating another user', () => {
     await alice.page.close()
 
     // The report's scenario: the impostor wears Alice's announcement and is the
-    // only peer Bob meets, so the history it hands him is all he gets.
+    // only peer Bob meets, so the history it hands him is all he gets. Part of
+    // it it writes as Alice, the identity it is listed under, and part as
+    // somebody else entirely.
+    const somebodyElse = 'f'.repeat(64)
+    const relayedMessage = 'Carol said the seed phrase is safe to share here.'
+
     await impostor.replayIdentity(victim.userId)
     await impostor.serveTranscript([
       {
@@ -312,6 +317,13 @@ test.describe('A peer impersonating another user', () => {
         timeSent: Date.now() - 60_000,
         timeReceived: Date.now() - 60_000,
         authorId: victim.userId,
+      },
+      {
+        id: 'backfilled-hearsay',
+        text: relayedMessage,
+        timeSent: Date.now() - 30_000,
+        timeReceived: Date.now() - 30_000,
+        authorId: somebodyElse,
       },
     ])
 
@@ -325,9 +337,18 @@ test.describe('A peer impersonating another user', () => {
 
     await expect(message).toBeVisible({ timeout: connectionTimeout })
 
-    // It names Alice, as the impostor wrote it, but is flagged as history a
-    // peer relayed rather than something anyone verified her saying.
+    // What it wrote as Alice is its own claim, judged like anything it sends
+    // live: it names Alice, but is flagged once the replayer fails to prove
+    // it is her.
     await expect(message).toContainText(victim.peerName)
-    await expect(verificationBadge(message, relayedMessageLabel)).toBeVisible()
+    await expect(verificationBadge(message, unverifiedAuthorLabel)).toBeVisible(
+      { timeout: verificationTimeout }
+    )
+    await expect(verificationBadge(message, relayedMessageLabel)).toHaveCount(0)
+
+    // What it says somebody else wrote is only its account of them.
+    const hearsay = transcriptMessage(bob.page, relayedMessage)
+
+    await expect(verificationBadge(hearsay, relayedMessageLabel)).toBeVisible()
   })
 })

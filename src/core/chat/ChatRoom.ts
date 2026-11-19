@@ -44,6 +44,7 @@ import {
 } from 'core/chat/messageValidation'
 import {
   applyTranscriptLimit,
+  attributeOwnBackfill,
   getInlineMediaUris,
   settleAuthorVerification,
   withoutAuthorVerification,
@@ -247,6 +248,15 @@ export class ChatRoom extends EventTarget {
     { authorId: string; messageIds: Set<string> }
   > = new Map()
 
+  /**
+   * The backfill this client accepted, until the entries its sender wrote
+   * itself have been attributed to it: see {@link attributeOwnBackfillOf}. A
+   * transcript can arrive before its sender's metadata does, and only the
+   * peer list says who that sender is.
+   */
+  private pendingBackfill: { peerId: string; entryIds: Set<string> } | null =
+    null
+
   /** Our own public key as sent on the wire, exported once and reused. */
   private publicKeyString: Promise<string> | null = null
 
@@ -433,6 +443,7 @@ export class ChatRoom extends EventTarget {
 
     this.heldMessages.clear()
     this.messagesAwaitingVerdict.clear()
+    this.pendingBackfill = null
 
     if (this.isTyping) {
       await this.sendTypingStatus(false)
@@ -931,6 +942,45 @@ export class ChatRoom extends EventTarget {
     }
 
     this.setMessageLog(parsed.messageLog)
+
+    this.pendingBackfill = {
+      peerId,
+      entryIds: new Set(parsed.messageLog.map(({ id }) => id)),
+    }
+    this.attributeOwnBackfillOf(peerId)
+  }
+
+  /**
+   * Attributes the entries of the accepted backfill that name its sender as
+   * author to that sender, as if it had sent them live: they take on its
+   * verification state, and the verdict if its check is still running. Runs
+   * when the backfill lands and again when its sender is listed, whichever
+   * comes second does the work.
+   */
+  private attributeOwnBackfillOf = (peerId: string) => {
+    if (this.pendingBackfill?.peerId !== peerId) return
+
+    const sender = findPeer(this.peers, peerId)
+
+    if (!sender) return
+
+    const { entryIds } = this.pendingBackfill
+
+    this.pendingBackfill = null
+
+    const { messageLog, attributed } = attributeOwnBackfill(this.messageLog, {
+      entryIds,
+      authorId: sender.userId,
+      verificationState: sender.verificationState,
+    })
+
+    if (!attributed.length) return
+
+    if (sender.verificationState === PeerVerificationState.VERIFYING) {
+      for (const entry of attributed) this.awaitVerdict(peerId, entry)
+    }
+
+    this.setMessageLog(messageLog)
   }
 
   private warnMalformed = (what: MalformedFrame, peerId: string) => {
@@ -1042,6 +1092,7 @@ export class ChatRoom extends EventTarget {
 
     this.setPeers(peers)
     this.releaseHeldMessages(peerId)
+    this.attributeOwnBackfillOf(peerId)
 
     if (isNewClaim) {
       if (isUserIdBoundToKey) {
@@ -1486,6 +1537,10 @@ export class ChatRoom extends EventTarget {
     this.departedPeerIds.add(peerId)
     this.forgetIdentityClaim(peerId)
     this.heldMessages.delete(peerId)
+
+    // A sender that leaves before announcing itself never said who it was, so
+    // nothing it handed over can be attributed to it.
+    if (this.pendingBackfill?.peerId === peerId) this.pendingBackfill = null
     this.settleMessagesAwaitingVerdict(peerId, PeerVerificationState.UNVERIFIED)
 
     const peer = findPeer(this.peers, peerId)
