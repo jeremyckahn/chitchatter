@@ -156,7 +156,10 @@ export const Message = ({ message, showAuthor, userId }: MessageProps) => {
                 : `${peerFingerprintLabel}: ${authorFingerprint}`
             }
           >
-            <PeerNameDisplay>{message.authorId}</PeerNameDisplay>
+            {/* A Tooltip anchors to its child by ref, which PeerNameDisplay does not forward. */}
+            <Box component="span">
+              <PeerNameDisplay>{message.authorId}</PeerNameDisplay>
+            </Box>
           </Tooltip>
           <SharedPeerNameBadge userId={message.authorId} />
           <AuthorVerificationBadge

@@ -1,4 +1,5 @@
 import { render, screen } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 import { SettingsContext } from 'contexts/SettingsContext'
 import { ShellContext } from 'contexts/ShellContext'
 import { funAnimalName } from 'fun-animal-names'
@@ -6,7 +7,7 @@ import { useContext } from 'react'
 
 import { createPeer } from 'core/chat/peers'
 import { encryption } from 'core/crypto/Encryption'
-import { getPeerName } from 'core/names/peerNames'
+import { getPeerFingerprint, getPeerName } from 'core/names/peerNames'
 import { findCollidingUserIds } from 'test-utils/peerNames'
 import {
   peerFingerprintLabel,
@@ -220,6 +221,18 @@ describe('Message', () => {
       expect(
         screen.getByLabelText(new RegExp(`^${peerFingerprintLabel}: `))
       ).toBeInTheDocument()
+    })
+
+    test("shows the author's fingerprint on hovering their name", async () => {
+      // Regression: the tooltip's child did not take a ref, so the tooltip
+      // never opened, though its label was set.
+      render(<MessageInRoom peerList={[authorPeer]} />)
+
+      await userEvent.hover(screen.getByText(getPeerName(authorUserId)))
+
+      expect(await screen.findByRole('tooltip')).toHaveTextContent(
+        `${peerFingerprintLabel}: ${getPeerFingerprint(authorUserId)}`
+      )
     })
   })
 })
