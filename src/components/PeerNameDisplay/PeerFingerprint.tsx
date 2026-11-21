@@ -12,7 +12,11 @@ export interface PeerFingerprintProps extends TypographyProps {
  * A user's key fingerprint, the identifier people compare to be sure who they
  * are talking to. Renders nothing for an id that no key derives.
  */
-export const PeerFingerprint = ({ userId, ...rest }: PeerFingerprintProps) => {
+export const PeerFingerprint = ({
+  userId,
+  sx,
+  ...rest
+}: PeerFingerprintProps) => {
   const fingerprint = getPeerFingerprint(userId)
 
   if (fingerprint === null) return null
@@ -21,9 +25,12 @@ export const PeerFingerprint = ({ userId, ...rest }: PeerFingerprintProps) => {
     <Typography
       component="span"
       variant="caption"
-      aria-label={`${peerFingerprintLabel}: ${fingerprint}`}
-      sx={{ fontFamily: 'monospace', whiteSpace: 'nowrap' }}
       {...rest}
+      aria-label={`${peerFingerprintLabel}: ${fingerprint}`}
+      sx={[
+        { fontFamily: 'monospace', whiteSpace: 'nowrap' },
+        ...(Array.isArray(sx) ? sx : [sx]),
+      ]}
     >
       {fingerprint}
     </Typography>

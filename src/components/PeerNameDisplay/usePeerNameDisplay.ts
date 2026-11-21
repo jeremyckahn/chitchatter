@@ -23,7 +23,7 @@ export const usePeerNameDisplay = () => {
    * Whether another user in the room has the same generated name as `userId`,
    * so that the name alone cannot tell them apart.
    */
-  const isPeerNameShared = (userId: string) =>
+  const isPeerNameShared = (userId: string): boolean =>
     userIdsSharingPeerName.has(userId)
 
   const getPeer = (userId: string) =>

@@ -29,6 +29,7 @@ import {
 import { PublicKey } from 'components/PublicKey'
 import { Room } from 'components/Room'
 import { PeerConnectionType } from 'core/transport/types'
+import { getPeerFingerprint } from 'core/names/peerNames'
 import { AudioChannelName, Peer, PeerVerificationState } from 'core/models/chat'
 import { AudioChannel } from 'models/media'
 import { SettingsContext } from 'contexts/SettingsContext'
@@ -78,6 +79,11 @@ export const PeerListItem = ({
   const isSmallViewport = useMediaQuery(theme.breakpoints.down('sm'))
 
   const hasPeerConnection = peer.peerId in peerConnectionTypes
+
+  // A peer that has not proven it holds the key behind its user id may have
+  // copied someone else's, so its fingerprint would vouch for that person.
+  const isPeerVerified =
+    peer.verificationState === PeerVerificationState.VERIFIED
 
   const isPeerConnectionDirect =
     peerConnectionTypes[peer.peerId] === PeerConnectionType.DIRECT
@@ -151,11 +157,13 @@ export const PeerListItem = ({
             <Box component="span">
               <PeerNameDisplay>{peer.userId}</PeerNameDisplay>
               <SharedPeerNameBadge userId={peer.userId} />
-              <PeerFingerprint
-                userId={peer.userId}
-                display="block"
-                color="text.secondary"
-              />
+              {isPeerVerified && (
+                <PeerFingerprint
+                  userId={peer.userId}
+                  display="block"
+                  color="text.secondary"
+                />
+              )}
             </Box>
           </Box>
           {microphoneAudio && (
@@ -192,13 +200,15 @@ export const PeerListItem = ({
           </Box>
         </DialogTitle>
         <DialogContent sx={{ display: 'flex', flexDirection: 'column' }}>
-          <Typography variant="body2" sx={{ mb: 1 }}>
-            Fingerprint:{' '}
-            <PeerFingerprint userId={peer.userId} variant="inherit" />
-            <br />
-            Names are not unique. To be sure who this is, check that this
-            fingerprint matches the one they see in their own user info.
-          </Typography>
+          {isPeerVerified && getPeerFingerprint(peer.userId) !== null && (
+            <Typography variant="body2" sx={{ mb: 1 }}>
+              Fingerprint:{' '}
+              <PeerFingerprint userId={peer.userId} variant="inherit" />
+              <br />
+              Names are not unique. To be sure who this is, check that this
+              fingerprint matches the one they see in their own user info.
+            </Typography>
+          )}
           <Accordion>
             <AccordionSummary>
               <Typography>Their public key</Typography>

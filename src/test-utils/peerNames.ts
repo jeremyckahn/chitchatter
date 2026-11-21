@@ -4,7 +4,7 @@ import { getPeerName } from 'core/names/peerNames'
  * The `index`th key-derived-looking user id: 64 lowercase hex digits, which
  * differ within the fingerprint's leading digits as real derived ids do.
  */
-const syntheticUserId = (index: number) =>
+const syntheticUserId = (index: number): string =>
   index.toString(16).padStart(16, '0').padEnd(64, '0')
 
 /**

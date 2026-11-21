@@ -125,7 +125,17 @@ export const Message = ({ message, showAuthor, userId }: MessageProps) => {
 
   const isRelayed = isMessageReceived(message) && message.isRelayed === true
 
-  const authorFingerprint = getPeerFingerprint(message.authorId)
+  // Only a sender that has proven it holds the key can be vouched for by the
+  // key's fingerprint. An unverified, still-verifying or relayed author may
+  // name any user id, and showing that id's fingerprint would lend it weight.
+  const isAuthorKeyProven =
+    !isRelayed &&
+    (authorVerificationState === PeerVerificationState.VERIFIED ||
+      authorVerificationState === undefined)
+
+  const authorFingerprint = isAuthorKeyProven
+    ? getPeerFingerprint(message.authorId)
+    : null
 
   // Each bubble carries the cue, not just the author line its run shares.
   let outline = 'none'

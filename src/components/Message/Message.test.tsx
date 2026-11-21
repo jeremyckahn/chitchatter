@@ -223,6 +223,41 @@ describe('Message', () => {
       ).toBeInTheDocument()
     })
 
+    test.each<
+      [
+        string,
+        Partial<Pick<ReceivedMessage, 'authorVerificationState' | 'isRelayed'>>,
+      ]
+    >([
+      [
+        'an unverified author',
+        { authorVerificationState: PeerVerificationState.UNVERIFIED },
+      ],
+      [
+        'an author still being verified',
+        { authorVerificationState: PeerVerificationState.VERIFYING },
+      ],
+      ['the author a relayed message names', { isRelayed: true }],
+    ])('does not offer the fingerprint of %s', (_, overrides) => {
+      // Regression: anyone can claim a user id, so showing its fingerprint for
+      // a sender that has not proven the key lent an impostor its weight.
+      render(
+        <MockMessage
+          message={{
+            ...mockReceivedMessage,
+            authorId: authorUserId,
+            ...overrides,
+          }}
+          userId={mockUserId}
+          showAuthor={true}
+        />
+      )
+
+      expect(
+        screen.queryByLabelText(new RegExp(`^${peerFingerprintLabel}: `))
+      ).toBeNull()
+    })
+
     test("shows the author's fingerprint on hovering their name", async () => {
       // Regression: the tooltip's child did not take a ref, so the tooltip
       // never opened, though its label was set.

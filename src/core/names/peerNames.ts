@@ -36,8 +36,11 @@ const keyDerivedUserIdPattern = /^[0-9a-f]{64}$/
  * they are talking to. A VERIFIED peer has proven it holds the key behind its
  * fingerprint.
  *
- * `null` for an id that was not derived from a key — for example, one a
- * relayed message names — because there is no key for it to stand for.
+ * `null` for an id that does not have the shape of a key-derived id, because
+ * there is no key for it to stand for. A non-null result says nothing about
+ * whoever presents the id: anyone can claim a user id (an unverified peer, or
+ * the author a relayed message names), so only show a fingerprint for a sender
+ * that has proven it holds the key.
  */
 export const getPeerFingerprint = (userId: string): string | null => {
   if (!keyDerivedUserIdPattern.test(userId)) return null
