@@ -38,7 +38,7 @@ const pixelPng = Buffer.from(
 const pixelAltText = 'pixel.png'
 
 const verifiedPeerLabel =
-  'This person has been verified with public-key cryptography'
+  'This person has proven they hold the key behind the fingerprint shown. Names are not unique, so compare the fingerprint to be sure who this is.'
 
 test.describe("A peer replaying another peer's magnet URI", () => {
   test.describe.configure({ timeout: 90_000 })

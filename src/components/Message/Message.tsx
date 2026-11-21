@@ -17,7 +17,12 @@ import {
   isInlineMedia,
   PeerVerificationState,
 } from 'core/models/chat'
-import { PeerNameDisplay } from 'components/PeerNameDisplay'
+import {
+  PeerNameDisplay,
+  SharedPeerNameBadge,
+  peerFingerprintLabel,
+} from 'components/PeerNameDisplay'
+import { getPeerFingerprint } from 'core/names/peerNames'
 import { CopyableBlock } from 'components/CopyableBlock/CopyableBlock'
 
 import { AuthorVerificationBadge } from './AuthorVerificationBadge'
@@ -120,6 +125,18 @@ export const Message = ({ message, showAuthor, userId }: MessageProps) => {
 
   const isRelayed = isMessageReceived(message) && message.isRelayed === true
 
+  // Only a sender that has proven it holds the key can be vouched for by the
+  // key's fingerprint. An unverified, still-verifying or relayed author may
+  // name any user id, and showing that id's fingerprint would lend it weight.
+  const isAuthorKeyProven =
+    !isRelayed &&
+    (authorVerificationState === PeerVerificationState.VERIFIED ||
+      authorVerificationState === undefined)
+
+  const authorFingerprint = isAuthorKeyProven
+    ? getPeerFingerprint(message.authorId)
+    : null
+
   // Each bubble carries the cue, not just the author line its run shares.
   let outline = 'none'
   let outlineColor = 'transparent'
@@ -142,7 +159,19 @@ export const Message = ({ message, showAuthor, userId }: MessageProps) => {
             textAlign: message.authorId === userId ? 'right' : 'left',
           }}
         >
-          <PeerNameDisplay>{message.authorId}</PeerNameDisplay>
+          <Tooltip
+            title={
+              authorFingerprint === null
+                ? ''
+                : `${peerFingerprintLabel}: ${authorFingerprint}`
+            }
+          >
+            {/* A Tooltip anchors to its child by ref, which PeerNameDisplay does not forward. */}
+            <Box component="span">
+              <PeerNameDisplay>{message.authorId}</PeerNameDisplay>
+            </Box>
+          </Tooltip>
+          <SharedPeerNameBadge userId={message.authorId} />
           <AuthorVerificationBadge
             verificationState={authorVerificationState}
             isRelayed={isRelayed}
