@@ -11,8 +11,9 @@ export interface SharedPeerNameBadgeProps {
 }
 
 /**
- * Warns that another user in the room shares `userId`'s generated name: an
- * accidental collision, or someone posing as them. Renders nothing otherwise.
+ * Warns that another user in the room shares `userId`'s generated name or
+ * custom username: an accidental collision, or someone posing as them. Renders
+ * nothing otherwise.
  */
 export const SharedPeerNameBadge = ({ userId }: SharedPeerNameBadgeProps) => {
   const { isPeerNameShared } = usePeerNameDisplay()

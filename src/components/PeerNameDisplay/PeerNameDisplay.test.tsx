@@ -15,16 +15,20 @@ import { SharedPeerNameBadge, sharedPeerNameLabel } from './SharedPeerNameBadge'
 const selfUserId = 'a'.repeat(64)
 const [collidingUserId1, collidingUserId2] = findCollidingUserIds()
 
-const createTestPeer = (userId: string): Peer =>
+const createTestPeer = (userId: string, customUsername = ''): Peer =>
   createPeer({
     peerId: `peer-${userId}`,
     userId,
-    customUsername: '',
+    customUsername,
     publicKey: encryption.cryptoKeyStub,
     verificationState: PeerVerificationState.VERIFIED,
   })
 
-const createWrapper = (peerList: readonly Peer[], userId = selfUserId) => {
+const createWrapper = (
+  peerList: readonly Peer[],
+  userId = selfUserId,
+  customUsername = ''
+) => {
   const userSettingsStub = userSettingsContextStubFactory({ userId })
 
   const Wrapper = ({ children }: PropsWithChildren) => {
@@ -32,7 +36,9 @@ const createWrapper = (peerList: readonly Peer[], userId = selfUserId) => {
 
     return (
       <SettingsContext.Provider value={userSettingsStub}>
-        <ShellContext.Provider value={{ ...shellDefaults, peerList }}>
+        <ShellContext.Provider
+          value={{ ...shellDefaults, peerList, customUsername }}
+        >
           {children}
         </ShellContext.Provider>
       </SettingsContext.Provider>
@@ -102,5 +108,34 @@ describe('SharedPeerNameBadge', () => {
     })
 
     expect(screen.queryByLabelText(sharedPeerNameLabel)).toBeNull()
+  })
+  test('warns when two peers chose the same custom username', () => {
+    // Regression: copying someone's custom username needs no brute force, and
+    // it was not flagged because only generated names were compared.
+    const userId1 = 'b'.repeat(64)
+    const userId2 = 'c'.repeat(64)
+
+    render(<SharedPeerNameBadge userId={userId2} />, {
+      wrapper: createWrapper([
+        createTestPeer(userId1, 'Alice'),
+        createTestPeer(userId2, 'Alice'),
+      ]),
+    })
+
+    expect(screen.getByLabelText(sharedPeerNameLabel)).toBeInTheDocument()
+  })
+
+  test("warns when a peer copies the local user's custom username", () => {
+    const peerUserId = 'b'.repeat(64)
+
+    render(<SharedPeerNameBadge userId={peerUserId} />, {
+      wrapper: createWrapper(
+        [createTestPeer(peerUserId, 'Alice')],
+        selfUserId,
+        'Alice'
+      ),
+    })
+
+    expect(screen.getByLabelText(sharedPeerNameLabel)).toBeInTheDocument()
   })
 })

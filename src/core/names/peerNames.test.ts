@@ -151,6 +151,7 @@ describe('findUserIdsSharingPeerName', () => {
   it('is empty when every name is distinct', () => {
     expect(
       findUserIdsSharingPeerName({
+        selfCustomUsername: '',
         selfUserId: 'self',
         peers: [peerWith('user-1', ''), peerWith('user-2', '')],
       }).size
@@ -159,6 +160,7 @@ describe('findUserIdsSharingPeerName', () => {
 
   it('flags two peers that share a generated name', () => {
     const shared = findUserIdsSharingPeerName({
+      selfCustomUsername: '',
       selfUserId: 'self',
       peers: [peerWith(userId1, ''), peerWith(userId2, '')],
     })
@@ -168,6 +170,7 @@ describe('findUserIdsSharingPeerName', () => {
 
   it("flags a peer that shares the local user's generated name", () => {
     const shared = findUserIdsSharingPeerName({
+      selfCustomUsername: '',
       selfUserId: userId1,
       peers: [peerWith(userId2, '')],
     })
@@ -178,6 +181,7 @@ describe('findUserIdsSharingPeerName', () => {
   it('flags a shared generated name even behind custom usernames', () => {
     // The generated name is shown next to a custom one, so it still collides.
     const shared = findUserIdsSharingPeerName({
+      selfCustomUsername: '',
       selfUserId: 'self',
       peers: [peerWith(userId1, 'Ada'), peerWith(userId2, 'Grace')],
     })
@@ -189,9 +193,78 @@ describe('findUserIdsSharingPeerName', () => {
   it('does not flag one user connected twice', () => {
     expect(
       findUserIdsSharingPeerName({
+        selfCustomUsername: '',
         selfUserId: userId1,
         peers: [peerWith(userId1, ''), peerWith(userId1, '')],
       }).size
+    ).toBe(0)
+  })
+  it('flags two peers that chose the same custom username', () => {
+    // Regression: a custom username costs nothing to copy, and a copied one
+    // was not flagged because only generated names were compared.
+    const shared = findUserIdsSharingPeerName({
+      ...contextWith([
+        peerWith('user-1', 'Alice'),
+        peerWith('user-2', 'Alice'),
+      ]),
+    })
+
+    expect([...shared].sort()).toEqual(['user-1', 'user-2'])
+  })
+
+  it("flags a peer that copied the local user's custom username", () => {
+    const shared = findUserIdsSharingPeerName({
+      ...contextWith([peerWith('user-1', 'Alice')]),
+      selfCustomUsername: 'Alice',
+    })
+
+    expect([...shared].sort()).toEqual(['self', 'user-1'])
+  })
+
+  it('compares custom usernames ignoring case, spacing and width', () => {
+    const shared = findUserIdsSharingPeerName(
+      contextWith([
+        peerWith('user-1', 'Alice  Smith'),
+        peerWith('user-2', ' alice smith '),
+        peerWith('user-3', 'Ａｌｉｃｅ Smith'),
+      ])
+    )
+
+    expect([...shared].sort()).toEqual(['user-1', 'user-2', 'user-3'])
+  })
+
+  it("flags a custom username that copies another user's generated name", () => {
+    const shared = findUserIdsSharingPeerName(
+      contextWith([
+        peerWith('user-1', ''),
+        peerWith('user-2', getPeerName('user-1')),
+      ])
+    )
+
+    expect([...shared].sort()).toEqual(['user-1', 'user-2'])
+  })
+
+  it('does not flag a user whose custom username is their own generated name', () => {
+    expect(
+      findUserIdsSharingPeerName(
+        contextWith([peerWith('user-1', getPeerName('user-1'))])
+      ).size
+    ).toBe(0)
+  })
+
+  it('does not flag one user connected twice under different custom usernames', () => {
+    expect(
+      findUserIdsSharingPeerName(
+        contextWith([peerWith('user-1', 'Ada'), peerWith('user-1', 'Grace')])
+      ).size
+    ).toBe(0)
+  })
+
+  it('ignores blank custom usernames', () => {
+    expect(
+      findUserIdsSharingPeerName(
+        contextWith([peerWith('user-1', '  '), peerWith('user-2', '  ')])
+      ).size
     ).toBe(0)
   })
 })

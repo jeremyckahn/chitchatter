@@ -86,29 +86,56 @@ export const getFriendlyName = (
 ) => getCustomUsername(userId, context) || getPeerName(userId)
 
 /**
- * The user ids, among this user and the peers in `context`, whose generated
- * name is shared with at least one *other* user id.
+ * The form two names are compared in: Unicode compatibility forms folded
+ * (fullwidth letters and the like), case ignored, and runs of whitespace
+ * collapsed, so that names a reader would take to be the same compare equal.
+ */
+const normalizeNameForComparison = (name: string): string =>
+  name.normalize('NFKC').toLocaleLowerCase().replace(/\s+/g, ' ').trim()
+
+/**
+ * The user ids, among this user and the peers in `context`, whose name is
+ * shared with at least one *other* user id.
  *
  * A shared name means the name alone cannot say who is who: either an
- * accidental collision or someone deliberately posing as another user. The
- * same user id appearing twice (one account in two tabs) is the same user, and
- * is not a collision.
+ * accidental collision or someone deliberately posing as another user. Each
+ * user is known by their generated name and, if they chose one, their custom
+ * username, and a match between any two of those counts. That catches a peer
+ * that brute-forced a key to get someone's generated name, one that simply
+ * typed in someone's custom username, and one that took someone's generated
+ * name as its custom username. Names are compared loosely (see
+ * {@link normalizeNameForComparison}), so `Alice` and ` alice ` match.
+ *
+ * The same user id appearing twice (one account in two tabs) is the same user,
+ * and is not a collision, even if each copy reports a different custom
+ * username.
  */
 export const findUserIdsSharingPeerName = ({
   selfUserId,
+  selfCustomUsername,
   peers,
-}: Pick<
-  NameResolutionContext,
-  'selfUserId' | 'peers'
->): ReadonlySet<string> => {
+}: NameResolutionContext): ReadonlySet<string> => {
   const userIdsByName = new Map<string, Set<string>>()
 
-  for (const userId of [selfUserId, ...peers.map(peer => peer.userId)]) {
-    const name = getPeerName(userId)
-    const userIds = userIdsByName.get(name) ?? new Set<string>()
+  const addName = (name: string, userId: string) => {
+    const comparableName = normalizeNameForComparison(name)
+
+    if (comparableName === '') return
+
+    const userIds = userIdsByName.get(comparableName) ?? new Set<string>()
 
     userIds.add(userId)
-    userIdsByName.set(name, userIds)
+    userIdsByName.set(comparableName, userIds)
+  }
+
+  const users = [
+    { userId: selfUserId, customUsername: selfCustomUsername },
+    ...peers,
+  ]
+
+  for (const { userId, customUsername } of users) {
+    addName(getPeerName(userId), userId)
+    addName(customUsername, userId)
   }
 
   const userIdsSharingName = new Set<string>()

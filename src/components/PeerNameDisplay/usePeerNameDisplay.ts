@@ -15,13 +15,18 @@ export const usePeerNameDisplay = () => {
   const isPeerSelf = (userId: string) => selfUserId === userId
 
   const userIdsSharingPeerName = useMemo(
-    () => findUserIdsSharingPeerName({ selfUserId, peers: peerList }),
-    [selfUserId, peerList]
+    () =>
+      findUserIdsSharingPeerName({
+        selfUserId,
+        selfCustomUsername,
+        peers: peerList,
+      }),
+    [selfUserId, selfCustomUsername, peerList]
   )
 
   /**
-   * Whether another user in the room has the same generated name as `userId`,
-   * so that the name alone cannot tell them apart.
+   * Whether another user in the room has the same generated name or custom
+   * username as `userId`, so that the name alone cannot tell them apart.
    */
   const isPeerNameShared = (userId: string): boolean =>
     userIdsSharingPeerName.has(userId)
