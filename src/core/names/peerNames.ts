@@ -86,12 +86,28 @@ export const getFriendlyName = (
 ) => getCustomUsername(userId, context) || getPeerName(userId)
 
 /**
- * The form two names are compared in: Unicode compatibility forms folded
- * (fullwidth letters and the like), case ignored, and runs of whitespace
- * collapsed, so that names a reader would take to be the same compare equal.
+ * Characters that render as nothing: zero-width spaces and joiners, bidi
+ * controls, soft hyphens and the like. Inserted into a name, they make it
+ * differ from the original without looking any different.
+ */
+const invisibleCharacterPattern = /\p{Default_Ignorable_Code_Point}/gu
+
+/**
+ * The form two names are compared in, so that names a reader would take to be
+ * the same compare equal: invisible characters removed, Unicode compatibility
+ * forms folded (fullwidth letters and the like), case ignored, and runs of
+ * whitespace collapsed.
+ *
+ * Case is folded with `toLowerCase` rather than `toLocaleLowerCase`, so the
+ * result does not depend on the viewer's locale.
  */
 const normalizeNameForComparison = (name: string): string =>
-  name.normalize('NFKC').toLocaleLowerCase().replace(/\s+/g, ' ').trim()
+  name
+    .normalize('NFKC')
+    .replace(invisibleCharacterPattern, '')
+    .toLowerCase()
+    .replace(/\s+/g, ' ')
+    .trim()
 
 /**
  * The user ids, among this user and the peers in `context`, whose name is
@@ -104,7 +120,8 @@ const normalizeNameForComparison = (name: string): string =>
  * that brute-forced a key to get someone's generated name, one that simply
  * typed in someone's custom username, and one that took someone's generated
  * name as its custom username. Names are compared loosely (see
- * {@link normalizeNameForComparison}), so `Alice` and ` alice ` match.
+ * {@link normalizeNameForComparison}), so `Alice`, ` alice ` and `Alice` with
+ * a zero-width space inside it all match.
  *
  * The same user id appearing twice (one account in two tabs) is the same user,
  * and is not a collision, even if each copy reports a different custom

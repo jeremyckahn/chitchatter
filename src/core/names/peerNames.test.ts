@@ -233,6 +233,51 @@ describe('findUserIdsSharingPeerName', () => {
     expect([...shared].sort()).toEqual(['user-1', 'user-2', 'user-3'])
   })
 
+  it.each([
+    ['a zero-width space', 'Ali\u200Bce'],
+    ['a zero-width joiner', 'Ali\u200Dce'],
+    ['a zero-width non-joiner', 'Ali\u200Cce'],
+    ['a soft hyphen', 'Ali\u00ADce'],
+    ['a byte order mark', '\uFEFFAlice'],
+    ['a right-to-left override', '\u202EAlice\u202C'],
+    ['a word joiner', 'Alice\u2060'],
+  ])(
+    'flags a custom username that differs only by %s',
+    (_description, disguisedName) => {
+      // Regression: invisible characters made a copied name compare unequal
+      // while it looked identical on screen.
+      const shared = findUserIdsSharingPeerName(
+        contextWith([
+          peerWith('user-1', 'Alice'),
+          peerWith('user-2', disguisedName),
+        ])
+      )
+
+      expect([...shared].sort()).toEqual(['user-1', 'user-2'])
+    }
+  )
+
+  it('flags a generated name copied with invisible characters inside it', () => {
+    const generatedName = getPeerName('user-1')
+    const disguisedName = generatedName.replace(' ', '\u200B \u200B')
+    const shared = findUserIdsSharingPeerName(
+      contextWith([peerWith('user-1', ''), peerWith('user-2', disguisedName)])
+    )
+
+    expect([...shared].sort()).toEqual(['user-1', 'user-2'])
+  })
+
+  it('ignores custom usernames made only of invisible characters', () => {
+    expect(
+      findUserIdsSharingPeerName(
+        contextWith([
+          peerWith('user-1', '\u200B'),
+          peerWith('user-2', '\u200B\u200D'),
+        ])
+      ).size
+    ).toBe(0)
+  })
+
   it("flags a custom username that copies another user's generated name", () => {
     const shared = findUserIdsSharingPeerName(
       contextWith([
