@@ -4,6 +4,7 @@ import type { FileReference } from 'core/models/chat'
 
 import type {
   downloadAsFreshClient as downloadAsFreshClientInBrowser,
+  ForgedStreamMetadata,
   ForgedTranscriptEntry,
   HostilePeer,
   joinRoomAsHostilePeer,
@@ -13,6 +14,7 @@ import type {
 
 export type {
   FileReference,
+  ForgedStreamMetadata,
   ForgedTranscriptEntry,
   OverheardIdentity,
   OwnIdentity,
@@ -74,6 +76,15 @@ export interface HostilePeerSession {
   replayIdentity: (userId: string) => Promise<void>
   /** Sends a live message naming `authorId` as its author. */
   sendMessage: (text: string, authorId: string) => Promise<void>
+  /**
+   * Plays a tone into every peer's browser, and every newcomer's, with
+   * `metadata` attached to the stream. Resolves with the state of the audio
+   * context making it, which is `running` when the tone is really audible.
+   */
+  playTone: (
+    metadata: ForgedStreamMetadata,
+    frequency?: number
+  ) => Promise<AudioContextState>
   /** Leaves the room, as a peer that simply disconnects does. */
   leave: () => Promise<void>
   close: () => Promise<void>
@@ -122,6 +133,16 @@ export const joinAsHostilePeer = async (
         text,
         authorId,
       ] as const),
+    playTone: async (metadata, frequency = 1451) => {
+      // A click is what lets the page's audio context start: without it the
+      // tone would be silence, and a test of muting it would prove nothing.
+      await page.mouse.click(1, 1)
+
+      return peer.evaluate((p, [tagged, hz]) => p.playTone(tagged, hz), [
+        metadata,
+        frequency,
+      ] as const)
+    },
     leave: () => peer.evaluate(p => p.leave()),
     close: () => context.close(),
   }

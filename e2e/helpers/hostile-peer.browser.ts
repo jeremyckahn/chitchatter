@@ -39,6 +39,18 @@ const rtcConfig: RTCConfiguration = { iceServers: [] }
  */
 export type ForgedTranscriptEntry = { [field: string]: string | number }
 
+/**
+ * Whatever a peer attaches to a stream it sends. The receiver gets it
+ * verbatim, so a hostile peer can send any shape, or none at all. Flat, like
+ * {@link ForgedTranscriptEntry}, because Playwright cannot type a recursive
+ * JSON value as an argument.
+ */
+export type ForgedStreamMetadata =
+  | { [field: string]: string }
+  | string
+  | null
+  | undefined
+
 /** An identity another peer announced, and the name the app shows it under. */
 export interface OverheardIdentity {
   userId: string
@@ -121,6 +133,19 @@ export const joinRoomAsHostilePeer = (roomId: string) => {
 
   let forgedTranscript: ForgedTranscriptEntry[] | undefined
 
+  // The audio this peer pushes to every peer, and to each newcomer, once it is
+  // playing one: what an attacker with an oscillator and no microphone sends.
+  let tone: { stream: MediaStream; metadata: ForgedStreamMetadata } | undefined
+
+  const sendTone = (peerId: string) => {
+    if (!tone) return
+
+    transport.addStream(tone.stream, {
+      target: peerId,
+      metadata: tone.metadata,
+    })
+  }
+
   // What a real client does for a newcomer to a public room, with the history
   // of the hostile peer's choosing: it is how a room's first peer to answer
   // gets to say what was said before the newcomer arrived.
@@ -130,6 +155,8 @@ export const joinRoomAsHostilePeer = (roomId: string) => {
 
     // Introduces itself to a newcomer as a real client does when it greets one.
     if (announcement) void sendMetadata(announcement, { target: peerId })
+
+    sendTone(peerId)
   })
 
   onMetadata(data => {
@@ -228,6 +255,31 @@ export const joinRoomAsHostilePeer = (roomId: string) => {
         timeSent: Date.now(),
         authorId,
       }),
+
+    /**
+     * Plays a tone into every peer's browser, and every newcomer's, tagged with
+     * `metadata`: the stream a peer with no microphone can still send. The
+     * page must have been clicked first, or its audio context stays
+     * suspended and the tone is silence.
+     */
+    playTone: async (metadata: ForgedStreamMetadata, frequency: number) => {
+      const audioContext = new AudioContext()
+
+      await audioContext.resume()
+
+      const oscillator = audioContext.createOscillator()
+      const destination = audioContext.createMediaStreamDestination()
+
+      oscillator.frequency.value = frequency
+      oscillator.connect(destination)
+      oscillator.start()
+
+      tone = { stream: destination.stream, metadata }
+
+      for (const peerId of transport.getPeers()) sendTone(peerId)
+
+      return audioContext.state
+    },
 
     leave: () => transport.leaveRoom(),
   }
