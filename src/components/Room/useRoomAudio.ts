@@ -1,6 +1,7 @@
 import { useContext, useEffect, useCallback, useState } from 'react'
 
 import { ShellContext } from 'contexts/ShellContext'
+import { isRecord } from 'core/lib/type-guards'
 import { PeerAction } from 'core/models/network'
 import {
   AudioState,
@@ -75,14 +76,17 @@ export function useRoomAudio({ peerRoom }: UseRoomAudioConfig) {
   })
 
   peerRoom.onPeerStream(PeerStreamType.AUDIO, (stream, peerId, metadata) => {
-    if (
-      typeof metadata === 'object' &&
-      metadata !== null &&
+    // Fail closed, as the video and screen share handlers do: every stream is
+    // offered to every handler, so a stream that does not positively identify
+    // itself as a microphone must not be played. Anything else (no metadata,
+    // `null`, a string, an array) used to fall through to an autoplaying
+    // `Audio` element that no peer row, and so no volume control, owned.
+    const isMicrophoneStream =
+      isRecord(metadata) &&
       'type' in metadata &&
-      metadata['type'] !== StreamType.MICROPHONE
-    ) {
-      return
-    }
+      metadata['type'] === StreamType.MICROPHONE
+
+    if (!isMicrophoneStream) return
 
     const audioTracks = stream.getAudioTracks()
 
