@@ -21,10 +21,15 @@ import { useMediaQuery } from '@mui/material'
 import { useContext, useState } from 'react'
 
 import { AudioVolume } from 'components/AudioVolume'
-import { PeerNameDisplay } from 'components/PeerNameDisplay'
+import {
+  PeerFingerprint,
+  PeerNameDisplay,
+  SharedPeerNameBadge,
+} from 'components/PeerNameDisplay'
 import { PublicKey } from 'components/PublicKey'
 import { Room } from 'components/Room'
 import { PeerConnectionType } from 'core/transport/types'
+import { getPeerFingerprint } from 'core/names/peerNames'
 import { AudioChannelName, Peer, PeerVerificationState } from 'core/models/chat'
 import { AudioChannel } from 'models/media'
 import { SettingsContext } from 'contexts/SettingsContext'
@@ -38,6 +43,9 @@ interface PeerListItemProps {
   roomId: string
 }
 
+export const verifiedPeerLabel =
+  'This person has proven they hold the key behind the fingerprint shown. Names are not unique, so compare the fingerprint to be sure who this is.'
+
 const verificationStateDisplayMap = {
   [PeerVerificationState.UNVERIFIED]: (
     <Tooltip title="This person could not be verified with public-key cryptography. They may be misrepresenting themself. Be careful with what you share.">
@@ -45,7 +53,7 @@ const verificationStateDisplayMap = {
     </Tooltip>
   ),
   [PeerVerificationState.VERIFIED]: (
-    <Tooltip title="This person has been verified with public-key cryptography">
+    <Tooltip title={verifiedPeerLabel}>
       <EnhancedEncryptionIcon color="success" />
     </Tooltip>
   ),
@@ -71,6 +79,11 @@ export const PeerListItem = ({
   const isSmallViewport = useMediaQuery(theme.breakpoints.down('sm'))
 
   const hasPeerConnection = peer.peerId in peerConnectionTypes
+
+  // A peer that has not proven it holds the key behind its user id may have
+  // copied someone else's, so its fingerprint would vouch for that person.
+  const isPeerVerified =
+    peer.verificationState === PeerVerificationState.VERIFIED
 
   const isPeerConnectionDirect =
     peerConnectionTypes[peer.peerId] === PeerConnectionType.DIRECT
@@ -141,7 +154,17 @@ export const PeerListItem = ({
             >
               {verificationStateDisplayMap[peer.verificationState]}
             </Box>
-            <PeerNameDisplay>{peer.userId}</PeerNameDisplay>
+            <Box component="span">
+              <PeerNameDisplay>{peer.userId}</PeerNameDisplay>
+              <SharedPeerNameBadge userId={peer.userId} />
+              {isPeerVerified && (
+                <PeerFingerprint
+                  userId={peer.userId}
+                  display="block"
+                  color="text.secondary"
+                />
+              )}
+            </Box>
           </Box>
           {microphoneAudio && (
             <AudioVolume
@@ -173,9 +196,19 @@ export const PeerListItem = ({
             <PeerNameDisplay sx={{ fontSize: 'inherit' }}>
               {peer.userId}
             </PeerNameDisplay>
+            <SharedPeerNameBadge userId={peer.userId} />
           </Box>
         </DialogTitle>
         <DialogContent sx={{ display: 'flex', flexDirection: 'column' }}>
+          {isPeerVerified && getPeerFingerprint(peer.userId) !== null && (
+            <Typography variant="body2" sx={{ mb: 1 }}>
+              Fingerprint:{' '}
+              <PeerFingerprint userId={peer.userId} variant="inherit" />
+              <br />
+              Names are not unique. To be sure who this is, check that this
+              fingerprint matches the one they see in their own user info.
+            </Typography>
+          )}
           <Accordion>
             <AccordionSummary>
               <Typography>Their public key</Typography>

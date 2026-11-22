@@ -42,7 +42,7 @@ const connectionTimeout = 25_000
 const verificationTimeout = 25_000
 
 const verifiedLabel =
-  'This person has been verified with public-key cryptography'
+  'This person has proven they hold the key behind the fingerprint shown. Names are not unique, so compare the fingerprint to be sure who this is.'
 
 const unverifiedLabel =
   'This person could not be verified with public-key cryptography. They may be misrepresenting themself. Be careful with what you share.'

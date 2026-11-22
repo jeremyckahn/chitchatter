@@ -1,6 +1,7 @@
-import { useContext } from 'react'
+import { useContext, useMemo } from 'react'
 import { SettingsContext } from 'contexts/SettingsContext'
 import { ShellContext } from 'contexts/ShellContext'
+import { findUserIdsSharingPeerName } from 'core/names/peerNames'
 
 import { getPeerName } from './getPeerName'
 
@@ -12,6 +13,23 @@ export const usePeerNameDisplay = () => {
   const { userId: selfUserId } = getUserSettings()
 
   const isPeerSelf = (userId: string) => selfUserId === userId
+
+  const userIdsSharingPeerName = useMemo(
+    () =>
+      findUserIdsSharingPeerName({
+        selfUserId,
+        selfCustomUsername,
+        peers: peerList,
+      }),
+    [selfUserId, selfCustomUsername, peerList]
+  )
+
+  /**
+   * Whether another user in the room has the same generated name or custom
+   * username as `userId`, so that the name alone cannot tell them apart.
+   */
+  const isPeerNameShared = (userId: string): boolean =>
+    userIdsSharingPeerName.has(userId)
 
   const getPeer = (userId: string) =>
     peerList.find(peer => peer.userId === userId)
@@ -46,6 +64,7 @@ export const usePeerNameDisplay = () => {
   return {
     getCustomUsername,
     isPeerSelf,
+    isPeerNameShared,
     getFriendlyName,
     getDisplayUsername,
   }
