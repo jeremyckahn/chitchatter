@@ -49,28 +49,47 @@ interface PeerAudioState {
   currentTime: number
   /** Whether media is arriving on the element's track: false until RTP does. */
   isReceiving: boolean
+  /**
+   * Whether the element was ever playing while unmuted, however briefly. A
+   * snapshot of `muted` alone would miss audio heard for a moment and then
+   * silenced.
+   */
+  wasEverAudible: boolean
 }
 
 declare global {
   interface Window {
     peerAudioElements?: HTMLAudioElement[]
+    audiblePeerAudioElements?: WeakSet<HTMLAudioElement>
   }
 }
 
 /**
  * Peer audio elements are never put in the DOM, so they cannot be queried.
- * This records each one the app creates, before any of its code runs.
+ * This records each one the app creates, before any of its code runs, and
+ * notes every one that is ever playing while unmuted.
  */
-const recordPeerAudioElements = () => {
+const recordPeerAudioElements = (): void => {
   const NativeAudio = window.Audio
   const created: HTMLAudioElement[] = []
+  const audible = new WeakSet<HTMLAudioElement>()
 
   window.peerAudioElements = created
+  window.audiblePeerAudioElements = audible
 
   window.Audio = class extends NativeAudio {
     constructor(src?: string) {
       super(src)
       created.push(this)
+
+      const noteIfAudible = () => {
+        if (!this.muted && !this.paused) audible.add(this)
+      }
+
+      // `playing` catches audio that starts unmuted, `volumechange` audio
+      // that is unmuted once already playing.
+      this.addEventListener('playing', noteIfAudible)
+      this.addEventListener('volumechange', noteIfAudible)
     }
   }
 }
@@ -89,6 +108,7 @@ const getPeerAudio = (page: Page): Promise<PeerAudioState[]> =>
         isReceiving: tracks.some(
           track => track.readyState === 'live' && !track.muted
         ),
+        wasEverAudible: window.audiblePeerAudioElements?.has(audio) ?? false,
       }
     })
   )
@@ -114,7 +134,14 @@ const expectAudible = async (page: Page) => {
     .poll(async () => (await getPeerAudio(page))[0], {
       timeout: connectionTimeout,
     })
-    .toMatchObject({ muted: false, paused: false, isReceiving: true })
+    .toMatchObject({
+      muted: false,
+      paused: false,
+      isReceiving: true,
+      // Also shows that the probe behind `wasEverAudible` does see audio, so
+      // its `false` for an unlisted peer means something.
+      wasEverAudible: true,
+    })
 
   const before = (await getPeerAudio(page))[0]?.currentTime ?? 0
 
@@ -199,9 +226,11 @@ test.describe('Audio from a peer the room does not list', () => {
         })
         .toMatchObject({ isReceiving: true })
 
-      // ...and is held muted, from a peer the victim's UI does not show.
+      // ...and is held muted, from a peer the victim's UI does not show. It
+      // was never heard, not even for the moment before the app muted it.
       expect(await waitForPeerAudio(victim.page)).toMatchObject({
         muted: true,
+        wasEverAudible: false,
       })
       await expect(
         victim.page.getByText('Searching for peers...')
@@ -257,6 +286,9 @@ test.describe('Audio from a peer the room does not list', () => {
     await alice.page.getByRole('button', { name: 'call' }).click()
 
     await expectAudible(bob.page)
-    await expect(bob.page.getByRole('slider').first()).toBeVisible()
+
+    // Alice's row on Bob's screen carries her microphone's volume control.
+    await expect(bob.page.getByLabel('Their microphone volume')).toBeVisible()
+    await expect(bob.page.getByRole('slider', { name: 'Volume' })).toBeVisible()
   })
 })

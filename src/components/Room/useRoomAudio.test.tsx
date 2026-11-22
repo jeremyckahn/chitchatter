@@ -104,7 +104,7 @@ describe('useRoomAudio', () => {
     vi.clearAllMocks()
   })
 
-  test('plays a stream that identifies itself as a microphone', () => {
+  test('plays a stream that identifies itself as a microphone, starting muted', () => {
     const { channels, receiveStream } = renderRoomAudio()
 
     receiveStream({ type: StreamType.MICROPHONE })
@@ -113,6 +113,32 @@ describe('useRoomAudio', () => {
 
     expect(audio).toBeInstanceOf(HTMLAudioElement)
     expect(audio?.autoplay).toBe(true)
+    // Unmuted by `useUnlistedPeerAudioMute` once the peer is listed, so it is
+    // never heard before then, not even for a frame.
+    expect(audio?.muted).toBe(true)
+  })
+
+  test('silences the previous element when a peer sends a second microphone stream', () => {
+    const { channels, receiveStream } = renderRoomAudio()
+
+    receiveStream({ type: StreamType.MICROPHONE })
+
+    const first = channels.current['peer-1']?.[AudioChannelName.MICROPHONE]
+
+    if (!first) throw new Error('The first stream was not played')
+
+    // As if the peer had been listed and the mute hook had released it.
+    first.muted = false
+    const pause = vi.spyOn(first, 'pause').mockImplementation(() => {})
+
+    receiveStream({ type: StreamType.MICROPHONE })
+
+    const second = channels.current['peer-1']?.[AudioChannelName.MICROPHONE]
+
+    expect(second).not.toBe(first)
+    expect(first.muted).toBe(true)
+    expect(pause).toHaveBeenCalled()
+    expect(first.srcObject).toBeNull()
   })
 
   test.each([

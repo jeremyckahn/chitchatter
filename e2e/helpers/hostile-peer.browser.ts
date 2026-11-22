@@ -137,7 +137,7 @@ export const joinRoomAsHostilePeer = (roomId: string) => {
   // playing one: what an attacker with an oscillator and no microphone sends.
   let tone: { stream: MediaStream; metadata: ForgedStreamMetadata } | undefined
 
-  const sendTone = (peerId: string) => {
+  const sendTone = (peerId: string): void => {
     if (!tone) return
 
     transport.addStream(tone.stream, {
@@ -262,7 +262,10 @@ export const joinRoomAsHostilePeer = (roomId: string) => {
      * page must have been clicked first, or its audio context stays
      * suspended and the tone is silence.
      */
-    playTone: async (metadata: ForgedStreamMetadata, frequency: number) => {
+    playTone: async (
+      metadata: ForgedStreamMetadata,
+      frequency: number
+    ): Promise<AudioContextState> => {
       const audioContext = new AudioContext()
 
       await audioContext.resume()

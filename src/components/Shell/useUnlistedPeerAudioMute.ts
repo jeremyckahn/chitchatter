@@ -23,7 +23,7 @@ import { AudioChannel } from 'models/media'
 export const useUnlistedPeerAudioMute = (
   peerList: readonly Peer[],
   peerAudioChannels: Readonly<Record<string, AudioChannel>>
-) => {
+): void => {
   useEffect(() => {
     const listedPeerIds = new Set(peerList.map(({ peerId }) => peerId))
 
