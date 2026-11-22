@@ -42,6 +42,7 @@ export const Settings = ({ userId }: SettingsProps) => {
     playSoundOnNewMessage,
     showNotificationOnNewMessage,
     showActiveTypingStatus,
+    showVideoByDefault,
     isEnhancedConnectivityEnabled,
   } = getUserSettings()
 
@@ -82,6 +83,13 @@ export const Settings = ({ userId }: SettingsProps) => {
     newShowActiveTypingStatus: boolean
   ) => {
     updateUserSettings({ showActiveTypingStatus: newShowActiveTypingStatus })
+  }
+
+  const handleShowVideoByDefaultChange = (
+    _event: ChangeEvent,
+    newShowVideoByDefault: boolean
+  ) => {
+    updateUserSettings({ showVideoByDefault: newShowVideoByDefault })
   }
 
   const handleIsEnhancedConnectivityEnabledChange = (
@@ -195,6 +203,22 @@ export const Settings = ({ userId }: SettingsProps) => {
         </FormGroup>
         <Typography variant="subtitle2">
           Disabling this will also hide your active typing status from others.
+        </Typography>
+      </Paper>
+      <Paper elevation={3} sx={{ p: 2, mb: 2 }}>
+        <FormGroup>
+          <FormControlLabel
+            control={
+              <Switch
+                checked={showVideoByDefault}
+                onChange={handleShowVideoByDefaultChange}
+              />
+            }
+            label="Show video instead of messages when a call starts"
+          />
+        </FormGroup>
+        <Typography variant="subtitle2">
+          Messages can still be opened with the button above the video.
         </Typography>
       </Paper>
       <Divider sx={{ my: 2 }} />

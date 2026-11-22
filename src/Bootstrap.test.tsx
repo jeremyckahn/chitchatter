@@ -71,6 +71,7 @@ test('updates persisted user settings', async () => {
       playSoundOnNewMessage: true,
       showNotificationOnNewMessage: true,
       showActiveTypingStatus: true,
+      showVideoByDefault: false,
       isEnhancedConnectivityEnabled: true,
       publicKey: mockSerializedPublicKey,
       privateKey: mockSerializedPrivateKey,

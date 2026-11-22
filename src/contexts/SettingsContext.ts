@@ -19,6 +19,7 @@ export const SettingsContext = createContext<SettingsContextProps>({
     playSoundOnNewMessage: true,
     showNotificationOnNewMessage: true,
     showActiveTypingStatus: true,
+    showVideoByDefault: false,
     isEnhancedConnectivityEnabled: true,
     publicKey: encryption.cryptoKeyStub,
     privateKey: encryption.cryptoKeyStub,

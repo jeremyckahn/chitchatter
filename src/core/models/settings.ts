@@ -16,6 +16,7 @@ export interface UserSettings {
   playSoundOnNewMessage: boolean
   showNotificationOnNewMessage: boolean
   showActiveTypingStatus: boolean
+  showVideoByDefault: boolean
   isEnhancedConnectivityEnabled: boolean
   publicKey: CryptoKeyPair['publicKey']
   privateKey: CryptoKeyPair['privateKey']
