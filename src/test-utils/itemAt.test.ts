@@ -19,10 +19,16 @@ describe('itemAt', () => {
 
   it('throws when there is no item at the index', () => {
     expect(() => itemAt(['a'], 1)).toThrow(
-      'Expected an item at index 1, but there are 1'
+      'Expected an item at index 1, but found undefined (length 1)'
     )
     expect(() => itemAt([], 0)).toThrow(
-      'Expected an item at index 0, but there are 0'
+      'Expected an item at index 0, but found undefined (length 0)'
+    )
+  })
+
+  it('treats an undefined element inside the list as missing', () => {
+    expect(() => itemAt([undefined, 'b'], 0)).toThrow(
+      'Expected an item at index 0, but found undefined (length 2)'
     )
   })
 })

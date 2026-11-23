@@ -7,7 +7,7 @@ export const itemAt = <T>(items: ArrayLike<T>, index: number): T => {
 
   if (item === undefined) {
     throw new Error(
-      `Expected an item at index ${index}, but there are ${items.length}`
+      `Expected an item at index ${index}, but found undefined (length ${items.length})`
     )
   }
 
