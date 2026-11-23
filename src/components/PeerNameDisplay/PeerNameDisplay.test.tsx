@@ -214,7 +214,7 @@ describe('SharedPeerNamesProvider', () => {
       expect(spy).toHaveBeenCalledTimes(3)
       expect(screen.queryByLabelText(sharedPeerNameLabel)).toBeNull()
     } finally {
-      chatRoom.leave()
+      await chatRoom.leave()
       spy.mockRestore()
     }
   })

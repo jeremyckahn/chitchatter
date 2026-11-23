@@ -315,7 +315,11 @@ describe('Message', () => {
         }),
       })
 
+      let hasLeft = false
+
       const leave = async () => {
+        if (hasLeft) return
+        hasLeft = true
         await room.leave()
         transport.leaveRoom()
       }
@@ -562,9 +566,9 @@ describe('Message', () => {
     })
 
     test('does not flag messages when the departed history entry was unverified', async () => {
-      const rejectingEncryption = Object.create(encryption) as EncryptionService
+      const rejectingEncryption = new EncryptionService()
 
-      rejectingEncryption.verifySignature = async () => false
+      vi.spyOn(rejectingEncryption, 'verifySignature').mockResolvedValue(false)
 
       const network = createInMemoryNetwork()
       const bob = await createLiveRoom({

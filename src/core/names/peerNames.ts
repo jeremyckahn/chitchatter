@@ -78,7 +78,7 @@ export interface SharedPeerNameContext extends NameResolutionContext {
    * generated name — once someone leaves, their messages no longer show a
    * custom username.
    */
-  messages?: readonly (Message | InlineMedia)[]
+  messages: readonly (Message | InlineMedia)[]
 }
 
 /**
@@ -180,7 +180,7 @@ export const findUserIdsSharingPeerName = ({
   selfUserId,
   selfCustomUsername,
   peers,
-  messages = [],
+  messages,
 }: SharedPeerNameContext): ReadonlySet<string> => {
   const userIdsByName = new Map<string, Set<string>>()
 

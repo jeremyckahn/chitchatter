@@ -18,7 +18,7 @@ import {
   getPeerName,
   isMessageAuthorKeyProven,
   isPeerSelf,
-  NameResolutionContext,
+  SharedPeerNameContext,
 } from 'core/names/peerNames'
 import { deriveUserIdFromKey } from 'core/chat/identity'
 import { findCollidingUserIds } from 'test-utils/peerNames'
@@ -38,10 +38,11 @@ const peerWith = (userId: string, customUsername: string): Peer =>
     verificationState: PeerVerificationState.VERIFIED,
   })
 
-const contextWith = (peers: Peer[]): NameResolutionContext => ({
+const contextWith = (peers: Peer[]): SharedPeerNameContext => ({
   selfUserId: 'self',
   selfCustomUsername: '',
   peers,
+  messages: [],
 })
 
 const messageFrom = (
@@ -180,6 +181,7 @@ describe('findUserIdsSharingPeerName', () => {
         selfCustomUsername: '',
         selfUserId: 'self',
         peers: [peerWith('user-1', ''), peerWith('user-2', '')],
+        messages: [],
       }).size
     ).toBe(0)
   })
@@ -189,6 +191,7 @@ describe('findUserIdsSharingPeerName', () => {
       selfCustomUsername: '',
       selfUserId: 'self',
       peers: [peerWith(userId1, ''), peerWith(userId2, '')],
+      messages: [],
     })
 
     expect([...shared].sort()).toEqual([userId1, userId2].sort())
@@ -199,6 +202,7 @@ describe('findUserIdsSharingPeerName', () => {
       selfCustomUsername: '',
       selfUserId: userId1,
       peers: [peerWith(userId2, '')],
+      messages: [],
     })
 
     expect([...shared].sort()).toEqual([userId1, userId2].sort())
@@ -210,6 +214,7 @@ describe('findUserIdsSharingPeerName', () => {
       selfCustomUsername: '',
       selfUserId: 'self',
       peers: [peerWith(userId1, 'Ada'), peerWith(userId2, 'Grace')],
+      messages: [],
     })
 
     expect(shared.has(userId1)).toBe(true)
@@ -222,6 +227,7 @@ describe('findUserIdsSharingPeerName', () => {
         selfCustomUsername: '',
         selfUserId: userId1,
         peers: [peerWith(userId1, ''), peerWith(userId1, '')],
+        messages: [],
       }).size
     ).toBe(0)
   })
