@@ -101,7 +101,13 @@ const renderScreenShare = () => {
   const getScreenAudio = () =>
     channels.current['peer-1']?.[AudioChannelName.SCREEN_SHARE]
 
-  return { receiveScreenShare, getScreenAudio }
+  const disconnectPeer = () => {
+    act(() => {
+      trysteroRoom.onPeerLeave?.('peer-1')
+    })
+  }
+
+  return { receiveScreenShare, getScreenAudio, disconnectPeer }
 }
 
 describe('useRoomScreenShare', () => {
@@ -137,5 +143,26 @@ describe('useRoomScreenShare', () => {
     expect(first.muted).toBe(true)
     expect(pause).toHaveBeenCalled()
     expect(first.srcObject).toBeNull()
+  })
+
+  test('releases the screen audio of a peer that leaves', () => {
+    const { receiveScreenShare, getScreenAudio, disconnectPeer } =
+      renderScreenShare()
+
+    receiveScreenShare()
+
+    const audio = getScreenAudio()
+
+    if (!audio) throw new Error('The screen share was not played')
+
+    audio.muted = false
+    const pause = vi.spyOn(audio, 'pause').mockImplementation(() => {})
+
+    disconnectPeer()
+
+    expect(getScreenAudio()).toBeUndefined()
+    expect(audio.muted).toBe(true)
+    expect(pause).toHaveBeenCalled()
+    expect(audio.srcObject).toBeNull()
   })
 })

@@ -174,7 +174,7 @@ export function useRoomScreenShare({ peerRoom }: UseRoomScreenShareConfig) {
       const screenShareAudio =
         newPeerAudios[peerId][AudioChannelName.SCREEN_SHARE]
 
-      screenShareAudio?.pause()
+      releasePeerAudio(screenShareAudio)
 
       const { [AudioChannelName.SCREEN_SHARE]: _, ...newPeerAudioChannels } =
         newPeerAudios[peerId]

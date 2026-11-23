@@ -216,7 +216,7 @@ export function useRoomAudio({ peerRoom }: UseRoomAudioConfig) {
 
       const microphoneAudio = newPeerAudios[peerId][AudioChannelName.MICROPHONE]
 
-      microphoneAudio?.pause()
+      releasePeerAudio(microphoneAudio)
 
       const { [AudioChannelName.MICROPHONE]: _, ...newPeerAudioChannels } =
         newPeerAudios[peerId]

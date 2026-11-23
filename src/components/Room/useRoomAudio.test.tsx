@@ -96,7 +96,13 @@ const renderRoomAudio = () => {
     })
   }
 
-  return { channels, receiveStream }
+  const disconnectPeer = () => {
+    act(() => {
+      trysteroRoom.onPeerLeave?.('peer-1')
+    })
+  }
+
+  return { channels, receiveStream, disconnectPeer }
 }
 
 describe('useRoomAudio', () => {
@@ -155,6 +161,28 @@ describe('useRoomAudio', () => {
     receiveStream(metadata)
 
     expect(channels.current).toEqual({})
+  })
+
+  test('releases the microphone audio of a peer that leaves', () => {
+    const { channels, receiveStream, disconnectPeer } = renderRoomAudio()
+
+    receiveStream({ type: StreamType.MICROPHONE })
+
+    const audio = channels.current['peer-1']?.[AudioChannelName.MICROPHONE]
+
+    if (!audio) throw new Error('The stream was not played')
+
+    audio.muted = false
+    const pause = vi.spyOn(audio, 'pause').mockImplementation(() => {})
+
+    disconnectPeer()
+
+    expect(
+      channels.current['peer-1']?.[AudioChannelName.MICROPHONE]
+    ).toBeUndefined()
+    expect(audio.muted).toBe(true)
+    expect(pause).toHaveBeenCalled()
+    expect(audio.srcObject).toBeNull()
   })
 
   test('does not play a microphone stream that carries no audio', () => {
