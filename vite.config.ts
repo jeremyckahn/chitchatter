@@ -11,6 +11,7 @@ import macrosPlugin from 'vite-plugin-babel-macros'
 import { VitePWA } from 'vite-plugin-pwa'
 
 import { manifest } from './manifest'
+import { contentSecurityPolicyPlugin } from './scripts/vite/contentSecurityPolicy'
 import { RouterType } from './src/models/router'
 
 const srcPaths = [
@@ -82,6 +83,7 @@ const config = () => {
         manifest,
         selfDestroying: true,
       }),
+      contentSecurityPolicyPlugin(),
     ],
     resolve: {
       alias: {
@@ -90,6 +92,10 @@ const config = () => {
             './node_modules/webtorrent/webtorrent.min.js',
             import.meta.url
           )
+        ),
+        // A hardened copy of StreamSaver.js; see vendor/streamsaver/README.md.
+        streamsaver: fileURLToPath(
+          new URL('./vendor/streamsaver/StreamSaver.js', import.meta.url)
         ),
         ...srcPathAliases,
       },
@@ -132,6 +138,19 @@ const config = () => {
             globals: true,
             environment: 'node',
             include: ['src/core/**/*.test.ts'],
+            exclude: ['**/node_modules/**'],
+          },
+        },
+        {
+          // Build tooling (such as Vite plugins) runs in Node. Not extending
+          // the root config keeps the app's Node polyfills, which replace
+          // node:fs and node:crypto with browser stand-ins, out of it.
+          extends: false,
+          test: {
+            name: 'scripts',
+            globals: true,
+            environment: 'node',
+            include: ['scripts/**/*.test.ts'],
             exclude: ['**/node_modules/**'],
           },
         },
