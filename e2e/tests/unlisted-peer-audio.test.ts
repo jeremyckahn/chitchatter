@@ -61,6 +61,7 @@ declare global {
   interface Window {
     peerAudioElements?: HTMLAudioElement[]
     audiblePeerAudioElements?: WeakSet<HTMLAudioElement>
+    receivedAudioStreamIds?: string[]
   }
 }
 
@@ -93,6 +94,46 @@ const recordPeerAudioElements = (): void => {
     }
   }
 }
+
+/**
+ * Records the id of every stream whose audio arrives over WebRTC, in order,
+ * whatever the app does with it. A test that expects a stream to be ignored
+ * needs this to show that the stream did arrive, rather than passing because
+ * it never got there.
+ */
+const recordReceivedAudioStreams = (): void => {
+  const NativePeerConnection = window.RTCPeerConnection
+  const received: string[] = []
+
+  window.receivedAudioStreamIds = received
+
+  window.RTCPeerConnection = class extends NativePeerConnection {
+    constructor(configuration?: RTCConfiguration) {
+      super(configuration)
+
+      this.addEventListener('track', ({ track, streams }) => {
+        const [stream] = streams
+
+        if (track.kind === 'audio' && stream) received.push(stream.id)
+      })
+    }
+  }
+}
+
+const getReceivedAudioStreamIds = (page: Page): Promise<string[]> =>
+  page.evaluate(() => [...(window.receivedAudioStreamIds ?? [])])
+
+/** How many peer audio elements the app has created, ever. */
+const getPeerAudioElementCount = (page: Page): Promise<number> =>
+  page.evaluate(() => window.peerAudioElements?.length ?? 0)
+
+/** The ids of the streams the page's peer audio elements are playing. */
+const getPlayingStreamIds = (page: Page): Promise<string[]> =>
+  page.evaluate(() =>
+    (window.peerAudioElements ?? []).flatMap(({ srcObject }) =>
+      srcObject instanceof MediaStream ? [srcObject.id] : []
+    )
+  )
 
 const getPeerAudio = (page: Page): Promise<PeerAudioState[]> =>
   page.evaluate(() =>
@@ -157,6 +198,7 @@ const openVictim = async (browser: Browser) => {
   const context = await browser.newContext({ permissions: ['microphone'] })
 
   await context.addInitScript(recordPeerAudioElements)
+  await context.addInitScript(recordReceivedAudioStreams)
 
   return { context, page: await context.newPage() }
 }
@@ -235,6 +277,61 @@ test.describe('Audio from a peer the room does not list', () => {
       await expect(
         victim.page.getByText('Searching for peers...')
       ).toBeVisible()
+    })
+  })
+
+  // The report's own proof of concept sent no metadata at all, and noted that
+  // `null`, a string and an array behave alike.
+  const malformedStreams: [string, ForgedStreamMetadata][] = [
+    ['no metadata', undefined],
+    ['null metadata', null],
+    ['string metadata', StreamType.MICROPHONE],
+    ['array metadata', [StreamType.MICROPHONE]],
+  ]
+
+  malformedStreams.forEach(([description, metadata]) => {
+    test(`is not played at all with ${description}`, async ({ browser }) => {
+      const victim = await openVictim(browser)
+
+      contexts.push(victim.context)
+
+      const roomId = await joinPublicRoom(victim.page)
+
+      attacker = await joinAsAttacker(browser, roomId)
+
+      expect(await attacker.playTone(metadata)).toBe('running')
+
+      // The malformed stream arrives...
+      await expect
+        .poll(
+          async () => (await getReceivedAudioStreamIds(victim.page)).length,
+          { timeout: connectionTimeout }
+        )
+        .toBe(1)
+
+      // ...and then, as the control, one that names itself a microphone.
+      await attacker.playTone({ type: StreamType.MICROPHONE })
+
+      await expect
+        .poll(
+          async () => (await getReceivedAudioStreamIds(victim.page)).length,
+          { timeout: connectionTimeout }
+        )
+        .toBe(2)
+
+      const [, controlStreamId] = await getReceivedAudioStreamIds(victim.page)
+
+      // Streams are handled in the order they arrive, so once the control is
+      // playing the malformed one has been handled too...
+      await expect
+        .poll(() => getPlayingStreamIds(victim.page), {
+          timeout: connectionTimeout,
+        })
+        .toEqual([controlStreamId])
+
+      // ...and it never got an element of its own, not even one since
+      // replaced by the control's.
+      expect(await getPeerAudioElementCount(victim.page)).toBe(1)
     })
   })
 

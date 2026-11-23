@@ -47,6 +47,7 @@ export type ForgedTranscriptEntry = { [field: string]: string | number }
  */
 export type ForgedStreamMetadata =
   | { [field: string]: string }
+  | string[]
   | string
   | null
   | undefined
