@@ -54,14 +54,18 @@ const getSecureRandomIndex = (exclusiveMax: number): number => {
   const unbiasedLimit = UINT32_RANGE - (UINT32_RANGE % exclusiveMax)
   const buffer = new Uint32Array(1)
 
-  let value: number | undefined
+  let value: number
 
   // Values at or above the limit would make the lowest indices more likely
   // than the rest, so they are discarded and a fresh value is drawn.
   do {
     globalThis.crypto.getRandomValues(buffer)
-    value = buffer[0]
-  } while (value === undefined || value >= unbiasedLimit)
+    const [drawn] = buffer
+
+    if (drawn === undefined) throw new Error('getRandomValues filled no value')
+
+    value = drawn
+  } while (value >= unbiasedLimit)
 
   return value % exclusiveMax
 }
