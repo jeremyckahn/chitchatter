@@ -18,6 +18,7 @@ import {
 } from 'react'
 
 import { ErrorBoundary } from 'components/ErrorBoundary'
+import { SharedPeerNamesProvider } from 'components/PeerNameDisplay'
 import { SettingsContext } from 'contexts/SettingsContext'
 import { ShellContext } from 'contexts/ShellContext'
 import { ChatRoom } from 'core/chat/ChatRoom'
@@ -350,124 +351,126 @@ export const Shell = ({ appNeedsUpdate, children, userPeerId }: ShellProps) => {
 
   return (
     <ShellContext.Provider value={shellContextValue}>
-      <ThemeProvider theme={theme}>
-        <CssBaseline />
-        {isEnvironmentSupported ? (
-          <>
-            <UpgradeDialog appNeedsUpdate={appNeedsUpdate} />
-            <Box
-              className="Chitchatter"
-              sx={{
-                // NOTE: 100vh on mobile Safari includes the area behind the
-                // browser toolbar, which pushes the message input off screen.
-                // 100dvh tracks the visible viewport instead. 100vh stays as
-                // the fallback for browsers without dynamic viewport units.
-                height: '100vh',
-                '@supports (height: 100dvh)': {
-                  height: '100dvh',
-                },
-                display: 'flex',
-                overflow: 'hidden',
-              }}
-            >
-              <NotificationArea
-                alertSeverity={alertSeverity}
-                alertText={alertText}
-                isAlertShowing={isAlertShowing}
-                onAlertClose={handleAlertClose}
-              />
-              <ShellAppBar
-                onDrawerOpen={handleDrawerOpen}
-                onLinkButtonClick={handleLinkButtonClick}
-                isDrawerOpen={isEmbedded ? false : isDrawerOpen}
-                isPeerListOpen={isPeerListOpen}
-                title={title}
-                onPeerListClick={handlePeerListClick}
-                onRoomControlsClick={() =>
-                  setShowRoomControls(!showRoomControls)
-                }
-                setIsQRCodeDialogOpen={setIsQRCodeDialogOpen}
-                showAppBar={showAppBar}
-                isFullscreen={isFullscreen}
-                setIsFullscreen={setIsFullscreen}
-              />
-              {isEmbedded ? null : (
-                <Drawer
-                  isDrawerOpen={isDrawerOpen}
-                  onDrawerClose={handleDrawerClose}
-                />
-              )}
-              <RouteContent
-                isDrawerOpen={isEmbedded ? true : isDrawerOpen}
-                isPeerListOpen={isPeerListOpen}
-                showAppBar={showAppBar}
-              >
-                <ErrorBoundary>{children}</ErrorBoundary>
-              </RouteContent>
-              <MuiDrawer
+      <SharedPeerNamesProvider>
+        <ThemeProvider theme={theme}>
+          <CssBaseline />
+          {isEnvironmentSupported ? (
+            <>
+              <UpgradeDialog appNeedsUpdate={appNeedsUpdate} />
+              <Box
+                className="Chitchatter"
                 sx={{
-                  flexShrink: { xs: 1, sm: 0 },
-                  pointerEvents: 'none',
-                  width: peerListWidth,
-                  '& .MuiDrawer-paper': {
-                    width: peerListWidth,
-                    boxSizing: 'border-box',
+                  // NOTE: 100vh on mobile Safari includes the area behind the
+                  // browser toolbar, which pushes the message input off screen.
+                  // 100dvh tracks the visible viewport instead. 100vh stays as
+                  // the fallback for browsers without dynamic viewport units.
+                  height: '100vh',
+                  '@supports (height: 100dvh)': {
+                    height: '100dvh',
                   },
-                  ...(isPeerListOpen && {
-                    pointerEvents: 'auto',
-                  }),
+                  display: 'flex',
+                  overflow: 'hidden',
                 }}
-                variant="persistent"
-                anchor="right"
-                open={isPeerListOpen}
               >
-                <PeerList
-                  userId={userPeerId}
-                  roomId={roomId}
-                  onPeerListClose={handlePeerListClick}
-                  peerList={peerList}
-                  peerConnectionTypes={peerConnectionTypes}
-                  peerAudioChannelState={audioChannelState}
-                  peerAudioChannels={peerAudioChannels}
-                  connectionTestResults={connectionTestResults}
+                <NotificationArea
+                  alertSeverity={alertSeverity}
+                  alertText={alertText}
+                  isAlertShowing={isAlertShowing}
+                  onAlertClose={handleAlertClose}
                 />
-                {isEmbedded ? (
-                  <Typography
-                    variant="caption"
-                    sx={{
-                      padding: '1em 1em 1.75em 1em',
-                      textAlign: 'center',
-                    }}
-                  >
-                    This conversation is powered by{' '}
-                    <Link
-                      href="https://github.com/jeremyckahn/chitchatter"
-                      target="_blank"
+                <ShellAppBar
+                  onDrawerOpen={handleDrawerOpen}
+                  onLinkButtonClick={handleLinkButtonClick}
+                  isDrawerOpen={isEmbedded ? false : isDrawerOpen}
+                  isPeerListOpen={isPeerListOpen}
+                  title={title}
+                  onPeerListClick={handlePeerListClick}
+                  onRoomControlsClick={() =>
+                    setShowRoomControls(!showRoomControls)
+                  }
+                  setIsQRCodeDialogOpen={setIsQRCodeDialogOpen}
+                  showAppBar={showAppBar}
+                  isFullscreen={isFullscreen}
+                  setIsFullscreen={setIsFullscreen}
+                />
+                {isEmbedded ? null : (
+                  <Drawer
+                    isDrawerOpen={isDrawerOpen}
+                    onDrawerClose={handleDrawerClose}
+                  />
+                )}
+                <RouteContent
+                  isDrawerOpen={isEmbedded ? true : isDrawerOpen}
+                  isPeerListOpen={isPeerListOpen}
+                  showAppBar={showAppBar}
+                >
+                  <ErrorBoundary>{children}</ErrorBoundary>
+                </RouteContent>
+                <MuiDrawer
+                  sx={{
+                    flexShrink: { xs: 1, sm: 0 },
+                    pointerEvents: 'none',
+                    width: peerListWidth,
+                    '& .MuiDrawer-paper': {
+                      width: peerListWidth,
+                      boxSizing: 'border-box',
+                    },
+                    ...(isPeerListOpen && {
+                      pointerEvents: 'auto',
+                    }),
+                  }}
+                  variant="persistent"
+                  anchor="right"
+                  open={isPeerListOpen}
+                >
+                  <PeerList
+                    userId={userPeerId}
+                    roomId={roomId}
+                    onPeerListClose={handlePeerListClick}
+                    peerList={peerList}
+                    peerConnectionTypes={peerConnectionTypes}
+                    peerAudioChannelState={audioChannelState}
+                    peerAudioChannels={peerAudioChannels}
+                    connectionTestResults={connectionTestResults}
+                  />
+                  {isEmbedded ? (
+                    <Typography
+                      variant="caption"
+                      sx={{
+                        padding: '1em 1em 1.75em 1em',
+                        textAlign: 'center',
+                      }}
                     >
-                      Chitchatter
-                    </Link>
-                  </Typography>
-                ) : null}
-              </MuiDrawer>
-              <QRCodeDialog
-                isOpen={isQRCodeDialogOpen}
-                handleClose={handleQRCodeDialogClose}
-              />
-              <RoomShareDialog
-                isOpen={isRoomShareDialogOpen}
-                handleClose={handleRoomShareDialogClose}
-                roomId={roomId ?? ''}
-                password={password ?? ''}
-                showAlert={showAlert}
-                copyToClipboard={copyToClipboard}
-              />
-              <ServerConnectionFailureDialog />
-            </Box>
-          </>
-        ) : (
-          <EnvironmentUnsupportedDialog />
-        )}
-      </ThemeProvider>
+                      This conversation is powered by{' '}
+                      <Link
+                        href="https://github.com/jeremyckahn/chitchatter"
+                        target="_blank"
+                      >
+                        Chitchatter
+                      </Link>
+                    </Typography>
+                  ) : null}
+                </MuiDrawer>
+                <QRCodeDialog
+                  isOpen={isQRCodeDialogOpen}
+                  handleClose={handleQRCodeDialogClose}
+                />
+                <RoomShareDialog
+                  isOpen={isRoomShareDialogOpen}
+                  handleClose={handleRoomShareDialogClose}
+                  roomId={roomId ?? ''}
+                  password={password ?? ''}
+                  showAlert={showAlert}
+                  copyToClipboard={copyToClipboard}
+                />
+                <ServerConnectionFailureDialog />
+              </Box>
+            </>
+          ) : (
+            <EnvironmentUnsupportedDialog />
+          )}
+        </ThemeProvider>
+      </SharedPeerNamesProvider>
     </ShellContext.Provider>
   )
 }

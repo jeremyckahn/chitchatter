@@ -1,6 +1,12 @@
 import { funAnimalName } from 'fun-animal-names'
 
-import { Peer } from 'core/models/chat'
+import {
+  InlineMedia,
+  isMessageReceived,
+  Message,
+  Peer,
+  PeerVerificationState,
+} from 'core/models/chat'
 
 /**
  * The stable, generated nickname for a user id. Every user has one, whether or
@@ -65,6 +71,40 @@ export interface NameResolutionContext {
   peers: readonly Peer[]
 }
 
+export interface SharedPeerNameContext extends NameResolutionContext {
+  /**
+   * Messages still in the room's transcript. Only authors whose key was proven
+   * (see {@link isMessageAuthorKeyProven}) are counted, and only by their
+   * generated name — once someone leaves, their messages no longer show a
+   * custom username.
+   */
+  messages: readonly (Message | InlineMedia)[]
+}
+
+/**
+ * Whether the sender of `message` has proven it holds the key behind
+ * `message.authorId`: a live (non-relayed) message from a VERIFIED peer, or
+ * one of this client's own messages (`authorId === selfUserId` with no
+ * verification verdict and not relayed).
+ *
+ * A relayed entry (transcript backfill) can name any author id with no
+ * signature behind it, and an unverified, still-verifying, or verdict-less
+ * remote message has not proven its key.
+ */
+export const isMessageAuthorKeyProven = (
+  message: Message | InlineMedia,
+  selfUserId: string
+): boolean => {
+  if (!isMessageReceived(message)) return message.authorId === selfUserId
+  if (message.isRelayed === true) return false
+
+  return (
+    message.authorVerificationState === PeerVerificationState.VERIFIED ||
+    (message.authorVerificationState === undefined &&
+      message.authorId === selfUserId)
+  )
+}
+
 export const isPeerSelf = (
   userId: string,
   { selfUserId }: NameResolutionContext
@@ -110,28 +150,38 @@ const normalizeNameForComparison = (name: string): string =>
     .trim()
 
 /**
- * The user ids, among this user and the peers in `context`, whose name is
- * shared with at least one *other* user id.
+ * The user ids, among this user, the peers in `context`, and the proven
+ * authors of `messages`, whose name is shared with at least one *other* user
+ * id.
  *
  * A shared name means the name alone cannot say who is who: either an
  * accidental collision or someone deliberately posing as another user. Each
- * user is known by their generated name and, if they chose one, their custom
- * username, and a match between any two of those counts. That catches a peer
- * that brute-forced a key to get someone's generated name, one that simply
- * typed in someone's custom username, and one that took someone's generated
- * name as its custom username. Names are compared loosely (see
+ * active user is known by their generated name and, if they chose one, their
+ * custom username; a proven author from `messages` who has since left is
+ * compared only by their generated name, because their messages no longer show
+ * a custom username once they leave. A match between any two of those counts.
+ * That catches a peer that brute-forced a key to get someone's generated name
+ * (including after that person left), one that simply typed in someone's
+ * custom username, and one that took someone's generated name as its custom
+ * username. Names are compared loosely (see
  * {@link normalizeNameForComparison}), so `Alice`, ` alice ` and `Alice` with
  * a zero-width space inside it all match.
  *
- * The same user id appearing twice (one account in two tabs) is the same user,
- * and is not a collision, even if each copy reports a different custom
- * username.
+ * Relayed, unverified and still-verifying message authors do not count: anyone
+ * can claim an arbitrary author id in a relayed transcript, so counting them
+ * would let an attacker flood the room with forged names and make the warning
+ * meaningless.
+ *
+ * The same user id appearing twice (one account in two tabs, or both as a peer
+ * and as a past message author) is the same user, and is not a collision, even
+ * if each copy reports a different custom username.
  */
 export const findUserIdsSharingPeerName = ({
   selfUserId,
   selfCustomUsername,
   peers,
-}: NameResolutionContext): ReadonlySet<string> => {
+  messages,
+}: SharedPeerNameContext): ReadonlySet<string> => {
   const userIdsByName = new Map<string, Set<string>>()
 
   const addName = (name: string, userId: string) => {
@@ -153,6 +203,16 @@ export const findUserIdsSharingPeerName = ({
   for (const { userId, customUsername } of users) {
     addName(getPeerName(userId), userId)
     addName(customUsername, userId)
+  }
+
+  const seenMessageAuthorIds = new Set<string>()
+
+  for (const message of messages) {
+    if (!isMessageAuthorKeyProven(message, selfUserId)) continue
+    if (seenMessageAuthorIds.has(message.authorId)) continue
+
+    seenMessageAuthorIds.add(message.authorId)
+    addName(getPeerName(message.authorId), message.authorId)
   }
 
   const userIdsSharingName = new Set<string>()
