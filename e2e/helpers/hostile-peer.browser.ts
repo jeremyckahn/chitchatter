@@ -307,6 +307,8 @@ export const downloadAsFreshClient = async ({
     doSave: false,
   })
 
+  if (!file) throw new Error(`Downloading ${magnetURI} returned no files`)
+
   const decoder = new TextDecoder()
   let text = ''
 

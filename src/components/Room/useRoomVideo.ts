@@ -57,8 +57,9 @@ export function useRoomVideo({ peerRoom }: UseRoomVideoConfig) {
 
       setVideoDevices(newVideoDevices)
 
-      if (newVideoDevices.length > 0 && !selfVideoStream) {
-        const [firstVideoDevice] = newVideoDevices
+      const [firstVideoDevice] = newVideoDevices
+
+      if (firstVideoDevice && !selfVideoStream) {
         const newSelfStream = await navigator.mediaDevices.getUserMedia({
           audio: false,
           video: {

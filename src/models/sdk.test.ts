@@ -3,6 +3,8 @@ import { afterEach, beforeEach, vi } from 'vitest'
 import { ColorMode } from 'core/models/settings'
 import { QueryParamKeys } from 'models/shell'
 
+import { itemAt } from 'test-utils/itemAt'
+
 import {
   getParentFrameOrigin,
   getSdkConfigFromMessage,
@@ -272,7 +274,7 @@ describe('getSdkConfigFromMessage', () => {
     ).toEqual({})
 
     expect(warnSpy).toHaveBeenCalledTimes(1)
-    const warning = warnSpy.mock.calls[0].join(' ')
+    const warning = itemAt(warnSpy.mock.calls, 0).join(' ')
 
     expect(warning).toContain('colorMode (invalid value)')
     expect(warning).toContain('publicKey (key not allowed)')

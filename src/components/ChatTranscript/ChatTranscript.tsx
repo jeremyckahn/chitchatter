@@ -40,9 +40,10 @@ export const ChatTranscript = ({
     const { scrollHeight, clientHeight, scrollTop, children } = boxEl
     const scrollTopMax = scrollHeight - clientHeight
 
-    if (children.length === 0) return
-
     const lastChild = children[children.length - 1]
+
+    if (!lastChild) return
+
     const lastChildHeight = lastChild.clientHeight
     const previousScrollTopMax = scrollTopMax - lastChildHeight
 

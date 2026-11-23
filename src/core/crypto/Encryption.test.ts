@@ -1,5 +1,7 @@
 import { describe, it, expect } from 'vitest'
 
+import { itemAt } from 'test-utils/itemAt'
+
 import { AllowedKeyType, EncryptionService } from './Encryption'
 
 describe('EncryptionService', () => {
@@ -140,7 +142,8 @@ describe('EncryptionService', () => {
       // Modified signature should fail verification
       const modifiedSignature = new Uint8Array(signature)
 
-      modifiedSignature[0] ^= 1 // Corrupt first byte
+      // Corrupt the first byte
+      modifiedSignature[0] = itemAt(modifiedSignature, 0) ^ 1
       const isVerifiedCorrupted = await service.verifySignature(
         keyPair.publicKey,
         modifiedSignature.buffer,

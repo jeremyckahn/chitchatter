@@ -44,8 +44,14 @@ must report zero errors. `tsconfig.json` has `strict: true` — which brings
 `noImplicitAny`, `strictNullChecks`, `strictFunctionTypes`,
 `strictPropertyInitialization` and `useUnknownInCatchVariables` — plus
 `noFallthroughCasesInSwitch`, `noImplicitReturns`, `noImplicitOverride`,
-`noPropertyAccessFromIndexSignature`, `noUnusedLocals` and
-`noUnusedParameters`.
+`noPropertyAccessFromIndexSignature`, `noUncheckedIndexedAccess`,
+`noUnusedLocals` and `noUnusedParameters`.
+
+With `noUncheckedIndexedAccess`, reading `items[i]` gives `T | undefined`.
+Handle the missing case (a guard, a default in a destructuring, or a narrower
+type such as a tuple) rather than asserting it away. In tests, read with
+`itemAt` from `src/test-utils/itemAt.ts`, which fails the test when the item
+is missing.
 
 **Do not weaken any of these.** If a change needs a flag relaxed, the change is
 wrong.
@@ -55,10 +61,9 @@ wrong.
 Ratcheting strictness up is welcome and tracked. Measured error counts as of
 this writing, so you know what you are signing up for:
 
-| Flag                         | Errors if enabled | Notes                                                                |
-| ---------------------------- | ----------------- | -------------------------------------------------------------------- |
-| `noUncheckedIndexedAccess`   | 55                | 16 production (3 in `src/core`), 39 in tests. The highest-value one. |
-| `exactOptionalPropertyTypes` | 24                | Mostly MUI props. Lowest priority.                                   |
+| Flag                         | Errors if enabled | Notes                              |
+| ---------------------------- | ----------------- | ---------------------------------- |
+| `exactOptionalPropertyTypes` | 24                | Mostly MUI props. Lowest priority. |
 
 Re-measure before quoting these — `npx tsc --noEmit --<flag>` — rather than
 trusting the table.

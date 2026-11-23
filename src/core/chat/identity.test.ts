@@ -13,6 +13,7 @@ import {
 } from 'core/chat/identity'
 import { encryption, EncryptionService } from 'core/crypto/Encryption'
 import { PeerVerificationState } from 'core/models/chat'
+import { itemAt } from 'test-utils/itemAt'
 
 const statement: IdentityStatement = {
   roomId: 'room-1',
@@ -135,7 +136,7 @@ describe('signIdentityChallenge / verifyIdentityChallenge', () => {
       EncryptionService.base64ToArrayBuffer(await sign())
     )
 
-    tampered[0] = tampered[0] ^ 0xff
+    tampered[0] = itemAt(tampered, 0) ^ 0xff
 
     await expect(
       verify(EncryptionService.arrayBufferToBase64(tampered.buffer))
@@ -184,7 +185,7 @@ describe('parsePeerPublicKey', () => {
 })
 
 describe('deriveUserId', () => {
-  let keyPairs: CryptoKeyPair[]
+  let keyPairs: [CryptoKeyPair, CryptoKeyPair]
 
   beforeAll(async () => {
     keyPairs = await Promise.all([

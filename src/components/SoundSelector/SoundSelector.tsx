@@ -1,6 +1,6 @@
 import React, { useContext } from 'react'
 import { Autocomplete, TextField } from '@mui/material'
-import { soundOptions } from 'config/soundNames'
+import { DEFAULT_SOUND, soundOptions } from 'config/soundNames'
 import { SettingsContext } from 'contexts/SettingsContext'
 
 export const handleChange = async (
@@ -8,7 +8,7 @@ export const handleChange = async (
   newValue: { label: string; value: string } | null,
   updateUserSettings: Function
 ) => {
-  const newSound = newValue?.value || soundOptions[0].value
+  const newSound = newValue?.value || DEFAULT_SOUND
 
   // Play the selected sound immediately
   if (newSound) {

@@ -172,7 +172,7 @@ describe('useRoomFileShare', () => {
     ;(liveList as unknown as File[]).length = 0
 
     expect(result.current.sharedFiles?.length).toBe(1)
-    expect(result.current.sharedFiles?.[0].name).toBe('hello.txt')
+    expect(result.current.sharedFiles?.[0]?.name).toBe('hello.txt')
   })
 
   test('releases the stop control when the room stops offering', async () => {

@@ -40,7 +40,9 @@ describe('RoomNameGenerator', () => {
 
       expect(parts).toHaveLength(5)
 
-      const [adjective1, noun1, adjective2, noun2, suffix] = parts
+      // A missing part defaults to '', which no word list contains, so it fails
+      const [adjective1 = '', noun1 = '', adjective2 = '', noun2 = '', suffix] =
+        parts
 
       expect(adjectives.has(adjective1)).toBe(true)
       expect(nouns.has(noun1)).toBe(true)
@@ -95,7 +97,9 @@ describe('RoomNameGenerator', () => {
         const name = RoomNameGenerator.generate(RoomNameType.PASSPHRASE)
 
         expect(rejectedValueServed).toBe(true)
-        expect(adjectives.has(name.split('-')[0])).toBe(true)
+        const [firstWord = ''] = name.split('-')
+
+        expect(adjectives.has(firstWord)).toBe(true)
         // The rejected draw is retried (1 extra call), on top of one draw per word.
         const uint32Calls = getRandomValues.mock.calls.filter(
           ([array]) => array instanceof Uint32Array

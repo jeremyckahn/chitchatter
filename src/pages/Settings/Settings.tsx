@@ -119,7 +119,11 @@ export const Settings = ({ userId }: SettingsProps) => {
     }
   }
 
-  const handleImportSettingsClick = async ([[, file]]: Result[]) => {
+  const handleImportSettingsClick = async ([result]: Result[]) => {
+    if (!result) return
+
+    const [, file] = result
+
     try {
       const userSettings = await settings.importSettings(file)
 

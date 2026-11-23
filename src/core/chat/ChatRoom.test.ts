@@ -43,6 +43,7 @@ import {
   DataPayload,
   PeerHookType,
 } from 'core/transport/types'
+import { itemAt } from 'test-utils/itemAt'
 
 /**
  * These tests run two or three real ChatRooms against each other over
@@ -50,10 +51,13 @@ import {
  * works at all is the proof the core is headless.
  */
 
-let keyPairs: CryptoKeyPair[]
+/** Which of the three generated identities a test client uses. */
+type ClientIndex = 0 | 1 | 2
+
+let keyPairs: [CryptoKeyPair, CryptoKeyPair, CryptoKeyPair]
 
 /** The user id each key pair derives, as a real client's would be. */
-let userIds: string[]
+let userIds: [string, string, string]
 
 beforeAll(async () => {
   // Key generation is the slow part, so generate once and share.
@@ -62,9 +66,14 @@ beforeAll(async () => {
     encryption.generateKeyPair(),
     encryption.generateKeyPair(),
   ])
-  userIds = await Promise.all(
-    keyPairs.map(({ publicKey }) => deriveUserIdFromKey(encryption, publicKey))
-  )
+  const deriveUserId = ({ publicKey }: CryptoKeyPair) =>
+    deriveUserIdFromKey(encryption, publicKey)
+
+  userIds = await Promise.all([
+    deriveUserId(keyPairs[0]),
+    deriveUserId(keyPairs[1]),
+    deriveUserId(keyPairs[2]),
+  ])
 }, 30_000)
 
 const makeIds = (): IdAdapter => {
@@ -106,7 +115,7 @@ interface Client {
 
 const createClient = (
   network: ReturnType<typeof createInMemoryNetwork>,
-  index: number,
+  index: ClientIndex,
   {
     password,
     customUsername = '',
@@ -179,7 +188,7 @@ const createClient = (
  */
 const createDirectMessageRoom = (
   client: Client,
-  index: number,
+  index: ClientIndex,
   targetPeerId: string
 ) =>
   new ChatRoom({
@@ -384,7 +393,7 @@ describe('ChatRoom', () => {
         text: 'hello bob',
         authorId: userIds[0],
       })
-      expect(isMessageReceived(received[0])).toBe(true)
+      expect(isMessageReceived(itemAt(received, 0))).toBe(true)
     })
 
     it('emits MESSAGE_RECEIVED exactly once, alongside MESSAGE_LOG_CHANGE', async () => {
@@ -403,7 +412,7 @@ describe('ChatRoom', () => {
       await settle()
 
       expect(onReceived).toHaveBeenCalledTimes(1)
-      expect(onReceived.mock.calls[0][0].peerId).toBe('peer-0')
+      expect(itemAt(onReceived.mock.calls, 0)[0].peerId).toBe('peer-0')
       expect(onLogChange).toHaveBeenCalled()
     })
 
@@ -509,7 +518,7 @@ describe('ChatRoom', () => {
       )
 
       expect(verifications).toEqual([PeerVerificationState.UNVERIFIED])
-      expect(alice.chatRoom.getPeers()[0].verificationState).toBe(
+      expect(itemAt(alice.chatRoom.getPeers(), 0).verificationState).toBe(
         PeerVerificationState.UNVERIFIED
       )
       // The warning is a documented diagnostic; an e2e test asserts on it.
@@ -532,7 +541,7 @@ describe('ChatRoom', () => {
       await settle()
 
       expect(onRename).toHaveBeenCalledTimes(1)
-      expect(onRename.mock.calls[0][0]).toEqual({
+      expect(itemAt(onRename.mock.calls, 0)[0]).toEqual({
         peerId: 'peer-1',
         previousDisplayName: `Bob (${getPeerName(userIds[1])})`,
         displayName: `Roberta (${getPeerName(userIds[1])})`,
@@ -576,8 +585,10 @@ describe('ChatRoom', () => {
       // Resolved from the peer found by `peerId`. Looking the previous name up
       // by the *incoming* user id finds nobody, so the alert named the new
       // identity on both sides of "is now".
-      expect(renames[0].previousDisplayName).toBe(getPeerName(userIds[1]))
-      expect(renames[0].displayName).toBe(getPeerName(renamedUserId))
+      expect(itemAt(renames, 0).previousDisplayName).toBe(
+        getPeerName(userIds[1])
+      )
+      expect(itemAt(renames, 0).displayName).toBe(getPeerName(renamedUserId))
     })
 
     it('removes a peer and reports it on leave', async () => {
@@ -596,8 +607,8 @@ describe('ChatRoom', () => {
       await settle()
 
       expect(alice.chatRoom.getPeers()).toHaveLength(0)
-      expect(onLeave.mock.calls[0][0].peerId).toBe('peer-1')
-      expect(onLeave.mock.calls[0][0].peer?.userId).toBe(userIds[1])
+      expect(itemAt(onLeave.mock.calls, 0)[0].peerId).toBe('peer-1')
+      expect(itemAt(onLeave.mock.calls, 0)[0].peer?.userId).toBe(userIds[1])
     })
   })
 
@@ -623,11 +634,11 @@ describe('ChatRoom', () => {
         'alice to challenge bob'
       )
 
-      expect(alice.chatRoom.getPeers()[0].verificationState).toBe(
+      expect(itemAt(alice.chatRoom.getPeers(), 0).verificationState).toBe(
         PeerVerificationState.VERIFYING
       )
 
-      const [{ challenge }] = bob.challengesReceived
+      const { challenge } = itemAt(bob.challengesReceived, 0)
       const identitySignatureBase64 = await signIdentityChallenge({
         encryptionService: encryption,
         privateKey: keyPairs[1].privateKey,
@@ -642,7 +653,7 @@ describe('ChatRoom', () => {
       await bob.prove({ challenge, identitySignatureBase64 }, 'peer-0')
       await waitFor(
         () =>
-          alice.chatRoom.getPeers()[0].verificationState ===
+          itemAt(alice.chatRoom.getPeers(), 0).verificationState ===
           PeerVerificationState.VERIFIED,
         'bob to be verified'
       )
@@ -666,7 +677,7 @@ describe('ChatRoom', () => {
       await settle()
 
       expect(challenges).not.toHaveBeenCalled()
-      expect(alice.chatRoom.getPeers()[0].verificationState).toBe(
+      expect(itemAt(alice.chatRoom.getPeers(), 0).verificationState).toBe(
         PeerVerificationState.VERIFIED
       )
     })
@@ -687,7 +698,7 @@ describe('ChatRoom', () => {
         "mallory to overhear alice's announcement"
       )
 
-      const [{ data: overheard }] = mallory.metadataReceived
+      const { data: overheard } = itemAt(mallory.metadataReceived, 0)
 
       expect(overheard).not.toHaveProperty('identitySignatureBase64')
 
@@ -715,7 +726,7 @@ describe('ChatRoom', () => {
 
       await waitFor(
         () =>
-          carol.chatRoom.getPeers()[0].verificationState ===
+          itemAt(carol.chatRoom.getPeers(), 0).verificationState ===
           PeerVerificationState.UNVERIFIED,
         'the unanswered challenge to time out',
         shortTimeout * 3
@@ -892,7 +903,7 @@ describe('ChatRoom', () => {
       )
 
       // The display name a host renders is Mallory's, not Alice's.
-      expect(bob.chatRoom.getMessageLog()[0].authorId).toBe(userIds[2])
+      expect(itemAt(bob.chatRoom.getMessageLog(), 0).authorId).toBe(userIds[2])
       expect(
         bob.chatRoom
           .getPeers()
@@ -925,7 +936,7 @@ describe('ChatRoom', () => {
         'bob to be verified'
       )
 
-      const [{ challenge }] = bob.challengesReceived
+      const { challenge } = itemAt(bob.challengesReceived, 0)
       const replay = await signIdentityChallenge({
         encryptionService: encryption,
         privateKey: keyPairs[1].privateKey,
@@ -978,7 +989,7 @@ describe('ChatRoom', () => {
         'the second challenge'
       )
 
-      const [first] = bob.challengesReceived
+      const first = itemAt(bob.challengesReceived, 0)
       const staleAnswer = await signIdentityChallenge({
         encryptionService: encryption,
         privateKey: keyPairs[1].privateKey,
@@ -996,7 +1007,7 @@ describe('ChatRoom', () => {
       )
       await settle()
 
-      expect(alice.chatRoom.getPeers()[0]).toMatchObject({
+      expect(itemAt(alice.chatRoom.getPeers(), 0)).toMatchObject({
         userId: userIds[2],
         verificationState: PeerVerificationState.VERIFYING,
       })
@@ -1132,7 +1143,7 @@ describe('ChatRoom', () => {
 
     const announceAs = async (
       peer: ReturnType<typeof createRawPeer>,
-      keyIndex: number,
+      keyIndex: ClientIndex,
       userId = userIds[keyIndex]
     ) =>
       peer.announce({
@@ -1173,7 +1184,7 @@ describe('ChatRoom', () => {
         'the message to be delivered'
       )
 
-      expect(bob.chatRoom.getMessageLog()[0]).not.toHaveProperty(
+      expect(itemAt(bob.chatRoom.getMessageLog(), 0)).not.toHaveProperty(
         'authorVerificationState'
       )
     })
@@ -1199,7 +1210,7 @@ describe('ChatRoom', () => {
         PeerVerificationState.VERIFYING
       )
 
-      const [{ challenge }] = bob.challengesReceived
+      const { challenge } = itemAt(bob.challengesReceived, 0)
 
       await bob.prove(
         {
@@ -1269,7 +1280,9 @@ describe('ChatRoom', () => {
         'the message to arrive'
       )
 
-      expect(alice.chatRoom.getMessageLog()[0].authorId).toBe(userIds[1])
+      expect(itemAt(alice.chatRoom.getMessageLog(), 0).authorId).toBe(
+        userIds[1]
+      )
       expect(verificationOf(alice, 'replayed')).toBe(
         PeerVerificationState.VERIFYING
       )
@@ -1606,14 +1619,14 @@ describe('ChatRoom', () => {
       alice.chatRoom.notifyTyping()
 
       await waitFor(
-        () => bob.chatRoom.getPeers()[0].isTypingGroupMessage,
+        () => itemAt(bob.chatRoom.getPeers(), 0).isTypingGroupMessage,
         'bob to see alice typing'
       )
 
       await alice.chatRoom.sendMessage('done typing')
 
       await waitFor(
-        () => !bob.chatRoom.getPeers()[0].isTypingGroupMessage,
+        () => !itemAt(bob.chatRoom.getPeers(), 0).isTypingGroupMessage,
         'the typing flag to clear'
       )
     })
@@ -1635,7 +1648,7 @@ describe('ChatRoom', () => {
       await settle()
 
       expect(carol.chatRoom.getMessageLog()).toHaveLength(1)
-      expect(carol.chatRoom.getMessageLog()[0]).toMatchObject({
+      expect(itemAt(carol.chatRoom.getMessageLog(), 0)).toMatchObject({
         text: 'said before carol arrived',
       })
     })
@@ -1684,7 +1697,9 @@ describe('ChatRoom', () => {
       await settle()
 
       expect(alice.chatRoom.getMessageLog()).toHaveLength(1)
-      expect(alice.chatRoom.getMessageLog()[0]).toMatchObject({ text: 'mine' })
+      expect(itemAt(alice.chatRoom.getMessageLog(), 0)).toMatchObject({
+        text: 'mine',
+      })
     })
 
     it('drops transcript inline media that carries no usable key, keeping the rest', async () => {
@@ -1742,8 +1757,8 @@ describe('ChatRoom', () => {
         fileKey: offeredKey(alice),
       }
 
-      expect(alice.chatRoom.getMessageLog()[0]).toMatchObject(expected)
-      expect(bob.chatRoom.getMessageLog()[0]).toMatchObject(expected)
+      expect(itemAt(alice.chatRoom.getMessageLog(), 0)).toMatchObject(expected)
+      expect(itemAt(bob.chatRoom.getMessageLog(), 0)).toMatchObject(expected)
     })
 
     it('hands the key to a peer joining a public room, via backfill', async () => {
@@ -1763,7 +1778,7 @@ describe('ChatRoom', () => {
         'carol to receive the backfilled transcript'
       )
 
-      expect(carol.chatRoom.getMessageLog()[0]).toMatchObject({
+      expect(itemAt(carol.chatRoom.getMessageLog(), 0)).toMatchObject({
         magnetURI: magnetFor('peer-0'),
         fileKey: offeredKey(alice),
       })
@@ -1817,7 +1832,7 @@ describe('ChatRoom', () => {
 
       expect(alice.chatRoom.getPeers()).toHaveLength(1)
       expect(bob.chatRoom.getPeers()).toHaveLength(1)
-      expect(alice.chatRoom.getPeers()[0].verificationState).toBe(
+      expect(itemAt(alice.chatRoom.getPeers(), 0).verificationState).toBe(
         PeerVerificationState.VERIFIED
       )
     })
@@ -1839,7 +1854,7 @@ describe('ChatRoom', () => {
         'the backfilled transcript'
       )
 
-      expect(bob.chatRoom.getMessageLog()[0]).toMatchObject({
+      expect(itemAt(bob.chatRoom.getMessageLog(), 0)).toMatchObject({
         text: 'said before anyone could hear it',
       })
     })
@@ -1868,7 +1883,7 @@ describe('ChatRoom', () => {
         'bob to receive the backfilled message'
       )
 
-      expect(bob.chatRoom.getMessageLog()[0]).toMatchObject({
+      expect(itemAt(bob.chatRoom.getMessageLog(), 0)).toMatchObject({
         text: 'hello, nobody',
         authorId: userIds[0],
       })
@@ -2191,7 +2206,7 @@ describe('ChatRoom', () => {
           'the backfill to land'
         )
 
-        expect(alice.chatRoom.getMessageLog()[0]).not.toHaveProperty(
+        expect(itemAt(alice.chatRoom.getMessageLog(), 0)).not.toHaveProperty(
           'authorVerificationState'
         )
       })
@@ -2286,7 +2301,7 @@ describe('ChatRoom', () => {
         ])
         await settle()
 
-        const [entry] = alice.chatRoom.getMessageLog()
+        const entry = itemAt(alice.chatRoom.getMessageLog(), 0)
 
         expect(isMessageReceived(entry)).toBe(true)
 
@@ -2436,7 +2451,9 @@ describe('ChatRoom', () => {
         await settle()
 
         expect(alice.chatRoom.getMessageLog()).toHaveLength(entryLimit)
-        expect(alice.chatRoom.getMessageLog()[0].id).not.toBe('names-the-file')
+        expect(itemAt(alice.chatRoom.getMessageLog(), 0).id).not.toBe(
+          'names-the-file'
+        )
         expect(alice.fileTransfer.rescind).not.toHaveBeenCalled()
         expect(alice.chatRoom.getSelfFileOfferMagnetUri()).toBe(victimsMagnet)
       })
@@ -2723,7 +2740,7 @@ describe('ChatRoom', () => {
           'the message to arrive'
         )
 
-        expect(alice.chatRoom.getMessageLog()[0]).toMatchObject({
+        expect(itemAt(alice.chatRoom.getMessageLog(), 0)).toMatchObject({
           id: 'spoof',
           authorId: userIds[2],
         })
@@ -2751,7 +2768,7 @@ describe('ChatRoom', () => {
           'the media to arrive'
         )
 
-        expect(alice.chatRoom.getMessageLog()[0]).toMatchObject({
+        expect(itemAt(alice.chatRoom.getMessageLog(), 0)).toMatchObject({
           id: 'spoofed-photo',
           authorId: userIds[2],
         })
@@ -2779,7 +2796,7 @@ describe('ChatRoom', () => {
           'the held message to be delivered'
         )
 
-        expect(alice.chatRoom.getMessageLog()[0]).toMatchObject({
+        expect(itemAt(alice.chatRoom.getMessageLog(), 0)).toMatchObject({
           id: 'early',
           authorId: userIds[2],
         })
@@ -2944,7 +2961,7 @@ describe('ChatRoom', () => {
         fileKey,
         isAllInlineMedia: false,
       })
-      expect(bob.chatRoom.getPeers()[0].offeredFile).toEqual({
+      expect(itemAt(bob.chatRoom.getPeers(), 0).offeredFile).toEqual({
         magnetURI: magnetFor('peer-0'),
         fileKey,
       })
@@ -3047,7 +3064,7 @@ describe('ChatRoom', () => {
       await settle()
 
       expect(bob.chatRoom.getFileOffers()).toEqual({})
-      expect(bob.chatRoom.getPeers()[0].offeredFile).toBeNull()
+      expect(itemAt(bob.chatRoom.getPeers(), 0).offeredFile).toBeNull()
       expect(alice.fileTransfer.rescind).toHaveBeenCalledWith(
         magnetFor('peer-0')
       )
@@ -3611,7 +3628,7 @@ describe('ChatRoom', () => {
         magnetFor('peer-0')
       )
       expect(onError).toHaveBeenCalledTimes(1)
-      expect(onError.mock.calls[0][0]).toMatchObject({
+      expect(itemAt(onError.mock.calls, 0)[0]).toMatchObject({
         context: ChatRoomErrorContext.RESCIND_FILE_OFFER,
       })
     })
@@ -3643,7 +3660,7 @@ describe('ChatRoom', () => {
         magnetFor('peer-0')
       )
       expect(onError).toHaveBeenCalledTimes(1)
-      expect(onError.mock.calls[0][0]).toMatchObject({
+      expect(itemAt(onError.mock.calls, 0)[0]).toMatchObject({
         context: ChatRoomErrorContext.RESCIND_FILE_OFFER,
         error: expect.objectContaining({ message: 'send failed' }),
       })
@@ -3674,7 +3691,7 @@ describe('ChatRoom', () => {
       // console warning; in the Node host this core is built for, it ends the
       // process by default.
       expect(onError).toHaveBeenCalledTimes(1)
-      expect(onError.mock.calls[0][0]).toMatchObject({
+      expect(itemAt(onError.mock.calls, 0)[0]).toMatchObject({
         context: ChatRoomErrorContext.STOP_SEEDING,
       })
     })
@@ -3796,7 +3813,7 @@ describe('ChatRoom', () => {
       bobToAlice.notifyTyping()
       await settle()
 
-      expect(aliceToBob.getPeers()[0].isTypingDirectMessage).toBe(true)
+      expect(itemAt(aliceToBob.getPeers(), 0).isTypingDirectMessage).toBe(true)
 
       bob.transport.leaveRoom()
       await settle()
@@ -3861,7 +3878,7 @@ describe('ChatRoom', () => {
       bobAgainToAlice.notifyTyping()
       await settle()
 
-      expect(aliceToBob.getPeers()[0].isTypingDirectMessage).toBe(true)
+      expect(itemAt(aliceToBob.getPeers(), 0).isTypingDirectMessage).toBe(true)
     })
   })
 
@@ -4023,10 +4040,12 @@ describe('ChatRoom', () => {
       ).resolves.toBeUndefined()
 
       expect(onError).toHaveBeenCalledTimes(1)
-      expect(onError.mock.calls[0][0]).toMatchObject({
+      expect(itemAt(onError.mock.calls, 0)[0]).toMatchObject({
         context: ChatRoomErrorContext.SEND_MESSAGE,
       })
-      expect(onError.mock.calls[0][0].error.message).toBe('transport is gone')
+      expect(itemAt(onError.mock.calls, 0)[0].error.message).toBe(
+        'transport is gone'
+      )
       // The sending flag is released even on failure, so the UI does not wedge.
       expect(chatRoom.getIsMessageSending()).toBe(false)
     })

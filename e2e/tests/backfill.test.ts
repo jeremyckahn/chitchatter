@@ -1,6 +1,7 @@
 import { BrowserContext, Locator, Page, expect, test } from '@playwright/test'
 
 import { sendMessage } from '../helpers/test-helpers'
+import { itemAt } from '../../src/test-utils/itemAt'
 
 /**
  * The history a newcomer to a public room is handed by a peer already there.
@@ -55,7 +56,9 @@ test.describe('Backfilled history', () => {
       pages.push(await context.newPage())
     }
 
-    const [alice, carol, bob] = pages
+    const alice = itemAt(pages, 0)
+    const carol = itemAt(pages, 1)
+    const bob = itemAt(pages, 2)
 
     await alice.goto('/')
     await alice.getByRole('button', { name: /join public room/i }).click()

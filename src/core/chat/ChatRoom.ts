@@ -1395,7 +1395,7 @@ export class ChatRoom extends EventTarget {
     } else {
       const withdrawn = this.fileOffers[peerId]
 
-      if (this.shouldStopSeedingOffer(peerId, withdrawn)) {
+      if (withdrawn && this.shouldStopSeedingOffer(peerId, withdrawn)) {
         this.stopSeeding(withdrawn.magnetURI)
       }
 
@@ -1431,7 +1431,7 @@ export class ChatRoom extends EventTarget {
    */
   private shouldStopSeedingOffer = (
     peerId: string,
-    offer: FileOfferMetadata | undefined
+    offer: FileOfferMetadata
   ) => {
     // A direct-message room cannot tell which torrents its peer's offer made
     // this client seed: downloads happen outside the core, and the file
@@ -1546,7 +1546,7 @@ export class ChatRoom extends EventTarget {
     const peer = findPeer(this.peers, peerId)
     const offer = this.fileOffers[peerId]
 
-    if (this.shouldStopSeedingOffer(peerId, offer)) {
+    if (offer && this.shouldStopSeedingOffer(peerId, offer)) {
       this.stopSeeding(offer.magnetURI)
     }
 
