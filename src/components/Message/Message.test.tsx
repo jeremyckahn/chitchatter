@@ -1,17 +1,25 @@
-import { render, screen } from '@testing-library/react'
+import { act, render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { SettingsContext } from 'contexts/SettingsContext'
 import { ShellContext } from 'contexts/ShellContext'
 import { funAnimalName } from 'fun-animal-names'
 import { useContext } from 'react'
 
+import { createPlatformAdapters } from 'core/adapters/noop'
+import { ChatRoom } from 'core/chat/ChatRoom'
+import { deriveUserIdFromKey } from 'core/chat/identity'
 import { createPeer } from 'core/chat/peers'
-import { encryption } from 'core/crypto/Encryption'
+import { encryption, EncryptionService } from 'core/crypto/Encryption'
+import {
+  createInMemoryNetwork,
+  InMemoryTransport,
+} from 'core/transport/InMemoryTransport'
 import { getPeerFingerprint, getPeerName } from 'core/names/peerNames'
 import { findCollidingUserIds } from 'test-utils/peerNames'
 import {
   peerFingerprintLabel,
   sharedPeerNameLabel,
+  SharedPeerNamesProvider,
 } from 'components/PeerNameDisplay'
 
 import {
@@ -183,13 +191,21 @@ describe('Message', () => {
       const shellDefaults = useContext(ShellContext)
 
       return (
-        <ShellContext.Provider value={{ ...shellDefaults, peerList }}>
-          <MockMessage
-            message={{ ...mockReceivedMessage, authorId: authorUserId }}
-            userId={mockUserId}
-            showAuthor={true}
-          />
-        </ShellContext.Provider>
+        <SettingsContext.Provider value={userSettingsStub}>
+          <ShellContext.Provider value={{ ...shellDefaults, peerList }}>
+            <SharedPeerNamesProvider>
+              <Message
+                message={{
+                  ...mockReceivedMessage,
+                  authorId: authorUserId,
+                  authorVerificationState: PeerVerificationState.VERIFIED,
+                }}
+                userId={mockUserId}
+                showAuthor={true}
+              />
+            </SharedPeerNamesProvider>
+          </ShellContext.Provider>
+        </SettingsContext.Provider>
       )
     }
 
@@ -238,6 +254,7 @@ describe('Message', () => {
         { authorVerificationState: PeerVerificationState.VERIFYING },
       ],
       ['the author a relayed message names', { isRelayed: true }],
+      ['a remote author with no verification verdict', {}],
     ])('does not offer the fingerprint of %s', (_, overrides) => {
       // Regression: anyone can claim a user id, so showing its fingerprint for
       // a sender that has not proven the key lent an impostor its weight.
@@ -268,6 +285,359 @@ describe('Message', () => {
       expect(await screen.findByRole('tooltip')).toHaveTextContent(
         `${peerFingerprintLabel}: ${getPeerFingerprint(authorUserId)}`
       )
+    })
+
+    const createLiveRoom = async ({
+      network,
+      peerId,
+      customUsername = '',
+      encryptionService = encryption,
+    }: {
+      network: ReturnType<typeof createInMemoryNetwork>
+      peerId: string
+      customUsername?: string
+      encryptionService?: EncryptionService
+    }) => {
+      const keyPair = await encryption.generateKeyPair()
+      const userId = await deriveUserIdFromKey(encryption, keyPair.publicKey)
+      let nextId = 0
+      const transport = new InMemoryTransport(network, peerId)
+      const room = new ChatRoom({
+        roomId: 'room-667',
+        userId,
+        customUsername,
+        publicKey: keyPair.publicKey,
+        privateKey: keyPair.privateKey,
+        transport,
+        encryptionService,
+        adapters: createPlatformAdapters({
+          uuid: () => `${peerId}-msg-${++nextId}`,
+        }),
+      })
+
+      const leave = async () => {
+        await room.leave()
+        transport.leaveRoom()
+      }
+
+      return { room, userId, leave }
+    }
+
+    const LiveRoomMessages = ({
+      chatRoom,
+      selfUserId,
+    }: {
+      chatRoom: ChatRoom
+      selfUserId: string
+    }) => {
+      const shellDefaults = useContext(ShellContext)
+      const settingsStub = userSettingsContextStubFactory({
+        userId: selfUserId,
+      })
+
+      return (
+        <SettingsContext.Provider value={settingsStub}>
+          <ShellContext.Provider
+            value={{
+              ...shellDefaults,
+              chatRoom,
+              peerList: chatRoom.getPeers(),
+            }}
+          >
+            <SharedPeerNamesProvider>
+              {chatRoom.getMessageLog().map(message => (
+                <Message
+                  key={message.id}
+                  message={message}
+                  userId={selfUserId}
+                  showAuthor={true}
+                />
+              ))}
+            </SharedPeerNamesProvider>
+          </ShellContext.Provider>
+        </SettingsContext.Provider>
+      )
+    }
+
+    test('flags both old and new messages when a newcomer matches a departed proven author', async () => {
+      // Regression (#667): Alice sends a verified message and leaves; an
+      // impostor then joins with her generated name. Both messages must show
+      // the shared-name badge via the real ChatRoom history subscription.
+      const network = createInMemoryNetwork()
+      const bob = await createLiveRoom({ network, peerId: 'bob-peer' })
+      const alice = await createLiveRoom({ network, peerId: 'alice-peer' })
+
+      try {
+        bob.room.join()
+        alice.room.join()
+
+        await waitFor(() => {
+          expect(bob.room.getPeers()).toEqual([
+            expect.objectContaining({
+              userId: alice.userId,
+              verificationState: PeerVerificationState.VERIFIED,
+            }),
+          ])
+        })
+
+        await alice.room.sendMessage('hello from Alice')
+
+        await waitFor(() => {
+          expect(bob.room.getMessageLog()).toHaveLength(1)
+        })
+
+        await alice.leave()
+
+        await waitFor(() => {
+          expect(bob.room.getPeers()).toHaveLength(0)
+        })
+
+        const impostor = await createLiveRoom({
+          network,
+          peerId: 'impostor-peer',
+          customUsername: getPeerName(alice.userId),
+        })
+
+        try {
+          impostor.room.join()
+
+          await waitFor(() => {
+            expect(bob.room.getPeers()).toEqual([
+              expect.objectContaining({
+                userId: impostor.userId,
+                verificationState: PeerVerificationState.VERIFIED,
+              }),
+            ])
+          })
+
+          await impostor.room.sendMessage('hello from impostor')
+
+          await waitFor(() => {
+            expect(bob.room.getMessageLog()).toHaveLength(2)
+          })
+
+          const { rerender } = render(
+            <LiveRoomMessages chatRoom={bob.room} selfUserId={bob.userId} />
+          )
+
+          expect(screen.getAllByLabelText(sharedPeerNameLabel)).toHaveLength(2)
+
+          // Switching to a room without the departed author clears the badge.
+          const otherNetwork = createInMemoryNetwork()
+          const otherRoom = await createLiveRoom({
+            network: otherNetwork,
+            peerId: 'bob-other',
+          })
+          const otherImpostor = await createLiveRoom({
+            network: otherNetwork,
+            peerId: 'impostor-other',
+            customUsername: getPeerName(alice.userId),
+          })
+
+          try {
+            otherRoom.room.join()
+            otherImpostor.room.join()
+
+            await waitFor(() => {
+              expect(otherRoom.room.getPeers()).toHaveLength(1)
+            })
+
+            await otherImpostor.room.sendMessage('fresh room message')
+
+            await waitFor(() => {
+              expect(otherRoom.room.getMessageLog()).toHaveLength(1)
+            })
+
+            act(() => {
+              rerender(
+                <LiveRoomMessages
+                  chatRoom={otherRoom.room}
+                  selfUserId={otherRoom.userId}
+                />
+              )
+            })
+
+            expect(screen.queryByLabelText(sharedPeerNameLabel)).toBeNull()
+          } finally {
+            await otherImpostor.leave()
+            await otherRoom.leave()
+          }
+        } finally {
+          await impostor.leave()
+        }
+      } finally {
+        await alice.leave()
+        await bob.leave()
+      }
+    })
+
+    test('does not flag messages when the departed history entry was relayed', async () => {
+      const network = createInMemoryNetwork()
+      const host = await createLiveRoom({ network, peerId: 'host-peer' })
+      const alice = await createLiveRoom({ network, peerId: 'alice-peer' })
+
+      try {
+        host.room.join()
+        alice.room.join()
+
+        await waitFor(() => {
+          expect(host.room.getPeers()).toEqual([
+            expect.objectContaining({
+              userId: alice.userId,
+              verificationState: PeerVerificationState.VERIFIED,
+            }),
+          ])
+        })
+
+        await alice.room.sendMessage('earlier message')
+
+        await waitFor(() => {
+          expect(host.room.getMessageLog()).toHaveLength(1)
+        })
+
+        await alice.leave()
+
+        await waitFor(() => {
+          expect(host.room.getPeers()).toHaveLength(0)
+        })
+
+        // Late joiner receives Alice's old message only as relayed backfill.
+        const lateJoiner = await createLiveRoom({
+          network,
+          peerId: 'late-peer',
+        })
+        const impostor = await createLiveRoom({
+          network,
+          peerId: 'impostor-peer',
+          customUsername: getPeerName(alice.userId),
+        })
+
+        try {
+          lateJoiner.room.join()
+
+          await waitFor(() => {
+            expect(lateJoiner.room.getMessageLog()).toEqual([
+              expect.objectContaining({
+                authorId: alice.userId,
+                isRelayed: true,
+              }),
+            ])
+          })
+
+          impostor.room.join()
+
+          await waitFor(() => {
+            expect(lateJoiner.room.getPeers()).toEqual(
+              expect.arrayContaining([
+                expect.objectContaining({
+                  userId: impostor.userId,
+                  verificationState: PeerVerificationState.VERIFIED,
+                }),
+              ])
+            )
+          })
+
+          await impostor.room.sendMessage('live message')
+
+          await waitFor(() => {
+            expect(lateJoiner.room.getMessageLog()).toHaveLength(2)
+          })
+
+          render(
+            <LiveRoomMessages
+              chatRoom={lateJoiner.room}
+              selfUserId={lateJoiner.userId}
+            />
+          )
+
+          expect(screen.queryByLabelText(sharedPeerNameLabel)).toBeNull()
+        } finally {
+          await impostor.leave()
+          await lateJoiner.leave()
+        }
+      } finally {
+        await alice.leave()
+        await host.leave()
+      }
+    })
+
+    test('does not flag messages when the departed history entry was unverified', async () => {
+      const rejectingEncryption = Object.create(encryption) as EncryptionService
+
+      rejectingEncryption.verifySignature = async () => false
+
+      const network = createInMemoryNetwork()
+      const bob = await createLiveRoom({
+        network,
+        peerId: 'bob-peer',
+        encryptionService: rejectingEncryption,
+      })
+      const unverified = await createLiveRoom({
+        network,
+        peerId: 'unverified-peer',
+      })
+
+      try {
+        bob.room.join()
+        unverified.room.join()
+
+        await waitFor(() => {
+          expect(bob.room.getPeers()).toEqual([
+            expect.objectContaining({
+              userId: unverified.userId,
+              verificationState: PeerVerificationState.UNVERIFIED,
+            }),
+          ])
+        })
+
+        await unverified.room.sendMessage('unverified message')
+
+        await waitFor(() => {
+          expect(bob.room.getMessageLog()).toEqual([
+            expect.objectContaining({
+              authorId: unverified.userId,
+              authorVerificationState: PeerVerificationState.UNVERIFIED,
+            }),
+          ])
+        })
+
+        await unverified.leave()
+
+        await waitFor(() => {
+          expect(bob.room.getPeers()).toHaveLength(0)
+        })
+
+        const newcomer = await createLiveRoom({
+          network,
+          peerId: 'newcomer-peer',
+          customUsername: getPeerName(unverified.userId),
+        })
+
+        try {
+          newcomer.room.join()
+
+          await waitFor(() => {
+            expect(bob.room.getPeers()).toHaveLength(1)
+          })
+
+          await newcomer.room.sendMessage('newcomer message')
+
+          await waitFor(() => {
+            expect(bob.room.getMessageLog()).toHaveLength(2)
+          })
+
+          render(
+            <LiveRoomMessages chatRoom={bob.room} selfUserId={bob.userId} />
+          )
+
+          expect(screen.queryByLabelText(sharedPeerNameLabel)).toBeNull()
+        } finally {
+          await newcomer.leave()
+        }
+      } finally {
+        await unverified.leave()
+        await bob.leave()
+      }
     })
   })
 })
