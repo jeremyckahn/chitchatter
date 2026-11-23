@@ -446,7 +446,7 @@ Per [#36](https://github.com/jeremyckahn/chitchatter/issues/36), check your `abo
 
 #### Offered files can't be downloaded from peers
 
-Chitchatter uses [StreamSaver.js](https://github.com/jimmywarting/StreamSaver.js) to facilitate large file transfers. Download managers such as [FDM](https://www.freedownloadmanager.org/) are [known to interfere with StreamSaver.js](https://github.com/jimmywarting/StreamSaver.js/issues/325), so it is recommended to disable such download managers when trying to receive files.
+Chitchatter uses [StreamSaver.js](https://github.com/jimmywarting/StreamSaver.js) to facilitate large file transfers. It installs a [hardened fork](https://github.com/jeremyckahn/StreamSaver.js), pinned by commit in `package.json`, that only posts file streams to the StreamSaver page's own origin and rejects untrusted download URLs. An `overrides` entry makes every dependency, including `secure-file-transfer`, use that copy. Download managers such as [FDM](https://www.freedownloadmanager.org/) are [known to interfere with StreamSaver.js](https://github.com/jimmywarting/StreamSaver.js/issues/325), so it is recommended to disable such download managers when trying to receive files.
 
 ### Contributors
 

@@ -93,10 +93,6 @@ const config = () => {
             import.meta.url
           )
         ),
-        // A hardened copy of StreamSaver.js; see vendor/streamsaver/README.md.
-        streamsaver: fileURLToPath(
-          new URL('./vendor/streamsaver/StreamSaver.js', import.meta.url)
-        ),
         ...srcPathAliases,
       },
     },
@@ -123,6 +119,14 @@ const config = () => {
             setupFiles: './src/setupTests.ts',
             include: ['src/**/*.test.{ts,tsx}'],
             exclude: ['src/core/**', '**/e2e/**', '**/node_modules/**'],
+            server: {
+              deps: {
+                // Run StreamSaver through Vite's module graph instead of
+                // Node's require cache, so vi.resetModules() gives each
+                // streamSaver.test.ts case a fresh copy of its module state.
+                inline: ['streamsaver'],
+              },
+            },
             env: {
               VITE_ROUTER_TYPE: RouterType.BROWSER,
             },

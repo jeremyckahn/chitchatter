@@ -1,9 +1,11 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 
 /**
- * Tests for Chitchatter's hardened StreamSaver.js (vendor/streamsaver), which
- * Vite aliases the `streamsaver` import to. They drive the real module through
- * its iframe strategy, the one Chromium and Firefox use on a secure origin.
+ * Tests for the hardened StreamSaver.js that Chitchatter installs from its fork
+ * (jeremyckahn/StreamSaver.js, pinned by commit in package.json; an `overrides`
+ * entry makes secure-file-transfer use the same copy). They drive the real
+ * module through its iframe strategy, the one Chromium and Firefox use on a
+ * secure origin, and fail if the dependency ever resolves to upstream's code.
  */
 
 const mitmOrigin = 'https://mitm.example'
@@ -42,7 +44,7 @@ const importStreamSaver = async (): Promise<StreamSaver> => {
     const streamSaver = module['default']
 
     if (!isStreamSaver(streamSaver)) {
-      throw new Error('streamsaver did not resolve to the vendored module')
+      throw new Error('streamsaver did not export the StreamSaver API')
     }
 
     streamSaver.mitm = mitmUrl
