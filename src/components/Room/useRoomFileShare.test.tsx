@@ -12,6 +12,7 @@ import {
   createInMemoryNetwork,
   InMemoryTransport,
 } from 'core/transport/InMemoryTransport'
+import { itemAt } from 'test-utils/itemAt'
 import { mockEncryptionService } from 'test-utils/mocks/mockEncryptionService'
 
 import { useRoomFileShare } from './useRoomFileShare'
@@ -172,7 +173,7 @@ describe('useRoomFileShare', () => {
     ;(liveList as unknown as File[]).length = 0
 
     expect(result.current.sharedFiles?.length).toBe(1)
-    expect(result.current.sharedFiles?.[0]?.name).toBe('hello.txt')
+    expect(itemAt(result.current.sharedFiles ?? [], 0).name).toBe('hello.txt')
   })
 
   test('releases the stop control when the room stops offering', async () => {
