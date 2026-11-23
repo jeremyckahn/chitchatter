@@ -1,6 +1,7 @@
 import { useContext, useEffect, useCallback, useState } from 'react'
 
 import { ShellContext } from 'contexts/ShellContext'
+import { isRecord } from 'core/lib/type-guards'
 import { PeerAction } from 'core/models/network'
 import {
   AudioState,
@@ -16,6 +17,8 @@ import {
 } from 'core/transport/types'
 import { usePeerAction } from 'hooks/usePeerAction'
 import { MessageContext } from 'trystero'
+
+import { createPeerAudio, releasePeerAudio } from './peerAudio'
 
 interface UseRoomAudioConfig {
   peerRoom: TrysteroTransport
@@ -75,31 +78,36 @@ export function useRoomAudio({ peerRoom }: UseRoomAudioConfig) {
   })
 
   peerRoom.onPeerStream(PeerStreamType.AUDIO, (stream, peerId, metadata) => {
-    if (
-      typeof metadata === 'object' &&
-      metadata !== null &&
+    // Fail closed, as the video and screen share handlers do: every stream is
+    // offered to every handler, so only a stream that positively identifies
+    // itself as a microphone is played. No metadata, `null`, a string, an
+    // array or any other type is refused.
+    const isMicrophoneStream =
+      isRecord(metadata) &&
       'type' in metadata &&
-      metadata['type'] !== StreamType.MICROPHONE
-    ) {
-      return
-    }
+      metadata['type'] === StreamType.MICROPHONE
+
+    if (!isMicrophoneStream) return
 
     const audioTracks = stream.getAudioTracks()
 
     if (audioTracks.length === 0) return
 
-    const audio = new Audio()
+    const audio = createPeerAudio(stream)
 
-    audio.srcObject = stream
-    audio.autoplay = true
+    setPeerAudioChannels(peerAudioChannels => {
+      // A peer that sends a second microphone stream would otherwise leave the
+      // first one playing, out of reach of every control.
+      releasePeerAudio(peerAudioChannels[peerId]?.[AudioChannelName.MICROPHONE])
 
-    setPeerAudioChannels(peerAudioChannels => ({
-      ...peerAudioChannels,
-      [peerId]: {
-        ...peerAudioChannels[peerId],
-        [AudioChannelName.MICROPHONE]: audio,
-      },
-    }))
+      return {
+        ...peerAudioChannels,
+        [peerId]: {
+          ...peerAudioChannels[peerId],
+          [AudioChannelName.MICROPHONE]: audio,
+        },
+      }
+    })
   })
 
   const cleanupAudio = useCallback(() => {
@@ -208,7 +216,7 @@ export function useRoomAudio({ peerRoom }: UseRoomAudioConfig) {
 
       const microphoneAudio = newPeerAudios[peerId][AudioChannelName.MICROPHONE]
 
-      microphoneAudio?.pause()
+      releasePeerAudio(microphoneAudio)
 
       const { [AudioChannelName.MICROPHONE]: _, ...newPeerAudioChannels } =
         newPeerAudios[peerId]

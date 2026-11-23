@@ -19,6 +19,8 @@ import {
 import { usePeerAction } from 'hooks/usePeerAction'
 import { MessageContext } from 'trystero'
 
+import { createPeerAudio, releasePeerAudio } from './peerAudio'
+
 interface UseRoomScreenShareConfig {
   peerRoom: TrysteroTransport
 }
@@ -79,12 +81,15 @@ export function useRoomScreenShare({ peerRoom }: UseRoomScreenShareConfig) {
       const audioTracks = stream.getAudioTracks()
 
       if (audioTracks.length > 0) {
-        const audio = new Audio()
-
-        audio.srcObject = stream
-        audio.autoplay = true
+        const audio = createPeerAudio(stream)
 
         setPeerAudioChannels(peerAudioChannels => {
+          // A second screen share from the same peer would otherwise leave the
+          // first one's audio playing, out of reach of every control.
+          releasePeerAudio(
+            peerAudioChannels[peerId]?.[AudioChannelName.SCREEN_SHARE]
+          )
+
           return {
             ...peerAudioChannels,
             [peerId]: {
@@ -169,7 +174,7 @@ export function useRoomScreenShare({ peerRoom }: UseRoomScreenShareConfig) {
       const screenShareAudio =
         newPeerAudios[peerId][AudioChannelName.SCREEN_SHARE]
 
-      screenShareAudio?.pause()
+      releasePeerAudio(screenShareAudio)
 
       const { [AudioChannelName.SCREEN_SHARE]: _, ...newPeerAudioChannels } =
         newPeerAudios[peerId]

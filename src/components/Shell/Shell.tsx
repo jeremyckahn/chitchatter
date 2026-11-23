@@ -54,6 +54,7 @@ import { ShellAppBar } from './ShellAppBar'
 import { UpgradeDialog } from './UpgradeDialog'
 import { useConnectionTest } from './useConnectionTest'
 import { useShellTheme } from './useShellTheme'
+import { useUnlistedPeerAudioMute } from './useUnlistedPeerAudioMute'
 
 export interface ShellProps extends PropsWithChildren {
   userPeerId: string
@@ -114,6 +115,8 @@ export const Shell = ({ appNeedsUpdate, children, userPeerId }: ShellProps) => {
   // room's state, not copies kept in sync with it.
   const peerList = useChatRoomPeers(chatRoom)
   const peerConnectionTypes = useChatRoomConnectionTypes(chatRoom)
+
+  useUnlistedPeerAudioMute(peerList, peerAudioChannels)
 
   const registerChatRoom = useCallback((newChatRoom: ChatRoom | null) => {
     chatRoomRegistryRef.current.setGroup(newChatRoom)
