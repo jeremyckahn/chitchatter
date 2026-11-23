@@ -22,7 +22,10 @@ import {
   SharedPeerNameBadge,
   peerFingerprintLabel,
 } from 'components/PeerNameDisplay'
-import { getPeerFingerprint } from 'core/names/peerNames'
+import {
+  getPeerFingerprint,
+  isMessageAuthorKeyProven,
+} from 'core/names/peerNames'
 import { CopyableBlock } from 'components/CopyableBlock/CopyableBlock'
 
 import { AuthorVerificationBadge } from './AuthorVerificationBadge'
@@ -128,10 +131,7 @@ export const Message = ({ message, showAuthor, userId }: MessageProps) => {
   // Only a sender that has proven it holds the key can be vouched for by the
   // key's fingerprint. An unverified, still-verifying or relayed author may
   // name any user id, and showing that id's fingerprint would lend it weight.
-  const isAuthorKeyProven =
-    !isRelayed &&
-    (authorVerificationState === PeerVerificationState.VERIFIED ||
-      authorVerificationState === undefined)
+  const isAuthorKeyProven = isMessageAuthorKeyProven(message, userId)
 
   const authorFingerprint = isAuthorKeyProven
     ? getPeerFingerprint(message.authorId)

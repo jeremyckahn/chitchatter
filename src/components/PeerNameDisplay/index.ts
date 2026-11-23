@@ -1,5 +1,6 @@
 export * from './PeerNameDisplay'
 export * from './PeerFingerprint'
 export * from './SharedPeerNameBadge'
+export * from './SharedPeerNamesProvider'
 export * from './usePeerNameDisplay'
 export * from './getPeerName'

@@ -2,7 +2,13 @@ import { beforeAll, describe, expect, it } from 'vitest'
 
 import { createPeer } from 'core/chat/peers'
 import { encryption } from 'core/crypto/Encryption'
-import { Peer, PeerVerificationState } from 'core/models/chat'
+import {
+  Peer,
+  PeerVerificationState,
+  ReceivedInlineMedia,
+  ReceivedMessage,
+  UnsentMessage,
+} from 'core/models/chat'
 import {
   findUserIdsSharingPeerName,
   getCustomUsername,
@@ -10,8 +16,9 @@ import {
   getFriendlyName,
   getPeerFingerprint,
   getPeerName,
+  isMessageAuthorKeyProven,
   isPeerSelf,
-  NameResolutionContext,
+  SharedPeerNameContext,
 } from 'core/names/peerNames'
 import { deriveUserIdFromKey } from 'core/chat/identity'
 import { findCollidingUserIds } from 'test-utils/peerNames'
@@ -31,11 +38,31 @@ const peerWith = (userId: string, customUsername: string): Peer =>
     verificationState: PeerVerificationState.VERIFIED,
   })
 
-const contextWith = (peers: Peer[]): NameResolutionContext => ({
+const contextWith = (peers: Peer[]): SharedPeerNameContext => ({
   selfUserId: 'self',
   selfCustomUsername: '',
   peers,
+  messages: [],
 })
+
+const messageFrom = (
+  authorId: string,
+  overrides: Partial<
+    Pick<ReceivedMessage, 'authorVerificationState' | 'isRelayed'>
+  > = {}
+): ReceivedMessage => ({
+  id: `msg-${authorId}`,
+  text: 'hello',
+  timeSent: 1,
+  timeReceived: 2,
+  authorId,
+  ...overrides,
+})
+
+const verifiedMessageFrom = (authorId: string): ReceivedMessage =>
+  messageFrom(authorId, {
+    authorVerificationState: PeerVerificationState.VERIFIED,
+  })
 
 describe('getPeerName', () => {
   it('is deterministic for a user id', () => {
@@ -154,6 +181,7 @@ describe('findUserIdsSharingPeerName', () => {
         selfCustomUsername: '',
         selfUserId: 'self',
         peers: [peerWith('user-1', ''), peerWith('user-2', '')],
+        messages: [],
       }).size
     ).toBe(0)
   })
@@ -163,6 +191,7 @@ describe('findUserIdsSharingPeerName', () => {
       selfCustomUsername: '',
       selfUserId: 'self',
       peers: [peerWith(userId1, ''), peerWith(userId2, '')],
+      messages: [],
     })
 
     expect([...shared].sort()).toEqual([userId1, userId2].sort())
@@ -173,6 +202,7 @@ describe('findUserIdsSharingPeerName', () => {
       selfCustomUsername: '',
       selfUserId: userId1,
       peers: [peerWith(userId2, '')],
+      messages: [],
     })
 
     expect([...shared].sort()).toEqual([userId1, userId2].sort())
@@ -184,6 +214,7 @@ describe('findUserIdsSharingPeerName', () => {
       selfCustomUsername: '',
       selfUserId: 'self',
       peers: [peerWith(userId1, 'Ada'), peerWith(userId2, 'Grace')],
+      messages: [],
     })
 
     expect(shared.has(userId1)).toBe(true)
@@ -196,6 +227,7 @@ describe('findUserIdsSharingPeerName', () => {
         selfCustomUsername: '',
         selfUserId: userId1,
         peers: [peerWith(userId1, ''), peerWith(userId1, '')],
+        messages: [],
       }).size
     ).toBe(0)
   })
@@ -311,5 +343,178 @@ describe('findUserIdsSharingPeerName', () => {
         contextWith([peerWith('user-1', '  '), peerWith('user-2', '  ')])
       ).size
     ).toBe(0)
+  })
+
+  it('flags both a departed proven author and a newcomer sharing their generated name', () => {
+    // Regression (#667): once a verified author left the peer list, an impostor
+    // joining with a colliding generated name triggered no warning on either
+    // the old messages or the new ones.
+    const shared = findUserIdsSharingPeerName({
+      ...contextWith([peerWith(userId2, '')]),
+      messages: [verifiedMessageFrom(userId1)],
+    })
+
+    expect([...shared].sort()).toEqual([userId1, userId2].sort())
+  })
+
+  it('flags a newcomer whose custom username copies a departed proven author generated name', () => {
+    const shared = findUserIdsSharingPeerName({
+      ...contextWith([peerWith('newcomer', getPeerName(userId1))]),
+      messages: [verifiedMessageFrom(userId1)],
+    })
+
+    expect([...shared].sort()).toEqual(['newcomer', userId1].sort())
+  })
+
+  it('flags two departed proven authors that share a generated name', () => {
+    const shared = findUserIdsSharingPeerName({
+      ...contextWith([]),
+      messages: [verifiedMessageFrom(userId1), verifiedMessageFrom(userId2)],
+    })
+
+    expect([...shared].sort()).toEqual([userId1, userId2].sort())
+  })
+
+  it.each<
+    [
+      string,
+      Partial<Pick<ReceivedMessage, 'authorVerificationState' | 'isRelayed'>>,
+    ]
+  >([
+    ['a relayed author', { isRelayed: true }],
+    [
+      'an unverified author',
+      { authorVerificationState: PeerVerificationState.UNVERIFIED },
+    ],
+    [
+      'a still-verifying author',
+      { authorVerificationState: PeerVerificationState.VERIFYING },
+    ],
+    ['a remote author with no verification verdict', {}],
+  ])('does not flag anyone when %s matches a peer name', (_, overrides) => {
+    // Relayed, unverified, and verdict-less remote messages carry no proof of
+    // key ownership; counting them would let an attacker forge arbitrary author
+    // ids and poison badges.
+    const shared = findUserIdsSharingPeerName({
+      ...contextWith([peerWith(userId2, '')]),
+      messages: [messageFrom(userId1, overrides)],
+    })
+
+    expect(shared.size).toBe(0)
+  })
+
+  it("counts the local user's own past messages (sent and unsent) without self-collision", () => {
+    const ownReceived: ReceivedMessage = messageFrom(userId1)
+    const ownUnsent: UnsentMessage = {
+      id: 'unsent-own',
+      text: 'sending',
+      timeSent: 1,
+      authorId: userId1,
+    }
+
+    expect(isMessageAuthorKeyProven(ownReceived, userId1)).toBe(true)
+    expect(isMessageAuthorKeyProven(ownUnsent, userId1)).toBe(true)
+
+    expect(
+      [
+        ...findUserIdsSharingPeerName({
+          selfUserId: userId1,
+          selfCustomUsername: '',
+          peers: [peerWith(userId2, '')],
+          messages: [ownReceived, ownUnsent],
+        }),
+      ].sort()
+    ).toEqual([userId1, userId2].sort())
+
+    expect(
+      findUserIdsSharingPeerName({
+        selfUserId: userId1,
+        selfCustomUsername: 'Me',
+        peers: [],
+        messages: [ownReceived, ownUnsent],
+      }).size
+    ).toBe(0)
+  })
+
+  it('counts proven inline-media message authors', () => {
+    const mediaMessage: ReceivedInlineMedia = {
+      id: 'media-1',
+      magnetURI: 'magnet:?xt=urn:btih:0123456789abcdef0123456789abcdef01234567',
+      fileKey: 'a'.repeat(43),
+      timeSent: 1,
+      timeReceived: 2,
+      authorId: userId1,
+      authorVerificationState: PeerVerificationState.VERIFIED,
+    }
+
+    const shared = findUserIdsSharingPeerName({
+      ...contextWith([peerWith(userId2, '')]),
+      messages: [mediaMessage],
+    })
+
+    expect([...shared].sort()).toEqual([userId1, userId2].sort())
+  })
+
+  it('does not flag one user id seen both as a peer and as a past message author', () => {
+    expect(
+      findUserIdsSharingPeerName({
+        ...contextWith([peerWith(userId1, 'Ada')]),
+        messages: [verifiedMessageFrom(userId1)],
+      }).size
+    ).toBe(0)
+  })
+})
+
+describe('isMessageAuthorKeyProven', () => {
+  it('accepts verified live messages and own messages', () => {
+    const unsent: UnsentMessage = {
+      id: 'unsent',
+      text: 'hi',
+      timeSent: 1,
+      authorId: 'self',
+    }
+
+    expect(isMessageAuthorKeyProven(unsent, 'self')).toBe(true)
+    expect(isMessageAuthorKeyProven(messageFrom('self'), 'self')).toBe(true)
+    expect(
+      isMessageAuthorKeyProven(verifiedMessageFrom('peer-1'), 'self')
+    ).toBe(true)
+  })
+
+  it('rejects relayed, unverified, verifying, and verdict-less remote messages', () => {
+    const foreignUnsent: UnsentMessage = {
+      id: 'foreign-unsent',
+      text: 'hi',
+      timeSent: 1,
+      authorId: 'peer-1',
+    }
+
+    expect(isMessageAuthorKeyProven(foreignUnsent, 'self')).toBe(false)
+    expect(isMessageAuthorKeyProven(messageFrom('peer-1'), 'self')).toBe(false)
+    expect(
+      isMessageAuthorKeyProven(messageFrom('self', { isRelayed: true }), 'self')
+    ).toBe(false)
+    expect(
+      isMessageAuthorKeyProven(
+        messageFrom('peer-1', { isRelayed: true }),
+        'self'
+      )
+    ).toBe(false)
+    expect(
+      isMessageAuthorKeyProven(
+        messageFrom('peer-1', {
+          authorVerificationState: PeerVerificationState.UNVERIFIED,
+        }),
+        'self'
+      )
+    ).toBe(false)
+    expect(
+      isMessageAuthorKeyProven(
+        messageFrom('peer-1', {
+          authorVerificationState: PeerVerificationState.VERIFYING,
+        }),
+        'self'
+      )
+    ).toBe(false)
   })
 })

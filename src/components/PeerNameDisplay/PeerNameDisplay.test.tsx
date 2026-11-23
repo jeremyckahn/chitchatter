@@ -1,16 +1,27 @@
-import { render, screen } from '@testing-library/react'
+import { act, render, screen } from '@testing-library/react'
 import { PropsWithChildren, useContext } from 'react'
+import { vi } from 'vitest'
 
 import { SettingsContext } from 'contexts/SettingsContext'
 import { ShellContext } from 'contexts/ShellContext'
+import { createPlatformAdapters } from 'core/adapters/noop'
+import { ChatRoom } from 'core/chat/ChatRoom'
 import { createPeer } from 'core/chat/peers'
 import { encryption } from 'core/crypto/Encryption'
 import { Peer, PeerVerificationState } from 'core/models/chat'
+import * as peerNames from 'core/names/peerNames'
+import {
+  createInMemoryNetwork,
+  InMemoryTransport,
+} from 'core/transport/InMemoryTransport'
+import { mockEncryptionService } from 'test-utils/mocks/mockEncryptionService'
 import { findCollidingUserIds } from 'test-utils/peerNames'
 import { userSettingsContextStubFactory } from 'test-utils/stubs/settingsContext'
 
 import { PeerFingerprint, peerFingerprintLabel } from './PeerFingerprint'
+import { PeerNameDisplay } from './PeerNameDisplay'
 import { SharedPeerNameBadge, sharedPeerNameLabel } from './SharedPeerNameBadge'
+import { SharedPeerNamesProvider } from './SharedPeerNamesProvider'
 
 const selfUserId = 'a'.repeat(64)
 const [collidingUserId1, collidingUserId2] = findCollidingUserIds()
@@ -39,7 +50,7 @@ const createWrapper = (
         <ShellContext.Provider
           value={{ ...shellDefaults, peerList, customUsername }}
         >
-          {children}
+          <SharedPeerNamesProvider>{children}</SharedPeerNamesProvider>
         </ShellContext.Provider>
       </SettingsContext.Provider>
     )
@@ -137,5 +148,74 @@ describe('SharedPeerNameBadge', () => {
     })
 
     expect(screen.getByLabelText(sharedPeerNameLabel)).toBeInTheDocument()
+  })
+})
+
+describe('SharedPeerNamesProvider', () => {
+  test('computes shared names once per change of peers or room history, not once per consumer', async () => {
+    const spy = vi.spyOn(peerNames, 'findUserIdsSharingPeerName')
+    const userSettingsStub = userSettingsContextStubFactory({
+      userId: collidingUserId1,
+    })
+    let nextId = 0
+    const chatRoom = new ChatRoom({
+      roomId: 'room-spy',
+      userId: collidingUserId1,
+      customUsername: '',
+      publicKey: encryption.cryptoKeyStub,
+      privateKey: encryption.cryptoKeyStub,
+      transport: new InMemoryTransport(createInMemoryNetwork(), 'self-peer'),
+      encryptionService: mockEncryptionService,
+      adapters: createPlatformAdapters({ uuid: () => `msg-${++nextId}` }),
+    })
+
+    const initialPeers: readonly Peer[] = [createTestPeer(collidingUserId2)]
+
+    const Harness = ({ peerList }: { peerList: readonly Peer[] }) => {
+      const shellDefaults = useContext(ShellContext)
+
+      return (
+        <SettingsContext.Provider value={userSettingsStub}>
+          <ShellContext.Provider
+            value={{ ...shellDefaults, chatRoom, peerList }}
+          >
+            <SharedPeerNamesProvider>
+              <PeerNameDisplay>{collidingUserId1}</PeerNameDisplay>
+              <SharedPeerNameBadge userId={collidingUserId1} />
+              <PeerNameDisplay>{collidingUserId2}</PeerNameDisplay>
+              <SharedPeerNameBadge userId={collidingUserId2} />
+              <SharedPeerNameBadge userId={selfUserId} />
+            </SharedPeerNamesProvider>
+          </ShellContext.Provider>
+        </SettingsContext.Provider>
+      )
+    }
+
+    try {
+      const { rerender } = render(<Harness peerList={initialPeers} />)
+
+      expect(screen.getAllByLabelText(sharedPeerNameLabel)).toHaveLength(2)
+      expect(spy).toHaveBeenCalledTimes(1)
+
+      // Re-rendering with unchanged peers and room history does not recompute.
+      rerender(<Harness peerList={initialPeers} />)
+      expect(spy).toHaveBeenCalledTimes(1)
+
+      // Appending to the real ChatRoom's message log triggers one recomputation.
+      await act(async () => {
+        await chatRoom.sendMessage('hello world')
+      })
+
+      expect(spy).toHaveBeenCalledTimes(2)
+      expect(screen.getAllByLabelText(sharedPeerNameLabel)).toHaveLength(2)
+
+      // Clearing the colliding peer triggers one recomputation and clears badges.
+      rerender(<Harness peerList={[]} />)
+      expect(spy).toHaveBeenCalledTimes(3)
+      expect(screen.queryByLabelText(sharedPeerNameLabel)).toBeNull()
+    } finally {
+      await chatRoom.leave()
+      spy.mockRestore()
+    }
   })
 })
