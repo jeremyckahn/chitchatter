@@ -66,7 +66,7 @@ const getSecureRandomIndex = (exclusiveMax: number): number => {
   return value % exclusiveMax
 }
 
-/** Picks one item uniformly at random. Throws rather than return nothing. */
+/** Picks one item uniformly at random. Throws on an empty list. */
 const pickSecureRandom = <T>(items: readonly T[]): T => {
   const item = items[getSecureRandomIndex(items.length)]
 

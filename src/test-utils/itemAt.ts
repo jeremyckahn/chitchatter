@@ -1,7 +1,6 @@
 /**
- * Reads `items[index]` for a test, throwing instead of returning `undefined`
- * so a missing item fails at the read with a clear message, not later as a
- * confusing assertion on `undefined`.
+ * Reads `items[index]` for a test and throws if there is no item there, so the
+ * test fails at the read with a message that names the index.
  */
 export const itemAt = <T>(items: ArrayLike<T>, index: number): T => {
   const item = items[index]
