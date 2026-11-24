@@ -131,7 +131,7 @@ describe('hardened StreamSaver', () => {
     expect(targetOrigin).toBe('https://other-mitm.example')
   })
 
-  test('opens a download URL on the mitm origin', async () => {
+  test("opens a download URL inside the mitm page's directory", async () => {
     const streamSaver = await importStreamSaver()
     const { port } = await startDownload(streamSaver)
     const downloadUrl = `${mitmOrigin}/StreamSaver.js/0.123/secret.txt`
@@ -154,6 +154,20 @@ describe('hardened StreamSaver', () => {
     ['another origin', 'https://attacker.example/StreamSaver.js/0.1/x.txt'],
     ['a downgrade to http:', 'http://mitm.example/StreamSaver.js/0.1/x.txt'],
     ['a relative URL', '/StreamSaver.js/0.1/x.txt'],
+    // A github.io user site shares one origin across all of its projects.
+    ['another path on the mitm origin', `${mitmOrigin}/other-project/x.html`],
+    [
+      'a sibling path sharing the prefix',
+      `${mitmOrigin}/StreamSaver.jsx/x.html`,
+    ],
+    [
+      'a dot segment out of the scope',
+      `${mitmOrigin}/StreamSaver.js/../x.html`,
+    ],
+    [
+      'an encoded dot segment out of the scope',
+      `${mitmOrigin}/StreamSaver.js/%2e%2e/x.html`,
+    ],
     // new URL() would stringify this to a valid mitm-origin URL.
     ['a non-string', [`${mitmOrigin}/StreamSaver.js/0.1/x.txt`]],
   ])('rejects %s as a download URL', async (_, download) => {
