@@ -5,6 +5,7 @@ import {
   HostilePeerSession,
   joinAsHostilePeer,
 } from '../helpers/hostile-peer'
+import { itemAt } from '../../src/test-utils/itemAt'
 
 /**
  * A magnet URI is a bearer identifier that is broadcast to the whole room, so
@@ -122,9 +123,7 @@ test.describe("A peer replaying another peer's magnet URI", () => {
       })
       .toHaveLength(1)
 
-    const [file] = await attacker.getOfferedFiles()
-
-    return file
+    return itemAt(await attacker.getOfferedFiles(), 0)
   }
 
   /**
@@ -235,7 +234,7 @@ test.describe("A peer replaying another peer's magnet URI", () => {
       })
       .toHaveLength(1)
 
-    const [image] = await mallory.getInlineMediaFiles()
+    const image = itemAt(await mallory.getInlineMediaFiles(), 0)
 
     // The flag is the peer's own to set; a hostile one says it is not media
     await mallory.claim(image, false)

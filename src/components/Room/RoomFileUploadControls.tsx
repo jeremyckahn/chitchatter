@@ -65,7 +65,7 @@ export function RoomFileUploadControls({
   }
 
   const shareFileLabel =
-    (sharedFiles && sharedFiles.length === 1 && sharedFiles[0].name) || 'files'
+    (sharedFiles && sharedFiles.length === 1 && sharedFiles[0]?.name) || 'files'
 
   const disableFileUpload = !isFileSharingEnabled || isMessageSending
 

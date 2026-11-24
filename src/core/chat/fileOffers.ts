@@ -37,10 +37,12 @@ const activeContentTypes = ['image/svg+xml']
 /** Whether a file can be rendered inline in the transcript rather than downloaded. */
 export const isInlineMediaFile = ({ type }: FileHandle) => {
   // Drop any parameters ("; charset=...") so they cannot dodge the denylist
-  const bareMimeType = type.split(';')[0].trim().toLowerCase()
+  const [mimeType = ''] = type.split(';')
+  const bareMimeType = mimeType.trim().toLowerCase()
+  const [topLevelType = ''] = bareMimeType.split('/')
 
   return (
-    inlineMediaTypes.includes(bareMimeType.split('/')[0]) &&
+    inlineMediaTypes.includes(topLevelType) &&
     !activeContentTypes.includes(bareMimeType)
   )
 }

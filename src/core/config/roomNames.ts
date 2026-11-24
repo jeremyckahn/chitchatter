@@ -60,10 +60,23 @@ const getSecureRandomIndex = (exclusiveMax: number): number => {
   // than the rest, so they are discarded and a fresh value is drawn.
   do {
     globalThis.crypto.getRandomValues(buffer)
-    value = buffer[0]
+    const [drawn] = buffer
+
+    if (drawn === undefined) throw new Error('getRandomValues filled no value')
+
+    value = drawn
   } while (value >= unbiasedLimit)
 
   return value % exclusiveMax
+}
+
+/** Picks one item uniformly at random. Throws on an empty list. */
+const pickSecureRandom = <T>(items: readonly T[]): T => {
+  const item = items[getSecureRandomIndex(items.length)]
+
+  if (item === undefined) throw new Error('Cannot pick from an empty list')
+
+  return item
 }
 
 const getSecureRandomSuffix = (): string => {
@@ -93,7 +106,7 @@ export const getPassphraseEntropyBits = (): number => {
 
 const generatePassphrase = (): string => {
   const words = PASSPHRASE_WORD_PATTERN.map(
-    candidates => candidates[getSecureRandomIndex(candidates.length)].word
+    candidates => pickSecureRandom<{ readonly word: string }>(candidates).word
   )
 
   return [...words, getSecureRandomSuffix()].join('-')

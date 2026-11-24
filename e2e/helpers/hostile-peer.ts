@@ -98,7 +98,7 @@ export const joinAsHostilePeer = async (
   const page = await openBlankPage(context)
 
   const peer: JSHandle<HostilePeer> = await page.evaluateHandle(
-    async ([modulePath, room]) => {
+    async ({ modulePath, room }) => {
       // The URL is only known at run time, which is the point: the module is
       // the app's source, served by Vite to this page.
       const module: HostilePeerModule = await import(
@@ -107,7 +107,7 @@ export const joinAsHostilePeer = async (
 
       return module.joinRoomAsHostilePeer(room)
     },
-    [browserModulePath, roomId]
+    { modulePath: browserModulePath, room: roomId }
   )
 
   return {

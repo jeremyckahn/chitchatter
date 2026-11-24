@@ -17,6 +17,7 @@ import {
   ScreenShareState,
   VideoState,
 } from 'core/models/chat'
+import { itemAt } from 'test-utils/itemAt'
 
 let publicKey: CryptoKey
 
@@ -71,8 +72,8 @@ describe('applyPeerUpdate', () => {
       isTypingGroupMessage: true,
     })
 
-    expect(updated[0].isTypingGroupMessage).toBe(false)
-    expect(updated[1].isTypingGroupMessage).toBe(true)
+    expect(itemAt(updated, 0).isTypingGroupMessage).toBe(false)
+    expect(itemAt(updated, 1).isTypingGroupMessage).toBe(true)
   })
 
   it('ignores an unknown peer', () => {
@@ -88,7 +89,7 @@ describe('applyPeerUpdate', () => {
 
     applyPeerUpdate(peers, 'a', { customUsername: 'changed' })
 
-    expect(peers[0].customUsername).toBe('')
+    expect(itemAt(peers, 0).customUsername).toBe('')
   })
 })
 
@@ -140,7 +141,9 @@ describe('reconcilePeerMetadata', () => {
 
     expect(peers).toHaveLength(1)
     expect(addedPeer).toBeNull()
-    expect(peers[0].verificationState).toBe(PeerVerificationState.UNVERIFIED)
+    expect(itemAt(peers, 0).verificationState).toBe(
+      PeerVerificationState.UNVERIFIED
+    )
   })
 
   it('reports a rename when the custom username changes', () => {
@@ -158,7 +161,7 @@ describe('reconcilePeerMetadata', () => {
       previousUserId: 'peer-1-user',
       userId: 'peer-1-user',
     })
-    expect(peers[0].customUsername).toBe('Grace')
+    expect(itemAt(peers, 0).customUsername).toBe('Grace')
   })
 
   it('reports a rename when a custom username is cleared', () => {
@@ -203,9 +206,9 @@ describe('reconcilePeerMetadata', () => {
       verificationState: PeerVerificationState.VERIFIED,
     })
 
-    expect(peers[0].videoState).toBe(VideoState.PLAYING)
-    expect(peers[0].isTypingGroupMessage).toBe(true)
-    expect(peers[0].offeredFile).toEqual({
+    expect(itemAt(peers, 0).videoState).toBe(VideoState.PLAYING)
+    expect(itemAt(peers, 0).isTypingGroupMessage).toBe(true)
+    expect(itemAt(peers, 0).offeredFile).toEqual({
       magnetURI: 'magnet:a',
       fileKey: 'A'.repeat(43),
     })

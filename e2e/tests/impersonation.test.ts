@@ -9,6 +9,7 @@ import {
 
 import { HostilePeerSession, joinAsHostilePeer } from '../helpers/hostile-peer'
 import { sendMessage } from '../helpers/test-helpers'
+import { itemAt } from '../../src/test-utils/itemAt'
 
 /**
  * A peer claiming to be somebody else, run for real: the victims are the app
@@ -122,7 +123,7 @@ test.describe('A peer impersonating another user', () => {
       )
       .toBeGreaterThan(0)
 
-    const [victim] = await impostor.getOverheardIdentities()
+    const victim = itemAt(await impostor.getOverheardIdentities(), 0)
 
     await joinPublicRoom(bob.page, roomId)
     await expect
@@ -185,7 +186,7 @@ test.describe('A peer impersonating another user', () => {
       )
       .toBeGreaterThan(0)
 
-    const [victim] = await impostor.getOverheardIdentities()
+    const victim = itemAt(await impostor.getOverheardIdentities(), 0)
 
     // The real Alice is gone before Bob arrives: nothing of hers is online.
     // Only the page is closed: that takes Alice out of the room just the same,
@@ -234,7 +235,7 @@ test.describe('A peer impersonating another user', () => {
       )
       .toBeGreaterThan(0)
 
-    const [victim] = await impostor.getOverheardIdentities()
+    const victim = itemAt(await impostor.getOverheardIdentities(), 0)
 
     // Only the page is closed: that takes Alice out of the room just the same,
     // while closing the whole context mid-test makes Playwright export its trace
@@ -298,7 +299,7 @@ test.describe('A peer impersonating another user', () => {
       )
       .toBeGreaterThan(0)
 
-    const [victim] = await impostor.getOverheardIdentities()
+    const victim = itemAt(await impostor.getOverheardIdentities(), 0)
 
     await alice.page.close()
 

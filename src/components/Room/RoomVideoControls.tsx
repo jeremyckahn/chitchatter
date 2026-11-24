@@ -44,8 +44,13 @@ export function RoomVideoControls({ peerRoom }: RoomVideoControlsProps) {
     _event: React.MouseEvent<HTMLElement>,
     idx: number
   ) => {
-    setSelectedVideoDeviceIdx(idx)
-    handleVideoDeviceSelect(videoDevices[idx])
+    const videoDevice = videoDevices[idx]
+
+    if (videoDevice) {
+      setSelectedVideoDeviceIdx(idx)
+      handleVideoDeviceSelect(videoDevice)
+    }
+
     setVideoAnchorEl(null)
   }
 

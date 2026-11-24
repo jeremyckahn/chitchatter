@@ -35,8 +35,11 @@ export const AudioVolume = ({
   }
 
   const handleSliderChange = (_event: Event, value: number | number[]) => {
-    value = Array.isArray(value) ? value[0] : value
-    setAudioVolume(value / 100)
+    const volume = Array.isArray(value) ? value[0] : value
+
+    if (volume === undefined) return
+
+    setAudioVolume(volume / 100)
   }
 
   const formatLabelValue = () => `${Math.round(audioVolume * 100)}%`

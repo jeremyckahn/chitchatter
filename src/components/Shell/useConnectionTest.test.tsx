@@ -5,6 +5,8 @@ import type { ConnectionTest } from 'lib/ConnectionTest'
 import { ConnectionTestEvents, TrackerConnection } from 'lib/ConnectionTest'
 import type { useTurnConfig } from 'hooks/useTurnConfig'
 
+import { itemAt } from 'test-utils/itemAt'
+
 import { useConnectionTest } from './useConnectionTest'
 
 type FakeSurface = Pick<
@@ -127,7 +129,7 @@ describe('useConnectionTest', () => {
 
     await vi.advanceTimersByTimeAsync(0)
 
-    const [rtcTest] = rtcInstances()
+    const rtcTest = itemAt(rtcInstances(), 0)
 
     expect(rtcTest.destroyRtcPeerConnectionTest).not.toHaveBeenCalled()
 
@@ -151,7 +153,7 @@ describe('useConnectionTest', () => {
     await vi.advanceTimersByTimeAsync(0)
 
     const before = countTrackerTests()
-    const [firstRtcTest] = rtcInstances()
+    const firstRtcTest = itemAt(rtcInstances(), 0)
 
     mocks.turnConfig = newTurnConfig()
     rerender()
@@ -177,13 +179,13 @@ describe('useConnectionTest', () => {
 
     await vi.advanceTimersByTimeAsync(0)
 
-    const [staleTest] = rtcInstances()
+    const staleTest = itemAt(rtcInstances(), 0)
 
     mocks.turnConfig = newTurnConfig()
     rerender()
     await vi.advanceTimersByTimeAsync(0)
 
-    const currentTest = rtcInstances()[1]
+    const currentTest = itemAt(rtcInstances(), 1)
 
     currentTest.hasHost = true
     currentTest.hasTURNServer = true
@@ -222,7 +224,7 @@ describe('useConnectionTest', () => {
     expect(result.current.connectionTestResults.hasTURNServer).toBe(true)
 
     await act(async () => {
-      pending[0](new Error('closed during init'))
+      itemAt(pending, 0)(new Error('closed during init'))
       await vi.advanceTimersByTimeAsync(0)
     })
 

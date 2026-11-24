@@ -1,6 +1,8 @@
 import { expect, test } from '@playwright/test'
 import AxeBuilder from '@axe-core/playwright'
 
+import { itemAt } from '../../src/test-utils/itemAt'
+
 // TODO: Expand these tests to cover all pages
 
 test.describe('Accessibility', () => {
@@ -151,8 +153,8 @@ test.describe('Accessibility', () => {
       // Check heading hierarchy (no skipping levels) if multiple headings exist
       if (headingLevels.length > 1) {
         for (let i = 1; i < headingLevels.length; i++) {
-          const currentLevel = headingLevels[i]
-          const previousLevel = headingLevels[i - 1]
+          const currentLevel = itemAt(headingLevels, i)
+          const previousLevel = itemAt(headingLevels, i - 1)
 
           // Level should not increase by more than 1
           expect(currentLevel - previousLevel).toBeLessThanOrEqual(1)

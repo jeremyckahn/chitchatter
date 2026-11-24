@@ -59,8 +59,13 @@ export function RoomAudioControls({ peerRoom }: RoomAudioControlsProps) {
     _event: React.MouseEvent<HTMLElement>,
     idx: number
   ) => {
-    setSelectedAudioDeviceIdx(idx)
-    handleAudioDeviceSelect(audioDevices[idx])
+    const audioDevice = audioDevices[idx]
+
+    if (audioDevice) {
+      setSelectedAudioDeviceIdx(idx)
+      handleAudioDeviceSelect(audioDevice)
+    }
+
     setAudioAnchorEl(null)
   }
 

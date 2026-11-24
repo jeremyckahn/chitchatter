@@ -34,31 +34,32 @@ export const TypingStatusBar = ({
   }
 
   let statusMessage = <></>
+  const [firstTypingPeer, secondTypingPeer] = typingPeers
 
-  if (typingPeers.length === 1) {
+  if (typingPeers.length > 2) {
+    statusMessage = <>Several people are typing...</>
+  } else if (firstTypingPeer && secondTypingPeer) {
     statusMessage = (
       <>
         <PeerNameDisplay {...peerNameDisplayProps}>
-          {typingPeers[0].userId}
-        </PeerNameDisplay>{' '}
-        is typing...
-      </>
-    )
-  } else if (typingPeers.length === 2) {
-    statusMessage = (
-      <>
-        <PeerNameDisplay {...peerNameDisplayProps}>
-          {typingPeers[0].userId}
+          {firstTypingPeer.userId}
         </PeerNameDisplay>{' '}
         and{' '}
         <PeerNameDisplay {...peerNameDisplayProps}>
-          {typingPeers[1].userId}
+          {secondTypingPeer.userId}
         </PeerNameDisplay>{' '}
         are typing...
       </>
     )
-  } else if (typingPeers.length > 2) {
-    statusMessage = <>Several people are typing...</>
+  } else if (firstTypingPeer) {
+    statusMessage = (
+      <>
+        <PeerNameDisplay {...peerNameDisplayProps}>
+          {firstTypingPeer.userId}
+        </PeerNameDisplay>{' '}
+        is typing...
+      </>
+    )
   }
 
   return (
