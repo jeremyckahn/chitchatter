@@ -21,6 +21,11 @@ interface EmbedCodeDialogProps {
   roomName: string
 }
 
+// NOTE: This must be "markup", not its alias "html". PrismAsyncLight only
+// registers async loaders by canonical Prism language name, so an alias is
+// treated as unsupported and silently falls back to unhighlighted text.
+export const embedCodeLanguage = 'markup'
+
 const basePackageHomepage =
   import.meta.env.VITE_HOMEPAGE ?? window.location.origin
 const packageHomepage = basePackageHomepage.endsWith('/')
@@ -71,7 +76,7 @@ export const EmbedCodeDialog = ({
         </DialogContentText>
         <CopyableBlock>
           <SyntaxHighlighter
-            language="html"
+            language={embedCodeLanguage}
             style={materialDark}
             PreTag="div"
             lineProps={{
@@ -121,7 +126,7 @@ export const EmbedCodeDialog = ({
         </DialogContentText>
         <CopyableBlock>
           <SyntaxHighlighter
-            language="html"
+            language={embedCodeLanguage}
             style={materialDark}
             PreTag="div"
             lineProps={{
