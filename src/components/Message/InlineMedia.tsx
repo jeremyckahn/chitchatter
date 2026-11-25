@@ -34,49 +34,91 @@ const imagePreviewViewportInset = '64px'
 // library used to embed media files:
 // https://github.com/feross/render-media/blob/a445b2ab90fcd4a248552d32027b2bc6a02600c8/index.js#L15-L72
 //
-// SECURITY: This is an allowlist of inert raster formats, and it must stay
-// one. Files come from untrusted peers and their blob URLs live in the app's
+// SECURITY: Keep this map restricted to inert raster image and audio MIME
+// types. Files come from untrusted peers and their blob URLs live in the app's
 // own origin, so a format that can carry script runs with full access to the
-// app's storage when the user opens the image in its own tab. That is why
-// `.svg` (and `.html`, `.xml`, `.pdf`, ...) is deliberately absent: such files
-// are treated like any other non-previewable file instead.
-const supportedImageExtensions = ['.bmp', '.gif', '.jpeg', '.jpg', '.png']
+// app's storage when opened in its own tab. Active formats such as `.svg`
+// (`image/svg+xml`), `.html`, `.xml`, and `.pdf` must stay out of this map.
+export const inlineImageMimeTypes = {
+  '.bmp': 'image/bmp',
+  '.gif': 'image/gif',
+  '.jpeg': 'image/jpeg',
+  '.jpg': 'image/jpeg',
+  '.png': 'image/png',
+} as const satisfies Readonly<Record<`.${string}`, `image/${string}`>>
 
-const supportedAudioExtensions = ['.aac', '.oga', '.ogg', '.wav', '.flac']
+export const inlineAudioMimeTypes = {
+  '.aac': 'audio/aac',
+  '.flac': 'audio/flac',
+  '.oga': 'audio/ogg',
+  '.ogg': 'audio/ogg',
+  '.wav': 'audio/wav',
+} as const satisfies Readonly<Record<`.${string}`, `audio/${string}`>>
 
-const supportedMediaExtensions = [
-  ...supportedImageExtensions,
-  ...supportedAudioExtensions,
-]
+export const inlineMediaMimeTypes = {
+  ...inlineImageMimeTypes,
+  ...inlineAudioMimeTypes,
+} as const
+
+export type InlineMediaMimeType =
+  (typeof inlineMediaMimeTypes)[keyof typeof inlineMediaMimeTypes]
+
+const isInlineMediaExtension = (
+  ext: string
+): ext is keyof typeof inlineMediaMimeTypes =>
+  Object.hasOwn(inlineMediaMimeTypes, ext)
+
+const getNormalizedExtension = (fileName: string): string => {
+  const lastDotIndex = fileName.lastIndexOf('.')
+
+  if (lastDotIndex <= 0) return ''
+
+  return fileName.slice(lastDotIndex).toLowerCase()
+}
+
+export const getInlineMediaMimeType = (
+  fileName: string
+): InlineMediaMimeType | undefined => {
+  const extension = getNormalizedExtension(fileName)
+
+  return isInlineMediaExtension(extension)
+    ? inlineMediaMimeTypes[extension]
+    : undefined
+}
 
 // Matches render-media's MAX_BLOB_LENGTH, which this component used to
 // inherit through appendTo
 const maxInlineMediaBytes = 200 * 1000 * 1000
 
 const useBlobUrl = (
-  file: Pick<TorrentFile, 'getBlobURL'>,
-  isEnabled: boolean
+  file: Pick<TorrentFile, 'getBlob'>,
+  mimeType: InlineMediaMimeType | undefined
 ) => {
   const [url, setUrl] = useState<string>()
   const [didFail, setDidFail] = useState(false)
 
   useEffect(() => {
-    if (!isEnabled) return undefined
+    setUrl(undefined)
+    setDidFail(false)
+
+    if (!mimeType) return undefined
 
     let isCurrent = true
     let blobUrl: string | undefined
 
-    file.getBlobURL((err, createdUrl) => {
-      if (err || !createdUrl) {
+    // Read the raw Blob from WebTorrent and rebuild it with our fixed
+    // allowlisted MIME type rather than calling getBlobURL (which derives the
+    // Content-Type from the peer-controlled filename).
+    file.getBlob((err, rawBlob) => {
+      if (err || !rawBlob) {
         if (isCurrent) setDidFail(true)
         return
       }
 
-      // The component went away while the blob was being built
-      if (!isCurrent) {
-        URL.revokeObjectURL(createdUrl)
-        return
-      }
+      if (!isCurrent) return
+
+      const safeBlob = new Blob([rawBlob], { type: mimeType })
+      const createdUrl = URL.createObjectURL(safeBlob)
 
       blobUrl = createdUrl
       setUrl(createdUrl)
@@ -87,7 +129,7 @@ const useBlobUrl = (
 
       if (blobUrl) URL.revokeObjectURL(blobUrl)
     }
-  }, [file, isEnabled])
+  }, [file, mimeType])
 
   return { url, didFail }
 }
@@ -96,13 +138,15 @@ export const InlineFile = ({ file }: InlineFileProps) => {
   const [isImagePreviewOpen, setIsImagePreviewOpen] = useState(false)
 
   const { name } = file
-  const fileNameExtension = `.${name.split('.').pop() ?? ''}`
-  const isImage = supportedImageExtensions.includes(fileNameExtension)
+  const fixedMimeType = getInlineMediaMimeType(name)
+  const isImage = fixedMimeType?.startsWith('image/') ?? false
   const isMediaSupported =
-    supportedMediaExtensions.includes(fileNameExtension) &&
-    file.length <= maxInlineMediaBytes
+    fixedMimeType !== undefined && file.length <= maxInlineMediaBytes
 
-  const { url, didFail } = useBlobUrl(file, isMediaSupported)
+  const { url, didFail } = useBlobUrl(
+    file,
+    isMediaSupported ? fixedMimeType : undefined
+  )
 
   if (!isMediaSupported) {
     return (

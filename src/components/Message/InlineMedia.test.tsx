@@ -7,41 +7,94 @@ import {
 } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 
-import { InlineFile, InlineMediaView } from './InlineMedia'
+import { itemAt } from 'test-utils/itemAt'
+
+import {
+  InlineFile,
+  InlineMediaView,
+  getInlineMediaMimeType,
+  inlineMediaMimeTypes,
+} from './InlineMedia'
 import { InlineMediaDownloadState } from './useInlineMediaDownload'
 
 type InlineFileSource = Parameters<typeof InlineFile>[0]['file']
 
-const blobUrl = 'blob:http://localhost/photo'
-
 // Matches render-media's MAX_BLOB_LENGTH
 const maxInlineMediaBytes = 200 * 1000 * 1000
 
-const revokeObjectURL = vi.fn()
+const blobsByUrl = new Map<string, Blob>()
+let createObjectURL = vi.fn<(obj: Blob | MediaSource) => string>()
+let revokeObjectURL = vi.fn<(url: string) => void>()
 
-// jsdom does not implement revokeObjectURL, which the component calls when it
-// is done with a blob URL.
-beforeAll(() => {
+// jsdom does not implement createObjectURL or revokeObjectURL, so stand in with
+// an in-memory registry of created blobs and their active URLs.
+beforeEach(() => {
+  let nextId = 0
+
+  blobsByUrl.clear()
+  createObjectURL = vi.fn((obj: Blob | MediaSource) => {
+    const url = `blob:http://localhost/${nextId++}`
+
+    if (obj instanceof Blob) {
+      blobsByUrl.set(url, obj)
+    }
+
+    return url
+  })
+  revokeObjectURL = vi.fn((url: string) => {
+    blobsByUrl.delete(url)
+  })
+  URL.createObjectURL = createObjectURL
   URL.revokeObjectURL = revokeObjectURL
 })
 
-beforeEach(() => {
-  revokeObjectURL.mockClear()
-})
+const lastCreatedUrl = (): string => {
+  const index = createObjectURL.mock.results.length - 1
 
-// Mimics WebTorrent: the blob URL is built asynchronously.
-const fileStub = (name: string, length = 1024): InlineFileSource => ({
+  if (index < 0) {
+    throw new Error('Expected URL.createObjectURL to have been called')
+  }
+
+  const result = itemAt(createObjectURL.mock.results, index)
+
+  if (result.type !== 'return') {
+    throw new Error('Expected URL.createObjectURL to return a string')
+  }
+
+  return result.value
+}
+
+const firstCreatedBlob = (): Blob => {
+  const call = itemAt(createObjectURL.mock.calls, 0)
+  const created = call[0]
+
+  if (!(created instanceof Blob)) {
+    throw new Error('Expected URL.createObjectURL to be called with a Blob')
+  }
+
+  return created
+}
+
+// Mimics WebTorrent: reads the file into a Blob asynchronously, with whatever
+// filename-derived MIME type WebTorrent chose unless overridden cleanly.
+const fileStub = (
+  name: string,
+  length = 1024,
+  rawBlobType = 'application/octet-stream'
+): InlineFileSource => ({
   name,
   length,
-  getBlobURL: vi.fn(callback => {
-    queueMicrotask(() => callback(undefined, blobUrl))
+  getBlob: vi.fn(callback => {
+    queueMicrotask(() =>
+      callback(undefined, new Blob(['fake-media-bytes'], { type: rawBlobType }))
+    )
   }),
 })
 
 const failingFileStub = (name: string): InlineFileSource => ({
   name,
   length: 1024,
-  getBlobURL: vi.fn(callback => {
+  getBlob: vi.fn(callback => {
     queueMicrotask(() => callback(new Error('Could not read the file')))
   }),
 })
@@ -54,7 +107,10 @@ describe('InlineFile image preview', () => {
 
     const thumbnail = await findThumbnail()
 
-    expect(within(thumbnail).getByRole('img')).toHaveAttribute('src', blobUrl)
+    expect(within(thumbnail).getByRole('img')).toHaveAttribute(
+      'src',
+      lastCreatedUrl()
+    )
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
   })
 
@@ -65,7 +121,10 @@ describe('InlineFile image preview', () => {
 
     const dialog = screen.getByRole('dialog', { name: 'photo.png preview' })
 
-    expect(within(dialog).getByRole('img')).toHaveAttribute('src', blobUrl)
+    expect(within(dialog).getByRole('img')).toHaveAttribute(
+      'src',
+      lastCreatedUrl()
+    )
   })
 
   test.each(['{Enter}', ' '])(
@@ -123,36 +182,98 @@ describe('InlineFile audio', () => {
 
     const audio = container.querySelector('audio')
 
-    expect(audio).toHaveAttribute('src', blobUrl)
+    expect(audio).toHaveAttribute('src', lastCreatedUrl())
     expect(audio).toHaveAttribute('controls')
     expect(screen.queryByRole('button')).not.toBeInTheDocument()
   })
 })
 
-describe('InlineFile unsupported and failing files', () => {
-  test('shows a message and does not read unsupported file types', () => {
-    const file = fileStub('notes.txt')
+describe('InlineFile fixed MIME types', () => {
+  test('never maps any extension to an active MIME type', () => {
+    const activeMimeTypes = new Set([
+      'image/svg+xml',
+      'text/html',
+      'application/xhtml+xml',
+      'text/xml',
+      'application/xml',
+      'application/pdf',
+      'text/javascript',
+      'application/javascript',
+    ])
 
-    render(<InlineFile file={file} />)
-
-    screen.getByText('Media preview not supported')
-    expect(file.getBlobURL).not.toHaveBeenCalled()
+    for (const [ext, mimeType] of Object.entries(inlineMediaMimeTypes)) {
+      expect(activeMimeTypes.has(mimeType.toLowerCase())).toBe(false)
+      expect(mimeType).toMatch(/^(image|audio)\//)
+      expect(getInlineMediaMimeType(`file${ext}`)).toBe(mimeType)
+    }
   })
+
+  test.each([
+    ['photo.png', 'image/png'],
+    ['photo.PNG', 'image/png'],
+    ['my.vacation.photo.Png', 'image/png'],
+    ['evil.svg.PNG', 'image/png'],
+    ['frame.Jpg', 'image/jpeg'],
+    ['frame.a.JPEG', 'image/jpeg'],
+    ['anim.Gif', 'image/gif'],
+    ['bitmap.BMP', 'image/bmp'],
+    ['clip.OGG', 'audio/ogg'],
+    ['voice.v2.Oga', 'audio/ogg'],
+    ['track.AAC', 'audio/aac'],
+    ['song.mix.Wav', 'audio/wav'],
+    ['master.Flac', 'audio/flac'],
+  ])(
+    'creates a Blob with fixed type %s -> %s regardless of raw blob type, casing, or extra dots',
+    async (fileName, expectedMimeType) => {
+      const stub = fileStub(fileName, 1024, 'image/svg+xml')
+
+      render(<InlineFile file={stub} />)
+
+      await vi.waitFor(() => {
+        expect(createObjectURL).toHaveBeenCalledOnce()
+      })
+
+      const createdBlob = firstCreatedBlob()
+
+      expect(createdBlob.type).toBe(expectedMimeType)
+      expect(createdBlob.size).toBe('fake-media-bytes'.length)
+    }
+  )
+})
+
+describe('InlineFile unsupported and failing files', () => {
+  test.each(['notes.txt', 'png', 'photo.png.', '.png'])(
+    'shows a message and does not read unsupported filename %s',
+    fileName => {
+      const file = fileStub(fileName)
+
+      render(<InlineFile file={file} />)
+
+      screen.getByText('Media preview not supported')
+      expect(file.getBlob).not.toHaveBeenCalled()
+      expect(createObjectURL).not.toHaveBeenCalled()
+    }
+  )
 
   // Regression test: a peer-supplied SVG rendered from a same-origin blob: URL
   // runs script when opened in its own tab (stored XSS). Active-content
   // formats must never get a blob URL, regardless of extension casing.
-  test.each(['poc.svg', 'poc.SVG', 'poc.Svg', 'poc.html', 'poc.xml'])(
-    'does not render or read %s because it can carry script',
-    file => {
-      const stub = fileStub(file)
-      const { container } = render(<InlineFile file={stub} />)
+  test.each([
+    'poc.svg',
+    'poc.SVG',
+    'poc.Svg',
+    'poc.html',
+    'poc.xml',
+    'photo.png.svg',
+  ])('does not render or read %s because it can carry script', file => {
+    const stub = fileStub(file)
+    const { container } = render(<InlineFile file={stub} />)
 
-      screen.getByText('Media preview not supported')
-      expect(container.querySelector('img')).toBeNull()
-      expect(stub.getBlobURL).not.toHaveBeenCalled()
-    }
-  )
+    screen.getByText('Media preview not supported')
+    expect(container.querySelector('img')).toBeNull()
+    expect(stub.getBlob).not.toHaveBeenCalled()
+    expect(createObjectURL).not.toHaveBeenCalled()
+  })
 
   test('shows a message and does not read files over the size limit', () => {
     const file = fileStub('photo.png', maxInlineMediaBytes + 1)
@@ -160,7 +281,8 @@ describe('InlineFile unsupported and failing files', () => {
     render(<InlineFile file={file} />)
 
     screen.getByText('Media preview not supported')
-    expect(file.getBlobURL).not.toHaveBeenCalled()
+    expect(file.getBlob).not.toHaveBeenCalled()
+    expect(createObjectURL).not.toHaveBeenCalled()
   })
 
   test('still previews a file exactly at the size limit', async () => {
@@ -174,6 +296,7 @@ describe('InlineFile unsupported and failing files', () => {
 
     await screen.findByText('Media failed to render')
     expect(screen.queryByRole('button')).not.toBeInTheDocument()
+    expect(createObjectURL).not.toHaveBeenCalled()
   })
 })
 
@@ -182,19 +305,35 @@ describe('InlineFile blob URL cleanup', () => {
     const { unmount } = render(<InlineFile file={fileStub('photo.png')} />)
 
     await findThumbnail()
+
+    const createdUrl = lastCreatedUrl()
+
     unmount()
 
-    expect(revokeObjectURL).toHaveBeenCalledWith(blobUrl)
+    expect(revokeObjectURL).toHaveBeenCalledWith(createdUrl)
+    expect(blobsByUrl.size).toBe(0)
   })
 
-  test('revokes a blob URL that arrives after unmount', async () => {
-    const file = fileStub('photo.png')
+  test('does not create or leak a blob URL if unmounted before the blob arrives', () => {
+    let deliverBlob: ((blob: Blob) => void) | undefined
+    const file: InlineFileSource = {
+      name: 'photo.png',
+      length: 1024,
+      getBlob: vi.fn(callback => {
+        deliverBlob = blob => callback(undefined, blob)
+      }),
+    }
     const { unmount } = render(<InlineFile file={file} />)
 
+    if (!deliverBlob) {
+      throw new Error('Expected getBlob to have been called')
+    }
+
     unmount()
-    await vi.waitFor(() => {
-      expect(revokeObjectURL).toHaveBeenCalledWith(blobUrl)
-    })
+    deliverBlob(new Blob(['fake-media-bytes'], { type: 'image/png' }))
+
+    expect(createObjectURL).not.toHaveBeenCalled()
+    expect(blobsByUrl.size).toBe(0)
   })
 })
 
