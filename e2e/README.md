@@ -53,6 +53,8 @@ e2e/
 │   └── hostile-peer.html        # The blank page it runs on
 ├── tests/
 │   ├── accessibility.test.ts    # Accessibility tests
+│   ├── content-security-policy.test.ts # The CSP blocks javascript: URLs and the app still works under it
+│   ├── embedder-file-exfiltration.test.ts # A hostile embedding page cannot read a downloaded file
 │   ├── file-offer-replay.test.ts # Replayed file offers cannot destroy shared files
 │   ├── forged-transcript.test.ts # A hostile first peer's history cannot make a newcomer contact its server
 │   ├── home.test.ts             # Home page tests

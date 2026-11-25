@@ -37,7 +37,7 @@ Open <https://chitchatter.im/> and join a room to start chatting with anyone els
 - Screen sharing.
 - Direct messaging.
 - File sharing:
-  - Unlimited file size transfers.
+  - Unlimited file size transfers when Chitchatter is opened directly. Embedded rooms are limited by memory (see [Known limitations of embedded rooms](#known-limitations-of-embedded-rooms)).
   - Files are encrypted prior to sending and decrypted by the receiver. Each share gets its own random key, which is only sent to peers in the room.
 - Embedding into other web apps via `iframe`.
 - Markdown support via [`react-markdown`](https://github.com/remarkjs/react-markdown).
@@ -157,6 +157,16 @@ As well as the following [standard `<iframe />` attributes](https://developer.mo
 - `style`
 - `referrerpolicy`
 - `sandbox`
+
+### Known limitations of embedded rooms
+
+When Chitchatter runs inside an `iframe` (including via the SDK), downloaded files are not streamed to disk. To keep decrypted files away from the embedding page, each file is held in memory until it has fully arrived and is only then saved. As a result:
+
+- The browser's download prompt or download bar appears only once the whole file has arrived. The download button's progress indicator still shows the transfer.
+- Very large files may fail to save, or may crash the tab, depending on the available memory.
+- A cancelled or interrupted transfer leaves no partial file behind.
+
+For large files, open the room directly (outside of the embedding page) instead.
 
 ## Developing Chitchatter
 
@@ -418,6 +428,16 @@ Build the app with `npm run build`, and then serve the `dist` directory. Any sta
 
 Explore the files in `src/config` to modify pairing and relay server configuration.
 
+#### Content Security Policy
+
+The build adds a [Content Security Policy](https://developer.mozilla.org/en-US/docs/Web/HTTP/CSP) to `index.html` as a `<meta>` tag. Its `script-src` only allows scripts served from the app's own origin, plus inline scripts that are present in `index.html` at build time (they are allowed by hash automatically). Any script that is added after the build is blocked. This includes scripts that a server, CDN or hosting platform injects into the page, such as analytics snippets or Vercel's preview toolbar (`vercel.live`). To run such a script, add it to `index.html` before building, or serve it from your own origin.
+
+#### File sharing (StreamSaver)
+
+Outside of an `iframe`, received files are streamed to disk through a [StreamSaver.js](https://github.com/jimmywarting/StreamSaver.js) "mitm" page hosted on another origin. The default is `https://jeremyckahn.github.io/StreamSaver.js/mitm.html`. To use your own copy, set the `VITE_STREAMSAVER_URL` environment variable to its `mitm.html` URL at build time (or change the default in `src/config/streamSaverUrl.ts`).
+
+For security, Chitchatter only opens download URLs that are inside the same directory as that `mitm.html` page. For example, with `https://example.github.io/StreamSaver.js/mitm.html`, download URLs must start with `https://example.github.io/StreamSaver.js/`. A stock StreamSaver.js deployment already works this way, because its service worker creates download URLs inside its own scope. This only matters if you have modified your copy so that it creates download URLs somewhere else, in which case downloads will fail with a `[StreamSaver] Rejected untrusted download URL` error in the browser console.
+
 #### Theme customization
 
 Chitchatter utilizes the [MUI component library](https://mui.com/) which is [themeable](https://mui.com/material-ui/customization/theming/). You can customize Chitchatter's look and feel by modifying [the shell theme definition](https://github.com/jeremyckahn/chitchatter/blob/dc78137702bb9d6bf1be289e469e080cd7d5dc8b/src/components/Shell/useShellTheme.ts#L11-L18).
@@ -446,7 +466,7 @@ Per [#36](https://github.com/jeremyckahn/chitchatter/issues/36), check your `abo
 
 #### Offered files can't be downloaded from peers
 
-Chitchatter uses [StreamSaver.js](https://github.com/jimmywarting/StreamSaver.js) to facilitate large file transfers. Download managers such as [FDM](https://www.freedownloadmanager.org/) are [known to interfere with StreamSaver.js](https://github.com/jimmywarting/StreamSaver.js/issues/325), so it is recommended to disable such download managers when trying to receive files.
+Chitchatter uses [StreamSaver.js](https://github.com/jimmywarting/StreamSaver.js) to facilitate large file transfers. It installs a [hardened fork](https://github.com/jeremyckahn/StreamSaver.js), pinned by commit in `package.json`, that only posts file streams to the StreamSaver page's own origin and rejects untrusted download URLs. See [the fork's changes compared to the upstream commit it is based on](https://github.com/jeremyckahn/StreamSaver.js/compare/34ea69e...d0d6f59). An `overrides` entry makes every dependency, including `secure-file-transfer`, use that copy. Download managers such as [FDM](https://www.freedownloadmanager.org/) are [known to interfere with StreamSaver.js](https://github.com/jimmywarting/StreamSaver.js/issues/325), so it is recommended to disable such download managers when trying to receive files.
 
 ### Contributors
 

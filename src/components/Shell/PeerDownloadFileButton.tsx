@@ -11,6 +11,7 @@ import { Peer } from 'core/models/chat'
 
 import { usePeerNameDisplay } from 'components/PeerNameDisplay/usePeerNameDisplay'
 import { RoomContext } from 'contexts/RoomContext'
+import { downloadAndSaveFiles } from 'services/FileTransfer'
 
 interface PeerDownloadFileButtonProps {
   peer: Peer
@@ -41,8 +42,10 @@ export const PeerDownloadFileButton = ({
     setDownloadProgress(null)
 
     try {
-      await fileTransfer.download(offeredFile.magnetURI, offeredFile.fileKey, {
-        doSave: true,
+      await downloadAndSaveFiles({
+        fileTransfer,
+        magnetURI: offeredFile.magnetURI,
+        fileKey: offeredFile.fileKey,
         onProgress,
       })
     } catch (e) {
