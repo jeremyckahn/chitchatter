@@ -11,10 +11,7 @@ export enum InlineMediaDownloadState {
 }
 
 /** The part of a downloaded file that rendering it needs. */
-export type InlineMediaFile = Pick<
-  TorrentFile,
-  'name' | 'length' | 'getBlobURL'
->
+export type InlineMediaFile = Pick<TorrentFile, 'name' | 'length' | 'getBlob'>
 
 export type InlineMediaDownload =
   | { state: InlineMediaDownloadState.LOADING }
