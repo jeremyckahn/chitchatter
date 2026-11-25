@@ -39,26 +39,34 @@ const imagePreviewViewportInset = '64px'
 // own origin, so a format that can carry script runs with full access to the
 // app's storage when opened in its own tab. Active formats such as `.svg`
 // (`image/svg+xml`), `.html`, `.xml`, and `.pdf` must stay out of this map.
-export const inlineImageMimeTypes: Readonly<Record<string, string>> = {
+export const inlineImageMimeTypes = {
   '.bmp': 'image/bmp',
   '.gif': 'image/gif',
   '.jpeg': 'image/jpeg',
   '.jpg': 'image/jpeg',
   '.png': 'image/png',
-}
+} as const satisfies Readonly<Record<`.${string}`, `image/${string}`>>
 
-export const inlineAudioMimeTypes: Readonly<Record<string, string>> = {
+export const inlineAudioMimeTypes = {
   '.aac': 'audio/aac',
   '.flac': 'audio/flac',
   '.oga': 'audio/ogg',
   '.ogg': 'audio/ogg',
   '.wav': 'audio/wav',
-}
+} as const satisfies Readonly<Record<`.${string}`, `audio/${string}`>>
 
-export const inlineMediaMimeTypes: Readonly<Record<string, string>> = {
+export const inlineMediaMimeTypes = {
   ...inlineImageMimeTypes,
   ...inlineAudioMimeTypes,
-}
+} as const
+
+export type InlineMediaMimeType =
+  (typeof inlineMediaMimeTypes)[keyof typeof inlineMediaMimeTypes]
+
+const isInlineMediaExtension = (
+  ext: string
+): ext is keyof typeof inlineMediaMimeTypes =>
+  Object.hasOwn(inlineMediaMimeTypes, ext)
 
 const getNormalizedExtension = (fileName: string): string => {
   const lastDotIndex = fileName.lastIndexOf('.')
@@ -70,10 +78,10 @@ const getNormalizedExtension = (fileName: string): string => {
 
 export const getInlineMediaMimeType = (
   fileName: string
-): string | undefined => {
+): InlineMediaMimeType | undefined => {
   const extension = getNormalizedExtension(fileName)
 
-  return Object.prototype.hasOwnProperty.call(inlineMediaMimeTypes, extension)
+  return isInlineMediaExtension(extension)
     ? inlineMediaMimeTypes[extension]
     : undefined
 }
@@ -84,7 +92,7 @@ const maxInlineMediaBytes = 200 * 1000 * 1000
 
 const useBlobUrl = (
   file: Pick<TorrentFile, 'getBlob'>,
-  mimeType: string | undefined
+  mimeType: InlineMediaMimeType | undefined
 ) => {
   const [url, setUrl] = useState<string>()
   const [didFail, setDidFail] = useState(false)
@@ -130,12 +138,8 @@ export const InlineFile = ({ file }: InlineFileProps) => {
   const [isImagePreviewOpen, setIsImagePreviewOpen] = useState(false)
 
   const { name } = file
-  const extension = getNormalizedExtension(name)
   const fixedMimeType = getInlineMediaMimeType(name)
-  const isImage = Object.prototype.hasOwnProperty.call(
-    inlineImageMimeTypes,
-    extension
-  )
+  const isImage = fixedMimeType?.startsWith('image/') ?? false
   const isMediaSupported =
     fixedMimeType !== undefined && file.length <= maxInlineMediaBytes
 

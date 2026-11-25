@@ -7,6 +7,8 @@ import {
 } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 
+import { itemAt } from 'test-utils/itemAt'
+
 import {
   InlineFile,
   InlineMediaView,
@@ -46,6 +48,33 @@ beforeEach(() => {
   URL.revokeObjectURL = revokeObjectURL
 })
 
+const lastCreatedUrl = (): string => {
+  const index = createObjectURL.mock.results.length - 1
+
+  if (index < 0) {
+    throw new Error('Expected URL.createObjectURL to have been called')
+  }
+
+  const result = itemAt(createObjectURL.mock.results, index)
+
+  if (result.type !== 'return') {
+    throw new Error('Expected URL.createObjectURL to return a string')
+  }
+
+  return result.value
+}
+
+const firstCreatedBlob = (): Blob => {
+  const call = itemAt(createObjectURL.mock.calls, 0)
+  const created = call[0]
+
+  if (!(created instanceof Blob)) {
+    throw new Error('Expected URL.createObjectURL to be called with a Blob')
+  }
+
+  return created
+}
+
 // Mimics WebTorrent: reads the file into a Blob asynchronously, with whatever
 // filename-derived MIME type WebTorrent chose unless overridden cleanly.
 const fileStub = (
@@ -77,11 +106,10 @@ describe('InlineFile image preview', () => {
     render(<InlineFile file={fileStub('photo.png')} />)
 
     const thumbnail = await findThumbnail()
-    const createdUrl = createObjectURL.mock.results[0]?.value as string
 
     expect(within(thumbnail).getByRole('img')).toHaveAttribute(
       'src',
-      createdUrl
+      lastCreatedUrl()
     )
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
   })
@@ -92,9 +120,11 @@ describe('InlineFile image preview', () => {
     await userEvent.click(await findThumbnail())
 
     const dialog = screen.getByRole('dialog', { name: 'photo.png preview' })
-    const createdUrl = createObjectURL.mock.results[0]?.value as string
 
-    expect(within(dialog).getByRole('img')).toHaveAttribute('src', createdUrl)
+    expect(within(dialog).getByRole('img')).toHaveAttribute(
+      'src',
+      lastCreatedUrl()
+    )
   })
 
   test.each(['{Enter}', ' '])(
@@ -151,9 +181,8 @@ describe('InlineFile audio', () => {
     })
 
     const audio = container.querySelector('audio')
-    const createdUrl = createObjectURL.mock.results[0]?.value as string
 
-    expect(audio).toHaveAttribute('src', createdUrl)
+    expect(audio).toHaveAttribute('src', lastCreatedUrl())
     expect(audio).toHaveAttribute('controls')
     expect(screen.queryByRole('button')).not.toBeInTheDocument()
   })
@@ -204,11 +233,10 @@ describe('InlineFile fixed MIME types', () => {
         expect(createObjectURL).toHaveBeenCalledOnce()
       })
 
-      const createdBlob = createObjectURL.mock.calls[0]?.[0]
+      const createdBlob = firstCreatedBlob()
 
-      expect(createdBlob).toBeInstanceOf(Blob)
-      expect((createdBlob as Blob).type).toBe(expectedMimeType)
-      expect((createdBlob as Blob).size).toBe('fake-media-bytes'.length)
+      expect(createdBlob.type).toBe(expectedMimeType)
+      expect(createdBlob.size).toBe('fake-media-bytes'.length)
     }
   )
 })
@@ -278,7 +306,7 @@ describe('InlineFile blob URL cleanup', () => {
 
     await findThumbnail()
 
-    const createdUrl = createObjectURL.mock.results[0]?.value as string
+    const createdUrl = lastCreatedUrl()
 
     unmount()
 
@@ -286,15 +314,23 @@ describe('InlineFile blob URL cleanup', () => {
     expect(blobsByUrl.size).toBe(0)
   })
 
-  test('does not create or leak a blob URL if unmounted before the blob arrives', async () => {
-    const file = fileStub('photo.png')
+  test('does not create or leak a blob URL if unmounted before the blob arrives', () => {
+    let deliverBlob: ((blob: Blob) => void) | undefined
+    const file: InlineFileSource = {
+      name: 'photo.png',
+      length: 1024,
+      getBlob: vi.fn(callback => {
+        deliverBlob = blob => callback(undefined, blob)
+      }),
+    }
     const { unmount } = render(<InlineFile file={file} />)
 
-    unmount()
+    if (!deliverBlob) {
+      throw new Error('Expected getBlob to have been called')
+    }
 
-    await vi.waitFor(() => {
-      expect(file.getBlob).toHaveBeenCalledOnce()
-    })
+    unmount()
+    deliverBlob(new Blob(['fake-media-bytes'], { type: 'image/png' }))
 
     expect(createObjectURL).not.toHaveBeenCalled()
     expect(blobsByUrl.size).toBe(0)
