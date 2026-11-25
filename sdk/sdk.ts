@@ -77,6 +77,9 @@ class ChatEmbed extends HTMLElement {
     const { origin: rootUrlOrigin } = new URL(rootUrl)
 
     if (rootUrlOrigin !== event.origin) return
+    // NOTE: Every <chat-room> listens on window, so a request from another
+    // element's iframe must not consume this element's listener.
+    if (event.source !== this.iframe.contentWindow) return
     if (!isPostMessageEvent(event)) return
     if (event.data.name !== PostMessageEventName.CONFIG_REQUESTED) return
 

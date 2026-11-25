@@ -117,7 +117,7 @@ const config = () => {
             globals: true,
             environment: 'jsdom',
             setupFiles: './src/setupTests.ts',
-            include: ['src/**/*.test.{ts,tsx}'],
+            include: ['src/**/*.test.{ts,tsx}', 'sdk/**/*.test.ts'],
             exclude: ['src/core/**', '**/e2e/**', '**/node_modules/**'],
             server: {
               deps: {
