@@ -11,6 +11,7 @@ import {
   isOfferedByAnotherPeer,
   removeFileOffer,
   shouldRescindOffer,
+  withoutContradictedInlineFlag,
 } from 'core/chat/fileOffers'
 import {
   FILE_KEY_BYTE_LENGTH,
@@ -245,6 +246,49 @@ describe('isOfferedByAnotherPeer', () => {
 
   it('is false when nobody offers anything', () => {
     expect(isOfferedByAnotherPeer({}, 'peer-1', 'magnet:a')).toBe(false)
+  })
+})
+
+describe('withoutContradictedInlineFlag', () => {
+  const flagged: FileOfferMetadata = {
+    magnetURI: 'magnet:a',
+    fileKey,
+    isAllInlineMedia: true,
+  }
+  const unflagged: FileOfferMetadata = { ...flagged, isAllInlineMedia: false }
+
+  it('keeps the flag when nobody has offered the magnet', () => {
+    expect(withoutContradictedInlineFlag({}, flagged)).toBe(flagged)
+  })
+
+  it('keeps the flag when every recorded offer of the magnet carries it', () => {
+    expect(withoutContradictedInlineFlag({ 'peer-1': flagged }, flagged)).toBe(
+      flagged
+    )
+  })
+
+  it('drops the flag when a recorded offer of the magnet lacks it', () => {
+    expect(
+      withoutContradictedInlineFlag(
+        { 'peer-1': flagged, 'peer-2': unflagged },
+        flagged
+      )
+    ).toEqual(unflagged)
+  })
+
+  it('judges each magnet on its own', () => {
+    expect(
+      withoutContradictedInlineFlag(
+        { 'peer-1': { ...unflagged, magnetURI: 'magnet:b' } },
+        flagged
+      )
+    ).toBe(flagged)
+  })
+
+  it('returns an unflagged offer as it is', () => {
+    expect(
+      withoutContradictedInlineFlag({ 'peer-1': flagged }, unflagged)
+    ).toBe(unflagged)
   })
 })
 
