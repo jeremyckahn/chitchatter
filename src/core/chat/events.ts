@@ -87,6 +87,11 @@ export interface ChatRoomEventPayloads {
   [ChatRoomEvent.TYPING_STATUS_CHANGE]: { peerId: string; isTyping: boolean }
   [ChatRoomEvent.FILE_OFFER_CHANGE]: {
     peerId: string
+    /**
+     * The offer as this client recorded it, or `null` when it ended. Its
+     * `isAllInlineMedia` is this client's verdict, not what the peer sent: see
+     * `ChatRoom.getFileOffers`.
+     */
     metadata: FileOfferMetadata | null
   }
   [ChatRoomEvent.SELF_FILE_OFFER_CHANGE]: { magnetURI: string | null }

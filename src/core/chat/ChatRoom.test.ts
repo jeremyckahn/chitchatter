@@ -3722,6 +3722,41 @@ describe('ChatRoom', () => {
               magnetFor('peer-0')
             )
           })
+
+          // The owner's offer is recorded without the flag, and that record
+          // contradicts each later announcement of it. So the flag does not
+          // come back when the unflagged claim goes away, only when the owner
+          // withdraws and offers the file afresh.
+          it("keeps the honest flag dropped while the owner's offer stays on record, after the unflagged claim is gone", async () => {
+            const bob = createClient(network, 1)
+
+            await bob.chatRoom.join()
+
+            const mallory = await createForger(2)
+            const owner = await createForger(0)
+
+            await mallory.offer(magnetFor('peer-0'), false)
+            await owner.offer(magnetFor('peer-0'), true)
+            await settle()
+
+            mallory.transport.leaveRoom()
+            await settle()
+
+            await owner.offer(magnetFor('peer-0'), true)
+            await settle()
+
+            expect(
+              bob.chatRoom.getFileOffers()['peer-0']?.isAllInlineMedia
+            ).toBe(false)
+
+            await owner.withdraw()
+            await owner.offer(magnetFor('peer-0'), true)
+            await settle()
+
+            expect(
+              bob.chatRoom.getFileOffers()['peer-0']?.isAllInlineMedia
+            ).toBe(true)
+          })
         })
       })
 
@@ -3807,6 +3842,114 @@ describe('ChatRoom', () => {
           await owner.offer(magnetFor('second'))
           await settle()
 
+          expect(bob.fileTransfer.rescind).not.toHaveBeenCalled()
+        })
+
+        it("leaves inline media in this room's transcript seeded", async () => {
+          const alice = createClient(network, 0)
+          const bob = createClient(network, 1)
+
+          await joinAll(alice, bob)
+
+          await alice.chatRoom.sendInlineMedia([
+            { name: 'a.png', type: 'image/png', size: 1 },
+          ])
+          await settle()
+
+          expect(bob.chatRoom.getMessageLog()).toHaveLength(1)
+
+          // Alice offers the magnet her image was posted under, unflagged, and
+          // then moves on to another file.
+          const [send] = alice.transport.makeAction<FileOfferMetadata | null>(
+            PeerAction.FILE_OFFER,
+            ActionNamespace.GROUP
+          )
+
+          await send({
+            magnetURI: magnetFor('peer-0'),
+            fileKey: peerFileKey,
+            isAllInlineMedia: false,
+          })
+          await send({
+            magnetURI: magnetFor('elsewhere'),
+            fileKey: peerFileKey,
+            isAllInlineMedia: false,
+          })
+          await settle()
+
+          expect(bob.chatRoom.getFileOffers()['peer-0']?.magnetURI).toBe(
+            magnetFor('elsewhere')
+          )
+          expect(bob.fileTransfer.rescind).not.toHaveBeenCalled()
+        })
+
+        it('leaves inline media from a direct-message transcript seeded, when its author replaces a group offer of it', async () => {
+          const alice = createClient(network, 0)
+          const mallory = createClient(network, 2)
+          const aliceToMallory = createDirectMessageRoom(alice, 0, 'peer-2')
+          const malloryToAlice = createDirectMessageRoom(mallory, 2, 'peer-0')
+
+          await alice.chatRoom.join()
+          await aliceToMallory.join()
+          await malloryToAlice.join()
+
+          // The image is in the DM transcript only: the group room has never
+          // heard of its magnet.
+          await malloryToAlice.sendInlineMedia([
+            { name: 'a.png', type: 'image/png', size: 1 },
+          ])
+          await settle()
+
+          expect(aliceToMallory.getMessageLog()).toHaveLength(1)
+          expect(alice.chatRoom.getMessageLog()).toHaveLength(0)
+
+          const [send] = mallory.transport.makeAction<FileOfferMetadata | null>(
+            PeerAction.FILE_OFFER,
+            ActionNamespace.GROUP
+          )
+
+          await send({
+            magnetURI: magnetFor('peer-2'),
+            fileKey: peerFileKey,
+            isAllInlineMedia: false,
+          })
+          await send({
+            magnetURI: magnetFor('elsewhere'),
+            fileKey: peerFileKey,
+            isAllInlineMedia: false,
+          })
+          await settle()
+
+          expect(alice.chatRoom.getFileOffers()['peer-2']?.magnetURI).toBe(
+            magnetFor('elsewhere')
+          )
+          expect(alice.fileTransfer.rescind).not.toHaveBeenCalled()
+        })
+
+        it('does not stop a seed when the offer is replaced in a direct-message room', async () => {
+          const alice = createClient(network, 0)
+          const bob = createClient(network, 1)
+          const bobToMallory = createDirectMessageRoom(bob, 1, 'peer-2')
+
+          await joinAll(alice, bob)
+          await bobToMallory.join()
+
+          // Bob re-seeds Alice's file for the group: the mock reports every
+          // magnet as being offered.
+          await alice.chatRoom.offerFiles([
+            { name: 'doc.pdf', type: 'application/pdf', size: 10 },
+          ])
+          await settle()
+
+          const mallory = await createForger(2, ActionNamespace.DIRECT_MESSAGE)
+
+          await mallory.offer(magnetFor('peer-0'))
+          await mallory.offer(magnetFor('elsewhere'))
+          await settle()
+
+          expect(bobToMallory.getFileOffers()['peer-2']?.magnetURI).toBe(
+            magnetFor('elsewhere')
+          )
           expect(bob.fileTransfer.rescind).not.toHaveBeenCalled()
         })
       })

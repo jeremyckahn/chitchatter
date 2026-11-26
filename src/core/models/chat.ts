@@ -130,6 +130,11 @@ export const isInlineMedia = (
 }
 
 export type FileOfferMetadata = FileReference & {
+  /**
+   * On the wire, what the offering peer claims. In `ChatRoom.getFileOffers`
+   * and the `FILE_OFFER_CHANGE` payload, what the receiving client decided to
+   * believe, which is `false` for a claim it did not accept.
+   */
   isAllInlineMedia: boolean
 }
 

@@ -481,6 +481,13 @@ export class ChatRoom extends EventTarget {
 
   getIsMessageSending = () => this.isMessageSending
 
+  /**
+   * What each peer is offering, as this client treats it.
+   *
+   * `isAllInlineMedia` here is this client's verdict, not what the peer sent:
+   * a flag that an offer already on record contradicted is reported as `false`.
+   * See {@link withoutContradictedInlineFlag}.
+   */
   getFileOffers = (): FileOffers => this.fileOffers
 
   getSelfFileOfferMagnetUri = () => this.selfFileOffer?.magnetURI ?? null

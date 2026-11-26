@@ -123,6 +123,13 @@ export const isOfferedByAnotherPeer = (
  * record is believed. An honest flag that arrives while a false unflagged
  * claim on the same magnet is on record is dropped. Nothing in the protocol
  * tells a claimant from the owner: see {@link isOfferedByAnotherPeer}.
+ *
+ * A dropped flag stays dropped for as long as the sender's own offer of the
+ * magnet is on record, not only while the contradicting offer is. The caller
+ * records the offer as returned here, without the flag, and that record then
+ * contradicts every later announcement of the same offer. The sender gets the
+ * flag back only by withdrawing the offer, or leaving, and offering the file
+ * again once no unflagged offer of it remains.
  */
 export const withoutContradictedInlineFlag = (
   offers: FileOffers,
