@@ -432,6 +432,7 @@ export const Shell = ({ appNeedsUpdate, children, userPeerId }: ShellProps) => {
                     peerAudioChannelState={audioChannelState}
                     peerAudioChannels={peerAudioChannels}
                     connectionTestResults={connectionTestResults}
+                    isPrivateRoom={password !== undefined}
                   />
                   {isEmbedded ? (
                     <Typography

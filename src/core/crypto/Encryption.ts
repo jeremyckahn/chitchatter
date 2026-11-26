@@ -15,6 +15,52 @@ const algorithmName = 'RSASSA-PKCS1-v1_5'
 
 const algorithmHash = 'SHA-256'
 
+/**
+ * Generations of the private room secret. A secret's version is part of its
+ * serialized form (see {@link getRoomSecretVersion}), so a room link records
+ * which derivation produced it.
+ */
+export enum RoomSecretVersion {
+  /** `base64(SHA-256(roomId + "_" + password))`. No work factor. */
+  V1 = 'v1',
+  /** `"v2." + base64(PBKDF2-SHA256(v1 digest, salt, iterations))`. */
+  V2 = 'v2',
+}
+
+/**
+ * PBKDF2-HMAC-SHA256 work factor for private room secrets: the OWASP
+ * recommended minimum. Lowering it makes offline guessing of room passwords
+ * cheaper and changes every room's key, so it is pinned by a test.
+ */
+export const roomSecretKdfIterations = 600_000
+
+const roomSecretBits = 256
+
+const roomSecretSaltPrefix = 'chitchatter:room-secret:'
+
+const roomSecretVersionSeparator = '.'
+
+// Base64 of exactly 32 bytes: 43 significant characters and one pad.
+const base64Sha256Pattern = /^[A-Za-z0-9+/]{43}=$/
+
+/**
+ * Identifies which derivation produced a serialized room secret, or returns
+ * `undefined` when the value is not a well-formed secret of any version.
+ */
+export const getRoomSecretVersion = (
+  secret: string
+): RoomSecretVersion | undefined => {
+  const v2Prefix = `${RoomSecretVersion.V2}${roomSecretVersionSeparator}`
+
+  if (secret.startsWith(v2Prefix)) {
+    return base64Sha256Pattern.test(secret.slice(v2Prefix.length))
+      ? RoomSecretVersion.V2
+      : undefined
+  }
+
+  return base64Sha256Pattern.test(secret) ? RoomSecretVersion.V1 : undefined
+}
+
 export class EncryptionService {
   static arrayBufferToBase64(buffer: ArrayBuffer): string {
     const binary = String.fromCharCode(...new Uint8Array(buffer))
@@ -56,13 +102,87 @@ export class EncryptionService {
     return keyPair
   }
 
-  encodePassword = async (roomId: string, password: string) => {
+  /**
+   * Derives the secret a private room hands to the transport from the room's
+   * password. The result is what encrypts every signalling offer announced to
+   * the public trackers, so it is stretched with PBKDF2: anybody who knows the
+   * room name can collect those offers and test password guesses offline, and
+   * the work factor is the only thing that makes each guess expensive.
+   *
+   * The derivation is chained through the legacy (v1) digest so that room
+   * links created before the work factor was added can still be upgraded
+   * locally — see {@link resolveRoomLinkSecret}.
+   */
+  encodePassword = async (roomId: string, password: string): Promise<string> =>
+    this.stretchLegacyRoomSecret(
+      roomId,
+      await this.hashLegacyRoomSecret(roomId, password)
+    )
+
+  /**
+   * Turns the `secret` carried by a shared room link into the secret to join
+   * with. Current (v2) secrets are used as-is; legacy (v1) secrets from links
+   * copied before the work factor was added are upgraded to v2. Anything else
+   * — a truncated or tampered link — yields `undefined`, and the host should
+   * ask for the password instead.
+   */
+  resolveRoomLinkSecret = async (
+    roomId: string,
+    linkSecret: string
+  ): Promise<string | undefined> => {
+    switch (getRoomSecretVersion(linkSecret)) {
+      case RoomSecretVersion.V2:
+        return linkSecret
+      case RoomSecretVersion.V1:
+        return this.stretchLegacyRoomSecret(roomId, linkSecret)
+      case undefined:
+        return undefined
+    }
+  }
+
+  /**
+   * The original single-SHA-256 room secret. It must never be handed to the
+   * transport any more: it is only an intermediate value of the v2 derivation
+   * and the format of legacy room links.
+   */
+  private hashLegacyRoomSecret = async (
+    roomId: string,
+    password: string
+  ): Promise<string> => {
     const data = new TextEncoder().encode(`${roomId}_${password}`)
     const digest = await globalThis.crypto.subtle.digest('SHA-256', data)
-    const bytes = new Uint8Array(digest)
-    const encodedPassword = btoa(String.fromCharCode(...bytes))
 
-    return encodedPassword
+    return EncryptionService.arrayBufferToBase64(digest)
+  }
+
+  private stretchLegacyRoomSecret = async (
+    roomId: string,
+    legacySecret: string
+  ): Promise<string> => {
+    const { subtle } = globalThis.crypto
+
+    const baseKey = await subtle.importKey(
+      'raw',
+      EncryptionService.base64ToArrayBuffer(legacySecret),
+      'PBKDF2',
+      false,
+      ['deriveBits']
+    )
+
+    const derivedBits = await subtle.deriveBits(
+      {
+        name: 'PBKDF2',
+        hash: 'SHA-256',
+        salt: new TextEncoder().encode(
+          `${roomSecretSaltPrefix}${RoomSecretVersion.V2}:${roomId}`
+        ),
+        iterations: roomSecretKdfIterations,
+      },
+      baseKey,
+      roomSecretBits
+    )
+
+    return `${RoomSecretVersion.V2}${roomSecretVersionSeparator}${EncryptionService.arrayBufferToBase64(derivedBits)}`
   }
 
   stringifyCryptoKey = async (cryptoKey: CryptoKey) => {

@@ -1,6 +1,7 @@
 import Alert, { AlertColor } from '@mui/material/Alert'
 import Button from '@mui/material/Button'
 import Checkbox from '@mui/material/Checkbox'
+import CircularProgress from '@mui/material/CircularProgress'
 import Dialog from '@mui/material/Dialog'
 import DialogActions from '@mui/material/DialogActions'
 import DialogContent from '@mui/material/DialogContent'
@@ -12,6 +13,7 @@ import TextField from '@mui/material/TextField'
 import Tooltip from '@mui/material/Tooltip'
 import CloseIcon from '@mui/icons-material/Close'
 
+import { useDelayedFlag } from 'hooks/useDelayedFlag'
 import { AlertOptions } from 'models/shell'
 import { useEffect, useState, SyntheticEvent } from 'react'
 import { sleep } from 'core/lib/sleep'
@@ -35,6 +37,8 @@ export function RoomShareDialog(props: RoomShareDialogProps) {
   const [isUnderstood, setIsUnderstood] = useState(false)
   const [password, setPassword] = useState('')
   const [passThrottled, setPassThrottled] = useState(false)
+  const [isVerifying, setIsVerifying] = useState(false)
+  const showVerifyingProgress = useDelayedFlag(isVerifying)
   const handleClose = () => {
     props.handleClose()
     setPassword('')
@@ -51,7 +55,23 @@ export function RoomShareDialog(props: RoomShareDialogProps) {
   const [url = ''] = window.location.href.split('#')
 
   const copyWithPass = async () => {
-    const encoded = await encryption.encodePassword(props.roomId, password)
+    setIsVerifying(true)
+
+    let encoded: string
+
+    try {
+      // Deliberately slow: the same derivation that protects the room.
+      encoded = await encryption.encodePassword(props.roomId, password)
+    } catch (error) {
+      console.error(error)
+      props.showAlert("Couldn't verify the password. Please try again.", {
+        severity: 'error',
+      })
+
+      return
+    } finally {
+      setIsVerifying(false)
+    }
 
     if (encoded === props.password) {
       const params = new URLSearchParams()
@@ -92,7 +112,7 @@ export function RoomShareDialog(props: RoomShareDialogProps) {
   const handleFormSubmit = (event: SyntheticEvent<HTMLFormElement>) => {
     event.preventDefault()
 
-    if (!passThrottled) copyWithPass()
+    if (!passThrottled && !isVerifying) copyWithPass()
   }
 
   return (
@@ -158,7 +178,7 @@ export function RoomShareDialog(props: RoomShareDialogProps) {
               fullWidth
               variant="standard"
               value={password}
-              disabled={!isUnderstood}
+              disabled={!isUnderstood || isVerifying}
               onChange={e => setPassword(e.target.value)}
             />
           </DialogContent>
@@ -167,15 +187,26 @@ export function RoomShareDialog(props: RoomShareDialogProps) {
           {isAdvanced ? (
             <Tooltip title="Copy room URL with password. No password entry required to access room.">
               <span>
+                {/* Submitting the form is what copies; an onClick here as well
+                    ran the (slow) password check twice per click. */}
                 <Button
                   type="submit"
-                  onClick={copyWithPass}
                   color="error"
                   disabled={
-                    password.length === 0 || !isUnderstood || passThrottled
+                    password.length === 0 ||
+                    !isUnderstood ||
+                    passThrottled ||
+                    isVerifying
+                  }
+                  startIcon={
+                    showVerifyingProgress ? (
+                      <CircularProgress size={16} color="inherit" />
+                    ) : undefined
                   }
                 >
-                  Copy URL with password
+                  {showVerifyingProgress
+                    ? 'Verifying password…'
+                    : 'Copy URL with password'}
                 </Button>
               </span>
             </Tooltip>
