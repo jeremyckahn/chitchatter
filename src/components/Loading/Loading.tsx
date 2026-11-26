@@ -1,10 +1,15 @@
 import Box, { BoxProps } from '@mui/material/Box'
 import CircularProgress from '@mui/material/CircularProgress'
+import Typography from '@mui/material/Typography'
 
-interface WholePageLoadingProps extends BoxProps {}
+interface WholePageLoadingProps extends BoxProps {
+  /** Text shown beneath the spinner, describing what is being waited on. */
+  label?: string
+}
 
 export const WholePageLoading = ({
   sx = [],
+  label,
   ...props
 }: WholePageLoadingProps) => {
   return (
@@ -12,6 +17,8 @@ export const WholePageLoading = ({
       sx={[
         {
           display: 'flex',
+          flexDirection: 'column',
+          gap: 2,
           justifyContent: 'center',
           alignItems: 'center',
           position: 'absolute',
@@ -24,7 +31,8 @@ export const WholePageLoading = ({
       ]}
       {...props}
     >
-      <CircularProgress aria-label="Loading" />
+      <CircularProgress aria-label={label ?? 'Loading'} />
+      {label && <Typography color="text.secondary">{label}</Typography>}
     </Box>
   )
 }

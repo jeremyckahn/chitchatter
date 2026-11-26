@@ -169,6 +169,15 @@ Two limits on what that gives you:
   see, the key only crosses the room's peer connections, so never log it, put it
   in a notification or send it anywhere else. A payload without a well-formed
   key (`isFileKey`) is dropped: it could never be decrypted.
+- **A room password must stay slow to test.** The private room secret encrypts
+  the signalling offers that public trackers relay to anybody who announces the
+  room's swarm, so those offers are an offline password oracle for anyone who
+  knows the room name. `EncryptionService.encodePassword` therefore stretches
+  the password with PBKDF2-SHA256 (`roomSecretKdfIterations`) and produces a
+  versioned `v2.` secret. Never hand the transport anything unstretched, and
+  never lower the work factor: both reopen cheap offline guessing, and changing
+  the derivation splits old and new clients. Room links from before the work
+  factor carry the legacy (v1) digest, which `resolveRoomLinkSecret` upgrades.
 
 An entry in the transcript is a claim about a torrent, not proof this client has
 anything to do with it, so it can never be what ends a seed on its own: see

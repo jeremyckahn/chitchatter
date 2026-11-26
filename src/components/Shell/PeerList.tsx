@@ -7,6 +7,7 @@ import VolumeUp from '@mui/icons-material/VolumeUp'
 import ListItem from '@mui/material/ListItem'
 import Box from '@mui/material/Box'
 import CircularProgress from '@mui/material/CircularProgress'
+import Typography from '@mui/material/Typography'
 
 import { UserInfo } from 'components/UserInfo'
 import {
@@ -25,6 +26,9 @@ import { ConnectionTestResults as IConnectionTestResults } from './useConnection
 
 export const peerListWidth = 300
 
+export const privateRoomEmptyHint =
+  'Not seeing anyone? Others only appear if they entered the same password. If it matches, ask them to reload the page to get the latest version of Chitchatter.'
+
 export interface PeerListProps extends PropsWithChildren {
   userId: string
   roomId: string | undefined
@@ -34,6 +38,12 @@ export interface PeerListProps extends PropsWithChildren {
   peerAudioChannelState: PeerAudioChannelState
   peerAudioChannels: Record<string, AudioChannel>
   connectionTestResults: IConnectionTestResults
+  /**
+   * Whether the room is password protected. Peers who entered a different
+   * password — or run a version that derives the room key differently — are
+   * silently invisible, so an empty private room explains why.
+   */
+  isPrivateRoom: boolean
 }
 
 export const PeerList = ({
@@ -45,6 +55,7 @@ export const PeerList = ({
   peerAudioChannelState,
   peerAudioChannels,
   connectionTestResults,
+  isPrivateRoom,
 }: PeerListProps) => {
   return (
     <>
@@ -91,6 +102,15 @@ export const PeerList = ({
               <CircularProgress size={16} sx={{ mr: 1.5 }} />
               <span>Searching for peers...</span>
             </Box>
+            {isPrivateRoom && (
+              <Typography
+                variant="body2"
+                color="text.secondary"
+                sx={{ mx: 2, mb: 2 }}
+              >
+                {privateRoomEmptyHint}
+              </Typography>
+            )}
           </>
         ) : null}
       </List>
