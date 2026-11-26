@@ -13,6 +13,7 @@ import {
   isOfferedByAnotherPeer,
   removeFileOffer,
   shouldRescindOffer,
+  withoutContradictedInlineFlag,
 } from 'core/chat/fileOffers'
 import {
   generateIdentityChallenge,
@@ -202,8 +203,9 @@ export class ChatRoom extends EventTarget {
   /**
    * Magnets a peer announced as all inline media. Their torrents outlive the
    * offer, so a later claim on the same magnet cannot be used to destroy them.
-   * Pruned once nothing is seeding a magnet and no peer offers it: see
-   * {@link pruneRetainedMagnet}.
+   * Only a flag that no recorded offer contradicts gets a magnet in here: see
+   * {@link withoutContradictedInlineFlag}. Pruned once nothing is seeding a
+   * magnet and no peer offers it: see {@link pruneRetainedMagnet}.
    */
   private retainedMagnetUris: Set<string> = new Set()
 
@@ -1372,16 +1374,32 @@ export class ChatRoom extends EventTarget {
 
     // `null` is a withdrawal. Anything else has to be a complete offer, rebuilt
     // from checked fields: one without a usable key could never be downloaded.
-    const metadata = payload === null ? null : parseFileOfferMetadata(payload)
+    const parsed = payload === null ? null : parseFileOfferMetadata(payload)
 
-    if (payload !== null && !metadata) {
+    if (payload !== null && !parsed) {
       this.warnMalformed(MalformedFrame.FILE_OFFER, peerId)
 
       return
     }
 
+    // Recorded, and reported to subscribers, as this client will treat it: an
+    // inline media flag that an offer already on record contradicts is not
+    // believed.
+    const metadata =
+      parsed && withoutContradictedInlineFlag(this.fileOffers, parsed)
+
     if (metadata) {
-      const replaced = this.fileOffers[peerId]
+      const standing = this.fileOffers[peerId]
+      const replaced =
+        standing && standing.magnetURI !== metadata.magnetURI ? standing : null
+
+      // A peer that moves on to another file no longer stands behind the one
+      // it was offering, so that offer ends as a withdrawal would. Otherwise
+      // the old file would be left seeding with no offer on record, and no
+      // later withdrawal or departure would name it.
+      if (replaced && this.shouldStopSeedingOffer(peerId, replaced)) {
+        this.stopSeeding(replaced.magnetURI)
+      }
 
       if (metadata.isAllInlineMedia) {
         this.retainedMagnetUris.add(metadata.magnetURI)
@@ -1389,9 +1407,7 @@ export class ChatRoom extends EventTarget {
 
       this.fileOffers = applyFileOffer(this.fileOffers, peerId, metadata)
 
-      if (replaced && replaced.magnetURI !== metadata.magnetURI) {
-        this.pruneRetainedMagnet(peerId, replaced.magnetURI)
-      }
+      if (replaced) this.pruneRetainedMagnet(peerId, replaced.magnetURI)
     } else {
       const withdrawn = this.fileOffers[peerId]
 

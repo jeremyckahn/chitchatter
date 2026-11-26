@@ -106,6 +106,38 @@ export const isOfferedByAnotherPeer = (
   )
 
 /**
+ * Returns an incoming offer as this client should record it, with its
+ * `isAllInlineMedia` flag dropped when an offer already on record contradicts
+ * it.
+ *
+ * The flag keeps a file seeded after its offer has ended, and the offering
+ * peer writes it. A client derives it from the files themselves, so everyone
+ * who really offers one magnet agrees on it. A peer naming somebody else's
+ * magnet with the flag set is the exception, and believing it would stop
+ * receivers letting go of a file its owner later withdraws. So the flag is
+ * dropped when any recorded offer of the same magnet lacks it, whether that is
+ * another present peer's or the sending peer's own earlier one.
+ *
+ * The offers on record are all there is to go on, which leaves two cases this
+ * cannot settle. A false flag that arrives while no offer of the magnet is on
+ * record is believed. An honest flag that arrives while a false unflagged
+ * claim on the same magnet is on record is dropped. Nothing in the protocol
+ * tells a claimant from the owner: see {@link isOfferedByAnotherPeer}.
+ */
+export const withoutContradictedInlineFlag = (
+  offers: FileOffers,
+  metadata: FileOfferMetadata
+): FileOfferMetadata => {
+  if (!metadata.isAllInlineMedia) return metadata
+
+  const isContradicted = Object.values(offers).some(
+    offer => offer.magnetURI === metadata.magnetURI && !offer.isAllInlineMedia
+  )
+
+  return isContradicted ? { ...metadata, isAllInlineMedia: false } : metadata
+}
+
+/**
  * Whether an offer should be rescinded now that it has been withdrawn or its
  * peer has left.
  *
