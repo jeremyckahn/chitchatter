@@ -70,6 +70,12 @@ different action namespace (`ActionNamespace.GROUP = 'g'` vs
 `DIRECT_MESSAGE = 'dm'` in `transport/types.ts`). One underlying WebRTC room
 therefore carries group chat plus every DM.
 
+It shares the group room's `FileTransferService` the same way, taken from the
+`RoomFileTransferContext` that `Shell` provides around the peer list, so one
+WebTorrent client seeds for every room and the group room's `rescindAll` on
+leave ends all of it. That is safe only because no room's eviction stops a
+torrent another room stands behind: see `ChatRoom.stopSeedingEvictedMedia`.
+
 The consequence is the single sharpest edge in this design: **every room on a
 transport shares that transport's actions, and every direct-message room shares
 the `dm` namespace with every other one.** A DM room's receivers are called for

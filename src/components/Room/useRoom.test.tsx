@@ -1,5 +1,5 @@
 import { vi } from 'vitest'
-import { act, renderHook } from '@testing-library/react'
+import { act, render, renderHook } from '@testing-library/react'
 import { PropsWithChildren, useContext, useMemo, useRef, useState } from 'react'
 
 import { RoomFileTransferContext } from 'contexts/RoomFileTransferContext'
@@ -11,6 +11,8 @@ import { TrysteroTransport } from 'core/transport/TrysteroTransport'
 import { FileTransferService } from 'services/FileTransfer'
 import { mockEncryptionService } from 'test-utils/mocks/mockEncryptionService'
 import { userSettingsContextStubFactory } from 'test-utils/stubs/settingsContext'
+import { itemAt } from 'test-utils/itemAt'
+import { withoutUncaughtErrorReports } from 'test-utils/withoutUncaughtErrorReports'
 
 import { useRoom } from './useRoom'
 
@@ -216,7 +218,10 @@ describe('useRoom', () => {
     // peer in the list has one mounted. Publishing `undefined` from there
     // overwrote the private room's password, and the shell's share dialog is
     // built from that.
-    const { setPassword, unmount } = renderRoom({ targetPeerId: 'peer-1' })
+    const { setPassword, unmount } = renderRoom({
+      targetPeerId: 'peer-1',
+      groupFileTransferService: new FileTransferService({}),
+    })
 
     expect(setPassword).not.toHaveBeenCalled()
 
@@ -258,21 +263,90 @@ describe('useRoom', () => {
       expect(registerGroupRoom).toHaveBeenLastCalledWith(null)
     })
 
-    test("a direct-message room builds its own service rather than sharing the group room's", () => {
-      // A DM room rescinds inline media that scrolls out of its own transcript,
-      // judging by that transcript alone. On the group room's client, a DM peer
-      // could use that to stop a torrent the group room seeds, such as the
-      // user's own file offer.
+    // A DM room used to build a WebTorrent client of its own, which nothing
+    // ever rescinded: only the group room's `leave()` calls `rescindAll`. It
+    // shares the group room's now that a DM room's eviction can no longer stop
+    // a torrent it did not send itself (see the core's "across rooms sharing
+    // one file transfer" tests).
+    test("a direct-message room adopts the group room's service", async () => {
       const groupFileTransferService = new FileTransferService({})
       const { result, registerGroupRoom } = renderRoom({
         targetPeerId: 'peer-1',
         groupFileTransferService,
       })
 
-      expect(result.current.fileTransferService).not.toBe(
-        groupFileTransferService
-      )
+      expect(result.current.fileTransferService).toBe(groupFileTransferService)
+
+      await act(async () => {
+        await result.current.chatRoom.offerFiles([
+          { name: 'doc.pdf', type: 'application/pdf', size: 10 },
+        ])
+      })
+
+      // The room offers through the group's client, so the group room's
+      // `rescindAll` on leave ends what it seeds.
+      expect(groupFileTransferService.fileTransfer.offer).toHaveBeenCalled()
+
+      // Only the group room is published to the shell.
       expect(registerGroupRoom).not.toHaveBeenCalled()
+    })
+
+    // A peer that leaves and rejoins remounts its DM `Room`, which reuses the
+    // conversation's `ChatRoom` from the registry. A remount that built a new
+    // service would hand components (inline media downloads) a client other
+    // than the one that `ChatRoom` offers and rescinds through.
+    test('a remounted direct-message room is bound to the service its reused ChatRoom offers through', async () => {
+      const groupFileTransferService = new FileTransferService({})
+      const { Wrapper } = createWrapper(groupFileTransferService)
+      const mounts: ReturnType<typeof useRoom>[] = []
+
+      const DirectMessageRoom = () => {
+        mounts.push(
+          useRoom(
+            { appId: 'test', rtcConfig: { iceServers: [] } },
+            {
+              roomId: 'room-123',
+              userId: 'self',
+              publicKey: encryption.cryptoKeyStub,
+              encryptionService: mockEncryptionService,
+              targetPeerId: 'peer-1',
+            }
+          )
+        )
+
+        return null
+      }
+
+      const renderTree = (isMounted: boolean) => (
+        <Wrapper>{isMounted ? <DirectMessageRoom /> : null}</Wrapper>
+      )
+
+      const { rerender } = render(renderTree(true))
+      const first = itemAt(mounts, mounts.length - 1)
+
+      rerender(renderTree(false))
+      rerender(renderTree(true))
+
+      const second = itemAt(mounts, mounts.length - 1)
+
+      expect(second.chatRoom).toBe(first.chatRoom)
+      expect(second.fileTransferService).toBe(groupFileTransferService)
+
+      await act(async () => {
+        await second.chatRoom.offerFiles([
+          { name: 'doc.pdf', type: 'application/pdf', size: 10 },
+        ])
+      })
+
+      expect(second.fileTransferService.fileTransfer.offer).toHaveBeenCalled()
+    })
+
+    test("a direct-message room refuses to render outside the group room's service", () => {
+      expect(() =>
+        withoutUncaughtErrorReports(() =>
+          renderRoom({ targetPeerId: 'peer-1' })
+        )
+      ).toThrow(/outside the group room's RoomFileTransferContext/)
     })
 
     test('a group room builds its own service rather than adopting one', () => {

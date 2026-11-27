@@ -2950,7 +2950,7 @@ describe('ChatRoom', () => {
 
         /**
          * Alice's group room plus her conversation with Mallory, which keeps
-         * `dmLimit` entries. Mallory runs a real DM room of her own, so she is
+         * `dmLimit` entries. Mallory runs a real DM room of their own, so they are
          * listed in Alice's, and forges inline media through the raw action.
          */
         const openConversation = async (alice: Client) => {
