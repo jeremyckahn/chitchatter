@@ -97,6 +97,12 @@ test.describe('A file downloaded from the peer list', () => {
 
     observers.push(observer)
 
+    // Connected to both before anything is shared, so that reading the offer
+    // does not depend on how fast a late joiner is greeted.
+    await expect
+      .poll(() => observer.getPeerCount(), { timeout: connectionTimeout })
+      .toBe(2)
+
     await alice.locator('#file-upload').setInputFiles({
       name: 'secret.txt',
       mimeType: 'text/plain',
@@ -134,10 +140,44 @@ test.describe('A file downloaded from the peer list', () => {
 
     expect(Buffer.concat(chunks).toString()).toBe(sharedText)
 
-    return { alice, bob, downloadButton, file }
+    return { alice, bob, downloadButton, file, observer }
   }
 
   const stopSharing = (page: Page) => page.getByTestId('FolderIcon').click()
+
+  test('keeps being seeded while another peer still offers it', async ({
+    browser,
+  }) => {
+    // The control for the tests below. Alice stops seeding her own copy here
+    // too, so a fresh client that still gets the file got it from Bob: his
+    // download really is seeding, and it is the room's decision to stop it
+    // that the other tests see.
+    const { alice, bob, downloadButton, file, observer } =
+      await shareAndDownloadFromPeerList(browser)
+
+    // The same magnet, offered by someone else, is a reason for Bob's room to
+    // keep it when Alice withdraws hers.
+    await observer.claim(file)
+    await bob.waitForTimeout(teardownSettleMs)
+
+    await stopSharing(alice)
+
+    await expect(alice.getByTestId('FolderIcon')).toBeHidden()
+    await bob.waitForTimeout(teardownSettleMs)
+
+    await expect(downloadFileAsLateJoiner(browser, file)).resolves.toBe(
+      sharedText
+    )
+
+    // Once nobody offers it any more, Bob's room stops seeding it.
+    await observer.withdraw()
+    await expect(downloadButton).toBeHidden({ timeout: connectionTimeout })
+    await bob.waitForTimeout(teardownSettleMs)
+
+    await expect(
+      downloadFileAsLateJoiner(browser, file, unavailableAfterMs)
+    ).rejects.toThrow(/no peer is seeding it/)
+  })
 
   test('stops being seeded once its owner withdraws it', async ({
     browser,

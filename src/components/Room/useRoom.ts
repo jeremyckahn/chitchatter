@@ -7,7 +7,6 @@ import { FileHandle } from 'core/chat/fileOffers'
 import { encryption } from 'core/crypto/Encryption'
 import { RoomConfig, TrysteroTransport } from 'core/transport/TrysteroTransport'
 import { RoomContextProps } from 'contexts/RoomContext'
-import { RoomFileTransferContext } from 'contexts/RoomFileTransferContext'
 import { SettingsContext } from 'contexts/SettingsContext'
 import { ShellContext } from 'contexts/ShellContext'
 import {
@@ -63,32 +62,21 @@ export const useRoom = (
 
   const isDirectMessageRoom = typeof targetPeerId === 'string'
 
-  // Only set for a direct-message room: `Shell` provides the group room's
-  // service around the peer list, which is where those rooms are rendered.
-  const groupFileTransferService = useContext(RoomFileTransferContext)
-
-  // One per group room, and only one: the core captures this instance for the
+  // One per room, and only one: the core captures this instance for the
   // lifetime of its `ChatRoom`, so a second one would offer files the room
   // cannot rescind and seed torrents nothing ever stops. It is built once, like
   // the `ChatRoom` below, so the instance components download through (see
   // `RoomFileTransferContext`) can never drift from the one the room holds.
   //
-  // A direct-message room shares it, as it shares the transport. The core
-  // relies on that: a DM room leaves seeding to the group room, which ends it
-  // all on leave, so a client of the DM room's own would never be stopped.
-  const [fileTransferService] = useState(() => {
-    if (!isDirectMessageRoom) {
-      return new FileTransferService(roomConfig.rtcConfig ?? {})
-    }
-
-    if (!groupFileTransferService) {
-      throw new Error(
-        "A direct-message room was rendered outside its group room. It must be inside the RoomFileTransferContext provider that holds the group room's FileTransferService."
-      )
-    }
-
-    return groupFileTransferService
-  })
+  // A direct-message room deliberately gets its own rather than the group
+  // room's, unlike the transport. A DM room lets go of inline media that
+  // scrolls out of its transcript by rescinding it, judging only by its own
+  // transcript and offers. On a shared client, a DM peer could name the magnet
+  // of something the group room seeds — the user's own file offer included —
+  // and push it out of the DM transcript to stop it.
+  const [fileTransferService] = useState(
+    () => new FileTransferService(roomConfig.rtcConfig ?? {})
+  )
 
   // A direct-message room rides the group room's existing transport under a
   // separate action namespace, rather than joining the room a second time.

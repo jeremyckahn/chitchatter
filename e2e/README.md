@@ -106,6 +106,7 @@ These tests need a peer that does something the app's UI cannot: write a file of
 
 ### Peer-List Download Seeding Tests (`tests/peer-list-download-seeding.test.ts`)
 
+- A file downloaded from the peer list keeps being seeded while another peer still offers it (the control)
 - A file downloaded from the peer list stops being seeded once its owner withdraws it
 - It also stops being seeded once the downloader leaves the room
 

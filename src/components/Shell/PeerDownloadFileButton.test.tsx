@@ -40,14 +40,19 @@ import { Shell } from './Shell'
  * file-transfer adapter, the `ChatRoom`s and the shell — is the real code, so
  * what is being asserted is which client a real peer-list download reaches.
  */
-const { fileTransferClients } = vi.hoisted(() => {
+const { fileTransferClients, downloadBehavior } = vi.hoisted(() => {
   const clients: Array<{
     download: (magnetURI: string, fileKey: string) => Promise<never[]>
     rescind: (magnetURI: string) => Promise<void>
     torrents: Set<string>
   }> = []
 
-  return { fileTransferClients: clients }
+  return {
+    fileTransferClients: clients,
+    // Set to make a download take its torrent and then never finish, which is
+    // what the library does when the torrent is destroyed mid-download.
+    downloadBehavior: { hangs: false },
+  }
 })
 
 vi.mock('secure-file-transfer', async () => {
@@ -62,6 +67,8 @@ vi.mock('secure-file-transfer', async () => {
 
     download = hoistedVi.fn(async (magnetURI: string) => {
       this.torrents.add(magnetURI)
+
+      if (downloadBehavior.hangs) await new Promise<never>(() => {})
 
       return []
     })
@@ -89,6 +96,8 @@ vi.mock('secure-file-transfer', async () => {
 vi.mock('components/Room', () => ({ Room: () => null }))
 
 const aliceMagnetUri = `magnet:?xt=urn:btih:${'a'.repeat(40)}&dn=secret.txt`
+
+const aliceSecondMagnetUri = `magnet:?xt=urn:btih:${'b'.repeat(40)}&dn=other.txt`
 
 interface Identity {
   keyPair: CryptoKeyPair
@@ -154,6 +163,7 @@ const createChatRoom = (
  */
 const setUp = async () => {
   const network = createInMemoryNetwork()
+  let aliceOfferCount = 0
 
   const bobFileTransferService = new FileTransferService({})
   const bob = createChatRoom(
@@ -175,7 +185,9 @@ const setUp = async () => {
       {
         fileTransfer: {
           ...createPlatformAdapters({ uuid: () => '' }).fileTransfer,
-          offer: async () => aliceMagnetUri,
+          // The first offer, then a different file for any after it
+          offer: async () =>
+            aliceOfferCount++ === 0 ? aliceMagnetUri : aliceSecondMagnetUri,
         },
       }
     )
@@ -246,10 +258,12 @@ describe('PeerDownloadFileButton', () => {
 
   beforeEach(() => {
     fileTransferClients.length = 0
+    downloadBehavior.hangs = false
   })
 
   afterEach(() => {
     fileTransferClients.length = 0
+    downloadBehavior.hangs = false
   })
 
   // Regression test for https://github.com/jeremyckahn/chitchatter/issues/680
@@ -309,5 +323,43 @@ describe('PeerDownloadFileButton', () => {
     await bob.leave()
 
     expect(roomClient.torrents.has(aliceMagnetUri)).toBe(false)
+  })
+
+  // A download the owner withdraws mid-way is stopped by the room, and the
+  // library never settles it. The button must not stay a spinner because of it.
+  test('offers a fresh download for the next file after one was withdrawn mid-way', async () => {
+    downloadBehavior.hangs = true
+
+    const { alice, bob } = await setUp()
+
+    await downloadFromPeerList()
+
+    const roomClient = itemAt(fileTransferClients, 0)
+
+    await waitFor(() =>
+      expect(roomClient.torrents.has(aliceMagnetUri)).toBe(true)
+    )
+    expect(screen.getByRole('progressbar')).toBeInTheDocument()
+
+    await alice.rescindFileOffer()
+
+    await waitFor(() =>
+      expect(roomClient.rescind).toHaveBeenCalledWith(aliceMagnetUri)
+    )
+
+    await alice.offerFiles([{ name: 'other.txt', type: 'text/plain', size: 1 }])
+
+    await waitFor(() =>
+      expect(bob.getPeers()[0]?.offeredFile?.magnetURI).toBe(
+        aliceSecondMagnetUri
+      )
+    )
+
+    expect(
+      await screen.findByRole('button', {
+        name: /download files being offered by/i,
+      })
+    ).toBeInTheDocument()
+    expect(screen.queryByRole('progressbar')).not.toBeInTheDocument()
   })
 })

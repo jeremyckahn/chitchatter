@@ -10,7 +10,6 @@ import { encryption } from 'core/crypto/Encryption'
 import { TrysteroTransport } from 'core/transport/TrysteroTransport'
 import { FileTransferService } from 'services/FileTransfer'
 import { mockEncryptionService } from 'test-utils/mocks/mockEncryptionService'
-import { withoutUncaughtErrorReports } from 'test-utils/withoutUncaughtErrorReports'
 import { userSettingsContextStubFactory } from 'test-utils/stubs/settingsContext'
 
 import { useRoom } from './useRoom'
@@ -217,10 +216,7 @@ describe('useRoom', () => {
     // peer in the list has one mounted. Publishing `undefined` from there
     // overwrote the private room's password, and the shell's share dialog is
     // built from that.
-    const { setPassword, unmount } = renderRoom({
-      targetPeerId: 'peer-1',
-      groupFileTransferService: new FileTransferService({}),
-    })
+    const { setPassword, unmount } = renderRoom({ targetPeerId: 'peer-1' })
 
     expect(setPassword).not.toHaveBeenCalled()
 
@@ -262,26 +258,21 @@ describe('useRoom', () => {
       expect(registerGroupRoom).toHaveBeenLastCalledWith(null)
     })
 
-    test("a direct-message room shares the group room's service", () => {
+    test("a direct-message room builds its own service rather than sharing the group room's", () => {
+      // A DM room rescinds inline media that scrolls out of its own transcript,
+      // judging by that transcript alone. On the group room's client, a DM peer
+      // could use that to stop a torrent the group room seeds, such as the
+      // user's own file offer.
       const groupFileTransferService = new FileTransferService({})
       const { result, registerGroupRoom } = renderRoom({
         targetPeerId: 'peer-1',
         groupFileTransferService,
       })
 
-      // The core leaves seeding to the group room, which ends it all when it
-      // is left, so a client of the direct-message room's own would be one
-      // nothing ever stops.
-      expect(result.current.fileTransferService).toBe(groupFileTransferService)
+      expect(result.current.fileTransferService).not.toBe(
+        groupFileTransferService
+      )
       expect(registerGroupRoom).not.toHaveBeenCalled()
-    })
-
-    test('a direct-message room refuses to be built outside its group room', () => {
-      expect(() =>
-        withoutUncaughtErrorReports(() =>
-          renderRoom({ targetPeerId: 'peer-1' })
-        )
-      ).toThrow(/outside its group room/)
     })
 
     test('a group room builds its own service rather than adopting one', () => {

@@ -429,21 +429,25 @@ export const Shell = ({ appNeedsUpdate, children, userPeerId }: ShellProps) => {
                 >
                   {/* The peer list is outside the room, but the offers it lists
                   are the group room's, so it downloads them through that
-                  room's own file transfer service. */}
-                  <RoomFileTransferContext.Provider
-                    value={groupRoom?.fileTransferService ?? null}
-                  >
-                    <PeerList
-                      userId={userPeerId}
-                      roomId={roomId}
-                      onPeerListClose={handlePeerListClick}
-                      peerList={peerList}
-                      peerConnectionTypes={peerConnectionTypes}
-                      peerAudioChannelState={audioChannelState}
-                      peerAudioChannels={peerAudioChannels}
-                      connectionTestResults={connectionTestResults}
-                    />
-                  </RoomFileTransferContext.Provider>
+                  room's own file transfer service. Its own error boundary
+                  keeps a failure there, such as rendering a peer with no room
+                  service provided, from taking the whole app down with it. */}
+                  <ErrorBoundary>
+                    <RoomFileTransferContext.Provider
+                      value={groupRoom?.fileTransferService ?? null}
+                    >
+                      <PeerList
+                        userId={userPeerId}
+                        roomId={roomId}
+                        onPeerListClose={handlePeerListClick}
+                        peerList={peerList}
+                        peerConnectionTypes={peerConnectionTypes}
+                        peerAudioChannelState={audioChannelState}
+                        peerAudioChannels={peerAudioChannels}
+                        connectionTestResults={connectionTestResults}
+                      />
+                    </RoomFileTransferContext.Provider>
+                  </ErrorBoundary>
                   {isEmbedded ? (
                     <Typography
                       variant="caption"
