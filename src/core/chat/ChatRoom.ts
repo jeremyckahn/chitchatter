@@ -207,6 +207,22 @@ export class ChatRoom extends EventTarget {
    */
   private retainedMagnetUris: Set<string> = new Set()
 
+  /**
+   * The distinct inline-media magnets in this room's transcript that it has
+   * reported to the adapter with `trackInlineMedia`. The adapter's record is
+   * shared by every room on the file transfer and counts them per room, so
+   * each room tracks a magnet once and releases it once: see
+   * {@link syncTrackedInlineMedia}.
+   */
+  private trackedInlineMediaUris: Set<string> = new Set()
+
+  /**
+   * Magnets this room started seeding through {@link sendInlineMedia}. Only
+   * these are this room's own to stop seeding when they scroll out of its
+   * transcript: see {@link mayStopSeedingOnEviction}.
+   */
+  private sentInlineMediaUris: Set<string> = new Set()
+
   private selfOfferedFiles: readonly FileHandle[] | null = null
 
   private hasJoined = false
@@ -454,6 +470,15 @@ export class ChatRoom extends EventTarget {
     this.disconnectReceivers = []
     this.senders = null
 
+    // A room that has been left shows nothing any more, so it no longer stands
+    // behind the inline media in its transcript. The rooms still open keep
+    // their own claim on any of it they show.
+    for (const magnetURI of this.trackedInlineMediaUris) {
+      this.adapters.fileTransfer.untrackInlineMedia(magnetURI)
+    }
+
+    this.trackedInlineMediaUris.clear()
+
     // Our file offers are only reachable while we are in the room, so leaving
     // ends the seeding. A direct-message room shares the group room's file
     // transfer, so only the group room may do this.
@@ -566,6 +591,8 @@ export class ChatRoom extends EventTarget {
     try {
       const fileKey = generateFileKey()
       const magnetURI = await this.adapters.fileTransfer.offer(files, fileKey)
+
+      this.sentInlineMediaUris.add(magnetURI)
 
       const unsentInlineMedia: UnsentInlineMedia = {
         authorId: this.userId,
@@ -934,12 +961,6 @@ export class ChatRoom extends EventTarget {
     // An empty backfill changes nothing, and must not use up the chance of a
     // later peer's: the log is still empty.
     if (!parsed.messageLog.length) return
-
-    for (const message of parsed.messageLog) {
-      if (isInlineMedia(message)) {
-        this.adapters.fileTransfer.trackInlineMedia(message.magnetURI)
-      }
-    }
 
     this.setMessageLog(parsed.messageLog)
 
@@ -1672,10 +1693,6 @@ export class ChatRoom extends EventTarget {
     this.targetPeerId ? { target: this.targetPeerId } : undefined
 
   private appendToMessageLog = (message: Message | InlineMedia) => {
-    if (isInlineMedia(message)) {
-      this.adapters.fileTransfer.trackInlineMedia(message.magnetURI)
-    }
-
     this.setMessageLog([...this.messageLog, message])
   }
 
@@ -1696,11 +1713,46 @@ export class ChatRoom extends EventTarget {
       this.transcriptSizeLimit
     )
 
+    // Released before eviction is judged, so that the adapter's record then
+    // says whether any *other* room still shows an evicted magnet.
+    this.syncTrackedInlineMedia(messageLog)
     this.stopSeedingEvictedMedia(evicted, messageLog)
 
     this.messageLog = messageLog
     this.messageLogSnapshot = messageLog
     this.emit(ChatRoomEvent.MESSAGE_LOG_CHANGE, { messageLog })
+  }
+
+  /**
+   * Brings the adapter's shared record in line with the inline media this
+   * room's transcript now shows: tracks each magnet that has just appeared and
+   * releases each one that has just left, once per room either way.
+   *
+   * The record is shared by every room on the file transfer, so it has to
+   * count rooms rather than hold a flag. Otherwise a direct-message room whose
+   * transcript lost a magnet would erase it from the record while the group
+   * room still shows it, and the group room would lose the protection the
+   * record gives it (see {@link isProtectedFromPeerRescind}).
+   */
+  private syncTrackedInlineMedia = (messageLog: MessageLog) => {
+    const shown = new Set(getInlineMediaUris(messageLog))
+
+    for (const magnetURI of this.trackedInlineMediaUris) {
+      if (shown.has(magnetURI)) continue
+
+      this.trackedInlineMediaUris.delete(magnetURI)
+      this.adapters.fileTransfer.untrackInlineMedia(magnetURI)
+    }
+
+    // A room that has been left must not take a claim it will never release.
+    if (this.hasLeft) return
+
+    for (const magnetURI of shown) {
+      if (this.trackedInlineMediaUris.has(magnetURI)) continue
+
+      this.trackedInlineMediaUris.add(magnetURI)
+      this.adapters.fileTransfer.trackInlineMedia(magnetURI)
+    }
   }
 
   /**
@@ -1710,10 +1762,15 @@ export class ChatRoom extends EventTarget {
    * An entry is a claim about a torrent, not proof this client has anything to
    * do with it: a peer's transcript can name any magnet it has seen, including
    * one for a file this client is offering. So an entry going away ends the
-   * seed only when nothing else stands behind it — no entry still in the log,
-   * no offer of our own, and no present peer offering it. That is the rule
+   * seed only when nothing else stands behind it — no entry still in this or
+   * any other room's transcript, no offer of our own, no present peer offering
+   * it — and when the torrent is this room's to stop at all: see
+   * {@link mayStopSeedingOnEviction}. That is the rule
    * {@link shouldStopSeedingOffer} applies to a withdrawn offer, for the same
    * reason: a magnet is a bearer identifier anyone can write.
+   *
+   * Runs after {@link syncTrackedInlineMedia} has released the evicted
+   * magnets, so the adapter's record speaks only for the other rooms.
    */
   private stopSeedingEvictedMedia = (
     evicted: MessageLog,
@@ -1730,14 +1787,42 @@ export class ChatRoom extends EventTarget {
     for (const magnetURI of evictedUris) {
       if (stillShown.has(magnetURI)) continue
 
-      this.adapters.fileTransfer.untrackInlineMedia(magnetURI)
+      // Another room's transcript still shows it.
+      if (this.adapters.fileTransfer.isInlineMedia(magnetURI)) continue
 
       if (this.isStillOffered(magnetURI)) continue
+
+      if (!this.mayStopSeedingOnEviction(magnetURI)) continue
 
       if (this.adapters.fileTransfer.isOffering(magnetURI)) {
         this.stopSeeding(magnetURI)
       }
     }
+  }
+
+  /**
+   * Whether an evicted magnet is this room's to stop seeding.
+   *
+   * Media this room sent itself always is: nothing but its own transcript
+   * entry stood behind it. Beyond that, the file transfer is shared with every
+   * other room, and this room can only see its own offers:
+   *
+   * - A torrent this client started (`isOriginated`) belongs to whichever room
+   *   offered it — possibly one whose offer this room cannot see, such as the
+   *   group share a direct-message peer names to end it. It is stopped by its
+   *   own room's rescind, or by leaving.
+   * - A direct-message room does not stop anything else either. A torrent it
+   *   did not start may be one this client re-seeds for the group room, which
+   *   it cannot see the offers of, so a DM peer naming that magnet in one entry
+   *   and pushing it out with more would end the group's seed. Leaving the group
+   *   room still ends all seeding, as {@link shouldStopSeedingOffer} relies on.
+   */
+  private mayStopSeedingOnEviction = (magnetURI: string) => {
+    if (this.sentInlineMediaUris.has(magnetURI)) return true
+
+    if (this.isDirectMessageRoom) return false
+
+    return !this.adapters.fileTransfer.isOriginated(magnetURI)
   }
 
   /** Whether this client or a present peer has an offer standing for a magnet. */
@@ -1776,6 +1861,7 @@ export class ChatRoom extends EventTarget {
    */
   private stopSeeding = (magnetURI: string) => {
     this.retainedMagnetUris.delete(magnetURI)
+    this.sentInlineMediaUris.delete(magnetURI)
 
     void this.adapters.fileTransfer
       .rescind(magnetURI)

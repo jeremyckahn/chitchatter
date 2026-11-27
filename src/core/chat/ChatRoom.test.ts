@@ -29,6 +29,7 @@ import {
   isMessageReceived,
   PeerVerificationState,
   ReceivedMessage,
+  UnsentInlineMedia,
   UnsentMessage,
   VideoState,
 } from 'core/models/chat'
@@ -135,7 +136,8 @@ const createClient = (
   // Mirrors the web adapter, which is shared by a group room and every
   // direct-message room on one host and so remembers what any of them started.
   const originated = new Set<string>()
-  const inlineMedia = new Set<string>()
+  // Counted per room, as the web adapter does.
+  const inlineMedia = new Map<string, number>()
   const fileTransfer: FileTransferAdapter = {
     offer: vi.fn(async () => {
       originated.add(magnetFor(peerId))
@@ -144,7 +146,6 @@ const createClient = (
     }),
     rescind: vi.fn(async (magnetURI: string) => {
       originated.delete(magnetURI)
-      inlineMedia.delete(magnetURI)
     }),
     rescindAll: vi.fn(async () => {
       originated.clear()
@@ -153,10 +154,13 @@ const createClient = (
     isOffering: vi.fn(() => true),
     isOriginated: vi.fn((magnetURI: string) => originated.has(magnetURI)),
     trackInlineMedia: vi.fn((magnetURI: string) => {
-      inlineMedia.add(magnetURI)
+      inlineMedia.set(magnetURI, (inlineMedia.get(magnetURI) ?? 0) + 1)
     }),
     untrackInlineMedia: vi.fn((magnetURI: string) => {
-      inlineMedia.delete(magnetURI)
+      const count = inlineMedia.get(magnetURI) ?? 0
+
+      if (count > 1) inlineMedia.set(magnetURI, count - 1)
+      else inlineMedia.delete(magnetURI)
     }),
     isInlineMedia: vi.fn((magnetURI: string) => inlineMedia.has(magnetURI)),
   }
@@ -189,7 +193,8 @@ const createClient = (
 const createDirectMessageRoom = (
   client: Client,
   index: ClientIndex,
-  targetPeerId: string
+  targetPeerId: string,
+  { transcriptSizeLimit }: { transcriptSizeLimit?: number } = {}
 ) =>
   new ChatRoom({
     roomId,
@@ -200,6 +205,7 @@ const createDirectMessageRoom = (
     transport: client.transport,
     adapters: client.adapters,
     targetPeerId,
+    transcriptSizeLimit,
   })
 
 /**
@@ -2933,6 +2939,236 @@ describe('ChatRoom', () => {
           false,
         ])
         expect(alice.fileTransfer.rescind).not.toHaveBeenCalled()
+      })
+
+      // Every room on a host shares one file transfer, but a room judges an
+      // eviction by its own transcript and offers only. A peer can name any
+      // magnet it has seen in one entry and push that entry out with more, so
+      // eviction must not reach torrents another room stands behind.
+      describe('across rooms sharing one file transfer', () => {
+        const dmLimit = 2
+
+        /**
+         * Alice's group room plus her conversation with Mallory, which keeps
+         * `dmLimit` entries. Mallory runs a real DM room of their own, so they are
+         * listed in Alice's, and forges inline media through the raw action.
+         */
+        const openConversation = async (alice: Client) => {
+          const mallory = createClient(network, 2)
+          const aliceToMallory = createDirectMessageRoom(alice, 0, 'peer-2', {
+            transcriptSizeLimit: dmLimit,
+          })
+          const malloryToAlice = createDirectMessageRoom(mallory, 2, 'peer-0')
+
+          await aliceToMallory.join()
+          await malloryToAlice.join()
+          await waitFor(
+            () => aliceToMallory.getPeers().length === 1,
+            'Alice to list Mallory in their conversation'
+          )
+
+          const [sendInlineMedia] =
+            mallory.transport.makeAction<UnsentInlineMedia>(
+              PeerAction.MEDIA_MESSAGE,
+              ActionNamespace.DIRECT_MESSAGE
+            )
+
+          /** Names `magnetURI` in one inline-media entry of the conversation. */
+          const name = async (magnetURI: string) => {
+            await sendInlineMedia(
+              {
+                id: `names-${magnetURI}`,
+                authorId: userIds[2],
+                magnetURI,
+                fileKey: peerFileKey,
+                timeSent: 1_000,
+              },
+              { target: 'peer-0' }
+            )
+            await settle()
+          }
+
+          /** Names `magnetURI` in one entry, then pushes it out of the log. */
+          const nameAndEvict = async (magnetURI: string) => {
+            await name(magnetURI)
+
+            expect(
+              aliceToMallory
+                .getMessageLog()
+                .some(
+                  entry => isInlineMedia(entry) && entry.magnetURI === magnetURI
+                )
+            ).toBe(true)
+
+            for (let i = 0; i < dmLimit; i++) {
+              await malloryToAlice.sendMessage(`pad-${i}`)
+            }
+            await settle()
+
+            expect(aliceToMallory.getMessageLog().map(isInlineMedia)).toEqual(
+              Array.from({ length: dmLimit }, () => false)
+            )
+          }
+
+          return { aliceToMallory, name, nameAndEvict }
+        }
+
+        it("does not let a DM peer stop the user's group share by evicting an entry naming it", async () => {
+          const alice = createClient(network, 0)
+
+          await alice.chatRoom.join()
+          await alice.chatRoom.offerFiles([
+            { name: 'doc.pdf', type: 'application/pdf', size: 10 },
+          ])
+
+          const groupShare = alice.chatRoom.getSelfFileOfferMagnetUri()
+
+          expect(groupShare).toBe(magnetFor('peer-0'))
+
+          const { nameAndEvict } = await openConversation(alice)
+
+          await nameAndEvict(magnetFor('peer-0'))
+
+          expect(alice.fileTransfer.rescind).not.toHaveBeenCalled()
+          expect(alice.fileTransfer.isOriginated(magnetFor('peer-0'))).toBe(
+            true
+          )
+        })
+
+        it('does not let a DM peer stop a torrent the user re-seeds for the group', async () => {
+          const alice = createClient(network, 0)
+          const bob = createClient(network, 1)
+
+          await joinAll(alice, bob)
+
+          // Alice re-seeds Bob's file: the mock reports every magnet as being
+          // offered. It is not one Alice started.
+          await bob.chatRoom.offerFiles([
+            { name: 'doc.pdf', type: 'application/pdf', size: 10 },
+          ])
+          await settle()
+
+          expect(alice.fileTransfer.isOriginated(magnetFor('peer-1'))).toBe(
+            false
+          )
+
+          const { nameAndEvict } = await openConversation(alice)
+
+          await nameAndEvict(magnetFor('peer-1'))
+
+          expect(alice.fileTransfer.rescind).not.toHaveBeenCalled()
+        })
+
+        it("does not let a DM room's eviction erase inline media the group room still shows", async () => {
+          const alice = createClient(network, 0)
+          const bob = createClient(network, 1)
+
+          await joinAll(alice, bob)
+          await bob.chatRoom.sendInlineMedia([image])
+          await settle()
+
+          expect(alice.chatRoom.getMessageLog()).toHaveLength(1)
+
+          const { nameAndEvict } = await openConversation(alice)
+
+          await nameAndEvict(magnetFor('peer-1'))
+
+          expect(alice.fileTransfer.isInlineMedia(magnetFor('peer-1'))).toBe(
+            true
+          )
+          expect(alice.fileTransfer.rescind).not.toHaveBeenCalled()
+
+          // The group's record still protects the image from a peer's claim.
+          const mallory = createHostilePeer()
+
+          await mallory.send(PeerAction.FILE_OFFER, {
+            magnetURI: magnetFor('peer-1'),
+            fileKey: peerFileKey,
+            isAllInlineMedia: false,
+          })
+          await mallory.send(PeerAction.FILE_OFFER, null)
+          await settle()
+
+          expect(alice.fileTransfer.rescind).not.toHaveBeenCalled()
+        })
+
+        it('still stops seeding media a DM room sent itself once it scrolls out', async () => {
+          const alice = createClient(network, 0)
+
+          await alice.chatRoom.join()
+
+          const { aliceToMallory } = await openConversation(alice)
+
+          await aliceToMallory.sendInlineMedia([image])
+          for (let i = 0; i < dmLimit; i++) {
+            await aliceToMallory.sendMessage(`pad-${i}`)
+          }
+
+          expect(alice.fileTransfer.rescind).toHaveBeenCalledWith(
+            magnetFor('peer-0')
+          )
+          expect(alice.fileTransfer.isInlineMedia(magnetFor('peer-0'))).toBe(
+            false
+          )
+        })
+
+        it('does not let a group peer stop a share the user made in a DM by evicting an entry naming it', async () => {
+          const alice = createVictim(2)
+
+          await alice.chatRoom.join()
+
+          const { aliceToMallory } = await openConversation(alice)
+
+          await aliceToMallory.offerFiles([
+            { name: 'doc.pdf', type: 'application/pdf', size: 10 },
+          ])
+
+          const mallory = createHostilePeer()
+
+          await mallory.send(PeerAction.MESSAGE_TRANSCRIPT, [
+            mediaEntry('names-the-share', magnetFor('peer-0')),
+          ])
+          await settle()
+
+          expect(alice.chatRoom.getMessageLog()).toHaveLength(1)
+
+          // Eviction needs entries that arrive after the backfill.
+          await alice.chatRoom.sendMessage('one')
+          await alice.chatRoom.sendMessage('two')
+
+          expect(alice.chatRoom.getMessageLog().map(isInlineMedia)).toEqual([
+            false,
+            false,
+          ])
+          expect(alice.fileTransfer.rescind).not.toHaveBeenCalled()
+        })
+
+        it('releases what a left room showed, but not what another room still shows', async () => {
+          const alice = createClient(network, 0)
+          const bob = createClient(network, 1)
+
+          await joinAll(alice, bob)
+          await bob.chatRoom.sendInlineMedia([image])
+          await settle()
+
+          const { aliceToMallory, name } = await openConversation(alice)
+
+          // The conversation shows Bob's image as well as one of its own.
+          await name(magnetFor('peer-1'))
+          await aliceToMallory.sendInlineMedia([image])
+          await settle()
+
+          expect(aliceToMallory.getMessageLog()).toHaveLength(2)
+
+          await aliceToMallory.leave()
+
+          expect(alice.fileTransfer.isInlineMedia(magnetFor('peer-0'))).toBe(
+            false
+          )
+          expect(alice.fileTransfer.isInlineMedia(magnetFor('peer-1'))).toBe(
+            true
+          )
+        })
       })
     })
   })

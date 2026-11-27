@@ -7,6 +7,7 @@ import { FileHandle } from 'core/chat/fileOffers'
 import { encryption } from 'core/crypto/Encryption'
 import { RoomConfig, TrysteroTransport } from 'core/transport/TrysteroTransport'
 import { RoomContextProps } from 'contexts/RoomContext'
+import { RoomFileTransferContext } from 'contexts/RoomFileTransferContext'
 import { SettingsContext } from 'contexts/SettingsContext'
 import { ShellContext } from 'contexts/ShellContext'
 import {
@@ -53,7 +54,7 @@ export const useRoom = (
     setPassword,
     customUsername,
     transportRef,
-    registerChatRoom,
+    registerGroupRoom,
     chatRoomRegistry,
   } = useContext(ShellContext)
 
@@ -62,14 +63,37 @@ export const useRoom = (
 
   const isDirectMessageRoom = typeof targetPeerId === 'string'
 
-  // One per room, and only one: the core captures this instance for the
-  // lifetime of its `ChatRoom`, so a second one would offer files the room
-  // cannot rescind and seed torrents nothing ever stops. `rtcConfig` has to be
-  // a stable reference for that to hold — see `Room.tsx`.
-  const fileTransferService = useMemo(
-    () => new FileTransferService(roomConfig.rtcConfig ?? {}),
-    [roomConfig.rtcConfig]
-  )
+  // What `Shell` provides around the peer list, which is where a
+  // direct-message room is rendered: the group room's service. Read
+  // unconditionally, as hooks must be, but only a DM room uses it.
+  const groupFileTransferService = useContext(RoomFileTransferContext)
+
+  // The core captures this instance for the lifetime of its `ChatRoom`, so it
+  // is fixed once, like the `ChatRoom` below, and the instance components
+  // download through (see `RoomFileTransferContext`) can never drift from the
+  // one the room holds.
+  //
+  // The group room builds the session's one service. A direct-message room
+  // adopts it, as it does the transport, rather than building a second
+  // WebTorrent client: one of its own would be rescinded by nothing, since
+  // only the group room's `leave()` calls `rescindAll`. Sharing is safe because
+  // a DM room's eviction never stops a torrent it did not send itself (see
+  // `ChatRoom.mayStopSeedingOnEviction`), and it keeps a DM `ChatRoom` reused
+  // from the registry on a remount bound to the same service this hook
+  // returns, as both are the group room's.
+  const [fileTransferService] = useState(() => {
+    if (!isDirectMessageRoom) {
+      return new FileTransferService(roomConfig.rtcConfig ?? {})
+    }
+
+    if (!groupFileTransferService) {
+      throw new Error(
+        "A direct-message room was rendered outside the group room's RoomFileTransferContext. Render it inside the provider holding the group room's FileTransferService."
+      )
+    }
+
+    return groupFileTransferService
+  })
 
   // A direct-message room rides the group room's existing transport under a
   // separate action namespace, rather than joining the room a second time.
@@ -175,10 +199,12 @@ export const useRoom = (
     // the registry cleanup below takes care of.
     if (isDirectMessageRoom) return
 
-    registerChatRoom(chatRoom)
+    // Registered together, so the peer list in the shell downloads this room's
+    // offers through the client this room seeds and rescinds through.
+    registerGroupRoom({ chatRoom, fileTransferService })
 
     return () => {
-      registerChatRoom(null)
+      registerGroupRoom(null)
 
       // Cleared synchronously. React can run the next room's `useState`
       // initialiser — which adopts `transportRef.current` whenever it is set —
@@ -205,8 +231,9 @@ export const useRoom = (
   }, [
     chatRoom,
     chatRoomRegistry,
+    fileTransferService,
     isDirectMessageRoom,
-    registerChatRoom,
+    registerGroupRoom,
     transport,
     transportRef,
   ])
@@ -262,7 +289,6 @@ export const useRoom = (
       setSelfScreenStream,
       peerScreenStreams,
       setPeerScreenStreams,
-      fileTransferService,
     }),
     [
       chatRoom,
@@ -273,7 +299,6 @@ export const useRoom = (
       peerVideoStreams,
       selfScreenStream,
       peerScreenStreams,
-      fileTransferService,
     ]
   )
 
@@ -290,6 +315,7 @@ export const useRoom = (
 
   return {
     chatRoom,
+    fileTransferService,
     isDirectMessageRoom,
     isPrivate: chatRoom.isPrivate,
     handleInlineMediaUpload,

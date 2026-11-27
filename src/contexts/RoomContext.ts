@@ -1,5 +1,4 @@
 import { createContext, Dispatch, SetStateAction } from 'react'
-import { FileTransferService } from 'services/FileTransfer'
 
 export interface RoomContextProps {
   isPrivate: boolean
@@ -15,7 +14,6 @@ export interface RoomContextProps {
   setSelfScreenStream: Dispatch<SetStateAction<MediaStream | null>>
   peerScreenStreams: Record<string, MediaStream>
   setPeerScreenStreams: Dispatch<SetStateAction<Record<string, MediaStream>>>
-  fileTransferService: FileTransferService
 }
 
 export const RoomContext = createContext<RoomContextProps>({
@@ -32,5 +30,4 @@ export const RoomContext = createContext<RoomContextProps>({
   setSelfScreenStream: () => {},
   peerScreenStreams: {},
   setPeerScreenStreams: () => {},
-  fileTransferService: new FileTransferService({}),
 })

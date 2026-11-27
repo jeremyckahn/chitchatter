@@ -70,6 +70,12 @@ different action namespace (`ActionNamespace.GROUP = 'g'` vs
 `DIRECT_MESSAGE = 'dm'` in `transport/types.ts`). One underlying WebRTC room
 therefore carries group chat plus every DM.
 
+It shares the group room's `FileTransferService` the same way, taken from the
+`RoomFileTransferContext` that `Shell` provides around the peer list, so one
+WebTorrent client seeds for every room and the group room's `rescindAll` on
+leave ends all of it. That is safe only because no room's eviction stops a
+torrent another room stands behind: see `ChatRoom.stopSeedingEvictedMedia`.
+
 The consequence is the single sharpest edge in this design: **every room on a
 transport shares that transport's actions, and every direct-message room shares
 the `dm` namespace with every other one.** A DM room's receivers are called for
@@ -88,7 +94,7 @@ peer already has a live DM `ChatRoom` attached to those shared actions.
 room plus a DM room per peer. Rooms are registered there rather than owned by
 the components that render them, because a DM conversation has to survive the
 dialog closing and reopening with its transcript intact. Only the group room is
-published to the shell (`registerChatRoom`); when it unmounts it clears the
+published to the shell (`registerGroupRoom`, together with its `FileTransferService`); when it unmounts it clears the
 registry's DM rooms, leaves, and drops the transport.
 
 The registry also forwards the group room's `PEER_JOIN` and `PEER_LEAVE` to the
@@ -172,7 +178,13 @@ Two limits on what that gives you:
 
 An entry in the transcript is a claim about a torrent, not proof this client has
 anything to do with it, so it can never be what ends a seed on its own: see
-`ChatRoom.stopSeedingEvictedMedia`.
+`ChatRoom.stopSeedingEvictedMedia`. Every room on a host shares one file
+transfer while each sees only its own transcript and offers, so eviction never
+stops a torrent this client started unless the evicting room sent it as inline
+media itself, and a direct-message room stops nothing else (leaving the group
+room ends all seeding). The adapter's inline-media record is counted per room
+(`trackInlineMedia` / `untrackInlineMedia`), so one room letting go of a magnet
+does not erase it while another still shows it.
 
 ## Running it headless
 

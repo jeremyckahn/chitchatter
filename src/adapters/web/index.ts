@@ -63,8 +63,11 @@ export interface FileTransferSource {
 interface SharedMagnetRecord {
   /** Torrents this client started with `offer`. */
   originated: Set<string>
-  /** Magnets that are inline media in some room's transcript. */
-  inlineMedia: Set<string>
+  /**
+   * Magnets that are inline media in some room's transcript, with how many
+   * rooms show each. A magnet is forgotten only once the last of them lets go.
+   */
+  inlineMedia: Map<string, number>
 }
 
 const recordsBySource = new WeakMap<FileTransferSource, SharedMagnetRecord>()
@@ -84,7 +87,7 @@ const getSharedMagnetRecord = (source: FileTransferSource) => {
 
   const created: SharedMagnetRecord = {
     originated: new Set(),
-    inlineMedia: new Set(),
+    inlineMedia: new Map(),
   }
 
   recordsBySource.set(source, created)
@@ -117,8 +120,9 @@ export const createWebFileTransfer = (
       return magnetURI
     },
     rescind: async (magnetURI: string) => {
+      // The inline-media count is left alone: it belongs to the rooms that
+      // show the magnet, and each releases its own claim when it stops.
       originated.delete(magnetURI)
-      inlineMedia.delete(magnetURI)
 
       await fileTransfer.rescind(magnetURI)
     },
@@ -131,10 +135,19 @@ export const createWebFileTransfer = (
     isOffering: (magnetURI: string) => fileTransfer.isOffering(magnetURI),
     isOriginated: (magnetURI: string) => originated.has(magnetURI),
     trackInlineMedia: (magnetURI: string) => {
-      inlineMedia.add(magnetURI)
+      inlineMedia.set(magnetURI, (inlineMedia.get(magnetURI) ?? 0) + 1)
     },
     untrackInlineMedia: (magnetURI: string) => {
-      inlineMedia.delete(magnetURI)
+      const count = inlineMedia.get(magnetURI)
+
+      // Already forgotten, as after `rescindAll`: nothing left to release.
+      if (count === undefined) return
+
+      if (count > 1) {
+        inlineMedia.set(magnetURI, count - 1)
+      } else {
+        inlineMedia.delete(magnetURI)
+      }
     },
     isInlineMedia: (magnetURI: string) => inlineMedia.has(magnetURI),
   }

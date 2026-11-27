@@ -22,6 +22,20 @@ import { TrysteroTransport } from 'core/transport/TrysteroTransport'
 import { TrackerConnection } from 'lib/ConnectionTest'
 import { AudioChannel } from 'models/media'
 import { AlertOptions } from 'models/shell'
+import { FileTransferService } from 'services/FileTransfer'
+
+/**
+ * What the group room publishes to the shell while it is mounted.
+ *
+ * The room and its file transfer service travel together because they must
+ * agree: the peer list reads offers from `chatRoom` and downloads them through
+ * `fileTransferService`, and only a download held by the room's own service is
+ * one the room can stop seeding.
+ */
+export interface GroupRoomRegistration {
+  chatRoom: ChatRoom
+  fileTransferService: FileTransferService
+}
 
 export interface ShellContextProps {
   // --- presentation state, owned here
@@ -58,7 +72,7 @@ export interface ShellContextProps {
   // duplicated here. `peerList` and `peerConnectionTypes` are snapshots of the
   // core's state, not React state of their own.
   chatRoom: ChatRoom | null
-  registerChatRoom: (chatRoom: ChatRoom | null) => void
+  registerGroupRoom: (registration: GroupRoomRegistration | null) => void
   chatRoomRegistry: ChatRoomRegistry
   transportRef: MutableRefObject<TrysteroTransport | null>
   peerList: readonly Peer[]
@@ -100,7 +114,7 @@ export const ShellContext = createContext<ShellContextProps>({
   peerAudioChannels: {},
   setPeerAudioChannels: () => {},
   chatRoom: null,
-  registerChatRoom: () => {},
+  registerGroupRoom: () => {},
   chatRoomRegistry: new ChatRoomRegistry(),
   transportRef: { current: null },
   peerList: [],

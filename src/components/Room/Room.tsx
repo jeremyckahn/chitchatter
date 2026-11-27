@@ -11,6 +11,7 @@ import { WholePageLoading } from 'components/Loading'
 import { MessageForm } from 'components/MessageForm'
 import { trackerUrls } from 'config/trackerUrls'
 import { RoomContext } from 'contexts/RoomContext'
+import { RoomFileTransferContext } from 'contexts/RoomFileTransferContext'
 import { SettingsContext } from 'contexts/SettingsContext'
 import { ShellContext } from 'contexts/ShellContext'
 import { useTurnConfig } from 'hooks/useTurnConfig'
@@ -65,10 +66,10 @@ const RoomCore = ({
     []
   )
 
-  // Memoised because it is a room-scoped identity, not just a value: `useRoom`
-  // keys its `FileTransferService` — and so its WebTorrent client — on this
-  // reference, and a fresh object per render built a new one on every
-  // peer-list change, typing event and connection refresh.
+  // Memoised because it is a room-scoped identity, not just a value. `useRoom`
+  // builds its `FileTransferService` — and so its WebTorrent client — from it
+  // once, and an earlier version keyed on this reference built a new client on
+  // every peer-list change, typing event and connection refresh.
   const rtcConfig = useMemo(
     () =>
       // NOTE: Avoid using STUN servers in the E2E tests in order to make them
@@ -83,6 +84,7 @@ const RoomCore = ({
 
   const {
     chatRoom,
+    fileTransferService,
     isDirectMessageRoom,
     handleInlineMediaUpload,
     handleMessageChange,
@@ -125,101 +127,103 @@ const RoomCore = ({
 
   return (
     <RoomContext.Provider value={roomContextValue}>
-      <Box
-        className="Room"
-        sx={{
-          height: '100%',
-          display: 'flex',
-          flexGrow: '1',
-          overflow: 'auto',
-        }}
-      >
+      <RoomFileTransferContext.Provider value={fileTransferService}>
         <Box
+          className="Room"
           sx={{
+            height: '100%',
             display: 'flex',
-            flexDirection: 'column',
             flexGrow: '1',
             overflow: 'auto',
           }}
         >
-          {!isDirectMessageRoom && (
-            <Zoom in={showRoomControls}>
-              <Box
-                sx={{
-                  alignItems: 'flex-start',
-                  display: 'flex',
-                  justifyContent: 'center',
-                  overflow: 'visible',
-                  height: 0,
-                  position: 'relative',
-                  top: theme.spacing(1),
-                }}
-              >
-                <RoomAudioControls peerRoom={peerRoom} />
-                <RoomVideoControls peerRoom={peerRoom} />
-                <RoomScreenShareControls peerRoom={peerRoom} />
-                <RoomFileUploadControls
-                  chatRoom={chatRoom}
-                  onInlineMediaUpload={handleInlineMediaUpload}
-                />
-                <Zoom in={showVideoDisplay} mountOnEnter unmountOnExit>
-                  <span>
-                    <RoomShowMessagesControls />
-                  </span>
-                </Zoom>
-              </Box>
-            </Zoom>
-          )}
           <Box
             sx={{
               display: 'flex',
-              flexDirection: landscape ? 'row' : 'column',
-              height: '100%',
-              width: '100%',
+              flexDirection: 'column',
+              flexGrow: '1',
               overflow: 'auto',
             }}
           >
-            {showVideoDisplay && (
-              <RoomVideoDisplay
-                userId={userId}
-                width="100%"
-                height={landscape || !showMessages ? '100%' : '60%'}
-              />
-            )}
-            {showMessages && (
-              <Box
-                sx={{
-                  display: 'flex',
-                  flexDirection: 'column',
-                  flexGrow: '1',
-                  width: showVideoDisplay && landscape ? '400px' : '100%',
-                  height: landscape ? '100%' : '40%',
-                }}
-              >
-                <ChatTranscript
-                  messageLog={messageLog}
-                  userId={userId}
-                  sx={{ ...(isDirectMessageRoom && { pt: 1 }) }}
-                />
-                <Divider />
-                <Box>
-                  <MessageForm
-                    onMessageSubmit={handleMessageSubmit}
-                    isMessageSending={isMessageSending}
-                    onMessageChange={handleMessageChange}
+            {!isDirectMessageRoom && (
+              <Zoom in={showRoomControls}>
+                <Box
+                  sx={{
+                    alignItems: 'flex-start',
+                    display: 'flex',
+                    justifyContent: 'center',
+                    overflow: 'visible',
+                    height: 0,
+                    position: 'relative',
+                    top: theme.spacing(1),
+                  }}
+                >
+                  <RoomAudioControls peerRoom={peerRoom} />
+                  <RoomVideoControls peerRoom={peerRoom} />
+                  <RoomScreenShareControls peerRoom={peerRoom} />
+                  <RoomFileUploadControls
+                    chatRoom={chatRoom}
+                    onInlineMediaUpload={handleInlineMediaUpload}
                   />
-                  {showActiveTypingStatus ? (
-                    <TypingStatusBar
-                      chatRoom={chatRoom}
-                      isDirectMessageRoom={isDirectMessageRoom}
-                    />
-                  ) : null}
+                  <Zoom in={showVideoDisplay} mountOnEnter unmountOnExit>
+                    <span>
+                      <RoomShowMessagesControls />
+                    </span>
+                  </Zoom>
                 </Box>
-              </Box>
+              </Zoom>
             )}
+            <Box
+              sx={{
+                display: 'flex',
+                flexDirection: landscape ? 'row' : 'column',
+                height: '100%',
+                width: '100%',
+                overflow: 'auto',
+              }}
+            >
+              {showVideoDisplay && (
+                <RoomVideoDisplay
+                  userId={userId}
+                  width="100%"
+                  height={landscape || !showMessages ? '100%' : '60%'}
+                />
+              )}
+              {showMessages && (
+                <Box
+                  sx={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    flexGrow: '1',
+                    width: showVideoDisplay && landscape ? '400px' : '100%',
+                    height: landscape ? '100%' : '40%',
+                  }}
+                >
+                  <ChatTranscript
+                    messageLog={messageLog}
+                    userId={userId}
+                    sx={{ ...(isDirectMessageRoom && { pt: 1 }) }}
+                  />
+                  <Divider />
+                  <Box>
+                    <MessageForm
+                      onMessageSubmit={handleMessageSubmit}
+                      isMessageSending={isMessageSending}
+                      onMessageChange={handleMessageChange}
+                    />
+                    {showActiveTypingStatus ? (
+                      <TypingStatusBar
+                        chatRoom={chatRoom}
+                        isDirectMessageRoom={isDirectMessageRoom}
+                      />
+                    ) : null}
+                  </Box>
+                </Box>
+              )}
+            </Box>
           </Box>
         </Box>
-      </Box>
+      </RoomFileTransferContext.Provider>
     </RoomContext.Provider>
   )
 }
