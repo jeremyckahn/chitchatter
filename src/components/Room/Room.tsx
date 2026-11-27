@@ -66,9 +66,9 @@ const RoomCore = ({
   )
 
   // Memoised because it is a room-scoped identity, not just a value: `useRoom`
-  // keys its `FileTransferService` — and so its WebTorrent client — on this
-  // reference, and a fresh object per render built a new one on every
-  // peer-list change, typing event and connection refresh.
+  // builds its `FileTransferService` — and so its WebTorrent client — from
+  // this once per room, and a fresh object per render once built a new client
+  // on every peer-list change, typing event and connection refresh.
   const rtcConfig = useMemo(
     () =>
       // NOTE: Avoid using STUN servers in the E2E tests in order to make them

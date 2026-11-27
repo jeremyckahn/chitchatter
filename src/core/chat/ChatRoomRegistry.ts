@@ -12,10 +12,21 @@ import { ChatRoomEvent } from 'core/chat/events'
  * It also relays peer arrivals and departures to the conversations that cannot
  * hear them themselves; see {@link setGroup}.
  */
+/**
+ * Releases what a host built for a direct-message room alongside it, once the
+ * room has left. Platform-neutral on purpose: the registry only sequences it.
+ */
+export type DirectRoomDisposer = () => void | Promise<void>
+
+interface DirectRoomEntry {
+  chatRoom: ChatRoom
+  dispose: DirectRoomDisposer | null
+}
+
 export class ChatRoomRegistry {
   private group: ChatRoom | null = null
 
-  private direct: Map<string, ChatRoom> = new Map()
+  private direct: Map<string, DirectRoomEntry> = new Map()
 
   private unsubscribeGroupMembership: (() => void)[] = []
 
@@ -45,27 +56,52 @@ export class ChatRoomRegistry {
 
     this.unsubscribeGroupMembership = [
       chatRoom.on(ChatRoomEvent.PEER_JOIN, ({ peerId }) => {
-        this.direct.get(peerId)?.notifyPeerJoined(peerId)
+        this.direct.get(peerId)?.chatRoom.notifyPeerJoined(peerId)
       }),
 
       chatRoom.on(ChatRoomEvent.PEER_LEAVE, ({ peerId }) => {
-        this.direct.get(peerId)?.notifyPeerLeft(peerId)
+        this.direct.get(peerId)?.chatRoom.notifyPeerLeft(peerId)
       }),
     ]
   }
 
-  getDirect = (targetPeerId: string) => this.direct.get(targetPeerId) ?? null
+  getDirect = (targetPeerId: string) =>
+    this.direct.get(targetPeerId)?.chatRoom ?? null
 
-  setDirect = (targetPeerId: string, chatRoom: ChatRoom) => {
-    this.direct.set(targetPeerId, chatRoom)
+  /**
+   * Adopts `chatRoom` as the conversation with `targetPeerId`.
+   *
+   * @param dispose Run by {@link clearDirect} once this room's `leave()` has
+   * settled, whether it resolved or rejected. A host uses it to release what
+   * it built for the room and that must outlive the UI showing it, such as
+   * the room's file transfer.
+   */
+  setDirect = (
+    targetPeerId: string,
+    chatRoom: ChatRoom,
+    dispose: DirectRoomDisposer | null = null
+  ) => {
+    this.direct.set(targetPeerId, { chatRoom, dispose })
   }
 
-  /** Leaves and forgets every direct-message room. */
+  /**
+   * Leaves and forgets every direct-message room, disposing each one after its
+   * own `leave()` settles. Rooms are independent: one that never settles holds
+   * back only its own disposal.
+   */
   clearDirect = async () => {
-    const rooms = [...this.direct.values()]
+    const entries = [...this.direct.values()]
 
     this.direct.clear()
 
-    await Promise.all(rooms.map(chatRoom => chatRoom.leave()))
+    await Promise.all(
+      entries.map(async ({ chatRoom, dispose }) => {
+        try {
+          await chatRoom.leave()
+        } finally {
+          await dispose?.()
+        }
+      })
+    )
   }
 }
