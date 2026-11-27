@@ -58,6 +58,7 @@ e2e/
 │   ├── file-offer-replay.test.ts # Replayed file offers cannot destroy shared files
 │   ├── forged-transcript.test.ts # A hostile first peer's history cannot make a newcomer contact its server
 │   ├── home.test.ts             # Home page tests
+│   ├── peer-list-download-seeding.test.ts # A peer-list download stops seeding on withdrawal and on leaving
 │   ├── room.test.ts             # Room functionality tests
 │   └── settings.test.ts         # Settings and preferences tests
 └── README.md                    # This file
@@ -102,6 +103,13 @@ e2e/
 - The sharer can still withdraw their own offer
 
 These tests need a peer that does something the app's UI cannot: write a file offer for a magnet URI it did not create. See [Testing against a hostile peer](#testing-against-a-hostile-peer).
+
+### Peer-List Download Seeding Tests (`tests/peer-list-download-seeding.test.ts`)
+
+- A file downloaded from the peer list stops being seeded once its owner withdraws it
+- It also stops being seeded once the downloader leaves the room
+
+They read the offer with a hostile peer that only listens, and check for seeding by having a fresh client try to download the file.
 
 ## Authoring Tests with Playwright Codegen
 

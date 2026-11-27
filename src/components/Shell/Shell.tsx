@@ -20,8 +20,8 @@ import {
 import { ErrorBoundary } from 'components/ErrorBoundary'
 import { SharedPeerNamesProvider } from 'components/PeerNameDisplay'
 import { SettingsContext } from 'contexts/SettingsContext'
-import { ShellContext } from 'contexts/ShellContext'
-import { ChatRoom } from 'core/chat/ChatRoom'
+import { RoomFileTransferContext } from 'contexts/RoomFileTransferContext'
+import { GroupRoomRegistration, ShellContext } from 'contexts/ShellContext'
 import { ChatRoomRegistry } from 'core/chat/ChatRoomRegistry'
 import { TrysteroTransport } from 'core/transport/TrysteroTransport'
 import {
@@ -77,7 +77,8 @@ export const Shell = ({ appNeedsUpdate, children, userPeerId }: ShellProps) => {
   const chatRoomRegistryRef = useRef<ChatRoomRegistry>(new ChatRoomRegistry())
   // The active group room, as React state rather than a ref, so that the tree
   // re-renders when the Room mounts and registers it.
-  const [chatRoom, setChatRoom] = useState<ChatRoom | null>(null)
+  const [groupRoom, setGroupRoom] = useState<GroupRoomRegistration | null>(null)
+  const chatRoom = groupRoom?.chatRoom ?? null
   const [isAlertShowing, setIsAlertShowing] = useState(false)
   const [isDrawerOpen, setIsDrawerOpen] = useState(defaultSidebarsOpen)
   const [isQRCodeDialogOpen, setIsQRCodeDialogOpen] = useState(false)
@@ -119,10 +120,13 @@ export const Shell = ({ appNeedsUpdate, children, userPeerId }: ShellProps) => {
 
   useUnlistedPeerAudioMute(peerList, peerAudioChannels)
 
-  const registerChatRoom = useCallback((newChatRoom: ChatRoom | null) => {
-    chatRoomRegistryRef.current.setGroup(newChatRoom)
-    setChatRoom(newChatRoom)
-  }, [])
+  const registerGroupRoom = useCallback(
+    (registration: GroupRoomRegistration | null) => {
+      chatRoomRegistryRef.current.setGroup(registration?.chatRoom ?? null)
+      setGroupRoom(registration)
+    },
+    []
+  )
 
   const showAlert = useCallback((message: string, options?: AlertOptions) => {
     setAlertText(message)
@@ -173,7 +177,7 @@ export const Shell = ({ appNeedsUpdate, children, userPeerId }: ShellProps) => {
       connectionTestResults,
       updatePeer,
       chatRoom,
-      registerChatRoom,
+      registerGroupRoom,
       chatRoomRegistry: chatRoomRegistryRef.current,
       transportRef,
     }),
@@ -207,7 +211,7 @@ export const Shell = ({ appNeedsUpdate, children, userPeerId }: ShellProps) => {
       connectionTestResults,
       updatePeer,
       chatRoom,
-      registerChatRoom,
+      registerGroupRoom,
     ]
   )
 
@@ -423,16 +427,23 @@ export const Shell = ({ appNeedsUpdate, children, userPeerId }: ShellProps) => {
                   anchor="right"
                   open={isPeerListOpen}
                 >
-                  <PeerList
-                    userId={userPeerId}
-                    roomId={roomId}
-                    onPeerListClose={handlePeerListClick}
-                    peerList={peerList}
-                    peerConnectionTypes={peerConnectionTypes}
-                    peerAudioChannelState={audioChannelState}
-                    peerAudioChannels={peerAudioChannels}
-                    connectionTestResults={connectionTestResults}
-                  />
+                  {/* The peer list is outside the room, but the offers it lists
+                  are the group room's, so it downloads them through that
+                  room's own file transfer service. */}
+                  <RoomFileTransferContext.Provider
+                    value={groupRoom?.fileTransferService ?? null}
+                  >
+                    <PeerList
+                      userId={userPeerId}
+                      roomId={roomId}
+                      onPeerListClose={handlePeerListClick}
+                      peerList={peerList}
+                      peerConnectionTypes={peerConnectionTypes}
+                      peerAudioChannelState={audioChannelState}
+                      peerAudioChannels={peerAudioChannels}
+                      connectionTestResults={connectionTestResults}
+                    />
+                  </RoomFileTransferContext.Provider>
                   {isEmbedded ? (
                     <Typography
                       variant="caption"

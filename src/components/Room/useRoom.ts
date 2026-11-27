@@ -7,6 +7,7 @@ import { FileHandle } from 'core/chat/fileOffers'
 import { encryption } from 'core/crypto/Encryption'
 import { RoomConfig, TrysteroTransport } from 'core/transport/TrysteroTransport'
 import { RoomContextProps } from 'contexts/RoomContext'
+import { RoomFileTransferContext } from 'contexts/RoomFileTransferContext'
 import { SettingsContext } from 'contexts/SettingsContext'
 import { ShellContext } from 'contexts/ShellContext'
 import {
@@ -53,7 +54,7 @@ export const useRoom = (
     setPassword,
     customUsername,
     transportRef,
-    registerChatRoom,
+    registerGroupRoom,
     chatRoomRegistry,
   } = useContext(ShellContext)
 
@@ -62,14 +63,32 @@ export const useRoom = (
 
   const isDirectMessageRoom = typeof targetPeerId === 'string'
 
-  // One per room, and only one: the core captures this instance for the
+  // Only set for a direct-message room: `Shell` provides the group room's
+  // service around the peer list, which is where those rooms are rendered.
+  const groupFileTransferService = useContext(RoomFileTransferContext)
+
+  // One per group room, and only one: the core captures this instance for the
   // lifetime of its `ChatRoom`, so a second one would offer files the room
-  // cannot rescind and seed torrents nothing ever stops. `rtcConfig` has to be
-  // a stable reference for that to hold — see `Room.tsx`.
-  const fileTransferService = useMemo(
-    () => new FileTransferService(roomConfig.rtcConfig ?? {}),
-    [roomConfig.rtcConfig]
-  )
+  // cannot rescind and seed torrents nothing ever stops. It is built once, like
+  // the `ChatRoom` below, so the instance components download through (see
+  // `RoomFileTransferContext`) can never drift from the one the room holds.
+  //
+  // A direct-message room shares it, as it shares the transport. The core
+  // relies on that: a DM room leaves seeding to the group room, which ends it
+  // all on leave, so a client of the DM room's own would never be stopped.
+  const [fileTransferService] = useState(() => {
+    if (!isDirectMessageRoom) {
+      return new FileTransferService(roomConfig.rtcConfig ?? {})
+    }
+
+    if (!groupFileTransferService) {
+      throw new Error(
+        "A direct-message room was rendered outside its group room. It must be inside the RoomFileTransferContext provider that holds the group room's FileTransferService."
+      )
+    }
+
+    return groupFileTransferService
+  })
 
   // A direct-message room rides the group room's existing transport under a
   // separate action namespace, rather than joining the room a second time.
@@ -175,10 +194,12 @@ export const useRoom = (
     // the registry cleanup below takes care of.
     if (isDirectMessageRoom) return
 
-    registerChatRoom(chatRoom)
+    // Registered together, so the peer list in the shell downloads this room's
+    // offers through the client this room seeds and rescinds through.
+    registerGroupRoom({ chatRoom, fileTransferService })
 
     return () => {
-      registerChatRoom(null)
+      registerGroupRoom(null)
 
       // Cleared synchronously. React can run the next room's `useState`
       // initialiser — which adopts `transportRef.current` whenever it is set —
@@ -205,8 +226,9 @@ export const useRoom = (
   }, [
     chatRoom,
     chatRoomRegistry,
+    fileTransferService,
     isDirectMessageRoom,
-    registerChatRoom,
+    registerGroupRoom,
     transport,
     transportRef,
   ])
@@ -262,7 +284,6 @@ export const useRoom = (
       setSelfScreenStream,
       peerScreenStreams,
       setPeerScreenStreams,
-      fileTransferService,
     }),
     [
       chatRoom,
@@ -273,7 +294,6 @@ export const useRoom = (
       peerVideoStreams,
       selfScreenStream,
       peerScreenStreams,
-      fileTransferService,
     ]
   )
 
@@ -290,6 +310,7 @@ export const useRoom = (
 
   return {
     chatRoom,
+    fileTransferService,
     isDirectMessageRoom,
     isPrivate: chatRoom.isPrivate,
     handleInlineMediaUpload,

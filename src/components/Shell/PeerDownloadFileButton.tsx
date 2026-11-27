@@ -10,7 +10,7 @@ import { isError } from 'core/lib/type-guards'
 import { Peer } from 'core/models/chat'
 
 import { usePeerNameDisplay } from 'components/PeerNameDisplay/usePeerNameDisplay'
-import { RoomContext } from 'contexts/RoomContext'
+import { useRoomFileTransfer } from 'contexts/RoomFileTransferContext'
 import { downloadAndSaveFiles } from 'services/FileTransfer'
 
 interface PeerDownloadFileButtonProps {
@@ -23,9 +23,10 @@ export const PeerDownloadFileButton = ({
   const [isDownloading, setIsDownloading] = useState(false)
   const [downloadProgress, setDownloadProgress] = useState<number | null>(null)
   const shellContext = useContext(ShellContext)
-  const {
-    fileTransferService: { fileTransfer },
-  } = useContext(RoomContext)
+  // The group room's own service, which `Shell` provides around the peer list.
+  // The offer being downloaded is that room's, so this is the client whose
+  // seeding the room stops when the offer is withdrawn or the room is left.
+  const { fileTransfer } = useRoomFileTransfer()
   const { getDisplayUsername } = usePeerNameDisplay()
   const { offeredFile } = peer
 
