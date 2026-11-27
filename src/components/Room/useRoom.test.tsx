@@ -10,6 +10,7 @@ import { encryption } from 'core/crypto/Encryption'
 import { TrysteroTransport } from 'core/transport/TrysteroTransport'
 import { FileTransferService } from 'services/FileTransfer'
 import { mockEncryptionService } from 'test-utils/mocks/mockEncryptionService'
+import { withoutUncaughtErrorReports } from 'test-utils/withoutUncaughtErrorReports'
 import { userSettingsContextStubFactory } from 'test-utils/stubs/settingsContext'
 
 import { useRoom } from './useRoom'
@@ -276,9 +277,11 @@ describe('useRoom', () => {
     })
 
     test('a direct-message room refuses to be built outside its group room', () => {
-      expect(() => renderRoom({ targetPeerId: 'peer-1' })).toThrow(
-        /outside its group room/
-      )
+      expect(() =>
+        withoutUncaughtErrorReports(() =>
+          renderRoom({ targetPeerId: 'peer-1' })
+        )
+      ).toThrow(/outside its group room/)
     })
 
     test('a group room builds its own service rather than adopting one', () => {

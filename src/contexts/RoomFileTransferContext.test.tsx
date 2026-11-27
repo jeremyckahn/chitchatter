@@ -3,6 +3,7 @@ import { PropsWithChildren } from 'react'
 import { describe, expect, test, vi } from 'vitest'
 
 import { FileTransferService } from 'services/FileTransfer'
+import { withoutUncaughtErrorReports } from 'test-utils/withoutUncaughtErrorReports'
 
 import {
   RoomFileTransferContext,
@@ -37,9 +38,9 @@ describe('RoomFileTransferContext', () => {
   })
 
   test('refuses to be read outside a room', () => {
-    expect(() => renderHook(() => useRoomFileTransfer())).toThrow(
-      /outside a room/
-    )
+    expect(() =>
+      withoutUncaughtErrorReports(() => renderHook(() => useRoomFileTransfer()))
+    ).toThrow(/outside a room/)
   })
 
   test('refuses to be read under a provider that holds no service', () => {
@@ -50,7 +51,9 @@ describe('RoomFileTransferContext', () => {
     )
 
     expect(() =>
-      renderHook(() => useRoomFileTransfer(), { wrapper: Wrapper })
+      withoutUncaughtErrorReports(() =>
+        renderHook(() => useRoomFileTransfer(), { wrapper: Wrapper })
+      )
     ).toThrow(/outside a room/)
   })
 
