@@ -1,12 +1,13 @@
 import { vi } from 'vitest'
-import { act, renderHook } from '@testing-library/react'
-import { PropsWithChildren, useContext, useMemo, useRef, useState } from 'react'
+import { act, renderHook, waitFor } from '@testing-library/react'
+import { MutableRefObject, PropsWithChildren, useContext, useMemo } from 'react'
 
 import { SettingsContext } from 'contexts/SettingsContext'
 import { ShellContext } from 'contexts/ShellContext'
 import { ChatRoomRegistry } from 'core/chat/ChatRoomRegistry'
 import { encryption } from 'core/crypto/Encryption'
 import { TrysteroTransport } from 'core/transport/TrysteroTransport'
+import { itemAt } from 'test-utils/itemAt'
 import { mockEncryptionService } from 'test-utils/mocks/mockEncryptionService'
 import { userSettingsContextStubFactory } from 'test-utils/stubs/settingsContext'
 
@@ -14,10 +15,14 @@ import { useRoom } from './useRoom'
 
 vi.mock('../../lib/Audio')
 
-const { trysteroLeave, hangingRescindAll } = vi.hoisted(() => ({
-  trysteroLeave: vi.fn(),
-  hangingRescindAll: { current: false },
-}))
+const { trysteroLeave, hangingRescindAll, fileTransferServices } = vi.hoisted(
+  () => ({
+    trysteroLeave: vi.fn(),
+    hangingRescindAll: { current: false },
+    /** Every service built, in order, so a test can tell whose was destroyed. */
+    fileTransferServices: [] as { destroy: () => Promise<void> }[],
+  })
+)
 
 /**
  * A file transfer whose teardown can be made to never settle, which is how
@@ -25,6 +30,12 @@ const { trysteroLeave, hangingRescindAll } = vi.hoisted(() => ({
  */
 vi.mock('services/FileTransfer', () => ({
   FileTransferService: class {
+    constructor() {
+      fileTransferServices.push(this)
+    }
+
+    destroy = vi.fn(async () => {})
+
     fileTransfer = {
       offer: vi.fn(async () => 'magnet:a'),
       rescind: vi.fn(async () => {}),
@@ -60,24 +71,24 @@ const userSettingsStub = userSettingsContextStubFactory({ userId: 'self' })
 
 /**
  * The shell's defaults, with the mutable handles it owns made per-test so that
- * one room's transport cannot leak into the next.
+ * one room's transport cannot leak into the next. Every hook rendered with the
+ * same wrapper shares them, the way a group room and its direct-message rooms
+ * share the shell's.
  */
 const createWrapper = () => {
   const setPassword = vi.fn()
-  const handles: { transportRef: { current: TrysteroTransport | null } } = {
-    transportRef: { current: null },
+  const transportRef: MutableRefObject<TrysteroTransport | null> = {
+    current: null,
   }
+  const chatRoomRegistry = new ChatRoomRegistry()
+  const handles = { transportRef }
 
   const Wrapper = ({ children }: PropsWithChildren) => {
     const shellDefaults = useContext(ShellContext)
-    const transportRef = useRef<TrysteroTransport | null>(null)
-    const [chatRoomRegistry] = useState(() => new ChatRoomRegistry())
-
-    handles.transportRef = transportRef
 
     const shellValue = useMemo(
       () => ({ ...shellDefaults, transportRef, chatRoomRegistry, setPassword }),
-      [shellDefaults, chatRoomRegistry]
+      [shellDefaults]
     )
 
     return (
@@ -95,8 +106,13 @@ const createWrapper = () => {
 const renderRoom = ({
   password,
   targetPeerId,
-}: { password?: string; targetPeerId?: string } = {}) => {
-  const { Wrapper, handles, setPassword } = createWrapper()
+  wrapper = createWrapper(),
+}: {
+  password?: string
+  targetPeerId?: string
+  wrapper?: ReturnType<typeof createWrapper>
+} = {}) => {
+  const { Wrapper, handles, setPassword } = wrapper
 
   const rendered = renderHook(
     () =>
@@ -120,6 +136,7 @@ describe('useRoom', () => {
   beforeEach(() => {
     trysteroLeave.mockClear()
     hangingRescindAll.current = false
+    fileTransferServices.length = 0
   })
 
   test('shows the transcript whenever there is no video on screen', () => {
@@ -186,6 +203,76 @@ describe('useRoom', () => {
     // to adopt in its `useState` initialiser.
     expect(trysteroLeave).toHaveBeenCalled()
     expect(handles.transportRef.current).toBeNull()
+  })
+
+  test('destroys the WebTorrent client once the room has left', async () => {
+    const { unmount } = renderRoom()
+    const service = itemAt(fileTransferServices, 0)
+
+    expect(service.destroy).not.toHaveBeenCalled()
+
+    unmount()
+
+    // Without this, every room visited in a tab kept its own client alive,
+    // tracker sockets and all, until the page was closed.
+    await waitFor(() => expect(service.destroy).toHaveBeenCalledTimes(1))
+  })
+
+  test('a hanging rescind keeps the client but not the room', async () => {
+    hangingRescindAll.current = true
+
+    const { unmount } = renderRoom()
+    const service = itemAt(fileTransferServices, 0)
+
+    unmount()
+
+    // The room is left at once regardless...
+    expect(trysteroLeave).toHaveBeenCalled()
+
+    // ...but the client is not destroyed underneath a rescind still using it.
+    await act(async () => {
+      await new Promise(resolve => setTimeout(resolve, 0))
+    })
+
+    expect(service.destroy).not.toHaveBeenCalled()
+  })
+
+  test("destroys a direct-message room's client with the group room, not with its dialog", async () => {
+    const wrapper = createWrapper()
+    const group = renderRoom({ wrapper })
+    const firstDialog = renderRoom({ wrapper, targetPeerId: 'peer-1' })
+
+    expect(fileTransferServices).toHaveLength(2)
+
+    const directService = itemAt(fileTransferServices, 1)
+
+    expect(
+      firstDialog.result.current.roomContextValue.fileTransferService
+    ).toBe(directService)
+
+    // The conversation, and the file offers it made, outlive the dialog.
+    firstDialog.unmount()
+
+    await act(async () => {
+      await new Promise(resolve => setTimeout(resolve, 0))
+    })
+
+    expect(directService.destroy).not.toHaveBeenCalled()
+
+    // Reopening it picks the conversation's own client back up rather than
+    // starting another that nothing would ever destroy.
+    const secondDialog = renderRoom({ wrapper, targetPeerId: 'peer-1' })
+
+    expect(fileTransferServices).toHaveLength(2)
+    expect(
+      secondDialog.result.current.roomContextValue.fileTransferService
+    ).toBe(directService)
+
+    secondDialog.unmount()
+    group.unmount()
+
+    await waitFor(() => expect(directService.destroy).toHaveBeenCalledTimes(1))
+    expect(itemAt(fileTransferServices, 0).destroy).toHaveBeenCalledTimes(1)
   })
 
   test('does not publish a password from a direct-message room', () => {

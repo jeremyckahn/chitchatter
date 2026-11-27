@@ -19,6 +19,13 @@ import { FileTransferService } from 'services/FileTransfer'
 
 import { useChatRoomNotifications } from './useChatRoomNotifications'
 
+/**
+ * The file transfer each direct-message room was built with, so that a dialog
+ * remounting onto a conversation from the registry reuses it. Weak so that a
+ * conversation the registry has forgotten takes its entry with it.
+ */
+const directMessageFileTransfers = new WeakMap<ChatRoom, FileTransferService>()
+
 interface UseRoomConfig {
   roomId: string
   userId: string
@@ -62,15 +69,6 @@ export const useRoom = (
 
   const isDirectMessageRoom = typeof targetPeerId === 'string'
 
-  // One per room, and only one: the core captures this instance for the
-  // lifetime of its `ChatRoom`, so a second one would offer files the room
-  // cannot rescind and seed torrents nothing ever stops. `rtcConfig` has to be
-  // a stable reference for that to hold — see `Room.tsx`.
-  const fileTransferService = useMemo(
-    () => new FileTransferService(roomConfig.rtcConfig ?? {}),
-    [roomConfig.rtcConfig]
-  )
-
   // A direct-message room rides the group room's existing transport under a
   // separate action namespace, rather than joining the room a second time.
   const [transport] = useState(
@@ -84,16 +82,39 @@ export const useRoom = (
 
   transportRef.current = transport
 
-  const [chatRoom] = useState(() => {
+  // One file transfer service per room, and only one: the core captures it
+  // for the lifetime of its `ChatRoom`, so a second one would offer files the
+  // room cannot rescind and seed torrents nothing ever stops. Each owns a
+  // WebTorrent client, so each is destroyed once its room has left — the group
+  // room's by the unmount cleanup below, a direct-message room's by the
+  // registry when the group room clears it.
+  const [{ chatRoom, fileTransferService }] = useState(() => {
     // A direct-message conversation outlives the dialog that shows it, so it is
     // taken from the registry when one already exists. This is what keeps a DM
-    // transcript intact across closing and reopening the dialog.
+    // transcript intact across closing and reopening the dialog — and its file
+    // transfer is taken with it, rather than a fresh WebTorrent client being
+    // started for every remount and never stopped.
     const existing =
       isDirectMessageRoom && targetPeerId
         ? chatRoomRegistry.getDirect(targetPeerId)
         : null
 
-    if (existing) return existing
+    if (existing) {
+      return {
+        chatRoom: existing,
+        fileTransferService:
+          directMessageFileTransfers.get(existing) ??
+          // Unreachable from the app, which registers every direct-message
+          // room through this hook; only a room registered elsewhere lacks
+          // one. Built so the dialog can still download, it has no owner to
+          // destroy it.
+          new FileTransferService(roomConfig.rtcConfig ?? {}),
+      }
+    }
+
+    const createdFileTransferService = new FileTransferService(
+      roomConfig.rtcConfig ?? {}
+    )
 
     const created = new ChatRoom({
       roomId,
@@ -107,17 +128,26 @@ export const useRoom = (
       encryptionService,
       adapters: createWebAdapters({
         selectedSound,
-        fileTransferService,
+        fileTransferService: createdFileTransferService,
         getUuid,
         timeService,
       }),
     })
 
     if (isDirectMessageRoom && targetPeerId) {
-      chatRoomRegistry.setDirect(targetPeerId, created)
+      directMessageFileTransfers.set(created, createdFileTransferService)
+
+      // The registry runs this once the conversation's own `leave()` settles,
+      // which is when nothing it started can still need the client.
+      chatRoomRegistry.setDirect(targetPeerId, created, () =>
+        createdFileTransferService.destroy()
+      )
     }
 
-    return created
+    return {
+      chatRoom: created,
+      fileTransferService: createdFileTransferService,
+    }
   })
 
   const messageLog = useChatRoomMessageLog(chatRoom)
@@ -193,9 +223,14 @@ export const useRoom = (
       // the room exit on that would leave us joined and visible to peers long
       // after the user navigated away, and joined for good if it never
       // settles.
+      //
+      // The WebTorrent client is destroyed only once the leave has settled,
+      // either way: `leave()` is what rescinds our offers through it, and a
+      // client destroyed underneath that would fail the rescind. A leave that
+      // never settles therefore keeps the client, but not the room, alive.
       const leaving = Promise.all([
         chatRoomRegistry.clearDirect(),
-        chatRoom.leave(),
+        chatRoom.leave().finally(() => fileTransferService.destroy()),
       ])
 
       transport.leaveRoom()
@@ -205,6 +240,7 @@ export const useRoom = (
   }, [
     chatRoom,
     chatRoomRegistry,
+    fileTransferService,
     isDirectMessageRoom,
     registerChatRoom,
     transport,

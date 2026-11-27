@@ -3880,6 +3880,56 @@ describe('ChatRoom', () => {
 
       expect(itemAt(aliceToBob.getPeers(), 0).isTypingDirectMessage).toBe(true)
     })
+
+    it('disposes each conversation only after its own leave settles', async () => {
+      const alice = createClient(network, 0)
+
+      await alice.chatRoom.join()
+
+      const registry = new ChatRoomRegistry()
+      const aliceToBob = createDirectMessageRoom(alice, 0, 'peer-1')
+      const aliceToCarol = createDirectMessageRoom(alice, 0, 'peer-2')
+
+      await aliceToBob.join()
+      await aliceToCarol.join()
+
+      let finishBobLeave = () => {}
+
+      vi.spyOn(aliceToBob, 'leave').mockImplementation(
+        () =>
+          new Promise<void>(resolve => {
+            finishBobLeave = resolve
+          })
+      )
+
+      vi.spyOn(aliceToCarol, 'leave').mockRejectedValue(new Error('boom'))
+
+      const disposeBob = vi.fn()
+      const disposeCarol = vi.fn()
+
+      registry.setDirect('peer-1', aliceToBob, disposeBob)
+      registry.setDirect('peer-2', aliceToCarol, disposeCarol)
+
+      // Caught at once so the early rejection is not reported as unhandled
+      // while the test is still holding Bob's leave open.
+      const clearing = registry.clearDirect().catch((error: unknown) => error)
+
+      await settle()
+
+      // What a disposer releases may still be in use by a leave in progress,
+      // so it waits for that room. A rejected leave has settled too — skipping
+      // its disposal would leak what the host built — and a room whose leave
+      // hangs holds back nobody's disposal but its own.
+      expect(disposeBob).not.toHaveBeenCalled()
+      expect(disposeCarol).toHaveBeenCalledTimes(1)
+      expect(registry.getDirect('peer-1')).toBeNull()
+
+      finishBobLeave()
+      await settle()
+
+      expect(disposeBob).toHaveBeenCalledTimes(1)
+      expect(await clearing).toEqual(new Error('boom'))
+    })
   })
 
   describe('snapshots', () => {
