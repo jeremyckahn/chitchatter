@@ -3,6 +3,7 @@ import { render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { useContext, useEffect } from 'react'
 import { MemoryRouter as Router } from 'react-router-dom'
+import type { FileTransferOpts } from 'secure-file-transfer'
 import {
   afterEach,
   beforeAll,
@@ -45,6 +46,7 @@ const { fileTransferClients, downloadBehavior } = vi.hoisted(() => {
     download: (magnetURI: string, fileKey: string) => Promise<never[]>
     rescind: (magnetURI: string) => Promise<void>
     torrents: Set<string>
+    options: FileTransferOpts | undefined
   }> = []
 
   return {
@@ -83,7 +85,10 @@ vi.mock('secure-file-transfer', async () => {
 
     isOffering = (magnetURI: string) => this.torrents.has(magnetURI)
 
-    constructor() {
+    options: FileTransferOpts | undefined
+
+    constructor(options?: FileTransferOpts) {
+      this.options = options
       fileTransferClients.push(this)
     }
   }
@@ -161,11 +166,13 @@ const createChatRoom = (
  * offering a file. Bob's room is built like `useRoom` builds one: its own
  * `FileTransferService`, behind the real web adapters.
  */
-const setUp = async () => {
+const setUp = async ({
+  rtcConfig = {},
+}: { rtcConfig?: RTCConfiguration } = {}) => {
   const network = createInMemoryNetwork()
   let aliceOfferCount = 0
 
-  const bobFileTransferService = new FileTransferService({})
+  const bobFileTransferService = new FileTransferService(rtcConfig)
   const bob = createChatRoom(
     network,
     'peer-bob',
@@ -286,6 +293,38 @@ describe('PeerDownloadFileButton', () => {
       )
     )
     expect(fileTransferClients).toHaveLength(1)
+  })
+
+  // Regression test for https://github.com/jeremyckahn/chitchatter/issues/680:
+  // the stray client the button used to fall back to had no relay servers.
+  test("downloads with the group room's relay servers", async () => {
+    const rtcConfig: RTCConfiguration = {
+      iceServers: [
+        {
+          urls: 'turn:relay.example.com:3478',
+          username: 'user',
+          credential: 'secret',
+        },
+      ],
+    }
+
+    await setUp({ rtcConfig })
+    await downloadFromPeerList()
+
+    const roomClient = itemAt(fileTransferClients, 0)
+
+    await waitFor(() =>
+      expect(roomClient.download).toHaveBeenCalledWith(
+        aliceMagnetUri,
+        expect.anything(),
+        expect.anything()
+      )
+    )
+    // The client the download went through is the one WebTorrent was told to
+    // connect through these relay servers with.
+    expect(roomClient.options?.webtorrentInstanceOpts?.tracker?.rtcConfig).toBe(
+      rtcConfig
+    )
   })
 
   // Regression test for https://github.com/jeremyckahn/chitchatter/issues/680

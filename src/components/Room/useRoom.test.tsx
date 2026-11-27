@@ -16,10 +16,14 @@ import { useRoom } from './useRoom'
 
 vi.mock('../../lib/Audio')
 
-const { trysteroLeave, hangingRescindAll } = vi.hoisted(() => ({
-  trysteroLeave: vi.fn(),
-  hangingRescindAll: { current: false },
-}))
+const { trysteroLeave, hangingRescindAll, serviceRtcConfigs } = vi.hoisted(
+  () => ({
+    trysteroLeave: vi.fn(),
+    hangingRescindAll: { current: false },
+    // The RTC configuration each service was built with, keyed by the service
+    serviceRtcConfigs: new WeakMap<object, RTCConfiguration>(),
+  })
+)
 
 /**
  * A file transfer whose teardown can be made to never settle, which is how
@@ -36,6 +40,10 @@ vi.mock('services/FileTransfer', () => ({
           : Promise.resolve()
       ),
       isOffering: vi.fn(() => false),
+    }
+
+    constructor(rtcConfig: RTCConfiguration) {
+      serviceRtcConfigs.set(this, rtcConfig)
     }
   },
 }))
@@ -112,10 +120,12 @@ const renderRoom = ({
   password,
   targetPeerId,
   groupFileTransferService,
+  rtcConfig = { iceServers: [] },
 }: {
   password?: string
   targetPeerId?: string
   groupFileTransferService?: FileTransferService
+  rtcConfig?: RTCConfiguration
 } = {}) => {
   const { Wrapper, handles, setPassword, registerGroupRoom } = createWrapper(
     groupFileTransferService
@@ -124,7 +134,7 @@ const renderRoom = ({
   const rendered = renderHook(
     () =>
       useRoom(
-        { appId: 'test', rtcConfig: { iceServers: [] }, password },
+        { appId: 'test', rtcConfig, password },
         {
           roomId: 'room-123',
           userId: 'self',
@@ -256,6 +266,28 @@ describe('useRoom', () => {
       unmount()
 
       expect(registerGroupRoom).toHaveBeenLastCalledWith(null)
+    })
+
+    // The peer list downloads through the registered service, so the room's
+    // relay (TURN) servers have to be in that one for those downloads to
+    // connect on networks that block direct connections.
+    test("registers a service built with the room's relay servers", () => {
+      const rtcConfig: RTCConfiguration = {
+        iceServers: [
+          {
+            urls: 'turn:relay.example.com:3478',
+            username: 'user',
+            credential: 'secret',
+          },
+        ],
+      }
+      const { result, registerGroupRoom } = renderRoom({ rtcConfig })
+      const { fileTransferService } = result.current
+
+      expect(registerGroupRoom).toHaveBeenCalledWith(
+        expect.objectContaining({ fileTransferService })
+      )
+      expect(serviceRtcConfigs.get(fileTransferService)).toBe(rtcConfig)
     })
 
     test("a direct-message room builds its own service rather than sharing the group room's", () => {
