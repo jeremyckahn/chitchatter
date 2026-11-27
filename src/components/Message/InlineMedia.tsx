@@ -5,10 +5,10 @@ import CircularProgress from '@mui/material/CircularProgress'
 import Dialog from '@mui/material/Dialog'
 import IconButton from '@mui/material/IconButton'
 import Typography from '@mui/material/Typography'
-import { useContext, useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { TorrentFile } from 'webtorrent'
 
-import { RoomContext } from 'contexts/RoomContext'
+import { useRoomFileTransfer } from 'contexts/RoomFileTransferContext'
 import { FileReference } from 'core/models/chat'
 
 import {
@@ -213,9 +213,7 @@ export const InlineFile = ({ file }: InlineFileProps) => {
 }
 
 export const InlineMedia = ({ magnetURI, fileKey }: InlineMediaProps) => {
-  const {
-    fileTransferService: { fileTransfer },
-  } = useContext(RoomContext)
+  const { fileTransfer } = useRoomFileTransfer()
 
   return (
     <InlineMediaView

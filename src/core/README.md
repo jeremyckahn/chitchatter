@@ -88,7 +88,7 @@ peer already has a live DM `ChatRoom` attached to those shared actions.
 room plus a DM room per peer. Rooms are registered there rather than owned by
 the components that render them, because a DM conversation has to survive the
 dialog closing and reopening with its transcript intact. Only the group room is
-published to the shell (`registerChatRoom`); when it unmounts it clears the
+published to the shell (`registerGroupRoom`, together with its `FileTransferService`); when it unmounts it clears the
 registry's DM rooms, leaves, and drops the transport.
 
 The registry also forwards the group room's `PEER_JOIN` and `PEER_LEAVE` to the

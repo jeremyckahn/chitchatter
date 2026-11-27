@@ -2,11 +2,13 @@ import { vi } from 'vitest'
 import { act, renderHook } from '@testing-library/react'
 import { PropsWithChildren, useContext, useMemo, useRef, useState } from 'react'
 
+import { RoomFileTransferContext } from 'contexts/RoomFileTransferContext'
 import { SettingsContext } from 'contexts/SettingsContext'
 import { ShellContext } from 'contexts/ShellContext'
 import { ChatRoomRegistry } from 'core/chat/ChatRoomRegistry'
 import { encryption } from 'core/crypto/Encryption'
 import { TrysteroTransport } from 'core/transport/TrysteroTransport'
+import { FileTransferService } from 'services/FileTransfer'
 import { mockEncryptionService } from 'test-utils/mocks/mockEncryptionService'
 import { userSettingsContextStubFactory } from 'test-utils/stubs/settingsContext'
 
@@ -14,10 +16,14 @@ import { useRoom } from './useRoom'
 
 vi.mock('../../lib/Audio')
 
-const { trysteroLeave, hangingRescindAll } = vi.hoisted(() => ({
-  trysteroLeave: vi.fn(),
-  hangingRescindAll: { current: false },
-}))
+const { trysteroLeave, hangingRescindAll, serviceRtcConfigs } = vi.hoisted(
+  () => ({
+    trysteroLeave: vi.fn(),
+    hangingRescindAll: { current: false },
+    // The RTC configuration each service was built with, keyed by the service
+    serviceRtcConfigs: new WeakMap<object, RTCConfiguration>(),
+  })
+)
 
 /**
  * A file transfer whose teardown can be made to never settle, which is how
@@ -34,6 +40,10 @@ vi.mock('services/FileTransfer', () => ({
           : Promise.resolve()
       ),
       isOffering: vi.fn(() => false),
+    }
+
+    constructor(rtcConfig: RTCConfiguration) {
+      serviceRtcConfigs.set(this, rtcConfig)
     }
   },
 }))
@@ -61,9 +71,15 @@ const userSettingsStub = userSettingsContextStubFactory({ userId: 'self' })
 /**
  * The shell's defaults, with the mutable handles it owns made per-test so that
  * one room's transport cannot leak into the next.
+ *
+ * `groupFileTransferService` is what `Shell` provides around the peer list,
+ * which is where a direct-message room is rendered.
  */
-const createWrapper = () => {
+const createWrapper = (
+  groupFileTransferService: FileTransferService | null = null
+) => {
   const setPassword = vi.fn()
+  const registerGroupRoom = vi.fn()
   const handles: { transportRef: { current: TrysteroTransport | null } } = {
     transportRef: { current: null },
   }
@@ -76,32 +92,49 @@ const createWrapper = () => {
     handles.transportRef = transportRef
 
     const shellValue = useMemo(
-      () => ({ ...shellDefaults, transportRef, chatRoomRegistry, setPassword }),
+      () => ({
+        ...shellDefaults,
+        transportRef,
+        chatRoomRegistry,
+        setPassword,
+        registerGroupRoom,
+      }),
       [shellDefaults, chatRoomRegistry]
     )
 
     return (
       <SettingsContext.Provider value={userSettingsStub}>
         <ShellContext.Provider value={shellValue}>
-          {children}
+          <RoomFileTransferContext.Provider value={groupFileTransferService}>
+            {children}
+          </RoomFileTransferContext.Provider>
         </ShellContext.Provider>
       </SettingsContext.Provider>
     )
   }
 
-  return { Wrapper, handles, setPassword }
+  return { Wrapper, handles, setPassword, registerGroupRoom }
 }
 
 const renderRoom = ({
   password,
   targetPeerId,
-}: { password?: string; targetPeerId?: string } = {}) => {
-  const { Wrapper, handles, setPassword } = createWrapper()
+  groupFileTransferService,
+  rtcConfig = { iceServers: [] },
+}: {
+  password?: string
+  targetPeerId?: string
+  groupFileTransferService?: FileTransferService
+  rtcConfig?: RTCConfiguration
+} = {}) => {
+  const { Wrapper, handles, setPassword, registerGroupRoom } = createWrapper(
+    groupFileTransferService
+  )
 
   const rendered = renderHook(
     () =>
       useRoom(
-        { appId: 'test', rtcConfig: { iceServers: [] }, password },
+        { appId: 'test', rtcConfig, password },
         {
           roomId: 'room-123',
           userId: 'self',
@@ -113,7 +146,7 @@ const renderRoom = ({
     { wrapper: Wrapper }
   )
 
-  return { ...rendered, handles, setPassword }
+  return { ...rendered, handles, setPassword, registerGroupRoom }
 }
 
 describe('useRoom', () => {
@@ -206,5 +239,83 @@ describe('useRoom', () => {
     const { setPassword } = renderRoom({ password: 'secret' })
 
     expect(setPassword).toHaveBeenCalledWith('secret')
+  })
+
+  describe('file transfer', () => {
+    // Regression test for https://github.com/jeremyckahn/chitchatter/issues/680:
+    // the peer list is rendered by the shell, outside this room, and has to
+    // download the room's offers through the client the room seeds through.
+    test('registers the group room together with the service it seeds through', async () => {
+      const { result, registerGroupRoom, unmount } = renderRoom()
+      const { chatRoom, fileTransferService } = result.current
+
+      expect(registerGroupRoom).toHaveBeenCalledWith({
+        chatRoom,
+        fileTransferService,
+      })
+
+      await act(async () => {
+        await chatRoom.offerFiles([
+          { name: 'doc.pdf', type: 'application/pdf', size: 10 },
+        ])
+      })
+
+      // The instance registered is the one the room's adapters use.
+      expect(fileTransferService.fileTransfer.offer).toHaveBeenCalled()
+
+      unmount()
+
+      expect(registerGroupRoom).toHaveBeenLastCalledWith(null)
+    })
+
+    // The peer list downloads through the registered service, so the room's
+    // relay (TURN) servers have to be in that one for those downloads to
+    // connect on networks that block direct connections.
+    test("registers a service built with the room's relay servers", () => {
+      const rtcConfig: RTCConfiguration = {
+        iceServers: [
+          {
+            urls: 'turn:relay.example.com:3478',
+            username: 'user',
+            credential: 'secret',
+          },
+        ],
+      }
+      const { result, registerGroupRoom } = renderRoom({ rtcConfig })
+      const { fileTransferService } = result.current
+
+      expect(registerGroupRoom).toHaveBeenCalledWith(
+        expect.objectContaining({ fileTransferService })
+      )
+      expect(serviceRtcConfigs.get(fileTransferService)).toBe(rtcConfig)
+    })
+
+    test("a direct-message room builds its own service rather than sharing the group room's", () => {
+      // A DM room rescinds inline media that scrolls out of its own transcript,
+      // judging by that transcript alone. On the group room's client, a DM peer
+      // could use that to stop a torrent the group room seeds, such as the
+      // user's own file offer.
+      const groupFileTransferService = new FileTransferService({})
+      const { result, registerGroupRoom } = renderRoom({
+        targetPeerId: 'peer-1',
+        groupFileTransferService,
+      })
+
+      expect(result.current.fileTransferService).not.toBe(
+        groupFileTransferService
+      )
+      expect(registerGroupRoom).not.toHaveBeenCalled()
+    })
+
+    test('a group room builds its own service rather than adopting one', () => {
+      const unrelatedFileTransferService = new FileTransferService({})
+      const { result } = renderRoom({
+        groupFileTransferService: unrelatedFileTransferService,
+      })
+
+      expect(result.current.fileTransferService).not.toBe(
+        unrelatedFileTransferService
+      )
+    })
   })
 })
