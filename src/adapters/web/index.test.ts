@@ -143,7 +143,38 @@ describe('createWebFileTransfer', () => {
       expect(second.isInlineMedia('magnet:img')).toBe(false)
     })
 
-    it('forgets a magnet once it is rescinded, as when it is evicted', async () => {
+    // A direct-message room letting go of a magnet must not erase it while the
+    // group room still shows it, or the group room loses the protection the
+    // record gives its media.
+    it('keeps a magnet until every room that tracked it has untracked it', () => {
+      const { source } = createSource()
+      const groupRoom = createWebFileTransfer(source)
+      const directMessageRoom = createWebFileTransfer(source)
+
+      groupRoom.trackInlineMedia('magnet:img')
+      directMessageRoom.trackInlineMedia('magnet:img')
+      directMessageRoom.untrackInlineMedia('magnet:img')
+
+      expect(groupRoom.isInlineMedia('magnet:img')).toBe(true)
+
+      groupRoom.untrackInlineMedia('magnet:img')
+
+      expect(groupRoom.isInlineMedia('magnet:img')).toBe(false)
+    })
+
+    it('ignores an untrack of a magnet nobody tracked', () => {
+      const adapter = createWebFileTransfer(createSource().source)
+
+      adapter.untrackInlineMedia('magnet:img')
+      adapter.trackInlineMedia('magnet:img')
+
+      expect(adapter.isInlineMedia('magnet:img')).toBe(true)
+    })
+
+    // The count belongs to the rooms that show the magnet, which release it
+    // themselves. A rescind clearing it would leave a room still showing the
+    // magnet with a claim the record no longer holds.
+    it('leaves the record to the rooms when a magnet is rescinded', async () => {
       const { source } = createSource()
       const adapter = createWebFileTransfer(source)
 
@@ -152,7 +183,25 @@ describe('createWebFileTransfer', () => {
       adapter.trackInlineMedia(magnetURI)
       await adapter.rescind(magnetURI)
 
+      expect(adapter.isInlineMedia(magnetURI)).toBe(true)
+
+      adapter.untrackInlineMedia(magnetURI)
+
       expect(adapter.isInlineMedia(magnetURI)).toBe(false)
+    })
+
+    it('ignores the untracks of rooms still open after rescindAll', async () => {
+      const { source } = createSource()
+      const groupRoom = createWebFileTransfer(source)
+      const directMessageRoom = createWebFileTransfer(source)
+
+      groupRoom.trackInlineMedia('magnet:img')
+      directMessageRoom.trackInlineMedia('magnet:img')
+      await groupRoom.rescindAll()
+      directMessageRoom.untrackInlineMedia('magnet:img')
+      groupRoom.trackInlineMedia('magnet:img')
+
+      expect(groupRoom.isInlineMedia('magnet:img')).toBe(true)
     })
 
     it('forgets every magnet on rescindAll', async () => {

@@ -172,7 +172,13 @@ Two limits on what that gives you:
 
 An entry in the transcript is a claim about a torrent, not proof this client has
 anything to do with it, so it can never be what ends a seed on its own: see
-`ChatRoom.stopSeedingEvictedMedia`.
+`ChatRoom.stopSeedingEvictedMedia`. Every room on a host shares one file
+transfer while each sees only its own transcript and offers, so eviction never
+stops a torrent this client started unless the evicting room sent it as inline
+media itself, and a direct-message room stops nothing else (leaving the group
+room ends all seeding). The adapter's inline-media record is counted per room
+(`trackInlineMedia` / `untrackInlineMedia`), so one room letting go of a magnet
+does not erase it while another still shows it.
 
 ## Running it headless
 

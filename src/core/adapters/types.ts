@@ -60,14 +60,19 @@ export interface FileTransferAdapter {
    */
   isOriginated: (magnetURI: string) => boolean
   /**
-   * Records that `magnetURI` is inline media in a room's transcript, and
-   * {@link untrackInlineMedia} forgets it once it has left the transcript.
+   * Records that `magnetURI` is inline media in one more room's transcript,
+   * and {@link untrackInlineMedia} releases that room's claim once it has left
+   * the transcript. A room calls each once per magnet, however many entries
+   * show it.
    *
    * Inline media is meant to outlive its sender: every peer that received it
    * keeps seeding it for as long as it is in the transcript. Each room only
    * sees its own transcript, but they share this adapter, so the record lives
    * here for a room to know that a magnet is inline media in a room it cannot
-   * see. {@link rescind} and {@link rescindAll} forget it too.
+   * see. It is counted per room, so one room letting go does not erase a
+   * magnet another still shows. {@link rescindAll} forgets every magnet;
+   * {@link rescind} leaves the counts to the rooms that hold them, and an
+   * untrack of a magnet already forgotten does nothing.
    */
   trackInlineMedia: (magnetURI: string) => void
   untrackInlineMedia: (magnetURI: string) => void
