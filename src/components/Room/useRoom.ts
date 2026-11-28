@@ -58,7 +58,8 @@ export const useRoom = (
   } = useContext(ShellContext)
 
   const settingsContext = useContext(SettingsContext)
-  const { privateKey, selectedSound } = settingsContext.getUserSettings()
+  const { privateKey, selectedSound, showVideoByDefault } =
+    settingsContext.getUserSettings()
 
   const isDirectMessageRoom = typeof targetPeerId === 'string'
 
@@ -124,7 +125,8 @@ export const useRoom = (
   const isMessageSending = useChatRoomIsMessageSending(chatRoom)
   const peerList = useChatRoomPeers(chatRoom)
 
-  const [isShowingMessages, setIsShowingMessages] = useState(true)
+  const [isShowingMessages, setIsShowingMessages] =
+    useState(!showVideoByDefault)
 
   const [selfVideoStream, setSelfVideoStream] = useState<MediaStream | null>(
     null
@@ -151,10 +153,11 @@ export const useRoom = (
 
   // The stored flag is reset too, so that hiding the transcript during one call
   // does not silently hide it again at the start of the next one — the control
-  // that would unhide it is not even on screen in between.
+  // that would unhide it is not even on screen in between. Each call starts
+  // from the user's `showVideoByDefault` setting instead.
   useEffect(() => {
-    if (!showVideoDisplay) setIsShowingMessages(true)
-  }, [showVideoDisplay])
+    if (!showVideoDisplay) setIsShowingMessages(!showVideoByDefault)
+  }, [showVideoDisplay, showVideoByDefault])
 
   // Given the resolved value, not the stored one: a transcript that is on
   // screen and focused should not also announce itself with a sound or a

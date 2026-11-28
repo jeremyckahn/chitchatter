@@ -13,6 +13,7 @@ export const userSettingsStubFactory = (
     playSoundOnNewMessage: true,
     showNotificationOnNewMessage: true,
     showActiveTypingStatus: true,
+    showVideoByDefault: false,
     isEnhancedConnectivityEnabled: true,
     publicKey: encryption.cryptoKeyStub,
     privateKey: encryption.cryptoKeyStub,

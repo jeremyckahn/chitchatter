@@ -6,6 +6,7 @@ import { SettingsContext } from 'contexts/SettingsContext'
 import { ShellContext } from 'contexts/ShellContext'
 import { ChatRoomRegistry } from 'core/chat/ChatRoomRegistry'
 import { encryption } from 'core/crypto/Encryption'
+import { UserSettings } from 'core/models/settings'
 import { TrysteroTransport } from 'core/transport/TrysteroTransport'
 import { mockEncryptionService } from 'test-utils/mocks/mockEncryptionService'
 import { userSettingsContextStubFactory } from 'test-utils/stubs/settingsContext'
@@ -56,13 +57,15 @@ vi.mock('@trystero-p2p/torrent', () => ({
   }),
 }))
 
-const userSettingsStub = userSettingsContextStubFactory({ userId: 'self' })
-
 /**
  * The shell's defaults, with the mutable handles it owns made per-test so that
  * one room's transport cannot leak into the next.
  */
-const createWrapper = () => {
+const createWrapper = (settings: Partial<UserSettings>) => {
+  const userSettingsStub = userSettingsContextStubFactory({
+    userId: 'self',
+    ...settings,
+  })
   const setPassword = vi.fn()
   const handles: { transportRef: { current: TrysteroTransport | null } } = {
     transportRef: { current: null },
@@ -95,8 +98,13 @@ const createWrapper = () => {
 const renderRoom = ({
   password,
   targetPeerId,
-}: { password?: string; targetPeerId?: string } = {}) => {
-  const { Wrapper, handles, setPassword } = createWrapper()
+  settings = {},
+}: {
+  password?: string
+  targetPeerId?: string
+  settings?: Partial<UserSettings>
+} = {}) => {
+  const { Wrapper, handles, setPassword } = createWrapper(settings)
 
   const rendered = renderHook(
     () =>
@@ -166,6 +174,36 @@ describe('useRoom', () => {
     })
 
     expect(result.current.roomContextValue.isShowingMessages).toBe(true)
+  })
+
+  test('opens the video display without the transcript when set to show video by default', () => {
+    const { result } = renderRoom({ settings: { showVideoByDefault: true } })
+
+    expect(result.current.roomContextValue.isShowingMessages).toBe(true)
+
+    act(() => {
+      result.current.roomContextValue.setSelfVideoStream({} as MediaStream)
+    })
+
+    expect(result.current.roomContextValue.isShowingMessages).toBe(false)
+
+    act(() => {
+      result.current.roomContextValue.setIsShowingMessages(true)
+    })
+
+    expect(result.current.roomContextValue.isShowingMessages).toBe(true)
+
+    act(() => {
+      result.current.roomContextValue.setSelfVideoStream(null)
+    })
+
+    expect(result.current.roomContextValue.isShowingMessages).toBe(true)
+
+    act(() => {
+      result.current.roomContextValue.setSelfVideoStream({} as MediaStream)
+    })
+
+    expect(result.current.roomContextValue.isShowingMessages).toBe(false)
   })
 
   test('leaves the room and releases the transport synchronously on unmount', () => {

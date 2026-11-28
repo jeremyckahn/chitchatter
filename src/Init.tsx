@@ -40,6 +40,7 @@ const Init = (props: InitProps) => {
           playSoundOnNewMessage: true,
           showNotificationOnNewMessage: true,
           showActiveTypingStatus: true,
+          showVideoByDefault: false,
           isEnhancedConnectivityEnabled: true,
           publicKey,
           privateKey,

@@ -22,6 +22,7 @@ beforeAll(async () => {
     playSoundOnNewMessage: true,
     showNotificationOnNewMessage: true,
     showActiveTypingStatus: true,
+    showVideoByDefault: false,
     isEnhancedConnectivityEnabled: true,
     publicKey,
     privateKey,
